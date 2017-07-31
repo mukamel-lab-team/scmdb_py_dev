@@ -1,4 +1,5 @@
-"""Functions used to generate content. """ 
+"""Functions used to generate content. """  
+# New comment Eran
 import os
 import math
 import csv
