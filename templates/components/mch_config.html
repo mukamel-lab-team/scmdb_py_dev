@@ -1,0 +1,27 @@
+<h4>Options</h4>
+<div class="row">
+    <div class="col-md-3" id="mCHLevelCol">
+        <label for="levels" class="control-label">mCH Levels</label><br>
+        <input type="radio" name="levels" id="levelsOriginal" value="original">original</input><br>
+        <input type="radio" name="levels" id="levelsNormalized" value="normalized" checked>normalized</input>
+    </div>
+    <div class="col-md-3" id="geneNameCol">
+        <label for="geneName" class="control-label">
+            Gene name <a href="#" data-toggle="popover" title="Gene name" data-content="Type a gene name."><span class="glyphicon glyphicon-info-sign"></span></a>
+        </label><br>
+        <select id="geneName" style="width: 65%">
+            <option>Select..</option>
+        </select>
+    </div>
+    <div class="col-md-3" id="percentileCol">
+        <label for="percentile" class="control-label">Color scale percentile</label><br>
+        <input id="percentile" type="text" value="" />
+    </div>
+    <div class="col-md-3" id="epiBrowserCol">
+        <p><a href="#" target="_blank" id="epiBrowserLink" class="btn btn-info disabled" role="button">
+            <small>Epigenome browser (AnnoJ)</small>
+        </a></p>
+        <!-- <p><a href="#" target="_blank" id="orthologLink" class="btn btn-primary disabled" role="button" onclick="window.open(this.href, '', 'fullscreen=yes, scrollbars=yes,location=yes,resizable=yes, height=' + screen.height + ', width=' + screen.width); return false;">
+            <small>Ortholog comparison</small></a></p> -->
+    </div>
+</div>

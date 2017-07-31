@@ -1,0 +1,29 @@
+* {
+    margin: 0;
+    padding: 0;
+}
+html, body {
+    height: 100%;
+    width: 100%
+}
+body {
+    background-color: #F8F9F3 !important;
+    /* CNDD website colour */
+}
+
+#outlierOptions {
+    text-align: right;
+    float: left;
+    right: 10%;
+}
+
+.slider {
+    width: 60% !important;
+    max-width: 150px;
+    left: 2%;
+}
+
+#plot-cluster, #plot-mch-scatter, #plot-mch-box {
+    overflow: hidden;
+    height: auto;
+}

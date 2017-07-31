@@ -1,0 +1,14 @@
+{%- extends "bootstrap/base.html" %}
+{% block title %}Single Cell Methylome{% endblock %}
+{% import "bootstrap/fixes.html" as fixes %}
+{% block head %}
+    {{super()}}
+    {{fixes.ie8()}}
+{%- endblock %}
+{% block styles -%}
+    {{super()}}  {# do not forget to call super or Bootstrap's own stylesheets will disappear! #}
+    <link rel="stylesheet" type="text/css" href="./static/app.css">
+{% endblock %}
+{% block navbar %}
+{{nav.frontend_top.render()}}
+{% endblock %}

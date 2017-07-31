@@ -1,0 +1,111 @@
+Tue Jul 25 16:27:57 PDT 2017 Entered virtual environment.
+Flask at: /srv/venv/bin/flask
+/srv/venv/lib/python3.4/importlib/_bootstrap.py:1161: ExtDeprecationWarning:
+
+Importing flask.ext.htmlmin is deprecated, use flask_htmlmin instead.
+
+/srv/venv/lib/python3.4/importlib/_bootstrap.py:1161: ExtDeprecationWarning:
+
+Importing flask.ext.cache is deprecated, use flask_cache instead.
+
+flask serve is currently experimental. Use it at your own risk
+app            : scmdb_py
+# processes    : 32
+backend        : tornado 4.5.1
+addr           : 0.0.0.0:5000
+1_START.sh: line 6: 78746 Killed                  flask --app=scmdb_py serve --port 5000
+Tue Jul 25 18:00:07 PDT 2017 Killed / quit.
+Tue Jul 25 19:07:21 PDT 2017 Entered virtual environment.
+Flask at: /srv/venv/bin/flask
+/srv/venv/lib/python3.4/importlib/_bootstrap.py:1161: ExtDeprecationWarning:
+
+Importing flask.ext.htmlmin is deprecated, use flask_htmlmin instead.
+
+/srv/venv/lib/python3.4/importlib/_bootstrap.py:1161: ExtDeprecationWarning:
+
+Importing flask.ext.cache is deprecated, use flask_cache instead.
+
+flask serve is currently experimental. Use it at your own risk
+app            : scmdb_py
+# processes    : 32
+backend        : tornado 4.5.1
+addr           : 0.0.0.0:5000
+
+Aborted!
+Tue Jul 25 21:51:42 PDT 2017 Killed / quit.
+Thu Jul 27 16:28:43 PDT 2017 Entered virtual environment.
+Flask at: /srv/venv/bin/flask
+/srv/venv/lib/python3.4/importlib/_bootstrap.py:1161: ExtDeprecationWarning:
+
+Importing flask.ext.htmlmin is deprecated, use flask_htmlmin instead.
+
+/srv/venv/lib/python3.4/importlib/_bootstrap.py:1161: ExtDeprecationWarning:
+
+Importing flask.ext.cache is deprecated, use flask_cache instead.
+
+flask serve is currently experimental. Use it at your own risk
+app            : scmdb_py
+# processes    : 32
+backend        : tornado 4.5.1
+addr           : 0.0.0.0:5000
+Thu Jul 27 16:31:36 PDT 2017 Entered virtual environment.
+Flask at: /srv/venv/bin/flask
+/srv/venv/lib/python3.4/importlib/_bootstrap.py:1161: ExtDeprecationWarning:
+
+Importing flask.ext.htmlmin is deprecated, use flask_htmlmin instead.
+
+/srv/venv/lib/python3.4/importlib/_bootstrap.py:1161: ExtDeprecationWarning:
+
+Importing flask.ext.cache is deprecated, use flask_cache instead.
+
+flask serve is currently experimental. Use it at your own risk
+app            : scmdb_py
+# processes    : 32
+backend        : tornado 4.5.1
+addr           : 0.0.0.0:5000
+WARNING:tornado.access:404 GET /static/bootstrap-toggle.min.js.map (127.0.0.1) 150.71ms
+WARNING:tornado.access:404 GET /static/bootstrap-toggle.min.js.map (127.0.0.1) 1.72ms
+WARNING:tornado.access:404 GET /static/bootstrap-toggle.min.js.map (127.0.0.1) 1.57ms
+WARNING:tornado.access:404 GET /static/bootstrap-toggle.min.js.map (127.0.0.1) 1.66ms
+WARNING:tornado.access:404 GET /static/bootstrap-toggle.min.js.map (127.0.0.1) 1.57ms
+WARNING:tornado.access:404 GET /static/bootstrap-toggle.min.js.map (127.0.0.1) 1.53ms
+WARNING:tornado.access:404 GET /static/bootstrap-toggle.min.js.map (127.0.0.1) 1.43ms
+WARNING:tornado.access:404 GET /static/bootstrap-toggle.min.js.map (127.0.0.1) 1.46ms
+WARNING:tornado.access:404 GET /static/bootstrap-toggle.min.js.map (127.0.0.1) 1.58ms
+WARNING:tornado.access:404 GET /static/bootstrap-toggle.min.js.map (127.0.0.1) 1.65ms
+WARNING:tornado.access:404 GET /static/bootstrap-toggle.min.js.map (127.0.0.1) 1.58ms
+WARNING:tornado.access:404 GET /static/bootstrap-toggle.min.js.map (127.0.0.1) 1.49ms
+WARNING:tornado.access:404 GET /static/bootstrap-toggle.min.js.map (127.0.0.1) 1.42ms
+Sat Jul 29 12:33:37 PDT 2017 Entered virtual environment.
+Flask at: /srv/venv/bin/flask
+/srv/venv/lib/python3.4/importlib/_bootstrap.py:1161: ExtDeprecationWarning:
+
+Importing flask.ext.htmlmin is deprecated, use flask_htmlmin instead.
+
+/srv/venv/lib/python3.4/importlib/_bootstrap.py:1161: ExtDeprecationWarning:
+
+Importing flask.ext.cache is deprecated, use flask_cache instead.
+
+flask serve is currently experimental. Use it at your own risk
+app            : scmdb_py
+# processes    : 32
+backend        : tornado 4.5.1
+addr           : 0.0.0.0:5000
+Sat Jul 29 12:37:33 PDT 2017 Entered virtual environment.
+Flask at: /srv/venv/bin/flask
+/srv/venv/lib/python3.4/importlib/_bootstrap.py:1161: ExtDeprecationWarning:
+
+Importing flask.ext.htmlmin is deprecated, use flask_htmlmin instead.
+
+/srv/venv/lib/python3.4/importlib/_bootstrap.py:1161: ExtDeprecationWarning:
+
+Importing flask.ext.cache is deprecated, use flask_cache instead.
+
+flask serve is currently experimental. Use it at your own risk
+app            : scmdb_py
+# processes    : 32
+backend        : tornado 4.5.1
+addr           : 0.0.0.0:5000
+
+Aborted!
+Sun Jul 30 11:47:05 PDT 2017 Killed / quit.

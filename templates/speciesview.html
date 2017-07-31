@@ -1,0 +1,70 @@
+{%- extends "base.html" %}
+{% import "bootstrap/utils.html" as utils %}
+{% block content %}
+    <div class="container">
+    {%- with messages = get_flashed_messages(with_categories=True) %}
+    {%- if messages %}
+    <div class="row">
+      <div class="col-md-12">
+        {{utils.flashed_messages(messages)}}
+      </div>
+    </div>
+    {%- endif %}
+    {%- endwith %}
+    <div class="panel panel-default panel-main" style="width: 100%; margin-left:auto; margin-right:auto;">
+        {% include "components/tsne_cluster.html" %}
+    </div>
+    <div class="panel panel-default panel-main" style="width: 100%; margin-left:auto; margin-right:auto;">
+        <div class="panel-heading">Gene level mCH{% if gene is defined %} - {{ gene }}{%  endif %}</div>
+        <div class="panel-body ">
+            {% include "components/mch_config.html" %}
+            {% include "components/mch_cluster.html" %}
+            {% include "components/mch_box.html" %}
+        </div>
+    </div>
+    </div>
+{%- endblock %}
+{% block scripts %}
+  {{super()}}
+  <link href="./static/select2.min.css" rel="stylesheet" />
+  <script src="./static/select2.min.js"></script>
+  <link href="./static/bootstrap-slider.min.css" rel="stylesheet" />
+  <script src="./static/bootstrap-slider.min.js"></script>
+  <link href="./static/bootstrap-toggle.min.css" rel="stylesheet" />
+  <script src="./static/bootstrap-toggle.min.js"></script>
+  <script src="./static/plotly.min.js"></script>
+  <script src="./static/customview.js"></script>
+  <script>
+    var species = "{{ species }}";
+    var pSlider;
+    var geneSearchCache;
+    var mmu_gID;
+    var hsa_gID;
+    $(document).ready(function () {
+        $('[data-toggle="popover"]').popover();
+        $('#outlierToggle').bootstrapToggle();
+        $('#orthologsToggle').bootstrapToggle();
+        $('#orthologsToggle').bootstrapToggle('disable');
+        loadClusterPlot();
+        initGeneNameSearch();
+        // Percentile changes are handled separately, as every change would result in a plot update, but we want
+        // this to happen when sliding is actually stopped.
+        pSlider = $("#percentile").slider({
+            min: 0,
+            max: 1,
+            step: 0.05,
+            value: [0.05, 0.95],
+            tooltip: 'always',
+            tooltip_position: 'bottom'
+        }).on('slideStop', updateGeneElements).data('slider');
+
+    });
+
+    $("#mCHLevelCol :input, #geneNameCol :input").change(function () {
+        updateGeneElements();
+    });
+    $("#outlierToggle, #orthologsToggle").change(function () {
+        updateMCHBoxPlot();
+    });
+  </script>
+{% endblock %}
