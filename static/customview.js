@@ -41,7 +41,7 @@ function initGeneNameSearch() {
 
     // Initialise selector
     if (typeof(Storage) !== 'undefined') {
-        var defaultGene = localStorage.getItem(species);
+        var defaultGene = localStorage.getItem('lastViewed');
         if (defaultGene == null) {
             defaultGene = 'Gad2'; // No entry, set default to Gad2.
         }
@@ -122,7 +122,7 @@ function updateGeneElements() {
     var geneSelected = $('#geneName option:selected').val();
     if (geneSelected != 'Select..') {
         if (typeof(Storage) !== 'undefined') {
-            localStorage.setItem(species, $('#geneName option:selected').text());
+            localStorage.setItem('lastViewed', $('#geneName option:selected').text());
         }
         updateMCHClusterPlot();
         updateOrthologToggle();
