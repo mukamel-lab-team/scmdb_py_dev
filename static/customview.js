@@ -38,9 +38,20 @@ function initGeneNameSearch() {
         },
         minimumInputLength: 1
     });
-    // Initialise selector with Gad2
+
+    // Initialise selector
+    if (typeof(Storage) !== 'undefined') {
+        var defaultGene = localStorage.getItem('lastViewed');
+        if (defaultGene == null) {
+            defaultGene = 'Gad2'; // No entry, set default to Gad2.
+        }
+    } else {
+        // Browser has no localStorage support, we'll just do Gad2.
+        var defaultGene = 'Gad2';
+    }
+
     $.getJSON({
-        url: './gene/names/' + species + '?q=Gad2',
+        url: './gene/names/' + species + '?q=' + defaultGene,
         success: function(data) {
             data.forEach(function(gene) {
                 var option = new Option(gene.geneName, gene.geneID, true, true);
@@ -110,6 +121,9 @@ function updateMCHCombinedBoxPlot(mmu_gid, hsa_gid) {
 function updateGeneElements() {
     var geneSelected = $('#geneName option:selected').val();
     if (geneSelected != 'Select..') {
+        if (typeof(Storage) !== 'undefined') {
+            localStorage.setItem('lastViewed', $('#geneName option:selected').text());
+        }
         updateMCHClusterPlot();
         updateOrthologToggle();
         updateMCHBoxPlot();
