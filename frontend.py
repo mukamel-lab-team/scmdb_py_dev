@@ -5,18 +5,20 @@ For actual content generation see the content.py module.
 from flask import Blueprint, render_template, jsonify, request, redirect
 from flask_nav.elements import Navbar, Link
 
-from .content import get_cluster_plot, search_gene_names, get_mch_scatter, get_mch_box, get_mch_box_two_species,\
-    find_orthologs, FailToGraphException
+from .content import get_cluster_plot, search_gene_names, get_mch_scatter, get_mch_box, get_mch_box_two_species, find_orthologs, FailToGraphException, get_corr_genes
 from .nav import nav
 from .cache import cache
+from os import walk
 
 frontend = Blueprint('frontend', __name__) # Flask "bootstrap"
 
+# Find all the samples in the data directory
+dir_list = next(walk('/srv/scmdb_py_newdata/data/'))[1]
+dir_list_links=[Link(x, x) for x in dir_list]
+
 nav.register_element('frontend_top',
-                     Navbar(
-                         '',
-                         Link('Mouse', './mmu'),
-                         Link('Human', './hsa'),))
+                     Navbar('',*dir_list_links
+			))
 
 
 # Visitor routes
@@ -27,16 +29,9 @@ def index():
     return 'To be redirected manually, click <a href="./mmu">here</a>.' + \
            '<script>window.location = "./mmu"; window.location.replace("./mmu");</script>'
 
-
-@frontend.route('/mmu')
-def mouse():
-    return render_template('speciesview.html', species='mmu')
-
-
-@frontend.route('/hsa')
-def human():
-    return render_template('speciesview.html', species='hsa')
-
+@frontend.route('/<species>')
+def species(species):
+    return render_template('speciesview.html', species=species)
 
 @frontend.route('/standalone/<species>/<gene>')
 def standalone(species, gene):  # View gene body mCH plots alone.
@@ -120,3 +115,8 @@ def orthologs(species, geneID):
         return jsonify(find_orthologs(mmu_gid=geneID))
     else:
         return jsonify(find_orthologs(hsa_gid=geneID))
+    
+
+@frontend.route('/gene/corr/<species>/<geneID>')
+def correlated_genes(species, geneID):
+    return jsonify(get_corr_genes(species,geneID))

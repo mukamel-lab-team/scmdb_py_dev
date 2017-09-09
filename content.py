@@ -1,5 +1,4 @@
-"""Functions used to generate content. """  
-# New comment Eran
+"""Functions used to generate content. """
 import os
 import math
 import csv
@@ -252,6 +251,37 @@ def gene_id_to_name(species, query):
 
 
 @cache.memoize(timeout=3600)
+def get_corr_genes(species,query):
+    """Get correlated genes of a certain gene of a species. 
+    
+        Arguments:
+            species(str): Name of species.
+            query(str): Query string of gene ID.
+        
+        Returns:
+            dict: information of genes that are correlated with target gene.
+    """
+    conn = sqlite3.connect('{}/{}/top_corr_genes.sqlite3'.format(
+        current_app.config['DATA_DIR'], species))
+    conn.row_factory = sqlite3.Row
+    cursor = conn.cursor()
+    
+    cursor.execute('SELECT * FROM genes_corr WHERE TargetGene LIKE ?', (query + '%',))
+    
+    #skip first column (TargetGene)
+    query_results = list(cursor.fetchone())[1:]
+    table_data = []
+    #print(query_results)
+    i=1
+    for geneID in query_results:
+        gene = gene_id_to_name(species,geneID)
+        gene['Rank'] = i
+        table_data.append(gene)
+        i+=1
+    return table_data
+
+
+@cache.memoize(timeout=3600)
 def get_gene_mch(species, gene, outliers):
     """Return mCH data points for a given gene.
 
@@ -443,7 +473,7 @@ def get_cluster_plot(species):
             'linecolor': 'black',
             'linewidth': 0.5,
             'mirror': True,
-            'range': [-20,20]
+            # 'range': [-20,20]
         },
         title='Cell clusters',
         titlefont={'color': 'rgba(1,2,2,1)',
@@ -597,7 +627,7 @@ def get_mch_scatter(species, gene, level, ptile_start, ptile_end):
             'linecolor': 'black',
             'linewidth': 0.5,
             'mirror': True,
-            'range': [-20,20]
+            # 'range': [-20,20]
         },
         hovermode='closest',)
 
