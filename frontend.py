@@ -5,18 +5,20 @@ For actual content generation see the content.py module.
 from flask import Blueprint, render_template, jsonify, request, redirect
 from flask_nav.elements import Navbar, Link
 
-from .content import get_cluster_plot, search_gene_names, get_mch_scatter, get_mch_box, get_mch_box_two_species,\
-    find_orthologs, FailToGraphException
+from .content import get_cluster_plot, search_gene_names, get_mch_scatter, get_mch_box, get_mch_box_two_species, find_orthologs, FailToGraphException
 from .nav import nav
 from .cache import cache
+from os import walk
 
 frontend = Blueprint('frontend', __name__) # Flask "bootstrap"
 
+# Find all the samples in the data directory
+dir_list = next(walk('/srv/scmdb_py_newdata/data/'))[1]
+dir_list_links=[Link(x, x) for x in dir_list]
+
 nav.register_element('frontend_top',
-                     Navbar(
-                         '',
-                         Link('Mouse', './mmu'),
-                         Link('Human', './hsa'),))
+                     Navbar('',*dir_list_links
+			))
 
 
 # Visitor routes
@@ -28,6 +30,7 @@ def index():
            '<script>window.location = "./mmu"; window.location.replace("./mmu");</script>'
 
 
+""" 
 @frontend.route('/mmu')
 def mouse():
     return render_template('speciesview.html', species='mmu')
@@ -37,6 +40,15 @@ def mouse():
 def human():
     return render_template('speciesview.html', species='hsa')
 
+
+@frontend.route('/human_MB_EB')
+def human_MB_EB():
+    return render_template('speciesview.html', species='human_MB_EB')
+"""
+
+@frontend.route('/<species>')
+def species(species):
+    return render_template('speciesview.html', species=species)
 
 @frontend.route('/standalone/<species>/<gene>')
 def standalone(species, gene):  # View gene body mCH plots alone.

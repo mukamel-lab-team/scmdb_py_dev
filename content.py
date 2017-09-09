@@ -1,5 +1,4 @@
-"""Functions used to generate content. """  
-# New comment Eran
+"""Functions used to generate content. """
 import os
 import math
 import csv
@@ -443,7 +442,7 @@ def get_cluster_plot(species):
             'linecolor': 'black',
             'linewidth': 0.5,
             'mirror': True,
-            'range': [-20,20]
+            # 'range': [-20,20]
         },
         title='Cell clusters',
         titlefont={'color': 'rgba(1,2,2,1)',
@@ -597,7 +596,7 @@ def get_mch_scatter(species, gene, level, ptile_start, ptile_end):
             'linecolor': 'black',
             'linewidth': 0.5,
             'mirror': True,
-            'range': [-20,20]
+            # 'range': [-20,20]
         },
         hovermode='closest',)
 
