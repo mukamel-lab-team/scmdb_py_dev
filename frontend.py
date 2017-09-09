@@ -29,23 +29,6 @@ def index():
     return 'To be redirected manually, click <a href="./mmu">here</a>.' + \
            '<script>window.location = "./mmu"; window.location.replace("./mmu");</script>'
 
-
-""" 
-@frontend.route('/mmu')
-def mouse():
-    return render_template('speciesview.html', species='mmu')
-
-
-@frontend.route('/hsa')
-def human():
-    return render_template('speciesview.html', species='hsa')
-
-
-@frontend.route('/human_MB_EB')
-def human_MB_EB():
-    return render_template('speciesview.html', species='human_MB_EB')
-"""
-
 @frontend.route('/<species>')
 def species(species):
     return render_template('speciesview.html', species=species)
