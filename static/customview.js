@@ -185,7 +185,11 @@ function updateDataTable() {
             "processing": true,
             "ordering": false,
             "lengthChange": false,
-
+            "dom": "<'row'<'col-md-3 'f>>" +
+                    "<'row'<'col-md-3'tr>>" +
+                    "<'row'<'col-md-3'i>>" + 
+                    "<'row'<'col-md-3'p>>",
+            "pagingType": "simple",
             "ajax": {
                 "url": "./gene/corr/" + species + "/" + geneSelected,
                 "dataSrc": ""
@@ -193,8 +197,10 @@ function updateDataTable() {
             "columns": [
                 { "data": "Rank" },
                 { "data": "geneName" },
-                { "data": "chrom" },
+                { "data": "Corr" },
             ]
         });
+        
+        
     }
 }

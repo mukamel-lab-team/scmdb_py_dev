@@ -17,7 +17,7 @@ from .json import MiniJSONEncoder
 
 def create_app(configfile=None):
     app = Flask(__name__)
-
+        
     AppConfig(app)
     Bootstrap(app)
     # EAM : Set limit on the number of items in cache (RAM)

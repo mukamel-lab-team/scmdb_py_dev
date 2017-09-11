@@ -2,7 +2,7 @@
 
 For actual content generation see the content.py module.
 """
-from flask import Blueprint, render_template, jsonify, request, redirect
+from flask import Blueprint, render_template, jsonify, request, redirect, current_app
 from flask_nav.elements import Navbar, Link
 
 from .content import get_cluster_plot, search_gene_names, get_mch_scatter, get_mch_box, get_mch_box_two_species, find_orthologs, FailToGraphException, get_corr_genes
@@ -13,7 +13,7 @@ from os import walk
 frontend = Blueprint('frontend', __name__) # Flask "bootstrap"
 
 # Find all the samples in the data directory
-dir_list = next(walk('/srv/scmdb_py_newdata/data/'))[1]
+dir_list = next(walk('/Users/Tomo/Desktop/CNDD/data/'))[1]
 dir_list_links=[Link(x, x) for x in dir_list]
 
 nav.register_element('frontend_top',

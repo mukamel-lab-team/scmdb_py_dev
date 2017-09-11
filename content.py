@@ -266,19 +266,17 @@ def get_corr_genes(species,query):
     conn.row_factory = sqlite3.Row
     cursor = conn.cursor()
     
-    cursor.execute('SELECT * FROM genes_corr WHERE TargetGene LIKE ?', (query + '%',))
+    cursor.execute('SELECT Gene2, Correlation FROM corr_genes WHERE Gene1 LIKE ? ORDER BY Correlation DESC LIMIT 10', (query + '%',))
     
-    #skip first column (TargetGene)
-    query_results = list(cursor.fetchone())[1:]
-    table_data = []
-    #print(query_results)
-    i=1
-    for geneID in query_results:
-        gene = gene_id_to_name(species,geneID)
-        gene['Rank'] = i
-        table_data.append(gene)
-        i+=1
-    return table_data
+    query_results = list(cursor.fetchall())
+    table_data=[]
+    for rank, item in enumerate(query_results, 1):
+        gene = dict(item)
+        geneInfo = gene_id_to_name(species, gene['Gene2'])
+        geneInfo['Rank'] = rank
+        geneInfo['Corr'] = gene['Correlation']
+        table_data.append(geneInfo)
+    return(table_data)
 
 
 @cache.memoize(timeout=3600)

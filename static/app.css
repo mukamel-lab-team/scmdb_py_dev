@@ -27,3 +27,18 @@ body {
     overflow: hidden;
     height: auto;
 }
+
+#geneTable tbody td {
+    height: 15px;
+    padding: 3px;
+}
+
+#geneTable_previous{
+    position:relative;
+    left:0px;
+}
+.#geneTable_next{
+    position:absolute;
+    right: 0px;
+    float: right;
+}
