@@ -13,7 +13,7 @@ from os import walk
 frontend = Blueprint('frontend', __name__) # Flask "bootstrap"
 
 # Find all the samples in the data directory
-dir_list = next(walk('/Users/Tomo/Desktop/CNDD/data/'))[1]
+dir_list = next(walk('/srv/scmdb_py_newdata/data/'))[1] # TODO: This path should be specified using default_config DATA_DIR
 dir_list_links=[Link(x, x) for x in dir_list]
 
 nav.register_element('frontend_top',
