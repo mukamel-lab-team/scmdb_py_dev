@@ -104,3 +104,6 @@ ENV/
 # Data directory
 data/
 scripts/*.csv
+
+#Config Files
+default_config.py
