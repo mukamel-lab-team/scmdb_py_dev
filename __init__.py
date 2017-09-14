@@ -8,7 +8,6 @@ from flask import Flask
 from flask_appconfig import AppConfig
 from flask_bootstrap import Bootstrap
 
-from .frontend import frontend
 from .nav import nav
 from .cache import cache
 from .compress import compress, htmlmin
@@ -23,7 +22,9 @@ def create_app(configfile=None):
     # EAM : Set limit on the number of items in cache (RAM)
     cache.init_app(app, config={'CACHE_TYPE': 'simple', 'CACHE_THRESHOLD': 1000})
 
-    app.register_blueprint(frontend)
+    with app.app_context():
+        from .frontend import frontend
+        app.register_blueprint(frontend)
 
     app.json_encoder = MiniJSONEncoder
 
