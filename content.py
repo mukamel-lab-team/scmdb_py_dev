@@ -8,7 +8,7 @@ from collections import OrderedDict
 
 import pandas
 import plotly
-from random import random
+from random import random, sample
 # from bokeh import palettes
 # import colorcet
 # import matplotlib.cm as cm
@@ -90,15 +90,10 @@ def generate_cluster_colors(num):
     """
     # return palettes.plasma(num)
 
-    # c = ['hsl('+str(h)+','+str((20*h/360 % 1)*50+25)+'%,50%)' for h in linspace(0, 360, num)]
-    # c = ['hsl('+str(h)+','+str(random()*50+25)+'%,50%)' for h in linspace(0, 360, num)]
-    if num>18:
-        c = ['hsl('+str(round(h*1.8 % 360))+',50%,50%)' for h in linspace(0, 360, num)]
-    else:
-        c = ['hsl('+str(round(h*1.3 % 360))+',50%,50%)' for h in linspace(0, 360, num)]
-    c=c+c
+    c = ['hsl('+str(round(h))+',50%,50%)' for h in linspace(0, 360, num)]
+    # Randomize the color order
+    c = sample(c,num) 
     return c
-
 
 
 def set_color_by_percentile(this, start, end):
@@ -385,22 +380,27 @@ def get_cluster_plot(species):
     if species=='mmu':
         max_cluster=16
     colors = generate_cluster_colors(max_cluster)
+    ## Eran and Fangming 09/12/2017 ---begin
+    symbols=['circle-open','square-open','cross','triangle-up','triangle-down','octagon','star','diamond']
+    ## Eran and Fangming 09/12/2017 ---end
     for point in points:
-        trace = traces.setdefault(int(point['cluster_ordered']),
-                                  Scattergl(
-                                      x=list(),
-                                      y=list(),
-                                      text=list(),
-                                      mode='markers',
-                                      visible=True,
-                                    #   legendgroup="single cells",
-                                      name=point['cluster_name'],
-                                      marker={
-                                          'color': colors[int(point['cluster_ordered'])-1],
-                                          'size': 4,
-                                          'symbol': 'circle'
-                                      },
-                                      hoverinfo='text'))
+        cluster_num=int(point['cluster_ordered'])
+        cluster_sample_num=int(point['cluster_ordered'])+max_cluster*(int(point['biosample'])-1)
+        trace = traces.setdefault(cluster_sample_num,
+          Scattergl(
+              x=list(),
+              y=list(),
+              text=list(),
+              mode='markers',
+              visible=True,
+              name=point['cluster_name']+" Sample"+point['biosample'],
+              marker={
+                    'color': colors[cluster_num-1],
+                    'size': 7,
+                    'symbol': symbols[int(point['biosample'])-1], # Eran and Fangming 09/12/2017
+                    'line' : {'width' : 1, 'color':colors[cluster_num-1]}
+                    },
+              hoverinfo='text'))
         trace['x'].append(point['tsne_x'])
         trace['y'].append(point['tsne_y'])
         trace['text'].append(
@@ -408,9 +408,8 @@ def get_cluster_plot(species):
                 'Sample': point.get('samp', 'N/A'),
                 'Layer': point.get('layer', 'N/A'),
                 'Cluster': point.get('cluster_name', 'N/A')
-            }))
+                }))
 
-    symbols=['square','cross','triangle-up','triangle-down','octagon','star','diamond']
     if species == 'mmu':
         for i in range(17,23,1):
             traces[i]['marker']['size']=15
@@ -669,8 +668,8 @@ def get_mch_box(species, gene, level, outliers):
             Box(y=list(),
                 name=point['cluster_name'],
                 marker={
-                    'color': colors[int(point['cluster_ordered'])-1],
-                    'outliercolor': colors[int(point['cluster_ordered'])-1],
+                    'color': colors[(int(point['cluster_ordered'])-1)%len(colors)],
+                    'outliercolor': colors[(int(point['cluster_ordered'])-1)%len(colors)],
                     'size': 6
                 },
                 boxpoints='suspectedoutliers',

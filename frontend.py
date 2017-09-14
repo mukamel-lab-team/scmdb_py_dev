@@ -13,7 +13,7 @@ from os import walk
 frontend = Blueprint('frontend', __name__) # Flask "bootstrap"
 
 # Find all the samples in the data directory
-dir_list = next(walk('/Users/Tomo/Desktop/CNDD/data/'))[1]
+dir_list = next(walk('/srv/scmdb_py_newdata/data/'))[1] # TODO: This path should be specified using default_config DATA_DIR
 dir_list_links=[Link(x, x) for x in dir_list]
 
 nav.register_element('frontend_top',
@@ -26,8 +26,8 @@ nav.register_element('frontend_top',
 def index():
     # Index is not needed since this site is embedded as a frame.
     # We use a JavaScript redirection here, since a reverse proxy will be confused about subdirectories.
-    return 'To be redirected manually, click <a href="./mmu">here</a>.' + \
-           '<script>window.location = "./mmu"; window.location.replace("./mmu");</script>'
+    return 'To be redirected manually, click <a href="./human_combined">here</a>.' + \
+           '<script>window.location = "./human_combined"; window.location.replace("./human_combined");</script>'
 
 @frontend.route('/<species>')
 def species(species):
