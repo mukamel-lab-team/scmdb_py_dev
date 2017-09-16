@@ -324,8 +324,6 @@ def get_gene_mch(species, gene, outliers):
         dataframe_merged['cluster_ordered'], errors='coerce')
     dataframe_merged['cluster_ordered'] = dataframe_merged[
         'cluster_ordered'].astype('category')
-    # dataframe_merged['cluster_ordered'].cat.set_categories(
-        # rank_order, inplace=True)
     return dataframe_merged.sort_values(
         by='cluster_ordered', ascending=True).to_dict('records')
 
@@ -556,7 +554,6 @@ def get_mch_scatter(species, gene, level, ptile_start, ptile_end):
     colorbar_ticktext.append('>' + str(round(end, 3)))
 
     geneName = gene_id_to_name(species, gene)
-    # geneName = gene_id_to_name('mmu', 'ENSMUSG00000026787.3')
     geneName = geneName['geneName']
 
     trace = Scatter(
@@ -708,7 +705,6 @@ def get_mch_box(species, gene, level, outliers):
             'type': 'category',
             'anchor': 'y',
             'ticks': 'outside',
-            # 'tickcolor': 'white',
             'ticklen': 4,
             'tickangle': -45,
             'tickwidth': 0.5,
@@ -719,10 +715,8 @@ def get_mch_box(species, gene, level, outliers):
             'showline': True,
             'zeroline': False,
             'showgrid': True,
-            # 'linecolor': 'white',
             'linewidth': 1,
             'mirror': True,
-            # 'gridcolor': 'white'
         },
         yaxis={
             'title': geneName+' '+level.capitalize() + ' mCH',
@@ -742,12 +736,9 @@ def get_mch_box(species, gene, level, outliers):
             'showline': True,
             'zeroline': False,
             'showgrid': True,
-            # 'linecolor': 'white',
             'linewidth': 1,
             'mirror': True,
-            # 'gridcolor': 'white'
         },
-        # plot_bgcolor='lightgrey'
         )
 
     return plotly.offline.plot(
