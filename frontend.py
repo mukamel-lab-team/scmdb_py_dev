@@ -26,8 +26,8 @@ nav.register_element('frontend_top',
 def index():
     # Index is not needed since this site is embedded as a frame.
     # We use a JavaScript redirection here, since a reverse proxy will be confused about subdirectories.
-    return 'To be redirected manually, click <a href="./mmu">here</a>.' + \
-           '<script>window.location = "./mmu"; window.location.replace("./mmu");</script>'
+    return 'To be redirected manually, click <a href="./human_combined">here</a>.' + \
+           '<script>window.location = "./human_combined"; window.location.replace("./human_combined");</script>'
 
 @frontend.route('/<species>')
 def species(species):
