@@ -369,6 +369,7 @@ def get_cluster_plot(species):
               mode='markers',
               visible=True,
               name=point['cluster_name']+" Sample"+point['biosample'],
+              legendgroup="Sample"+point['biosample']
               marker={
                     'color': colors[cluster_num-1],
                     'size': 7,
