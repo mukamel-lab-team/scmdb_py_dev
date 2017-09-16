@@ -11,7 +11,7 @@ function loadClusterPlot() {
 }
 
 function initGeneNameSearch() {
-    var geneNameSelector = $('#geneName').select2({
+    geneNameSelector = $('#geneName').select2({
         placeholder: 'Search..',
         allowClear: true,
         ajax: {
@@ -57,11 +57,11 @@ function initGeneNameSearch() {
                 var option = new Option(gene.geneName, gene.geneID, true, true);
                 geneNameSelector.append(option);
                 $('#epiBrowserLink').attr('href', generateBrowserURL(gene));
-                $('#epiBrowserLink').removeClass('disabled')
+                $('#epiBrowserLink').removeClass('disabled');
             });
             geneNameSelector.trigger('change');
         }
-    })
+    });
 }
 
 function updateMCHClusterPlot() {
@@ -177,10 +177,27 @@ function updateOrthologToggle() {
     });
 }
 
+function initDataTableClick() {
+    $('#geneTable tbody').on('click', 'tr', function () {
+        var id = $(this).attr('id');
+        $.getJSON({
+            url: './gene/id/' + species + '?q=' + id,
+            success: function (data) {
+                var option = new Option(data.geneName, data.geneID, true, true);
+                geneNameSelector.append(option);
+                $('#epiBrowserLink').attr('href', generateBrowserURL(data));
+                $('#epiBrowserLink').removeClass('disabled')
+                updateGeneElements();
+                updateDataTable();
+            }
+        });
+    });
+}
+
 function updateDataTable() {
     var geneSelected = $('#geneName option:selected').val();
     if (geneSelected != 'Select..') {
-        $('#geneTable').DataTable( {
+        var table = $('#geneTable').DataTable( {
             "destroy": true,
             "processing": true,
             "ordering": false,
@@ -194,13 +211,12 @@ function updateDataTable() {
                 "url": "./gene/corr/" + species + "/" + geneSelected,
                 "dataSrc": ""
             },
+            rowId: 'geneID',
             "columns": [
                 { "data": "Rank" },
                 { "data": "geneName" },
                 { "data": "Corr" },
             ]
         });
-        
-        
     }
 }

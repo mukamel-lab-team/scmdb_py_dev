@@ -5,7 +5,7 @@ For actual content generation see the content.py module.
 from flask import Blueprint, render_template, jsonify, request, redirect, current_app
 from flask_nav.elements import Navbar, Link
 
-from .content import get_cluster_plot, search_gene_names, get_mch_scatter, get_mch_box, get_mch_box_two_species, find_orthologs, FailToGraphException, get_corr_genes
+from .content import get_cluster_plot, search_gene_names, get_mch_scatter, get_mch_box, get_mch_box_two_species, find_orthologs, FailToGraphException, get_corr_genes, gene_id_to_name
 from .nav import nav
 from .cache import cache
 from os import walk
@@ -13,7 +13,8 @@ from os import walk
 frontend = Blueprint('frontend', __name__) # Flask "bootstrap"
 
 # Find all the samples in the data directory
-dir_list = next(walk('/srv/scmdb_py_newdata/data/'))[1] # TODO: This path should be specified using default_config DATA_DIR
+dir_list = next(walk(current_app.config['DATA_DIR']))[1]
+
 dir_list_links=[Link(x, x) for x in dir_list]
 
 nav.register_element('frontend_top',
@@ -104,8 +105,15 @@ def plot_mch_box_two_species(gene_mmu, gene_hsa, level, outliers_toggle):
 @cache.cached(timeout=3600)
 @frontend.route('/gene/names/<species>')
 def search_gene_by_name(species):
-    query = request.args.get('q', 'MustHavAQueryString')
+    query = request.args.get('q', 'MustHaveAQueryString')
     return jsonify(search_gene_names(species, query))
+
+
+@cache.cached(timeout=3600)
+@frontend.route('/gene/id/<species>')
+def search_gene_by_id(species):
+    query = request.args.get('q', 'MustHaveAQueryString')
+    return jsonify(gene_id_to_name(species, query))
 
 
 @frontend.route('/gene/orthologs/<species>/<geneID>')
