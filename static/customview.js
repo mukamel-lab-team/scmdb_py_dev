@@ -10,6 +10,18 @@ function loadClusterPlot() {
 
 }
 
+function updateClusterPlot() {
+    $.ajax({
+        type: "GET",
+        url: './plot/cluster/' + species,
+        success: function(data) {
+            $('#plot-cluster').html(data);
+        }
+
+    });
+
+}
+
 function initGeneNameSearch() {
     geneNameSelector = $('#geneName').select2({
         placeholder: 'Search..',

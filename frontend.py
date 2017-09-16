@@ -59,6 +59,13 @@ def plot_cluster(species):
     except FailToGraphException:
         return 'Failed to produce cluster plot. Contact maintainer.'
 
+@cache.cached(timeout=3600)
+@frontend.route('/plot/cluster/<species>/<grouping>')
+def plot_cluster(species, grouping):
+    try:
+        return get_cluster_plot(species, grouping)
+    except FailToGraphException:
+        return 'Failed to produce cluster plot. Contact maintainer.'
 
 @cache.cached(timeout=3600)
 @frontend.route('/plot/mch/<species>/<gene>/<level>/<ptile_start>/<ptile_end>')

@@ -1,4 +1,14 @@
 <div class="panel-heading"><b>{{ species }}</b> Clustering{% if gene is defined %} - {{ gene }}{%  endif %}</div>
-    <div class="panel-body">
-        <div id="plot-cluster">Loading..</div>
-    </div>
+<div class="panel-body">
+	<div class="row">
+		<div class="col-md-3" id="tsne_grouping">
+			Group cells: <select id="tsne_grouping">
+				<option value="cluster_name">by cluster</option>
+				<option value="biosample">by biosample</option>
+				<option value="layer">by dissection layer</option>
+				<option value="cluster_biosample">by cluster+biosample</option>
+			</select>
+		</div>
+	</div>
+	<div id="plot-cluster">Loading..</div>
+</div>
