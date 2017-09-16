@@ -9,9 +9,6 @@ from collections import OrderedDict
 import pandas
 import plotly
 from random import random, sample
-# from bokeh import palettes
-# import colorcet
-# import matplotlib.cm as cm
 
 from flask import current_app
 from numpy import arange, linspace
