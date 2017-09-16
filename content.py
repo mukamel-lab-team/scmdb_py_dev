@@ -173,29 +173,6 @@ def get_cluster_points(species):
     except IOError:
         return None
 
-
-# @cache.memoize(timeout=3600)
-# def get_cluster_rank(species):
-#     """Generate ranking of tSNE clusters.
-
-#     Arguments:
-#         species (str): Name of species.
-
-#     Returns:
-#         list: cluster number ordered by intended rank.
-#     """
-#     if not species_exists(species):
-#         return None
-
-#     try:
-#         with open('{}/{}/cluster_order.txt'.format(current_app.config[
-#                 'DATA_DIR'], species)) as fp:
-#             order_text = fp.read()
-#             return [int(x) for x in order_text.strip().split('\n')]
-#     except IOError:
-#         return None
-
-
 @cache.memoize(timeout=3600)
 def search_gene_names(species, query):
     """Match gene names of a species.
