@@ -235,17 +235,19 @@ def get_corr_genes(species,query):
     conn.row_factory = sqlite3.Row
     cursor = conn.cursor()
     
-    cursor.execute('SELECT Gene2, Correlation FROM corr_genes WHERE Gene1 LIKE ? ORDER BY Correlation DESC LIMIT 50', (query + '%',))
-    
-    query_results = list(cursor.fetchall())
-    table_data=[]
-    for rank, item in enumerate(query_results, 1):
-        gene = dict(item)
-        geneInfo = gene_id_to_name(species, gene['Gene2'])
-        geneInfo['Rank'] = rank
-        geneInfo['Corr'] = gene['Correlation']
-        table_data.append(geneInfo)
-    return(table_data)
+    try:
+        cursor.execute('SELECT Gene2, Correlation FROM corr_genes WHERE Gene1 LIKE ? ORDER BY Correlation DESC LIMIT 50', (query + '%',))
+        query_results = list(cursor.fetchall())
+        table_data=[]
+        for rank, item in enumerate(query_results, 1):
+            gene = dict(item)
+            geneInfo = gene_id_to_name(species, gene['Gene2'])
+            geneInfo['Rank'] = rank
+            geneInfo['Corr'] = gene['Correlation']
+            table_data.append(geneInfo)
+        return(table_data)
+    except:
+        return(1)
 
 
 @cache.memoize(timeout=3600)
@@ -355,7 +357,8 @@ def get_cluster_plot(species):
     symbols=['circle-open','square-open','cross','triangle-up','triangle-down','octagon','star','diamond']
     for point in points:
         cluster_num=int(point['cluster_ordered'])
-        cluster_sample_num=int(point['cluster_ordered'])+max_cluster*(int(point['biosample'])-1)
+        biosample=int(point.get('biosample',1))-1
+        cluster_sample_num=int(point['cluster_ordered'])+max_cluster*biosample
         trace = traces.setdefault(cluster_sample_num,
           Scattergl(
               x=list(),
@@ -364,11 +367,13 @@ def get_cluster_plot(species):
               mode='markers',
               visible=True,
               name=point['cluster_name']+" Sample"+point['biosample'],
-              legendgroup="Sample"+point['biosample']
+              # EAM: TODO - create a toggle switch to allow the user to switch legend grouping
+              # legendgroup=str(biosample),
+              legendgroup=point['cluster_name'],
               marker={
                     'color': colors[cluster_num-1],
                     'size': 7,
-                    'symbol': symbols[int(point['biosample'])-1], # Eran and Fangming 09/12/2017
+                    'symbol': symbols[biosample], # Eran and Fangming 09/12/2017
                     'line' : {'width' : 1, 'color':colors[cluster_num-1]}
                     },
               hoverinfo='text'))
@@ -376,9 +381,10 @@ def get_cluster_plot(species):
         trace['y'].append(point['tsne_y'])
         trace['text'].append(
             build_hover_text({
-                'Sample': point.get('samp', 'N/A'),
+                'Cell': point.get('samp', 'N/A'),
                 'Layer': point.get('layer', 'N/A'),
-                'Cluster': point.get('cluster_name', 'N/A')
+                'Biosample': point.get('biosample', 'N/A'),
+                'Cluster': str(cluster_num)
                 }))
 
     if species == 'mmu':
@@ -397,11 +403,12 @@ def get_cluster_plot(species):
                 'r': 150,
                 'b': 75,
                 't': 75,
-                'pad': 20},
+                'pad': 20
+                },
         legend={
             'orientation': 'v',
-            'traceorder': 'normal',
-            'tracegroupgap': 1,
+            'traceorder': 'grouped',
+            'tracegroupgap': 10,
             'x': 1.03,
             'font': {
                 'color': 'rgba(1,2,2,1)',
