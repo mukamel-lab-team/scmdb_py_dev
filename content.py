@@ -355,9 +355,7 @@ def get_cluster_plot(species):
     if species=='mmu':
         max_cluster=16
     colors = generate_cluster_colors(max_cluster)
-    ## Eran and Fangming 09/12/2017 ---begin
     symbols=['circle-open','square-open','cross','triangle-up','triangle-down','octagon','star','diamond']
-    ## Eran and Fangming 09/12/2017 ---end
     for point in points:
         cluster_num=int(point['cluster_ordered'])
         cluster_sample_num=int(point['cluster_ordered'])+max_cluster*(int(point['biosample'])-1)
