@@ -8,10 +8,11 @@ from collections import OrderedDict
 
 import pandas
 import plotly
-from random import random, sample
+from random import sample
+import colorlover as cl
 
 from flask import current_app
-from numpy import arange, linspace
+from numpy import arange, linspace, random
 from plotly.graph_objs import Layout, Box, Scatter, Scattergl
 
 from .cache import cache
@@ -76,6 +77,7 @@ def build_hover_text(labels):
     return text.strip('<br>')
 
 
+#TODO: darken all colors
 def generate_cluster_colors(num):
     """Generate a list of colors given number needed.
 
@@ -87,9 +89,17 @@ def generate_cluster_colors(num):
     """
     # return palettes.plasma(num)
 
-    c = ['hsl('+str(round(h))+',50%,50%)' for h in linspace(0, 360, num)]
+    # c = ['hsl('+str(round(h))+',50%,50%)' for h in linspace(0, 360, num)]
     # Randomize the color order
-    c = sample(c,num) 
+    # c = sample(c,num)
+    if num < 12:
+        c = cl.scales[str(num)]['qual']
+        c = c[random.choice(list(c))]
+    else:
+        num_rounded = int(math.ceil(num/10)) * 10
+        c = cl.interp(cl.scales['12']['qual']['Paired'], num_rounded)
+
+    c = cl.to_hsl(sample(c, int(num)))
     return c
 
 
@@ -334,7 +344,8 @@ def get_ortholog_cluster_order():
 
 
 # Plot generating
-@cache.memoize(timeout=3600)
+# @cache.memoize(timeout=3600)
+#TODO: Make markers filled with color and black outline (test)
 def get_cluster_plot(species, grouping="cluster_ordered"):
     """Generate tSNE cluster plot.
 
@@ -355,11 +366,13 @@ def get_cluster_plot(species, grouping="cluster_ordered"):
     traces = OrderedDict()
     max_cluster = int(
         max(points, key=lambda x: int(x['cluster_ordered']))['cluster_ordered'])+1
+    print("max_cluster: " + str(max_cluster))
     if species=='mmu':
         max_cluster=16
     num_colors = int(
         max(points, key=lambda x: int(x[grouping]))[grouping])+1
-    colors = generate_cluster_colors(max_cluster)
+    print("num_colors: " + str(num_colors))
+    colors = generate_cluster_colors(num_colors)
     symbols=['circle-open','square-open','cross','triangle-up','triangle-down','octagon','star','diamond']
     for point in points:
         cluster_num=int(point['cluster_ordered'])
