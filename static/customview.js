@@ -1,7 +1,8 @@
 function loadClusterPlot() {
+    var grouping = $('#tsneGrouping option:selected').val();
     $.ajax({
         type: "GET",
-        url: './plot/cluster/' + species,
+        url: './plot/cluster/' + species + '/' + grouping,
         success: function(data) {
             $('#plot-cluster').html(data);
         }

@@ -14,8 +14,11 @@
         <div class="panel-heading">Gene level mCH{% if gene is defined %} - {{ gene }}{% endif %}</div>
         <div class="panel-body ">
             {% include "components/mch_config.html" %}
-            <table><tr><td>{% include "components/mch_cluster.html" %}
-            <td>{% include "components/mch_table.html" %}</td></table>
+            <table><tr>
+                <td>{% include "components/mch_cluster.html" %}
+                <td>{% include "components/mch_table.html" %}
+                </tr>
+            </table>
             {% include "components/mch_box.html" %}
         </div>
     </div>
@@ -41,6 +44,7 @@
     var geneSearchCache;
     var mmu_gID;
     var hsa_gID;
+    var grouping;
     $(document).ready(function() {
         $('[data-toggle="popover"]').popover();
         $('#outlierToggle').bootstrapToggle();
@@ -75,6 +79,10 @@
     
     $("#outlierToggle, #orthologsToggle").change(function() {
         updateMCHBoxPlot();
+    });
+
+    $("#tsneGrouping :input").change(function() {
+        loadClusterPlot();
     });
 </script>
 {% endblock %}
