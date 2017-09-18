@@ -13,8 +13,10 @@
     <div class="panel panel-default panel-main" style="width: 100%; margin-left:auto; margin-right:auto;">
         <div class="panel-heading">Gene level mCH{% if gene is defined %} - {{ gene }}{% endif %}</div>
         <div class="panel-body ">
-            {% include "components/mch_config.html" %} {% include "components/mch_cluster.html" %} {% include "components/mch_box.html" %}
-            <br> {% include "components/mch_table.html" %}
+            {% include "components/mch_config.html" %}
+            <table><tr><td>{% include "components/mch_cluster.html" %}
+            <td>{% include "components/mch_table.html" %}</td></table>
+            {% include "components/mch_box.html" %}
         </div>
     </div>
 </div>
