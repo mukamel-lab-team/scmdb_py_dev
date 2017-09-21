@@ -345,7 +345,6 @@ def get_ortholog_cluster_order():
 
 # Plot generating
 # @cache.memoize(timeout=3600)
-#TODO: Make markers filled with color and black outline (test)
 def get_cluster_plot(species, grouping="cluster_ordered"):
     """Generate tSNE cluster plot.
 
@@ -373,11 +372,11 @@ def get_cluster_plot(species, grouping="cluster_ordered"):
         max(points, key=lambda x: int(x[grouping]))[grouping])+1
     print("num_colors: " + str(num_colors))
     colors = generate_cluster_colors(num_colors)
-    symbols=['circle-open','square-open','cross','triangle-up','triangle-down','octagon','star','diamond']
+    symbols=['circle','square','cross','triangle-up','triangle-down','octagon','star','diamond']
     for point in points:
         cluster_num=int(point['cluster_ordered'])
-        biosample=int(point.get('biosample',1))-1
-        cluster_sample_num=int(point['cluster_ordered'])+max_cluster*biosample
+        biosample=int(point.get('biosample',1))
+        cluster_sample_num=int(point['cluster_ordered'])+max_cluster*(biosample-1)
         color_num=int(point[grouping])-1
         trace = traces.setdefault(cluster_sample_num,
           Scattergl(
@@ -389,10 +388,11 @@ def get_cluster_plot(species, grouping="cluster_ordered"):
               name=point['cluster_name']+" Sample"+str(biosample),
               legendgroup=point[grouping],
               marker={
-                    'color': colors[color_num],
                     'size': 7,
-                    'symbol': symbols[biosample], # Eran and Fangming 09/12/2017
-                    'line' : {'width' : 1, 'color':colors[color_num]}
+                    'symbol': symbols[biosample-1],  # Eran and Fangming 09/12/2017
+                    'line': {'width': 1, 'color': 'black'},
+                    'color': colors[color_num],
+                    'opacity': '0.8'
                     },
               hoverinfo='text'))
         trace['x'].append(point['tsne_x'])
