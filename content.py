@@ -414,6 +414,8 @@ def get_cluster_plot(species, grouping="cluster_ordered"):
                 'Cluster': str(cluster_num)
                 }))
 
+
+
     if species == 'mmu':
         for i in range(17,23,1):
             traces[i]['marker']['size']=15
@@ -630,7 +632,82 @@ def get_mch_scatter(species, gene, level, ptile_start, ptile_end):
             'mirror': True,
             # 'range': [-20,20]
         },
-        hovermode='closest',)
+        hovermode='closest')
+
+
+    # Available colorscales:
+    # https://community.plot.ly/t/what-colorscales-are-available-in-plotly-and-which-are-the-default/2079
+    updatemenus = list([
+        dict(
+            buttons=list([
+                dict(
+                    args=['marker.colorscale','Viridis'],
+                    label='Viridis',
+                    method='restyle'
+                ),
+                dict(
+                    args=['marker.colorscale','Bluered'],
+                    label='Bluered',
+                    method='restyle'
+                ),
+                dict(
+                    args=['marker.colorscale','Blackbody'],
+                    label='Blackbody',
+                    method='restyle'
+                ),
+                dict(
+                    args=['marker.colorscale','Electric'],
+                    label='Electric',
+                    method='restyle'
+                ),
+                dict(
+                    args=['marker.colorscale','Earth'],
+                    label='Earth',
+                    method='restyle'
+                ),
+                dict(
+                    args=['marker.colorscale','Jet'],
+                    label='Jet',
+                    method='restyle'
+                ),
+                dict(
+                    args=['marker.colorscale','Rainbow'],
+                    label='Rainbow',
+                    method='restyle'
+                ),
+                dict(
+                    args=['marker.colorscale','Picnic'],
+                    label='Picnic',
+                    method='restyle'
+                ),
+                dict(
+                    args=['marker.colorscale','Portland'],
+                    label='Portland',
+                    method='restyle'
+                ),
+                dict(
+                    args=['marker.colorscale','YlGnBu'],
+                    label='YlGnBu',
+                    method='restyle'
+                )
+            ]),
+            direction='down',
+            pad={'r': 10, 't': 10},
+            showactive=True,
+            x=0.12,
+            xanchor='left',
+            y=1.1,
+            yanchor='top'
+        )
+    ])
+    annotations = list([
+        dict(text='Colorscale:', x=0, y=1.07, yref='paper', xref='paper', xanchor='left', showarrow=False)
+    ])
+
+    layout['updatemenus'] = updatemenus
+    layout['annotations'] = annotations
+
+
 
     return plotly.offline.plot(
         {
