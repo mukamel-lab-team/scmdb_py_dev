@@ -8,11 +8,14 @@ from collections import OrderedDict
 
 import pandas
 import plotly
-from random import random, sample
+from random import sample
+import colorlover as cl
+import colorsys
 
 from flask import current_app
-from numpy import arange, linspace
+from numpy import arange, linspace, random
 from plotly.graph_objs import Layout, Box, Scatter, Scattergl
+
 
 from .cache import cache
 # from .cluster_color_scale import CLUSTER_COLORS
@@ -83,14 +86,30 @@ def generate_cluster_colors(num):
         num (int): Number of colors needed. n <= 35.
 
     Returns:
-        list: strings containing CSS-style strings e.g. #000000.
+        list: strings containing RGB-style strings e.g. rgb(255,255,255).
     """
-    # return palettes.plasma(num)
 
-    c = ['hsl('+str(round(h))+',50%,50%)' for h in linspace(0, 360, num)]
-    # Randomize the color order
-    c = sample(c,num) 
-    return c
+    # Selects a random colorscale (RGB) depending on number of colors needed
+    if num < 12:
+        c = cl.scales[str(num)]['qual']
+        c = c[random.choice(list(c))]
+    else:
+        num_rounded = int(math.ceil(num / 10)) * 10
+        c = cl.to_rgb(cl.interp(cl.scales['12']['qual']['Paired'], num_rounded))
+    c = cl.to_numeric(sample(c, int(num)))
+
+    # Converts selected colorscale to HSL, darkens the color if it is too light, convert it to rgb string and return
+    c_rgb=[]
+    for color in c:
+        hls = colorsys.rgb_to_hls(color[0] / 255, color[1] / 255, color[2] / 255)
+        if hls[1] < 0.6:  # Darkens the color if it is too light (HLS = [0]Hue [1]Lightness [2]Saturation)
+            rgb = colorsys.hls_to_rgb(hls[0], 0.6, hls[2])
+        else:
+            rgb = colorsys.hls_to_rgb(hls[0], hls[1], hls[2])
+        rgb_str = "rgb(" + str(rgb[0]*255) + "," + str(rgb[1]*255) + "," + str(rgb[2]*255) + ")"
+        c_rgb.append(rgb_str)
+
+    return c_rgb
 
 
 def set_color_by_percentile(this, start, end):
@@ -334,7 +353,7 @@ def get_ortholog_cluster_order():
 
 
 # Plot generating
-@cache.memoize(timeout=3600)
+# @cache.memoize(timeout=3600)
 def get_cluster_plot(species, grouping="cluster_ordered"):
     """Generate tSNE cluster plot.
 
@@ -355,16 +374,18 @@ def get_cluster_plot(species, grouping="cluster_ordered"):
     traces = OrderedDict()
     max_cluster = int(
         max(points, key=lambda x: int(x['cluster_ordered']))['cluster_ordered'])+1
+    print("max_cluster: " + str(max_cluster))
     if species=='mmu':
         max_cluster=16
     num_colors = int(
         max(points, key=lambda x: int(x[grouping]))[grouping])+1
-    colors = generate_cluster_colors(max_cluster)
-    symbols=['circle-open','square-open','cross','triangle-up','triangle-down','octagon','star','diamond']
+    print("num_colors: " + str(num_colors))
+    colors = generate_cluster_colors(num_colors)
+    symbols=['circle','square','cross','triangle-up','triangle-down','octagon','star','diamond']
     for point in points:
         cluster_num=int(point['cluster_ordered'])
-        biosample=int(point.get('biosample',1))-1
-        cluster_sample_num=int(point['cluster_ordered'])+max_cluster*biosample
+        biosample=int(point.get('biosample',1))
+        cluster_sample_num=int(point['cluster_ordered'])+max_cluster*(biosample-1)
         color_num=int(point[grouping])-1
         trace = traces.setdefault(cluster_sample_num,
           Scattergl(
@@ -376,10 +397,11 @@ def get_cluster_plot(species, grouping="cluster_ordered"):
               name=point['cluster_name']+" Sample"+str(biosample),
               legendgroup=point[grouping],
               marker={
-                    'color': colors[color_num],
                     'size': 7,
-                    'symbol': symbols[biosample], # Eran and Fangming 09/12/2017
-                    'line' : {'width' : 1, 'color':colors[color_num]}
+                    'symbol': symbols[biosample-1],  # Eran and Fangming 09/12/2017
+                    'line': {'width': 1, 'color': 'black'},
+                    'color': colors[color_num],
+                    'opacity': '0.8'
                     },
               hoverinfo='text'))
         trace['x'].append(point['tsne_x'])
@@ -391,6 +413,8 @@ def get_cluster_plot(species, grouping="cluster_ordered"):
                 'Biosample': point.get('biosample', 'N/A'),
                 'Cluster': str(cluster_num)
                 }))
+
+
 
     if species == 'mmu':
         for i in range(17,23,1):
@@ -608,7 +632,82 @@ def get_mch_scatter(species, gene, level, ptile_start, ptile_end):
             'mirror': True,
             # 'range': [-20,20]
         },
-        hovermode='closest',)
+        hovermode='closest')
+
+
+    # Available colorscales:
+    # https://community.plot.ly/t/what-colorscales-are-available-in-plotly-and-which-are-the-default/2079
+    updatemenus = list([
+        dict(
+            buttons=list([
+                dict(
+                    args=['marker.colorscale','Viridis'],
+                    label='Viridis',
+                    method='restyle'
+                ),
+                dict(
+                    args=['marker.colorscale','Bluered'],
+                    label='Bluered',
+                    method='restyle'
+                ),
+                dict(
+                    args=['marker.colorscale','Blackbody'],
+                    label='Blackbody',
+                    method='restyle'
+                ),
+                dict(
+                    args=['marker.colorscale','Electric'],
+                    label='Electric',
+                    method='restyle'
+                ),
+                dict(
+                    args=['marker.colorscale','Earth'],
+                    label='Earth',
+                    method='restyle'
+                ),
+                dict(
+                    args=['marker.colorscale','Jet'],
+                    label='Jet',
+                    method='restyle'
+                ),
+                dict(
+                    args=['marker.colorscale','Rainbow'],
+                    label='Rainbow',
+                    method='restyle'
+                ),
+                dict(
+                    args=['marker.colorscale','Picnic'],
+                    label='Picnic',
+                    method='restyle'
+                ),
+                dict(
+                    args=['marker.colorscale','Portland'],
+                    label='Portland',
+                    method='restyle'
+                ),
+                dict(
+                    args=['marker.colorscale','YlGnBu'],
+                    label='YlGnBu',
+                    method='restyle'
+                )
+            ]),
+            direction='down',
+            pad={'r': 10, 't': 10},
+            showactive=True,
+            x=0.12,
+            xanchor='left',
+            y=1.1,
+            yanchor='top'
+        )
+    ])
+    annotations = list([
+        dict(text='Colorscale:', x=0, y=1.07, yref='paper', xref='paper', xanchor='left', showarrow=False)
+    ])
+
+    layout['updatemenus'] = updatemenus
+    layout['annotations'] = annotations
+
+
 
     return plotly.offline.plot(
         {
