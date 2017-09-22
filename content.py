@@ -10,10 +10,12 @@ import pandas
 import plotly
 from random import sample
 import colorlover as cl
+import colorsys
 
 from flask import current_app
 from numpy import arange, linspace, random
 from plotly.graph_objs import Layout, Box, Scatter, Scattergl
+
 
 from .cache import cache
 # from .cluster_color_scale import CLUSTER_COLORS
@@ -77,7 +79,6 @@ def build_hover_text(labels):
     return text.strip('<br>')
 
 
-#TODO: darken all colors
 def generate_cluster_colors(num):
     """Generate a list of colors given number needed.
 
@@ -85,22 +86,30 @@ def generate_cluster_colors(num):
         num (int): Number of colors needed. n <= 35.
 
     Returns:
-        list: strings containing CSS-style strings e.g. #000000.
+        list: strings containing RGB-style strings e.g. rgb(255,255,255).
     """
-    # return palettes.plasma(num)
 
-    # c = ['hsl('+str(round(h))+',50%,50%)' for h in linspace(0, 360, num)]
-    # Randomize the color order
-    # c = sample(c,num)
+    # Selects a random colorscale (RGB) depending on number of colors needed
     if num < 12:
         c = cl.scales[str(num)]['qual']
         c = c[random.choice(list(c))]
     else:
-        num_rounded = int(math.ceil(num/10)) * 10
-        c = cl.interp(cl.scales['12']['qual']['Paired'], num_rounded)
+        num_rounded = int(math.ceil(num / 10)) * 10
+        c = cl.to_rgb(cl.interp(cl.scales['12']['qual']['Paired'], num_rounded))
+    c = cl.to_numeric(sample(c, int(num)))
 
-    c = cl.to_hsl(sample(c, int(num)))
-    return c
+    # Converts selected colorscale to HSL, darkens the color if it is too light, convert it to rgb string and return
+    c_rgb=[]
+    for color in c:
+        hls = colorsys.rgb_to_hls(color[0] / 255, color[1] / 255, color[2] / 255)
+        if hls[1] < 0.6:  # Darkens the color if it is too light (HLS = [0]Hue [1]Lightness [2]Saturation)
+            rgb = colorsys.hls_to_rgb(hls[0], 0.6, hls[2])
+        else:
+            rgb = colorsys.hls_to_rgb(hls[0], hls[1], hls[2])
+        rgb_str = "rgb(" + str(rgb[0]*255) + "," + str(rgb[1]*255) + "," + str(rgb[2]*255) + ")"
+        c_rgb.append(rgb_str)
+
+    return c_rgb
 
 
 def set_color_by_percentile(this, start, end):
