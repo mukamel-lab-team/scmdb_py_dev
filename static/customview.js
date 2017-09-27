@@ -1,15 +1,45 @@
-function loadClusterPlot() {
+function initAccordions() {
+    var acc = document.getElementsByClassName("accordion");
+    var i;
+
+    for (i = 0; i < acc.length; i++) {
+      acc[i].onclick = function() {
+        this.classList.toggle("active");
+        var panel = this.nextElementSibling;
+        if (panel.style.maxHeight){
+          panel.style.maxHeight = null;
+        }
+        else {
+          panel.style.maxHeight = panel.scrollHeight + "px";
+        }
+      }
+    }
+}
+
+
+function loadClusterPlots() {
     var grouping = $('#tsneGrouping option:selected').val();
     $.ajax({
         type: "GET",
         url: './plot/cluster/' + species + '/' + grouping,
         success: function(data) {
-            $('#plot-cluster').html(data);
+            if ("traces_3d" in data) {
+                Plotly.plot("plot-2d-cluster", Object.values(data["traces_2d"]), data["layout2d"]);
+                $('#loading_2dtsne').html("");
+                Plotly.plot("plot-3d-cluster", Object.values(data["traces_3d"]), data["layout3d"]);
+                $('#loading_3dtsne').html("");
+            }
+            else {
+                Plotly.plot("plot-2d-cluster", Object.values(data["traces_2d"]), data["layout2d"]);
+                $('#loading_2dtsne').html("");
+
+                $('#panel_3d').html("");
+            }
+
         }
-
     });
-
 }
+
 
 function initGeneNameSearch() {
     geneNameSelector = $('#geneName').select2({
