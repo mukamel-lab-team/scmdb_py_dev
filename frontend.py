@@ -18,7 +18,8 @@ dir_list = next(walk(current_app.config['DATA_DIR']))[1]
 dir_list_links=[Link(x, x) for x in dir_list]
 
 nav.register_element('frontend_top',
-                     Navbar('',*dir_list_links))
+                     Navbar('',*dir_list_links
+			))
 
 
 # Visitor routes
@@ -54,7 +55,7 @@ def box_combined(mmu_gid, hsa_gid):
 @frontend.route('/plot/cluster/<species>/<grouping>')
 def plot_cluster(species, grouping):
     try:
-        return jsonify(get_cluster_plot(species, grouping))
+        return get_cluster_plot(species, grouping)
     except FailToGraphException:
         return 'Failed to produce cluster plot. Contact maintainer.'
 
