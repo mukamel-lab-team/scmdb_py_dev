@@ -5,7 +5,10 @@ For actual content generation see the content.py module.
 from flask import Blueprint, render_template, jsonify, request, redirect, current_app
 from flask_nav.elements import Navbar, Link
 
-from .content import get_cluster_plot, search_gene_names, get_mch_scatter, get_mch_box, get_mch_box_two_species, find_orthologs, FailToGraphException, get_corr_genes, gene_id_to_name
+from .content import get_cluster_plot, search_gene_names, \
+    get_mch_scatter, get_mch_box, get_mch_box_two_species, \
+    find_orthologs, FailToGraphException, get_corr_genes, \
+    gene_id_to_name
 from .nav import nav
 from .cache import cache
 from os import walk
@@ -126,3 +129,4 @@ def orthologs(species, geneID):
 @frontend.route('/gene/corr/<species>/<geneID>')
 def correlated_genes(species, geneID):
     return jsonify(get_corr_genes(species,geneID))
+
