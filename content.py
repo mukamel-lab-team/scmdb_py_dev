@@ -5,6 +5,7 @@ import csv
 import glob
 import sqlite3
 from collections import OrderedDict
+import time
 
 import pandas
 import plotly
@@ -284,7 +285,7 @@ def get_corr_genes(species,query):
             geneInfo['Rank'] = rank
             geneInfo['Corr'] = gene['Correlation']
             table_data.append(geneInfo)
-        return(table_data)
+        return table_data
     except:
         return(1)
 
@@ -373,7 +374,7 @@ def get_ortholog_cluster_order():
 
 
 # Plot generating
-def get_cluster_plot(species, grouping="cluster_ordered"):
+def get_cluster_plot(species, grouping):
     """Generate tSNE cluster plot.
     Arguments:
         species (str): Name of species.
@@ -546,14 +547,20 @@ def get_cluster_plot(species, grouping="cluster_ordered"):
             'textangle': 0,
         }]
     )
+
+    global trace_colors
+    trace_colors = dict()
+
     traces_2d = OrderedDict()
+
+    global num_colors
     if not points_3d:
         max_cluster = int(
             max(points_2d, key=lambda x: int(x['cluster_ordered']))['cluster_ordered']) + 1
         if species == 'mmu':
             max_cluster = 16
         num_colors = int(
-            max(points_2d, key=lambda x: int(x[grouping]))[grouping]) + 1
+                max(points_2d, key=lambda x: int(x[grouping]))[grouping]) + 1
         colors = generate_cluster_colors(num_colors)
         symbols = ['circle', 'square', 'cross', 'triangle-up', 'triangle-down', 'octagon', 'star', 'diamond']
         for point in points_2d:
@@ -587,6 +594,11 @@ def get_cluster_plot(species, grouping="cluster_ordered"):
                     'Cluster': str(cluster_num)
                 })
             )
+
+        for i, (key, value) in enumerate(sorted(traces_2d.items())):
+            trace_str = 'cluster_color_' + str(int(value['legendgroup'])-1)
+            trace_colors.setdefault(trace_str, []).append(i)
+
         if species == 'mmu':
             for i in range(17, 23, 1):
                 traces_2d[i]['marker']['size'] = 15
@@ -610,7 +622,6 @@ def get_cluster_plot(species, grouping="cluster_ordered"):
             biosample = int(point.get('biosample',1))-1
             cluster_sample_num = int(point['cluster_ordered'])+max_cluster*biosample
             color_num = int(point[grouping])-1
-
             trace2d = traces_2d.setdefault(cluster_sample_num,
                 Scattergl(
                     x=list(),
@@ -648,7 +659,7 @@ def get_cluster_plot(species, grouping="cluster_ordered"):
                     name=point['cluster_name'] + " Sample" + str(biosample + 1),
                     legendgroup=point[grouping],
                     marker={
-                        'size': 3,
+                        'size': 4,
                         'symbol': symbols[biosample],  # Eran and Fangming 09/12/2017
                         'line': {'width': 1, 'color': 'black'},
                         'color': colors[color_num],
@@ -659,12 +670,17 @@ def get_cluster_plot(species, grouping="cluster_ordered"):
             trace3d['z'].append(point['tsne_3'])
             trace3d['text'] = trace2d['text']
 
+        for i, (key, value) in enumerate(sorted(traces_2d.items())):
+            trace_str = 'cluster_color_' + str(int(value['legendgroup']) - 1)
+            trace_colors.setdefault(trace_str, []).append(i)
+
         if species == 'mmu':
             for i in range(17,23,1):
                 traces_2d[i]['marker']['size'] = traces_3d[i]['marker']['size'] = 15
                 traces_2d[i]['marker']['symbol'] = traces_3d[i]['marker']['symbol'] = symbols[i % len(symbols)]
                 traces_2d[i]['marker']['color'] = traces_3d[i]['marker']['color'] = 'black'
                 traces_2d[i]['visible'] = traces_3d[i]['visible'] = "legendonly"
+
         return {'traces_2d': traces_2d, 'traces_3d': traces_3d, 'layout2d': layout2d, 'layout3d': layout3d}
 
 
@@ -1146,3 +1162,25 @@ def get_mch_box_two_species(gene_mmu, gene_hsa, level, outliers):
         show_link=False,
         include_plotlyjs=False)
 
+
+def randomize_cluster_colors():
+    """Generates random set of colors for tSNE cluster plot.
+
+    Arguments:
+        None
+
+    Returns:
+        list: dict items.
+            'colors' = new set of colors for each trace in rgb.
+            'num_colors' = number of colors to be used
+            'cluster_color_#' = indexes of traces to be assigned the new color
+
+    """
+    try:
+        new_colors = {'colors': generate_cluster_colors(num_colors)}
+        new_colors['num_colors'] = num_colors-1
+        new_colors.update(trace_colors)
+        return new_colors
+    except NameError:
+        time.sleep(5)
+        randomize_cluster_colors()

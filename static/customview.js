@@ -24,13 +24,13 @@ function loadClusterPlots() {
         url: './plot/cluster/' + species + '/' + grouping,
         success: function(data) {
             if ("traces_3d" in data) {
-                Plotly.plot("plot-2d-cluster", Object.values(data["traces_2d"]), data["layout2d"]);
+                Plotly.newPlot("plot-2d-cluster", Object.values(data["traces_2d"]), data["layout2d"]);
                 $('#loading_2dtsne').html("");
-                Plotly.plot("plot-3d-cluster", Object.values(data["traces_3d"]), data["layout3d"]);
+                Plotly.newPlot("plot-3d-cluster", Object.values(data["traces_3d"]), data["layout3d"]);
                 $('#loading_3dtsne').html("");
             }
             else {
-                Plotly.plot("plot-2d-cluster", Object.values(data["traces_2d"]), data["layout2d"]);
+                Plotly.newPlot("plot-2d-cluster", Object.values(data["traces_2d"]), data["layout2d"]);
                 $('#loading_2dtsne').html("");
 
                 $('#panel_3d').html("");
@@ -250,4 +250,35 @@ function updateDataTable() {
             ]
         });
     }
+}
+
+function randomizeClusterColors() {
+    $('#randomizeColorBtn').click(function() {
+        var grouping = $('#tsneGrouping option:selected').val();
+        console.log(grouping);
+        if (grouping == 'biosample'){
+            $.ajax({
+                type: "GET",
+                url: './plot/randomize_colors',
+                success: function(data){
+                    for(i = 0; i < data['num_colors']; i++){
+                        var group = 'cluster_color_' + String(i);
+                        var update = {
+                            'marker.color': data['colors'][i]
+                        };
+                        Plotly.restyle("plot-2d-cluster", update, data[group]);
+                        try {
+                            Plotly.restyle("plot-3d-cluster", update, data[group]);
+                        }
+                        catch(err) {
+                            console.log(err.message);
+                        }
+                    }
+                }
+            });
+        }
+        else {
+            loadClusterPlots();
+        }
+    });
 }
