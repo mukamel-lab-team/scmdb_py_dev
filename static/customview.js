@@ -1,21 +1,6 @@
-function initAccordions() {
-    var acc = document.getElementsByClassName("accordion");
-    var i;
-
-    for (i = 0; i < acc.length; i++) {
-      acc[i].onclick = function() {
-        this.classList.toggle("active");
-        var panel = this.nextElementSibling;
-        if (panel.style.maxHeight){
-          panel.style.maxHeight = null;
-        }
-        else {
-          panel.style.maxHeight = panel.scrollHeight + "px";
-        }
-      }
-    }
-}
-
+var trace_3d, layout_3d;
+var updates_3d = []
+var groups_3d = []
 
 function loadClusterPlots() {
     var grouping = $('#tsneGrouping option:selected').val();
@@ -23,23 +8,24 @@ function loadClusterPlots() {
         type: "GET",
         url: './plot/cluster/' + species + '/' + grouping,
         success: function(data) {
-            if ("traces_3d" in data) {
-                Plotly.newPlot("plot-2d-cluster", Object.values(data["traces_2d"]), data["layout2d"]);
-                $('#loading_2dtsne').html("");
-                Plotly.newPlot("plot-3d-cluster", Object.values(data["traces_3d"]), data["layout3d"]);
-                $('#loading_3dtsne').html("");
+            Plotly.newPlot("plot-2d-cluster", Object.values(data["traces_2d"]), data["layout2d"]);
+            $('#loading_2dtsne').html("");
+            if("traces_3d" in data){
+                if($('#toggle-3d').prop('checked')) {
+                    Plotly.newPlot("plot-3d-cluster", Object.values(data["traces_3d"]), data["layout3d"]);
+                    save3DData(data["traces_3d"],data["layout3d"]);
+                }
+                else {
+                    save3DData(data["traces_3d"], data["layout3d"]);
+                    $('#toggle-3d').bootstrapToggle('enable');
+                }
             }
             else {
-                Plotly.newPlot("plot-2d-cluster", Object.values(data["traces_2d"]), data["layout2d"]);
-                $('#loading_2dtsne').html("");
-
-                $('#panel_3d').html("");
+                save3DData(null, null);
             }
-
         }
-    });
+    });   
 }
-
 
 function initGeneNameSearch() {
     geneNameSelector = $('#geneName').select2({
@@ -208,6 +194,27 @@ function updateOrthologToggle() {
     });
 }
 
+function save3DData(trace, layout){
+    trace_3d = trace;
+    layout_3d = layout;
+}
+
+function display3DPlotToggle() {
+    if ($('#toggle-3d').prop('checked')){
+        $('#loading-3d-plot').html("loading..");
+        Plotly.newPlot("plot-3d-cluster", Object.values(trace_3d), layout_3d);
+        if($('#tsneGrouping option:selected').val() == 'biosample'){
+            for(i = 0; i < groups_3d.length; i++){
+                Plotly.restyle("plot-3d-cluster", updates_3d[i], groups_3d[i]);
+            }
+        }
+        $('#loading-3d-plot').html("");
+    }
+    else {
+        Plotly.purge("plot-3d-cluster");
+    }
+}
+
 function initDataTableClick() {
     $('#geneTable tbody').on('click', 'tr', function () {
         var id = $(this).attr('id');
@@ -252,11 +259,22 @@ function updateDataTable() {
     }
 }
 
+function storeUpdate(update, group, empty=false) {
+    if (empty == false){
+        updates_3d.push(update);
+        groups_3d.push(group);
+    }
+    else {
+        updates_3d = [];
+        groups_3d = [];
+    }
+}
+
 function randomizeClusterColors() {
     $('#randomizeColorBtn').click(function() {
         var grouping = $('#tsneGrouping option:selected').val();
-        console.log(grouping);
         if (grouping == 'biosample'){
+            storeUpdate(empty=true);
             $.ajax({
                 type: "GET",
                 url: './plot/randomize_colors',
@@ -267,11 +285,11 @@ function randomizeClusterColors() {
                             'marker.color': data['colors'][i]
                         };
                         Plotly.restyle("plot-2d-cluster", update, data[group]);
-                        try {
+                        if($('#toggle-3d').prop('checked')) {
                             Plotly.restyle("plot-3d-cluster", update, data[group]);
                         }
-                        catch(err) {
-                            console.log(err.message);
+                        else{
+                            storeUpdate(update,data[group]);
                         }
                     }
                 }

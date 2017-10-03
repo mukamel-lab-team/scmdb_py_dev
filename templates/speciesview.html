@@ -7,49 +7,29 @@
         </div>
     </div>
     {%- endif %} {%- endwith %}
-
-    <button class="accordion accordion-item-0">
-        <div class="panel-heading"><b>{{ species }}</b> Clustering{% if gene is defined %} - {{ gene }}{%  endif %}</div>
-    </button>
-    <div class="panel">
-        {% include "components/tsne_cluster.html" %}
-    </div>
-    <div id="panel_3d">
-        <button class="accordion">
-            <div class="panel-heading"><b>{{ species }}</b> 3D Clustering{% if gene is defined %} - {{ gene }}{%  endif %}</div>
-        </button>
-        <div class="panel">
-            {% include "components/tsne_3d_cluster.html" %}
+    <div class="panel panel-default panel-main" style="width: 100%; margin-left:auto; margin-right:auto;">
+        <div class="panel-heading"><b>{{ species }}</b> Clustering{% if gene is defined %} - {{ gene }}{% endif %}</div>
+        <div class="panel-body">
+            {% include "components/tsne_cluster.html" %}
         </div>
     </div>
-    <button class="accordion">
+    <div class="panel panel-default panel-main" style="width: 100%; margin-left:auto; margin-right:auto;">
         <div class="panel-heading">Gene level mCH{% if gene is defined %} - {{ gene }}{% endif %}</div>
-    </button>
-    <div class="panel">
         <div class="panel-body ">
-        {% include "components/mch_config.html" %}
-            <table>
-                <tr>
-                    <td>{% include "components/mch_cluster.html" %}</td>
-                    <td>{% include "components/mch_table.html" %}</td>
+            {% include "components/mch_config.html" %}
+            <table><tr>
+                <td>{% include "components/mch_cluster.html" %}
+                <td>{% include "components/mch_table.html" %}
                 </tr>
             </table>
-        {% include "components/mch_box.html" %}
+            {% include "components/mch_box.html" %}
         </div>
     </div>
 </div>
-
-
-
-
-
-
-{%- endblock %}
-{% block scripts %} 
-{{super()}}
+{%- endblock %} {% block scripts %} {{super()}}
 <script src="./static/plotly.min.js"></script>
 <script src="./static/customview.js" type="text/javascript"></script>
-<link href="./static/datatables.min.css"  rel="stylesheet"/>
+<link href="./static/datatables.min.css" rel="stylesheet" />
 <script src="./static/datatables.min.js"></script>
 <link href="./static/bootstrap-toggle.min.css" rel="stylesheet" />
 <script src="./static/bootstrap-toggle.min.js"></script>
@@ -70,10 +50,10 @@
         $('#outlierToggle').bootstrapToggle();
         $('#orthologsToggle').bootstrapToggle();
         $('#orthologsToggle').bootstrapToggle('disable');
-        initAccordions();
+        $('#toggle-3d').bootstrapToggle('disable');
+
         loadClusterPlots();
         randomizeClusterColors();
-
         initGeneNameSearch();
         var table = $('#geneTable').DataTable();
         initDataTableClick();
@@ -94,17 +74,22 @@
     $("#mCHLevelCol :input, #geneNameCol :input").change(function() {
         updateGeneElements();
     });
-    
+
     $("#geneNameCol :input").change(function() {
-        updateDataTable();        
+        updateDataTable();
     });
-    
+
     $("#outlierToggle, #orthologsToggle").change(function() {
         updateMCHBoxPlot();
+    });
+
+    $("#toggle-3d").change(function() {
+        display3DPlotToggle();
     });
 
     $("#tsneGrouping :input").change(function() {
         loadClusterPlots();
     });
+
 </script>
 {% endblock %}

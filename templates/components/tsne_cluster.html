@@ -3,7 +3,7 @@
 		<div class="col-md-3" id="tsneGrouping">
 			Group cells: <select id="tsne_grouping" name="grouping">
 				<option value="cluster_ordered">by cluster</option>
-				<option selected value="biosample">by biosample</option>
+				<option value="biosample">by biosample</option>
 				<option value="layer">by dissection layer</option>
 				<option value="cluster_biosample">by cluster+biosample</option>
 			</select>
@@ -14,4 +14,10 @@
 	</div>
 	<div id="loading_2dtsne">Loading..</div>
 	<div id="plot-2d-cluster"></div>
+	<div id="plot-3d-cluster-div">
+		<input id="toggle-3d" data-toggle="toggle" data-on="Hide 3D Plot" data-off="Show 3D Plot" type="checkbox">
+        <div id="loading-3d-plot"></div>
+        <div id="plot-3d-cluster"></div>
+	</div>
+	<!--TODO: button that creates 3D-tsne plot in SAME PANEL as 2D-->
 </div>
