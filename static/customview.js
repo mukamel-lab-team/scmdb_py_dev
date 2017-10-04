@@ -127,12 +127,11 @@ function updateMCHCombinedBoxPlot(mmu_gid, hsa_gid) {
     }
     $.ajax({
         type: "GET",
-        url: './plot/box_combined/' + mmu_gid + '/' + hsa_gid + '/' + levelType + '/' + outlierOption,
+        url: './plot/box_combined/' + species + '/' + mmu_gid + '/' + hsa_gid + '/' + levelType + '/' + outlierOption,
         success: function(data) {
             $('#plot-mch-box').html(data);
         }
     });
-
 }
 
 function updateGeneElements() {

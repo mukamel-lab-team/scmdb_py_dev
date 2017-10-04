@@ -89,15 +89,15 @@ def plot_mch_box(species, gene, level, outliers_toggle):
 
 @cache.cached(timeout=3600)
 @frontend.route(
-    '/plot/box_combined/<gene_mmu>/<gene_hsa>/<level>/<outliers_toggle>')
-def plot_mch_box_two_species(gene_mmu, gene_hsa, level, outliers_toggle):
+    '/plot/box_combined/<species>/<gene_mmu>/<gene_hsa>/<level>/<outliers_toggle>')
+def plot_mch_box_two_species(species, gene_mmu, gene_hsa, level, outliers_toggle):
     if outliers_toggle == 'outliers':
         outliers = True
     else:
         outliers = False
 
     try:
-        return get_mch_box_two_species(gene_mmu, gene_hsa, level, outliers)
+        return get_mch_box_two_species(species, gene_mmu, gene_hsa, level, outliers)
     except (FailToGraphException, ValueError) as e:
         print(e)
         return 'Failed to produce mCH levels box plot. Contact maintainer.'
