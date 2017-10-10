@@ -8,7 +8,7 @@ from flask_nav.elements import Navbar, Link
 from .content import get_cluster_plot, search_gene_names, \
     get_mch_scatter, get_mch_box, get_mch_box_two_species, \
     find_orthologs, FailToGraphException, get_corr_genes, \
-    gene_id_to_name, randomize_cluster_colors
+    gene_id_to_name, randomize_cluster_colors, get_mch_heatmap
 from .nav import nav
 from .cache import cache
 from os import walk
@@ -134,3 +134,9 @@ def correlated_genes(species, geneID):
 @frontend.route('/plot/randomize_colors')
 def randomize_colors():
     return jsonify(randomize_cluster_colors())
+
+
+@frontend.route('/plot/heat/<species>/<level>/<ptile_start>/<ptile_end>')
+def plot_mch_heatmap(species, level, ptile_start, ptile_end):
+    query = request.args.get('q', 'MustHaveAQueryString')
+    return get_mch_heatmap(species, level, ptile_start, ptile_end, query)

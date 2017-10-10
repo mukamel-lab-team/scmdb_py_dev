@@ -46,6 +46,7 @@ function initGeneNameSearch() {
                     results: $.map(data, function(gene) {
                         return {
                             text: gene.geneName,
+
                             id: gene.geneID
                         }
                     })
@@ -57,15 +58,17 @@ function initGeneNameSearch() {
     });
 
     // Initialise selector
-    if (typeof(Storage) !== 'undefined') {
-        var defaultGene = localStorage.getItem('lastViewed');
-        if (defaultGene == null) {
-            defaultGene = 'Gad2'; // No entry, set default to Gad2.
-        }
-    } else {
-        // Browser has no localStorage support, we'll just do Gad2.
-        var defaultGene = 'Gad2';
-    }
+//    if (typeof(Storage) !== 'undefined') {
+//        var defaultGene = localStorage.getItem('lastViewed');
+//        if (defaultGene == null) {
+//            defaultGene = 'Gad2'; // No entry, set default to Gad2.
+//        }
+//    } else {
+//        // Browser has no localStorage support, we'll just do Gad2.
+//        var defaultGene = 'Gad2';
+//    }
+
+    var defaultGene = 'Gad2';
 
     $.getJSON({
         url: './gene/names/' + species + '?q=' + defaultGene,
@@ -76,7 +79,8 @@ function initGeneNameSearch() {
                 $('#epiBrowserLink').attr('href', generateBrowserURL(gene));
                 $('#epiBrowserLink').removeClass('disabled');
             });
-            geneNameSelector.trigger('change');
+            updateGeneElements();
+            updateDataTable();
         }
     });
 }
@@ -90,6 +94,7 @@ function updateMCHClusterPlot() {
             type: "GET",
             url: './plot/mch/' + species + '/' + geneSelected + '/' + levelType + '/' + pValues[0] + '/' + pValues[1],
             success: function(data) {
+                $('#plot-mch-scatter').html("");
                 $('#plot-mch-scatter').html(data);
             }
         });
@@ -136,11 +141,18 @@ function updateMCHCombinedBoxPlot(mmu_gid, hsa_gid) {
 
 function updateGeneElements() {
     var geneSelected = $('#geneName option:selected').val();
+    console.log(geneSelected);
+    console.log($("#geneName").select2('data'));
     if (geneSelected != 'Select..') {
         if (typeof(Storage) !== 'undefined') {
             localStorage.setItem('lastViewed', $('#geneName option:selected').text());
         }
-        updateMCHClusterPlot();
+        if($("#geneName").select2('data').length == 1){
+            updateMCHClusterPlot();
+        }
+        else if($("#geneName").select2('data').length > 1) {
+            createHeatMap();
+        }
         updateOrthologToggle();
         updateMCHBoxPlot();
         try {
@@ -248,7 +260,7 @@ function updateDataTable() {
                 "url": "./gene/corr/" + species + "/" + geneSelected,
                 "dataSrc": ""
             },
-            rowId: 'geneID',
+            "rowId": 'geneID',
             "columns": [
                 { "data": "Rank" },
                 { "data": "geneName" },
@@ -296,6 +308,26 @@ function randomizeClusterColors() {
         }
         else {
             loadClusterPlots();
+        }
+    });
+}
+
+function createHeatMap() {
+    var levelType = $('input[name=levels]').filter(':checked').val();
+    var pValues = pSlider.getValue();
+    var genes = $("#geneName").select2('data');
+    var genes_query = "";
+    for (i = 0; i < genes.length; i++) {
+        genes_query += (genes[i].text + ":" + genes[i].id + "+");
+    }
+    genes_query = genes_query.slice(0,-1);
+    $.ajax({
+        type: "GET",
+        url: './plot/heat/' + species + '/' + levelType + '/' + pValues[0] + '/' + pValues[1] + '?q=' + genes_query,
+        success: function(data) {
+            $('#plot-mch-scatter').html("");
+            $('#plot-mch-scatter').html('<div class="mch_heatmap">' +
+                data + '</div>');
         }
     });
 }

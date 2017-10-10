@@ -42,3 +42,10 @@ body {
     right: 0px;
     float: right;
 }
+
+.mch_heatmap {
+	width: 60em;
+	float: center;
+	overflow-x: auto;
+	white-space: nowrap;
+}
