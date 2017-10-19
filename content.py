@@ -19,8 +19,9 @@ from plotly.graph_objs import Layout, Box, Scatter, Scattergl, Scatter3d, Heatma
 
 
 from .cache import cache
-# from .cluster_color_scale import CLUSTER_COLORS
 
+WIDTH_IN_PERCENT_OF_PARENT = 60
+HEIGHT_IN_PERCENT_OF_PARENT = 80
 
 class FailToGraphException(Exception):
     """Fail to generate data or graph due to an internal error.s"""
@@ -398,16 +399,15 @@ def get_cluster_plot(species, grouping):
 
 
     layout3d = Layout(
-        autosize=False,
-        width=900,
-        height=700,
+        autosize=True,
         title='3D Cell Cluster',
         titlefont={'color': 'rgba(1,2,2,1)',
-                   'size': 20},
-        margin={'l': 100,
-                'r': 150,
-                'b': 100,
-                't': 75
+                   'size': 16},
+        margin={'l': 49,
+                'r': 0,
+                'b': 30,
+                't': 50,
+                'pad': 10
                 },
 
         scene={
@@ -473,13 +473,11 @@ def get_cluster_plot(species, grouping):
     layout2d = Layout(
         autosize=True,
         showlegend=True,
-        width=900,
-        height=700,
-        margin={'l': 100,
-                'r': 150,
-                'b': 75,
-                't': 75,
-                'pad': 20
+        margin={'l': 49,
+                'r': 0,
+                'b': 30,
+                't': 50,
+                'pad': 10
                 },
         legend={
             'orientation': 'v',
@@ -488,14 +486,14 @@ def get_cluster_plot(species, grouping):
             'x': 1.03,
             'font': {
                 'color': 'rgba(1,2,2,1)',
-                'size': 12
+                'size': 10
             },
         },
         xaxis={
             'title': 'tSNE 1',
             'titlefont': {
                 'color': 'rgba(1,2,2,1)',
-                'size': 16
+                'size': 14,
             },
             'type': 'linear',
             'ticks': '',
@@ -512,7 +510,7 @@ def get_cluster_plot(species, grouping):
             'title': 'tSNE 2',
             'titlefont': {
                 'color': 'rgba(1,2,2,1)',
-                'size': 16
+                'size': 14,
             },
             'type': 'linear',
             'ticks': '',
@@ -528,24 +526,7 @@ def get_cluster_plot(species, grouping):
         },
         title='Cell clusters',
         titlefont={'color': 'rgba(1,2,2,1)',
-                   'size': 20},
-        annotations=[{
-            'text': 'Cluster',
-            'x': 0,
-            'y': -0.2,
-            'ax': 0,
-            'ay': 0,
-            'showarrow': False,
-            'font': {
-                'color': 'rgba(1,2,2,1)',
-                'size': 16
-            },
-            'xref': 'paper',
-            'yref': 'paper',
-            'xanchor': 'left',
-            'yanchor': 'bottom',
-            'textangle': 0,
-        }]
+                   'size': 16},
     )
 
     global trace_colors
@@ -579,9 +560,10 @@ def get_cluster_plot(species, grouping):
                                               legendgroup=point[grouping],
                                               marker={
                                                   'color': colors[color_num],
-                                                  'size': 7,
+                                                  'size': 6,
+                                                  'opacity':0.8,
                                                   'symbol': symbols[biosample],  # Eran and Fangming 09/12/2017
-                                                  'line': {'width': 1, 'color': 'black'}
+                                                  'line': {'width': 0.5, 'color': 'black'}  
                                               },
                                               hoverinfo='text'))
             trace2d['x'].append(point['tsne_x'])
@@ -633,9 +615,10 @@ def get_cluster_plot(species, grouping):
                     legendgroup=point[grouping],
                     marker={
                         'color': colors[color_num],
-                        'size': 7,
+                        'size': 6,
+                        'opacity':0.8,
                         'symbol': symbols[biosample],  # Eran and Fangming 09/12/2017
-                        'line': {'width': 1, 'color':'black'}
+                        'line': {'width': 0.5, 'color':'black'}
                     },
                     hoverinfo='text'))
             trace2d['x'].append(point['tsne_x'])
@@ -758,24 +741,22 @@ def get_mch_scatter(species, gene, level, ptile_start, ptile_end):
                 'ticktext': colorbar_ticktext
             }
         },
-        hoverinfo='text',)
+        hoverinfo='text')
     layout = Layout(
-        autosize=False,
-        width=700,
-        height=575,
+        autosize=True,
         title='Gene body mCH: '+geneName,
         titlefont={'color': 'rgba(1,2,2,1)',
-                   'size': 20},
+                   'size': 16},
         margin={'l': 49,
                 'r': 0,
                 'b': 30,
-                't': 75,
+                't': 50,
                 'pad': 0},
         xaxis={
             'title': 'tSNE 1',
             'titlefont': {
                 'color': 'rgba(1,2,2,1)',
-                'size': 16
+                'size': 14
             },
             'type': 'linear',
             'ticks': '',
@@ -792,7 +773,7 @@ def get_mch_scatter(species, gene, level, ptile_start, ptile_end):
             'title': 'tSNE 2',
             'titlefont': {
                 'color': 'rgba(1,2,2,1)',
-                'size': 16
+                'size': 14
             },
             'type': 'linear',
             'ticks': '',
@@ -866,22 +847,14 @@ def get_mch_scatter(species, gene, level, ptile_start, ptile_end):
                 )
             ]),
             direction='down',
-            pad={'r': 10, 't': 10},
             showactive=True,
-            x=0.14,
+            x=0,
             xanchor='left',
-            y=1.1,
+            y=1,
             yanchor='top'
         )
     ])
-    annotations = list([
-        dict(text='Colorscale:', x=0, y=1.07, yref='paper', xref='paper', xanchor='left', showarrow=False)
-    ])
-
     layout['updatemenus'] = updatemenus
-    layout['annotations'] = annotations
-
-
 
     return plotly.offline.plot(
         {
@@ -924,21 +897,6 @@ def get_mch_heatmap(species, level, ptile_start, ptile_end, query):
         y.append(key)
         mch.append(list(gene_info[key].values()))
 
-    mch_flat = [item for sublist in mch for item in sublist]
-
-    mch_dataframe = pandas.DataFrame(mch_flat)
-    start = mch_dataframe.dropna().quantile(float(ptile_start))[0].tolist()
-    end = mch_dataframe.dropna().quantile(float(ptile_end)).values[0].tolist()
-
-    colorbar_tickval = list(arange(start, end, (end - start) / 4))
-    colorbar_tickval[0] = start
-    colorbar_tickval.append(end)
-    colorbar_ticktext = [
-        str(round(x, 3)) for x in arange(start, end, (end - start) / 4)
-    ]
-    colorbar_ticktext[0] = '<' + str(round(start, 3))
-    colorbar_ticktext.append('>' + str(round(end, 3)))
-
     trace = Heatmap(
         x=x,
         y=y,
@@ -950,8 +908,6 @@ def get_mch_heatmap(species, level, ptile_start, ptile_end, query):
             'title': level.capitalize() + ' mCH',
             'titleside': 'right',
             'tickmode': 'array',
-            'tickvals': colorbar_tickval,
-            'ticktext': colorbar_ticktext,
             'thickness': 20
         },
         hoverinfo='x+y+z'
@@ -960,11 +916,14 @@ def get_mch_heatmap(species, level, ptile_start, ptile_end, query):
     layout = Layout(
         title='Gene body mCH ',
         titlefont={'color': 'rgba(1,2,2,1)',
-                   'size': 20},
+                   'size': 16},
         autosize=True,
-        height=450,
-
-        xaxis={'side': 'bottom'},
+        
+        xaxis={'side': 'bottom',
+               'tickangle': -45,
+               'tickfont':{
+                   'size': 12
+               }},
         yaxis={'title': 'Genes'},
 
         hovermode='closest')
@@ -1026,21 +985,15 @@ def get_mch_heatmap(species, level, ptile_start, ptile_end, query):
                 )
             ]),
             direction='down',
-            pad={'r': 10, 't': 10},
             showactive=True,
-            x=0.12,
+            x=0,
             xanchor='left',
             y=1.17,
             yanchor='top'
         )
     ])
 
-    annotations = list([
-        dict(text='Colorscale:', x=0, y=1.07, yref='paper', xref='paper', xanchor='left', showarrow=False)
-    ])
-
     layout['updatemenus'] = updatemenus
-    layout['annotations'] = annotations
 
     return plotly.offline.plot(
         {
@@ -1048,7 +1001,7 @@ def get_mch_heatmap(species, level, ptile_start, ptile_end, query):
             'layout': layout
         },
         output_type='div',
-        show_link=False,
+        show_link=True,
         include_plotlyjs=False)
 
 
@@ -1062,7 +1015,7 @@ def mean_cluster_mch(gene_info, level):
             level (str): Type of mCH data. Should be "original" or "normalized".
 
         Returns:
-            dict: Cluster_ordered (key) and mean mCH level (value).
+            dict: Cluster_ordered (key) : mean mCH level (value).
     """
     df = pandas.DataFrame(gene_info)
     return df.groupby('cluster_ordered')[level].mean().to_dict()
@@ -1103,6 +1056,7 @@ def get_mch_box(species, gene, level, outliers):
                 },
                 boxpoints='suspectedoutliers',
                 visible=True,
+                showlegend=False,
                 ))
         if level == 'normalized':
             trace['y'].append(point['normalized'])
@@ -1119,16 +1073,16 @@ def get_mch_box(species, gene, level, outliers):
     geneName = geneName['geneName']
 
     layout = Layout(
-        autosize=False,
-        width=950, height=700,
+        autosize=True,
+        height=400,
         title='Gene body mCH in each cluster: '+geneName,
         titlefont={'color': 'rgba(1,2,2,1)',
                    'size': 20},
-        legend={
-            'orientation': 'h',
-            'y': -0.3,
-            'traceorder': 'normal',
-        },
+#        legend={
+#            'orientation': 'h',
+#            'y': -0.3,
+#            'traceorder': 'normal',
+#        },
         xaxis={
             'title': 'Cluster',
             'titlefont': {
@@ -1224,10 +1178,9 @@ def get_mch_box_two_species(species, gene_mmu, gene_hsa, level, outliers):
 
     layout = Layout(
         boxmode='group',
-        autosize=False,
+        autosize=True,
         showlegend=False,
-        width=900,
-        height=700,
+        height=500,
         title='Gene body mCH in each cluster: '+geneName,
         titlefont={'color': 'rgba(1,2,2,1)',
                    'size': 20},

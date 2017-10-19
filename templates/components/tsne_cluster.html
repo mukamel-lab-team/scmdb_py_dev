@@ -1,21 +1,27 @@
+<div class="panel-collapse collapse" id="tsne_plots_options">
+    <div class="panel-body" style="padding-top:0px; padding-bottom: 0px;">
+        <div class="row">
+            <div class="col-sm-4" id="tsneGrouping" style="display:inline-block;">
+                Group cells: <select id="tsne_grouping" name="grouping">
+                    <option value="cluster_ordered">by cluster</option>
+                    <option value="biosample">by biosample</option>
+                    <option value="layer">by dissection layer</option>
+                    <option value="cluster_biosample">by cluster+biosample</option>
+                </select>
+            </div>
+            <div class="col-sm-4" id="toggle-3d-cluster-div" style="display:inline-block;">
+                <input id="toggle-3d" data-toggle="toggle" data-on="Hide 3D Plot" data-off="Show 3D Plot" type="checkbox" data-size="small"> 
+            </div>
+            <div class="col-sm-4" style="display: inline-block;">
+                <button type="button" class="btn btn-primary btn-sm" id="randomizeColorBtn">Randomize Color</button>
+            </div>
+        </div>
+    </div>
+</div>
 <div class="panel-body">
-	<div class="row">
-		<div class="col-md-3" id="tsneGrouping">
-			Group cells: <select id="tsne_grouping" name="grouping">
-				<option value="cluster_ordered">by cluster</option>
-				<option value="biosample">by biosample</option>
-				<option value="layer">by dissection layer</option>
-				<option value="cluster_biosample">by cluster+biosample</option>
-			</select>
-		</div>
-		<div class="col-md-3" style="float:right">
-            <button type="button" class="btn btn-primary" id="randomizeColorBtn">Randomize Color</button>
-		</div>
-	</div>
 	<div id="loading_2dtsne">Loading..</div>
 	<div id="plot-2d-cluster"></div>
 	<div id="plot-3d-cluster-div">
-		<input id="toggle-3d" data-toggle="toggle" data-on="Hide 3D Plot" data-off="Show 3D Plot" type="checkbox">
         <div id="loading-3d-plot"></div>
         <div id="plot-3d-cluster"></div>
 	</div>

@@ -1,3 +1,18 @@
-<!-- <h4>Gene body mCH of selected gene</h4> -->
-<div id="plot-mch-scatter">Loading...</div>
-<br />
+<div class="panel-collapse collapse" id="mch_scatter_options">
+    <div class="panel-body" style="padding-top:0px; padding-bottom: 0px;">
+        <div class="row">
+            <div class="col-md-5 col-sm-12" id="mCHLevelCol">
+                <label for="levels" class="control-label">mCH Levels</label><br>
+                <input type="radio" name="levels" id="levelsOriginal" value="original">&nbsp;Original
+                <input type="radio" name="levels" id="levelsNormalized" value="normalized" checked>&nbsp;Normalized
+            </div>
+            <div class="col-md-4 col-md-offset-3 col-sm-12" id="percentileCol">
+                <label for="percentile" class="control-label" style="text-align: center">Color scale percentile</label><br>
+                <input id="percentile" type="text" value="" />
+            </div>
+        </div>
+    </div>
+</div>
+<div class="panel-body">
+    <div id="plot-mch-scatter">Loading...</div>
+</div>
