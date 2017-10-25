@@ -30,6 +30,9 @@
     min-width: 110px;
 }
 
+.panel-body .option-panel {
+    background: #DCDCDC;
+}
 /*from https://github.com/plotly/dash-oil-and-gas-demo */
 /* Table of contents
 ––––––––––––––––––––––––––––––––––––––––––––––––––

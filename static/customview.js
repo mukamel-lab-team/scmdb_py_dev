@@ -1,6 +1,6 @@
 var trace_3d, layout_3d;
-var updates_3d = []
-var groups_3d = []
+var updates_3d = [];
+var groups_3d = [];
 
 function loadClusterPlots() {
     var grouping = $('#tsneGrouping option:selected').val();
@@ -86,12 +86,18 @@ function initGeneNameSearch() {
 
 function updateMCHClusterPlot() {
     var levelType = $('input[name=levels]').filter(':checked').val();
-    var geneSelected = $('#geneName option:selected').val();
+    var methylationType = $('input[name=mType]').filter(':checked').val();
     var pValues = pSlider.getValue();
-    if (geneSelected != 'Select..') {
+    var genes = $("#geneName").select2('data');
+    var genes_query = "";
+    for (i = 0; i < genes.length; i++) {
+        genes_query += (genes[i].text + ":" + genes[i].id + "+");
+    }
+    genes_query = genes_query.slice(0,-1);
+    if ($('#geneName option:selected').val() != 'Select..') {
         $.ajax({
             type: "GET",
-            url: './plot/mch/' + species + '/' + geneSelected + '/' + levelType + '/' + pValues[0] + '/' + pValues[1],
+            url: './plot/scatter/' + species + '/' + methylationType +  '/' + levelType + '/' + pValues[0] + '/' + pValues[1] + '?q=' + genes_query,
             success: function(data) {
                 $('#plot-mch-scatter').html("");
                 $('#plot-mch-scatter').html(data);
@@ -103,6 +109,7 @@ function updateMCHClusterPlot() {
 
 function updateMCHBoxPlot() {
     var levelType = $('input[name=levels]').filter(':checked').val();
+    var methylationType = $('input[name=mType]').filter(':checked').val();
     var geneSelected = $('#geneName option:selected').val();
     if ($('#orthologsToggle').prop('checked')) {
         return updateMCHCombinedBoxPlot(mmu_gID, hsa_gID);
@@ -114,7 +121,7 @@ function updateMCHBoxPlot() {
     }
     $.ajax({
         type: "GET",
-        url: './plot/box/' + species + '/' + geneSelected + '/' + levelType + '/' + outlierOption,
+        url: './plot/box/' + species + '/' + methylationType + '/' + geneSelected + '/' + levelType + '/' + outlierOption,
         success: function(data) {
             $('#plot-mch-box').html(data);
         }
@@ -124,6 +131,7 @@ function updateMCHBoxPlot() {
 
 function updateMCHCombinedBoxPlot(mmu_gid, hsa_gid) {
     var levelType = $('input[name=levels]').filter(':checked').val();
+    var methylationType = $('input[name=mType]').filter(':checked').val();
     if ($('#outlierToggle').prop('checked')) {
         var outlierOption = 'outliers';
     } else {
@@ -131,7 +139,7 @@ function updateMCHCombinedBoxPlot(mmu_gid, hsa_gid) {
     }
     $.ajax({
         type: "GET",
-        url: './plot/box_combined/' + species + '/' + mmu_gid + '/' + hsa_gid + '/' + levelType + '/' + outlierOption,
+        url: './plot/box_combined/' + species + '/' + methylationType + '/' + mmu_gid + '/' + hsa_gid + '/' + levelType + '/' + outlierOption,
         success: function(data) {
             $('#plot-mch-box').html(data);
         }
@@ -144,14 +152,15 @@ function updateGeneElements() {
         if (typeof(Storage) !== 'undefined') {
             localStorage.setItem('lastViewed', $('#geneName option:selected').text());
         }
-        if($("#geneName").select2('data').length == 1){
-            updateMCHClusterPlot();
-        }
-        else if($("#geneName").select2('data').length > 1) {
+        updateMCHClusterPlot();
+        if($("#geneName").select2('data').length > 1) {
             createHeatMap();
         }
-        updateOrthologToggle();
-        updateMCHBoxPlot();
+        else{
+            updateOrthologToggle();
+            updateMCHBoxPlot();
+            updateDataTable();
+        }
         try {
             var annojURL;
             geneSearchCache.forEach(function(gene) {
@@ -243,13 +252,7 @@ function initDataTableClick() {
                 geneNameSelector.append(option);
                 $('#epiBrowserLink').attr('href', generateBrowserURL(data));
                 $('#epiBrowserLink').removeClass('disabled')
-                if($("#geneName").select2('data').length > 1){
-                    createHeatMap();
-                }
-                else{
-                    updateGeneElements();
-                    updateDataTable();
-                }
+                updateGeneElements();
             }
         });
     });
@@ -325,6 +328,7 @@ function randomizeClusterColors() {
 
 function createHeatMap() {
     var levelType = $('input[name=levels]').filter(':checked').val();
+    var methylationType = $('input[name=mType]').filter(':checked').val();
     var pValues = pSlider.getValue();
     var genes = $("#geneName").select2('data');
     var genes_query = "";
@@ -334,7 +338,7 @@ function createHeatMap() {
     genes_query = genes_query.slice(0,-1);
     $.ajax({
         type: "GET",
-        url: './plot/heat/' + species + '/' + levelType + '/' + pValues[0] + '/' + pValues[1] + '?q=' + genes_query,
+        url: './plot/heat/' + species + '/' + methylationType + '/' + levelType + '/' + pValues[0] + '/' + pValues[1] + '?q=' + genes_query,
         success: function(data) {
             $('#plot-mch-box').html(data);
         }

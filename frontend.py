@@ -6,7 +6,7 @@ from flask import Blueprint, render_template, jsonify, request, redirect, curren
 from flask_nav.elements import Navbar, Link
 
 from .content import get_cluster_plot, search_gene_names, \
-    get_mch_scatter, get_mch_box, get_mch_box_two_species, \
+    get_methylation_scatter, get_mch_box, get_mch_box_two_species, \
     find_orthologs, FailToGraphException, get_corr_genes, \
     gene_id_to_name, randomize_cluster_colors, get_mch_heatmap
 from .nav import nav
@@ -62,26 +62,29 @@ def plot_cluster(species, grouping):
         return 'Failed to produce cluster plot. Contact maintainer.'
 
 @cache.cached(timeout=3600)
-@frontend.route('/plot/mch/<species>/<gene>/<level>/<ptile_start>/<ptile_end>')
-def plot_mch_scatter(species, gene, level, ptile_start, ptile_end):
+@frontend.route('/plot/scatter/<species>/<methylationType>/<level>/<ptile_start>/<ptile_end>')
+def plot_methylation_scatter(species, methylationType, level, ptile_start, ptile_end):
+    genes = request.args.get('q', 'MustHaveAQueryString')
     try:
-        return get_mch_scatter(species, gene, level,
-                               float(ptile_start), float(ptile_end))
+        return get_methylation_scatter(species,
+                                       methylationType,
+                                       genes, level,
+                                       float(ptile_start), float(ptile_end))
     except (FailToGraphException, ValueError) as e:
         print(e)
         return 'Failed to produce mCH levels scatter plot. Contact maintainer.'
 
 
 @cache.cached(timeout=3600)
-@frontend.route('/plot/box/<species>/<gene>/<level>/<outliers_toggle>')
-def plot_mch_box(species, gene, level, outliers_toggle):
+@frontend.route('/plot/box/<species>/<methylationType>/<gene>/<level>/<outliers_toggle>')
+def plot_mch_box(species, methylationType, gene, level, outliers_toggle):
     if outliers_toggle == 'outliers':
         outliers = True
     else:
         outliers = False
 
     try:
-        return get_mch_box(species, gene, level, outliers)
+        return get_mch_box(species, methylationType, gene, level, outliers)
     except (FailToGraphException, ValueError) as e:
         print(e)
         return 'Failed to produce mCH levels box plot. Contact maintainer.'
@@ -89,15 +92,15 @@ def plot_mch_box(species, gene, level, outliers_toggle):
 
 @cache.cached(timeout=3600)
 @frontend.route(
-    '/plot/box_combined/<species>/<gene_mmu>/<gene_hsa>/<level>/<outliers_toggle>')
-def plot_mch_box_two_species(species, gene_mmu, gene_hsa, level, outliers_toggle):
+    '/plot/box_combined/<species>/<methylationType>/<gene_mmu>/<gene_hsa>/<level>/<outliers_toggle>')
+def plot_mch_box_two_species(species, methylationType, gene_mmu, gene_hsa, level, outliers_toggle):
     if outliers_toggle == 'outliers':
         outliers = True
     else:
         outliers = False
 
     try:
-        return get_mch_box_two_species(species, gene_mmu, gene_hsa, level, outliers)
+        return get_mch_box_two_species(species, methylationType, gene_mmu, gene_hsa, level, outliers)
     except (FailToGraphException, ValueError) as e:
         print(e)
         return 'Failed to produce mCH levels box plot. Contact maintainer.'
@@ -136,7 +139,7 @@ def randomize_colors():
     return jsonify(randomize_cluster_colors())
 
 
-@frontend.route('/plot/heat/<species>/<level>/<ptile_start>/<ptile_end>')
-def plot_mch_heatmap(species, level, ptile_start, ptile_end):
+@frontend.route('/plot/heat/<species>/<methylationType>/<level>/<ptile_start>/<ptile_end>')
+def plot_mch_heatmap(species, methylationType, level, ptile_start, ptile_end):
     query = request.args.get('q', 'MustHaveAQueryString')
-    return get_mch_heatmap(species, level, ptile_start, ptile_end, query)
+    return get_mch_heatmap(species, methylationType, level, ptile_start, ptile_end, query)

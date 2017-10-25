@@ -21,7 +21,7 @@
             <div class="panel-body collapse in" id="search-panel-body" style="padding-top:10px;">
                 <div class="col-sm-12">
                     <div class="row">
-                        <div class="form-group col-md-5 col-sm-8" style="margin-bottom:0px;">
+                        <div class="form-group col-md-4 col-sm-12" style="margin-bottom:0px;">
                             <label for="geneName" class="control-label">
                                 Search gene by name: <a href="#" data-toggle="popover" title="Gene name" data-content="Type a gene name."><span class="glyphicon glyphicon-info-sign"></span></a>
                             </label><br>
@@ -29,7 +29,17 @@
                                 <option>Select..</option>
                             </select>
                         </div>
-                        <div class="form-group col-md-3 col-sm-3 col-sm-offset-1" style="margin-bottom:0px; margin-top:15px; float:right;">
+                        <div class="col-md-2 col-sm-4" id="mCHLevelCol">
+                            <label for="levels" class="control-label">mCH Levels</label><br>
+                            <input type="radio" name="levels" id="levelsOriginal" value="original">&nbsp;Original
+                            <input type="radio" name="levels" id="levelsNormalized" value="normalized" checked>&nbsp;Normalized
+                        </div>
+                        <div class="col-md-2 col-sm-4" id="methylationTypeCol">
+                            <label for="mType" class="control-label">Methylation Type</label><br>
+                            <input type="radio" name="mType" id="type_mch" value="mch" checked>&nbsp;mCH
+                            <input type="radio" name="mType" id="type_mcg" value="mcg">&nbsp;mCG
+                        </div>
+                        <div class="form-group col-md-3 col-sm-4" style="margin-bottom:0px; margin-top:15px; float:right;">
                             <div style="display: inline-block;">
                                 <button type="button" class="btn btn-success btn-sm" id="gene-search-btn" style="padding-right:10px;">
                                     <span class="glyphicon glyphicon-search"></span>&nbsp;&nbsp;Search
@@ -64,7 +74,7 @@
             <div class="panel panel-default panel-main" style="overflow-x: auto; margin-left:auto; margin-right:auto;">
                 <div class="panel-heading">
                     <div class="panel-title">
-                        Gene level mCH{% if gene is defined %} - {{ gene }}{% endif %}
+                        Gene Methylation level{% if gene is defined %} - {{ gene }}{% endif %}
                         <a data-toggle="collapse" title="" data-placement="left" href="#mch_scatter" class="btn btn-sm btn-basic pull-right" style="margin-top: 0px;" data-original-title="Collapse Search Options"><span class="glyphicon glyphicon-resize-small"></span></a>
                         <a data-toggle="collapse" title="" data-placement="left" href="#mch_scatter_options" class="btn btn-sm btn-basic pull-right" style="margin-top: 0px;" data-original-title="Collapse Search Options"><span class="glyphicon glyphicon-cog"></span></a>
                     </div>
@@ -81,7 +91,7 @@
         <div class="panel panel-default panel-main" style="overflow-x: auto; margin-left:auto; margin-right:auto; display:block;">
             <div class="panel-heading">
                 <div class="panel-title">
-                    Gene level mCH{% if gene is defined %} - {{ gene }}{% endif %}
+                    Gene methylation level{% if gene is defined %} - {{ gene }}{% endif %}
                     <a data-toggle="collapse" title="" data-placement="left" href="#mch_box" class="btn btn-sm btn-basic pull-right" style="margin-top: 0px;" data-original-title="Collapse Search Options"><span class="glyphicon glyphicon-resize-small"></span></a>
                 </div>
             </div>
@@ -142,20 +152,12 @@
         }).on('slideStop', updateGeneElements).data('slider');
         
     });
-    $("#mCHLevelCol :input").change(function() {
+    $("#mCHLevelCol :input, #methylationTypeCol :input").change(function() {
         updateGeneElements();
-        $('.equal-height-panel .panel').matchHeight();
-
     });
 
     $("#gene-search-btn").click(function() {
-        if ($("#geneName").select2('data').length == 1) {
-            updateGeneElements();
-            updateDataTable();
-        }
-        else if($("#geneName").select2('data').length > 1) {
-            createHeatMap();
-        }
+        updateGeneElements();
     });
     
     //wait for resizing to end, then reset axes.
