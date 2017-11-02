@@ -191,6 +191,17 @@ def get_cluster_points(species):
     except IOError:
         return None
 
+def is_3D_data_exists(species):
+    """Determines whether 3D tSNE data for a species exists.
+    Arguments:
+        species (str): Name of species:
+    Returns:
+        bool: True if 3D tSNE data exists. Returns False otherwise.
+    """
+    well = os.path.isfile(
+        '{}/{}/tsne_points_ordered_3D.csv'.format(current_app.config['DATA_DIR'], species))
+    print(well)
+    return well
 
 @cache.memoize(timeout=3600)
 def get_3D_cluster_points(species):
@@ -199,18 +210,14 @@ def get_3D_cluster_points(species):
         species (str): Name of species.
     Returns:
         list: cluster points in dict. See 3D_tsne_points.csv of each species for dictionary keys.
-        None: if there is an error finding the file of the species.
     """
 
     if not species_exists(species):
         return None
-    try:
-        with open('{}/{}/tsne_points_ordered_3D.csv' .format(current_app.config['DATA_DIR'],
+    with open('{}/{}/tsne_points_ordered_3D.csv' .format(current_app.config['DATA_DIR'],
                                                      species)) as fp:
-            return list(
-                csv.DictReader(fp, dialect='excel-tab'))
-    except IOError:
-        return None
+        return list(
+            csv.DictReader(fp, dialect='excel-tab'))
 
 @cache.memoize(timeout=3600)
 def search_gene_names(species, query):
@@ -263,12 +270,12 @@ def gene_id_to_name(species, query):
 
 @cache.memoize(timeout=3600)
 def get_corr_genes(species,query):
-    """Get correlated genes of a certain gene of a species. 
-    
+    """Get correlated genes of a certain gene of a species.
+
         Arguments:
             species(str): Name of species.
             query(str): Query string of gene ID.
-        
+
         Returns:
             dict: information of genes that are correlated with target gene.
     """
@@ -276,7 +283,7 @@ def get_corr_genes(species,query):
         current_app.config['DATA_DIR'], species))
     conn.row_factory = sqlite3.Row
     cursor = conn.cursor()
-    
+
     try:
         cursor.execute('SELECT Gene2, Correlation FROM corr_genes WHERE Gene1 LIKE ? ORDER BY Correlation DESC LIMIT 50', (query + '%',))
         query_results = list(cursor.fetchall())
@@ -293,6 +300,56 @@ def get_corr_genes(species,query):
 
 
 @cache.memoize(timeout=3600)
+def get_mult_gene_methylation(species, methylationType, genes):
+    """Return averaged methylation data ponts for a set of genes.
+
+    Data from ID-to-Name mapping and tSNE points are combined for plot generation.
+
+    Arguments:
+        species (str): Name of species.
+        methylationType (str): Type of methylation to visualize. "mch" or "mcg"
+        genes ([str]): List of gene IDs to query.
+        outliers (bool): Whether if outliers should be kept.
+
+    Returns:
+        DataFrame:
+    """
+    if not species_exists(species):
+        return []
+
+    df_methyl = pandas.DataFrame()
+    for gene in genes:
+        if gene_exists(species, methylationType, gene):
+            try:
+                filename = glob.glob(
+                    '{}/{}/{}/{}*'.format(
+                        current_app.config['DATA_DIR'],
+                        species, methylationType, gene))[0]
+            except IndexError as e:
+                print(e)
+            try:
+                df_methyl = df_methyl.append(
+                    pandas.read_csv(
+                        filename, index_col=False,
+                        delimiter="\t", header=None,
+                        names=['GeneID','samp','original','normalized']))
+            except FileNotFoundError as e:
+                print(e)
+    df_methyl = df_methyl.groupby(by='samp', as_index=False).mean()
+
+    df_cluster = pandas.DataFrame(get_cluster_points(species))
+
+    df_merged = pandas.merge(
+        df_cluster[['samp', 'tsne_x', 'tsne_y', 'cluster_label', 'cluster_name', 'cluster_ordered', 'cluster_ortholog']],
+        df_methyl[['samp', 'original', 'normalized']],
+        on='samp',
+        how='left')
+
+    return df_merged.sort_values(
+        by='cluster_ordered', ascending=True).to_dict('records')
+
+
+@cache.memoize(timeout=3600)
 def get_gene_methylation(species, methylationType, gene, outliers):
     """Return mCH data points for a given gene.
 
@@ -300,8 +357,8 @@ def get_gene_methylation(species, methylationType, gene, outliers):
 
     Arguments:
         species (str): Name of species.
-        methylationType (str): Type of methylation to visualize.        "mch" or "mcg"
-        gene (str): Name of gene for that species.
+        methylationType (str): Type of methylation to visualize. "mch" or "mcg"
+        gene (str): Ensembl ID of gene for that species.
         outliers (bool): Whether if outliers should be kept.
 
     Returns:
@@ -377,7 +434,7 @@ def get_ortholog_cluster_order():
 
 
 # Plot generating
-def get_cluster_plot(species, grouping):
+def get_cluster_plot(species, grouping = 'biosample'):
     """Generate tSNE cluster plot.
     Arguments:
         species (str): Name of species.
@@ -385,92 +442,13 @@ def get_cluster_plot(species, grouping):
     Returns:
         str: HTML generated by Plot.ly.
     """
-    points_3d = get_3D_cluster_points(species)
+    points_2d = get_cluster_points(species)
+    if not points_2d:
+        raise FailToGraphException
+    if not (grouping in points_2d[0]):
+        grouping="cluster_ordered"
+        print("**** Using cluster_ordered")
 
-    if not points_3d:
-        points_2d = get_cluster_points(species)
-        if not points_2d:
-            raise FailToGraphException
-        if not (grouping in points_2d[0]):
-            grouping="cluster_ordered"
-            print("**** Using cluster_ordered")
-    else:
-        if not (grouping in points_3d[0]):
-            grouping = "cluster_ordered"
-            print("**** Using cluster_ordered")
-
-
-    layout3d = Layout(
-        autosize=True,
-        title='3D Cell Cluster',
-        titlefont={'color': 'rgba(1,2,2,1)',
-                   'size': 16},
-        margin={'l': 49,
-                'r': 0,
-                'b': 30,
-                't': 50,
-                'pad': 10
-                },
-
-        scene={
-            'camera':{
-                'eye': dict(x=1.2, y=1.5, z=0.7),
-                'center': dict(x=0.25, z=-0.1)
-                     },
-            'aspectmode':'data',
-            'xaxis':{
-                'title': 'tSNE 1',
-                'titlefont': {
-                    'color': 'rgba(1,2,2,1)',
-                    'size': 12
-                },
-                'type': 'linear',
-                'ticks': '',
-                'showticklabels': False,
-                'tickwidth': 0,
-                'showline': True,
-                'showgrid': False,
-                'zeroline': False,
-                'linecolor': 'black',
-                'linewidth': 0.5,
-                'mirror': True
-            },
-            'yaxis':{
-                'title': 'tSNE 2',
-                'titlefont': {
-                    'color': 'rgba(1,2,2,1)',
-                    'size': 12
-                },
-                'type': 'linear',
-                'ticks': '',
-                'showticklabels': False,
-                'tickwidth': 0,
-                'showline': True,
-                'showgrid': False,
-                'zeroline': False,
-                'linecolor': 'black',
-                'linewidth': 0.5,
-                'mirror': True
-            },
-            'zaxis':{
-                'title': 'tSNE 3',
-                'titlefont': {
-                    'color': 'rgba(1,2,2,1)',
-                    'size': 12
-                },
-                'type': 'linear',
-                'ticks': '',
-                'showticklabels': False,
-                'tickwidth': 0,
-                'showline': True,
-                'showgrid': False,
-                'zeroline': False,
-                'linecolor': 'black',
-                'linewidth': 0.5,
-                'mirror': True
-            }
-        }
-    )
 
     layout2d = Layout(
         autosize=True,
@@ -484,7 +462,7 @@ def get_cluster_plot(species, grouping):
         legend={
             'orientation': 'v',
             'traceorder': 'grouped',
-            'tracegroupgap': 10,
+            'tracegroupgap': 4,
             'x': 1.03,
             'font': {
                 'color': 'rgba(1,2,2,1)',
@@ -537,61 +515,123 @@ def get_cluster_plot(species, grouping):
     traces_2d = OrderedDict()
 
     global num_colors
-    if not points_3d:
-        max_cluster = int(
-            max(points_2d, key=lambda x: int(x['cluster_ordered']))['cluster_ordered']) + 1
-        if species == 'mmu':
-            max_cluster = 16
-        num_colors = int(
-                max(points_2d, key=lambda x: int(x[grouping]))[grouping]) + 1
-        colors = generate_cluster_colors(num_colors)
-        symbols = ['circle', 'square', 'cross', 'triangle-up', 'triangle-down', 'octagon', 'star', 'diamond']
-        for point in points_2d:
-            cluster_num = int(point['cluster_ordered'])
-            biosample = int(point.get('biosample', 1)) - 1
-            cluster_sample_num = int(point['cluster_ordered']) + max_cluster * biosample
-            color_num = int(point[grouping]) - 1
-            trace2d = traces_2d.setdefault(cluster_sample_num,
-                                          Scattergl(
-                                              x=list(),
-                                              y=list(),
-                                              text=list(),
-                                              mode='markers',
-                                              visible=True,
-                                              name=point['cluster_name'] + " Sample" + str(biosample + 1),
-                                              legendgroup=point[grouping],
-                                              marker={
-                                                  'color': colors[color_num],
-                                                  'size': 6,
-                                                  'opacity':0.8,
-                                                  'symbol': symbols[biosample],  # Eran and Fangming 09/12/2017
-                                                  'line': {'width': 0.5, 'color': 'black'}  
-                                              },
-                                              hoverinfo='text'))
-            trace2d['x'].append(point['tsne_x'])
-            trace2d['y'].append(point['tsne_y'])
-            trace2d['text'].append(
-                build_hover_text({
-                    'Cell': point.get('samp', 'N/A'),
-                    'Layer': point.get('layer', 'N/A'),
-                    'Biosample': point.get('biosample', 'N/A'),
-                    'Cluster': str(cluster_num)
-                })
-            )
+    max_cluster = int(
+        max(points_2d, key=lambda x: int(x['cluster_ordered']))['cluster_ordered']) + 1
+    if species == 'mmu':
+        max_cluster = 16
+    num_colors = int(
+            max(points_2d, key=lambda x: int(x[grouping]))[grouping]) + 1
+    colors = generate_cluster_colors(num_colors)
+    symbols = ['circle', 'square', 'cross', 'triangle-up', 'triangle-down', 'octagon', 'star', 'diamond']
+    for point in points_2d:
+        cluster_num = int(point['cluster_ordered'])
+        biosample = int(point.get('biosample', 1)) - 1
+        cluster_sample_num = int(point['cluster_ordered']) + max_cluster * biosample
+        color_num = int(point[grouping]) - 1
+        trace2d = traces_2d.setdefault(cluster_sample_num,
+                                      Scattergl(
+                                          x=list(),
+                                          y=list(),
+                                          text=list(),
+                                          mode='markers',
+                                          visible=True,
+                                          name=point['cluster_name'] + " Sample" + str(biosample + 1),
+                                          legendgroup=point[grouping],
+                                          marker={
+                                              'color': colors[color_num],
+                                              'size': 6,
+                                              'opacity':0.8,
+                                              'symbol': symbols[biosample],  # Eran and Fangming 09/12/2017
+                                              'line': {'width': 0.5, 'color': 'black'}
+                                          },
+                                          hoverinfo='text'))
+        trace2d['x'].append(point['tsne_x'])
+        trace2d['y'].append(point['tsne_y'])
+        trace2d['text'].append(
+            build_hover_text({
+                'Cell': point.get('samp', 'N/A'),
+                'Layer': point.get('layer', 'N/A'),
+                'Biosample': point.get('biosample', 'N/A'),
+                'Cluster': str(cluster_num)
+            })
+        )
 
-        for i, (key, value) in enumerate(sorted(traces_2d.items())):
-            trace_str = 'cluster_color_' + str(int(value['legendgroup'])-1)
-            trace_colors.setdefault(trace_str, []).append(i)
+    if(is_3D_data_exists(species)):
+        points_3d = get_3D_cluster_points(species)
+        if not (grouping in points_3d[0]):
+            grouping = "cluster_ordered"
+            print("**** Using cluster_ordered")
+        layout3d = Layout(
+            autosize=True,
+            title='3D Cell Cluster',
+            titlefont={'color': 'rgba(1,2,2,1)',
+                       'size': 16},
+            margin={'l': 49,
+                    'r': 0,
+                    'b': 30,
+                    't': 50,
+                    'pad': 10
+                    },
 
-        if species == 'mmu':
-            for i in range(17, 23, 1):
-                traces_2d[i]['marker']['size'] = 15
-                traces_2d[i]['marker']['symbol'] = symbols[i % len(symbols)]
-                traces_2d[i]['marker']['color'] = 'black'
-                traces_2d[i]['visible'] = "legendonly"
-        return {'traces_2d': traces_2d, 'layout2d': layout2d}
-
-    else:
+            scene={
+                'camera':{
+                    'eye': dict(x=1.2, y=1.5, z=0.7),
+                    'center': dict(x=0.25, z=-0.1)
+                         },
+                'aspectmode':'data',
+                'xaxis':{
+                    'title': 'tSNE 1',
+                    'titlefont': {
+                        'color': 'rgba(1,2,2,1)',
+                        'size': 12
+                    },
+                    'type': 'linear',
+                    'ticks': '',
+                    'showticklabels': False,
+                    'tickwidth': 0,
+                    'showline': True,
+                    'showgrid': False,
+                    'zeroline': False,
+                    'linecolor': 'black',
+                    'linewidth': 0.5,
+                    'mirror': True
+                },
+                'yaxis':{
+                    'title': 'tSNE 2',
+                    'titlefont': {
+                        'color': 'rgba(1,2,2,1)',
+                        'size': 12
+                    },
+                    'type': 'linear',
+                    'ticks': '',
+                    'showticklabels': False,
+                    'tickwidth': 0,
+                    'showline': True,
+                    'showgrid': False,
+                    'zeroline': False,
+                    'linecolor': 'black',
+                    'linewidth': 0.5,
+                    'mirror': True
+                },
+                'zaxis':{
+                    'title': 'tSNE 3',
+                    'titlefont': {
+                        'color': 'rgba(1,2,2,1)',
+                        'size': 12
+                    },
+                    'type': 'linear',
+                    'ticks': '',
+                    'showticklabels': False,
+                    'tickwidth': 0,
+                    'showline': True,
+                    'showgrid': False,
+                    'zeroline': False,
+                    'linecolor': 'black',
+                    'linewidth': 0.5,
+                    'mirror': True
+                }
+            }
+        )
         max_cluster = int(
             max(points_3d, key=lambda x: int(x['cluster_ordered']))['cluster_ordered']) + 1
         if species == 'mmu':
@@ -660,13 +700,28 @@ def get_cluster_plot(species, grouping):
             trace_colors.setdefault(trace_str, []).append(i)
 
         if species == 'mmu':
-            for i in range(17,23,1):
+            for i in range(17, 23, 1):
                 traces_2d[i]['marker']['size'] = traces_3d[i]['marker']['size'] = 15
                 traces_2d[i]['marker']['symbol'] = traces_3d[i]['marker']['symbol'] = symbols[i % len(symbols)]
                 traces_2d[i]['marker']['color'] = traces_3d[i]['marker']['color'] = 'black'
                 traces_2d[i]['visible'] = traces_3d[i]['visible'] = "legendonly"
 
         return {'traces_2d': traces_2d, 'traces_3d': traces_3d, 'layout2d': layout2d, 'layout3d': layout3d}
+
+    else:
+        for i, (key, value) in enumerate(sorted(traces_2d.items())):
+            trace_str = 'cluster_color_' + str(int(value['legendgroup'])-1)
+            trace_colors.setdefault(trace_str, []).append(i)
+
+        if species == 'mmu':
+            for i in range(17, 23, 1):
+                traces_2d[i]['marker']['size'] = 15
+                traces_2d[i]['marker']['symbol'] = symbols[i % len(symbols)]
+                traces_2d[i]['marker']['color'] = 'black'
+                traces_2d[i]['visible'] = "legendonly"
+        return {'traces_2d': traces_2d, 'layout2d': layout2d}
+
+
 
 
 @cache.memoize(timeout=3600)
@@ -678,7 +733,7 @@ def get_methylation_scatter(species, methylationType, query, level, ptile_start,
     Arguments:
         species (str): Name of species.
         methylationType (str): Type of methylation to visualize.        "mch" or "mcg"
-        gene (str):  Ensembl ID of gene for that species.
+        gene (str):  Ensembl ID of gene(s) for that species.
         level (str): Type of mCH data. Should be "original" or          "normalized".
         ptile_start (float): Lower end of color percentile. [0, 1].
         ptile_end (float): Upper end of color percentile. [0, 1].
@@ -686,62 +741,45 @@ def get_methylation_scatter(species, methylationType, query, level, ptile_start,
     Returns:
         str: HTML generated by Plot.ly.
     """
-    genes = [x.split(':') for x in query.split()]
-    print(genes[0][1])
-    x, y, text, mch = list(), list(), list(), list()    
-    if len(genes) == 1:
-        points = get_gene_methylation(species, methylationType, genes[0][1],True)
+    genes = query.split()
 
-        if not points:
-            raise FailToGraphException
-
-        for point in points:
-            x.append(point['tsne_x'])
-            y.append(point['tsne_y'])
-            if level == 'normalized':
-                mch_value = point['normalized']
-            else:
-                mch_value = point['original']
-            mch.append(mch_value)
-            text.append(
-                build_hover_text({
-                    'mCH': round(mch_value, 6),
-                    'Sample': point['samp'],
-                    'Cluster': point['cluster_name']
-                }))
-        geneName = genes[0][0]
+    if methylationType == 'mch':
+        titleMType = 'mCH'
     else:
-        for gene in genes:
-            gene_info[gene[0]] = get_gene_methylation(species, methylationType, gene[1],True)
-            
-            geneName = gene[0] + ' + '
-        if not gene_info:
-            raise FailToGraphException    
-        
-        geneName = geneName.slice(0,-3)
-        
-#    df = pandas.DataFrame(gene_info)
-#    df.to_csv("wow.csv", na_rep="0", index=False)
-#    
-#    print(len(gene_info))
-    
-#
-#    for point in gene_info[0]:
-#        x.append(point['tsne_x'])
-#        y.append(point['tsne_y'])
-#        if level == 'normalized':
-#            mch_value = point['normalized']
-#        else:
-#            mch_value = point['original']
-#        mch.append(mch_value)
-#        text.append(
-#            build_hover_text({
-#                'mCH': round(mch_value, 6),
-#                'Sample': point['samp'],
-#                'Cluster': point['cluster_name']
-#            }))
+        titleMType = 'mCG'
 
-    # Sets mCH levels below or above the percentiles to %tile limits.
+    geneName = ''
+    x, y, text, mch = list(), list(), list(), list()
+
+    if len(genes) == 1:
+        points = get_gene_methylation(species, methylationType, genes[0], True)
+        geneName = gene_id_to_name(species, genes[0])['geneName']
+        title = 'Gene body ' + titleMType + ': ' + geneName
+    else:
+        points = get_mult_gene_methylation(species, methylationType, genes)
+        for gene in genes:
+            geneName += gene_id_to_name(species, gene)['geneName'] + '+'
+        geneName = geneName[:-1]
+        title = 'Avg. Gene body ' + titleMType + ': ' + geneName
+
+    if not points:
+        raise FailToGraphException
+
+    for point in points:
+        x.append(point['tsne_x'])
+        y.append(point['tsne_y'])
+        if level == 'normalized':
+            methylation_value = point['normalized']
+        else:
+            methylation_value = point['original']
+        mch.append(methylation_value)
+        text.append(
+            build_hover_text({
+                titleMType: round(methylation_value, 6),
+                'Sample': point['samp'],
+                'Cluster': point['cluster_name']
+            }))
+
     mch_dataframe = pandas.DataFrame(mch)
     start = mch_dataframe.dropna().quantile(ptile_start)[0].tolist()
     end = mch_dataframe.dropna().quantile(ptile_end).values[0].tolist()
@@ -755,8 +793,6 @@ def get_methylation_scatter(species, methylationType, query, level, ptile_start,
     ]
     colorbar_ticktext[0] = '<' + str(round(start, 3))
     colorbar_ticktext.append('>' + str(round(end, 3)))
-
-
 
     trace = Scatter(
         mode='markers',
@@ -781,7 +817,7 @@ def get_methylation_scatter(species, methylationType, query, level, ptile_start,
         hoverinfo='text')
     layout = Layout(
         autosize=True,
-        title='Gene body ' + methylationType + ': '+geneName,
+        title=title,
         titlefont={'color': 'rgba(1,2,2,1)',
                    'size': 16},
         margin={'l': 49,
@@ -833,52 +869,52 @@ def get_methylation_scatter(species, methylationType, query, level, ptile_start,
         dict(
             buttons=list([
                 dict(
-                    args=['marker.colorscale','Viridis'],
+                    args=['marker.colorscale', 'Viridis'],
                     label='Viridis',
                     method='restyle'
                 ),
                 dict(
-                    args=['marker.colorscale','Bluered'],
+                    args=['marker.colorscale', 'Bluered'],
                     label='Bluered',
                     method='restyle'
                 ),
                 dict(
-                    args=['marker.colorscale','Blackbody'],
+                    args=['marker.colorscale', 'Blackbody'],
                     label='Blackbody',
                     method='restyle'
                 ),
                 dict(
-                    args=['marker.colorscale','Electric'],
+                    args=['marker.colorscale', 'Electric'],
                     label='Electric',
                     method='restyle'
                 ),
                 dict(
-                    args=['marker.colorscale','Earth'],
+                    args=['marker.colorscale', 'Earth'],
                     label='Earth',
                     method='restyle'
                 ),
                 dict(
-                    args=['marker.colorscale','Jet'],
+                    args=['marker.colorscale', 'Jet'],
                     label='Jet',
                     method='restyle'
                 ),
                 dict(
-                    args=['marker.colorscale','Rainbow'],
+                    args=['marker.colorscale', 'Rainbow'],
                     label='Rainbow',
                     method='restyle'
                 ),
                 dict(
-                    args=['marker.colorscale','Picnic'],
+                    args=['marker.colorscale', 'Picnic'],
                     label='Picnic',
                     method='restyle'
                 ),
                 dict(
-                    args=['marker.colorscale','Portland'],
+                    args=['marker.colorscale', 'Portland'],
                     label='Portland',
                     method='restyle'
                 ),
                 dict(
-                    args=['marker.colorscale','YlGnBu'],
+                    args=['marker.colorscale', 'YlGnBu'],
                     label='YlGnBu',
                     method='restyle'
                 )
@@ -920,31 +956,38 @@ def get_mch_heatmap(species, methylationType, level, ptile_start, ptile_end, que
         str: HTML generated by Plot.ly
     """
 
-    query = [x.split(':') for x in query.split()]
-    gene_info = {}
+    if methylationType == 'mch':
+        titleMType = 'mCH'
+    else:
+        titleMType = 'mCG'
 
-    for gene in query:
-        gene_info[gene[0]] = mean_cluster_mch(get_gene_methylation(species, methylationType, gene[1], True), level)
-    
+    title = "Gene body " + titleMType + " by cluster: "
+    genes = query.split()
+    gene_info = {}
+    for geneID in genes:
+        geneName = gene_id_to_name(species, geneID)['geneName']
+        title += geneName + "+"
+        gene_info[geneName] = mean_cluster_mch(get_gene_methylation(species, methylationType, geneID, True), level)
+    title = title[:-1]
+
     x, y, text, hover, mch = list(), list(), list(), list(), list()
     i = 0
     for key in list(gene_info.keys()):
         j = 0
         y.append(key)
         mch.append(list(gene_info[key].values()))
-        for cluster_number in list(gene_info[key].keys()):
-            x.append('Cluster_' + str(cluster_number))
+        for cluster_label in list(gene_info[key].keys()):
+            x.append(cluster_label)
             text.append(build_hover_text({
                 'Gene': key,
                 'Cluster': x[j],
-                'mCH':mch[i][j]
-                })
-            )
+                titleMType: mch[i][j]
+            }))
             j += 1
         hover.append(text)
         text = []
         i += 1
-        
+
     trace = Heatmap(
         x=x,
         y=y,
@@ -960,18 +1003,18 @@ def get_mch_heatmap(species, methylationType, level, ptile_start, ptile_end, que
             'thickness': 20
         },
         hoverinfo='text'
-        
+
     )
 
     layout = Layout(
-        title='Gene body mCH ',
+        title=title,
         titlefont={'color': 'rgba(1,2,2,1)',
                    'size': 16},
         autosize=True,
-        
+
         xaxis={'side': 'bottom',
                'tickangle': -45,
-               'tickfont':{
+               'tickfont': {
                    'size': 12
                }},
         yaxis={'title': 'Genes'},
@@ -984,52 +1027,52 @@ def get_mch_heatmap(species, methylationType, level, ptile_start, ptile_end, que
         dict(
             buttons=list([
                 dict(
-                    args=['colorscale','Viridis'],
+                    args=['colorscale', 'Viridis'],
                     label='Viridis',
                     method='restyle'
                 ),
                 dict(
-                    args=['colorscale','Bluered'],
+                    args=['colorscale', 'Bluered'],
                     label='Bluered',
                     method='restyle'
                 ),
                 dict(
-                    args=['colorscale','Blackbody'],
+                    args=['colorscale', 'Blackbody'],
                     label='Blackbody',
                     method='restyle'
                 ),
                 dict(
-                    args=['colorscale','Electric'],
+                    args=['colorscale', 'Electric'],
                     label='Electric',
                     method='restyle'
                 ),
                 dict(
-                    args=['colorscale','Earth'],
+                    args=['colorscale', 'Earth'],
                     label='Earth',
                     method='restyle'
                 ),
                 dict(
-                    args=['colorscale','Jet'],
+                    args=['colorscale', 'Jet'],
                     label='Jet',
                     method='restyle'
                 ),
                 dict(
-                    args=['colorscale','Rainbow'],
+                    args=['colorscale', 'Rainbow'],
                     label='Rainbow',
                     method='restyle'
                 ),
                 dict(
-                    args=['colorscale','Picnic'],
+                    args=['colorscale', 'Picnic'],
                     label='Picnic',
                     method='restyle'
                 ),
                 dict(
-                    args=['colorscale','Portland'],
+                    args=['colorscale', 'Portland'],
                     label='Portland',
                     method='restyle'
                 ),
                 dict(
-                    args=['colorscale','YlGnBu'],
+                    args=['colorscale', 'YlGnBu'],
                     label='YlGnBu',
                     method='restyle'
                 )
@@ -1064,19 +1107,21 @@ def mean_cluster_mch(gene_info, level):
             level (str): Type of mCH data. Should be "original" or "normalized".
 
         Returns:
-            dict: Cluster_ordered (key) : mean mCH level (value).
+            dict: Cluster_label (key) : mean mCH level (value).
     """
     df = pandas.DataFrame(gene_info)
-    return df.groupby('cluster_ordered')[level].mean().to_dict()
+    return df.groupby('cluster_name')[level].mean().to_dict()
 
 
 @cache.memoize(timeout=3600)
-def mean_cell_mch(gene_info, level):
+def mean_cell_mch(genes, level):
     """Calculates average mch level of a gene for each individual cell.
-    
+
         Arguments:
-            gene_info(list): 
+            gene_info(list):
     """
+
+
 @cache.memoize(timeout=3600)
 def get_mch_box(species, methylationType, gene, level, outliers):
     """Generate gene body mCH box plot.
@@ -1100,16 +1145,16 @@ def get_mch_box(species, methylationType, gene, level, outliers):
     traces = OrderedDict()
     max_cluster = int(
         max(points, key=lambda x: int(x['cluster_ordered']))['cluster_ordered']) + 1
-    if species=='mmu':
-        max_cluster=16
+    if species == 'mmu':
+        max_cluster = 16
     colors = generate_cluster_colors(max_cluster)
     for point in points:
-        trace = traces.setdefault(int(point['cluster_ordered']),
-            Box(y=list(),
+        trace = traces.setdefault(int(point['cluster_ordered']), Box(
+                y=list(),
                 name=point['cluster_name'],
                 marker={
-                    'color': colors[(int(point['cluster_ordered'])-1)%len(colors)],
-                    'outliercolor': colors[(int(point['cluster_ordered'])-1)%len(colors)],
+                    'color': colors[(int(point['cluster_ordered']) - 1) % len(colors)],
+                    'outliercolor': colors[(int(point['cluster_ordered']) - 1) % len(colors)],
                     'size': 6
                 },
                 boxpoints='suspectedoutliers',
@@ -1122,18 +1167,23 @@ def get_mch_box(species, methylationType, gene, level, outliers):
             trace['y'].append(point['original'])
 
     if species == 'mmu':
-        for i in range(17,23,1):
-            traces[i]['marker']['color']='black'
-            traces[i]['marker']['outliercolor']='black'
-            traces[i]['visible']="legendonly"
+        for i in range(17, 23, 1):
+            traces[i]['marker']['color'] = 'black'
+            traces[i]['marker']['outliercolor'] = 'black'
+            traces[i]['visible'] = "legendonly"
 
     geneName = gene_id_to_name(species, gene)
     geneName = geneName['geneName']
 
+    if methylationType == 'mch':
+        titleMType = 'mCH'
+    else:
+        titleMType = 'mCG'
+
     layout = Layout(
         autosize=True,
         height=400,
-        title='Gene body ' + methylationType + ' in each cluster: '+geneName,
+        title='Gene body ' + titleMType + ' in each cluster: ' + geneName,
         titlefont={'color': 'rgba(1,2,2,1)',
                    'size': 20},
 #        legend={
@@ -1163,7 +1213,7 @@ def get_mch_box(species, methylationType, gene, level, outliers):
             'mirror': True,
         },
         yaxis={
-            'title': geneName+' '+level.capitalize() + ' mCH',
+            'title': geneName + ' ' + level.capitalize() + ' mCH',
             'titlefont': {
                 'size': 15
             },
@@ -1183,7 +1233,7 @@ def get_mch_box(species, methylationType, gene, level, outliers):
             'linewidth': 1,
             'mirror': True,
         },
-        )
+    )
 
     return plotly.offline.plot(
         {
@@ -1219,28 +1269,33 @@ def get_mch_box_two_species(species, methylationType, gene_mmu, gene_hsa, level,
         raise FailToGraphException
 
     geneName = gene_id_to_name('mouse_published', gene_mmu)
-    geneName=geneName['geneName']
+    geneName = geneName['geneName']
 
     # EAM - This organizes the box plot into groups
     traces_mmu = Box(
         y=list(i.get(level) for i in points_mmu if i.get('cluster_ortholog')),
         x=list(i.get('cluster_ortholog') for i in points_mmu if i.get('cluster_ortholog')),
-        marker={'color':'red', 'outliercolor':'red'},
+        marker={'color': 'red', 'outliercolor': 'red'},
         boxpoints='suspectedoutliers',
         hoverinfo='text')
     traces_hsa = Box(
         y=list(i.get(level) for i in points_hsa if i.get('cluster_ortholog')),
         x=list(i.get('cluster_ortholog') for i in points_hsa if i.get('cluster_ortholog')),
-        marker={'color':'black', 'outliercolor':'black'},
+        marker={'color': 'black', 'outliercolor': 'black'},
         boxpoints='suspectedoutliers')
     traces_combined = [traces_mmu, traces_hsa]
+
+    if methylationType == 'mch':
+        titleMType = 'mCH'
+    else:
+        titleMType = 'mCG'
 
     layout = Layout(
         boxmode='group',
         autosize=True,
         showlegend=False,
         height=500,
-        title='Gene body mCH in each cluster: '+geneName,
+        title='Gene body ' + titleMType + ' in each cluster: ' + geneName,
         titlefont={'color': 'rgba(1,2,2,1)',
                    'size': 20},
         # legend={

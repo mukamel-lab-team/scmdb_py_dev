@@ -1,4 +1,4 @@
-<div class="panel-collapse collapse" id="tsne_plots_options">
+<div class="panel-collapse collapse cluster_options_group" id="tsne_plots_options">
     <div class="panel-body option-panel" style="padding-top:0px; padding-bottom: 0px;">
         <div class="row">
             <div class="col-sm-4" id="tsneGrouping" style="display:inline-block;">
@@ -10,7 +10,8 @@
                 </select>
             </div>
             <div class="col-sm-4" id="toggle-3d-cluster-div" style="display:inline-block;">
-                <input id="toggle-3d" data-toggle="toggle" data-on="Hide 3D Plot" data-off="Show 3D Plot" type="checkbox" data-size="small"> 
+                <input id="toggle-3d" name="3d-checkbox" value="show3d" type="checkbox">
+                <label for="toggle-3d">Display 3D Plot</label>
             </div>
             <div class="col-sm-4" style="display: inline-block;">
                 <button type="button" class="btn btn-primary btn-sm" id="randomizeColorBtn">Randomize Color</button>

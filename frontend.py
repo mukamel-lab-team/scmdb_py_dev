@@ -13,15 +13,15 @@ from .nav import nav
 from .cache import cache
 from os import walk
 
-frontend = Blueprint('frontend', __name__) # Flask "bootstrap"
+frontend = Blueprint('frontend', __name__)  # Flask "bootstrap"
 
 # Find all the samples in the data directory
 dir_list = next(walk(current_app.config['DATA_DIR']))[1]
 
-dir_list_links=[Link(x, x) for x in dir_list]
+dir_list_links = [Link(x, x) for x in dir_list]
 
 nav.register_element('frontend_top',
-                     Navbar('',*dir_list_links))
+                     Navbar('', *dir_list_links))
 
 
 # Visitor routes
@@ -32,9 +32,11 @@ def index():
     return 'To be redirected manually, click <a href="./human_combined">here</a>.' + \
            '<script>window.location = "./human_combined"; window.location.replace("./human_combined");</script>'
 
+
 @frontend.route('/<species>')
 def species(species):
     return render_template('speciesview.html', species=species)
+
 
 @frontend.route('/standalone/<species>/<gene>')
 def standalone(species, gene):  # View gene body mCH plots alone.
@@ -60,6 +62,7 @@ def plot_cluster(species, grouping):
         return jsonify(get_cluster_plot(species, grouping))
     except FailToGraphException:
         return 'Failed to produce cluster plot. Contact maintainer.'
+
 
 @cache.cached(timeout=3600)
 @frontend.route('/plot/scatter/<species>/<methylationType>/<level>/<ptile_start>/<ptile_end>')
@@ -91,8 +94,7 @@ def plot_mch_box(species, methylationType, gene, level, outliers_toggle):
 
 
 @cache.cached(timeout=3600)
-@frontend.route(
-    '/plot/box_combined/<species>/<methylationType>/<gene_mmu>/<gene_hsa>/<level>/<outliers_toggle>')
+@frontend.route('/plot/box_combined/<species>/<methylationType>/<gene_mmu>/<gene_hsa>/<level>/<outliers_toggle>')
 def plot_mch_box_two_species(species, methylationType, gene_mmu, gene_hsa, level, outliers_toggle):
     if outliers_toggle == 'outliers':
         outliers = True
@@ -110,14 +112,20 @@ def plot_mch_box_two_species(species, methylationType, gene_mmu, gene_hsa, level
 @frontend.route('/gene/names/<species>')
 def search_gene_by_name(species):
     query = request.args.get('q', 'MustHaveAQueryString')
-    return jsonify(search_gene_names(species, query))
+    if query == 'none' or query == '':
+        return jsonify([])
+    else:
+        return jsonify(search_gene_names(species, query))
 
 
 @cache.cached(timeout=3600)
 @frontend.route('/gene/id/<species>')
 def search_gene_by_id(species):
     query = request.args.get('q', 'MustHaveAQueryString')
-    return jsonify(gene_id_to_name(species, query))
+    if query == 'none' or query == '':
+        return jsonify([])
+    else:
+        return jsonify(gene_id_to_name(species, query))
 
 
 @frontend.route('/gene/orthologs/<species>/<geneID>')
@@ -127,11 +135,11 @@ def orthologs(species, geneID):
         return jsonify(find_orthologs(mmu_gid=geneID))
     else:
         return jsonify(find_orthologs(hsa_gid=geneID))
-    
+
 
 @frontend.route('/gene/corr/<species>/<geneID>')
 def correlated_genes(species, geneID):
-    return jsonify(get_corr_genes(species,geneID))
+    return jsonify(get_corr_genes(species, geneID))
 
 
 @frontend.route('/plot/randomize_colors')
@@ -143,3 +151,8 @@ def randomize_colors():
 def plot_mch_heatmap(species, methylationType, level, ptile_start, ptile_end):
     query = request.args.get('q', 'MustHaveAQueryString')
     return get_mch_heatmap(species, methylationType, level, ptile_start, ptile_end, query)
+
+
+@frontend.route('/help')
+def help_page():
+    return render_template('help.html')

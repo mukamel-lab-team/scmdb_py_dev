@@ -7,7 +7,7 @@
         </div>
     </div>
     {%- endif %} {%- endwith %}
-    <div class="col-md-12 sticky">
+    <div class="col-md-12">
         <div class="panel panel-info" id="options-panel">
             <div class="panel-heading">
                 <div class="panel-title">
@@ -19,76 +19,36 @@
                 </div>
             </div>
             <div class="panel-body collapse in" id="search-panel-body" style="padding-top:10px;">
-                <div class="col-sm-12">
-                    <div class="row">
-                        <div class="form-group col-md-4 col-sm-12" style="margin-bottom:0px;">
-                            <label for="geneName" class="control-label">
-                                Search gene by name: <a href="#" data-toggle="popover" title="Gene name" data-content="Type a gene name."><span class="glyphicon glyphicon-info-sign"></span></a>
-                            </label><br>
-                            <select id="geneName" multiple style="width:100%">
-                                <option>Select..</option>
-                            </select>
-                        </div>
-                        <div class="col-md-2 col-sm-4" id="mCHLevelCol">
-                            <label for="levels" class="control-label">mCH Levels</label><br>
-                            <input type="radio" name="levels" id="levelsOriginal" value="original">&nbsp;Original
-                            <input type="radio" name="levels" id="levelsNormalized" value="normalized" checked>&nbsp;Normalized
-                        </div>
-                        <div class="col-md-2 col-sm-4" id="methylationTypeCol">
-                            <label for="mType" class="control-label">Methylation Type</label><br>
-                            <input type="radio" name="mType" id="type_mch" value="mch" checked>&nbsp;mCH
-                            <input type="radio" name="mType" id="type_mcg" value="mcg">&nbsp;mCG
-                        </div>
-                        <div class="form-group col-md-3 col-sm-4" style="margin-bottom:0px; margin-top:15px; float:right;">
-                            <div style="display: inline-block;">
-                                <button type="button" class="btn btn-success btn-sm" id="gene-search-btn" style="padding-right:10px;">
-                                    <span class="glyphicon glyphicon-search"></span>&nbsp;&nbsp;Search
-                                </button>
-                                <button type="button" class="btn btn-default btn-sm" id="back-btn">
-                                    Back
-                                </button>
-                            </div>
-                        </div>
-                    </div>
-                </div>
+                {% include "components/search_options.html" %}
             </div>
         </div>
     </div>
     <div style="position:relative; left:0; z-index:2;">
-        <div class="col-md-6 col-sm-12" style="padding-right:8px;">
+        <div class="col-md-12 col-sm-12">
             <div class="panel panel-default panel-main" style="overflow-x: auto; margin-left:auto; margin-right:auto;">
                 <div class="panel-heading">
                     <div class="panel-title"><b>{{ species }}</b> Clustering{% if gene is defined %} - {{ gene }}{% endif %}
-                        <a data-toggle="collapse" title="" data-placement="left" href="#tsne_plots" class="btn btn-sm btn-basic pull-right" style="margin-top: 0px;" data-original-title="Collapse Search Options"><span class="glyphicon glyphicon-resize-small"></span></a>
-                        <a data-toggle="collapse" title="" data-placement="left" href="#tsne_plots_options" class="btn btn-sm btn-basic pull-right" style="margin-top: 0px;" data-original-title="Collapse Search Options"><span class="glyphicon glyphicon-cog"></span></a>
+                        <a data-toggle="collapse" title="" data-placement="left" href="#cluster_plots" class="btn btn-sm btn-basic pull-right" style="margin-top: 0px;" data-original-title="Collapse Search Options"><span class="glyphicon glyphicon-resize-small"></span></a>
+                        <a data-toggle="collapse" title="" data-placement="left" href=".cluster_options_group" class="btn btn-sm btn-basic pull-right" style="margin-top: 0px;" data-original-title="Collapse Search Options"><span class="glyphicon glyphicon-cog"></span></a>
                     </div>
                 </div>
-                <div class="panel-collapse collapse in" id="tsne_plots">
+                <div class="panel-collapse collapse in" id="cluster_plots">
                     <div class="panel-body">
-                        {% include "components/tsne_cluster.html" %}
-                    </div>
-                </div>
-            </div>
-        </div>
-        <div class="col-md-6 col-sm-12" style="padding-left:8px;">
-            <div class="panel panel-default panel-main" style="overflow-x: auto; margin-left:auto; margin-right:auto;">
-                <div class="panel-heading">
-                    <div class="panel-title">
-                        Gene Methylation level{% if gene is defined %} - {{ gene }}{% endif %}
-                        <a data-toggle="collapse" title="" data-placement="left" href="#mch_scatter" class="btn btn-sm btn-basic pull-right" style="margin-top: 0px;" data-original-title="Collapse Search Options"><span class="glyphicon glyphicon-resize-small"></span></a>
-                        <a data-toggle="collapse" title="" data-placement="left" href="#mch_scatter_options" class="btn btn-sm btn-basic pull-right" style="margin-top: 0px;" data-original-title="Collapse Search Options"><span class="glyphicon glyphicon-cog"></span></a>
-                    </div>
-                </div>
-                <div class="panel-collapse collapse in" id="mch_scatter">
-                    <div class="panel-body">
-                        {% include "components/mch_cluster.html" %}
+                        <div class="row">
+                            <div class="col-md-6 col-sm-12" id="tSNE_cluster_div" style="padding: 0px">
+                                {% include "components/tsne_cluster.html" %}
+                            </div>
+                            <div class="col-md-6 col-sm-12" id="methyl_scatter_div" style="padding: 0px">
+                                {% include "components/mch_cluster.html" %}
+                            </div>
+                        <div>
                     </div>
                 </div>
             </div>
         </div>
     </div>
     <div class="col-sm-12" style="position:relative; z-index:2;">
-        <div class="panel panel-default panel-main" style="overflow-x: auto; margin-left:auto; margin-right:auto; display:block;">
+        <div class="panel panel-default panel-main" style="overflow-x: auto; margin-left:auto; margin-right:auto; display:none;" id="methyl_graphs_div">
             <div class="panel-heading">
                 <div class="panel-title">
                     Gene methylation level{% if gene is defined %} - {{ gene }}{% endif %}
@@ -128,19 +88,21 @@
     var mmu_gID;
     var hsa_gID;
     var grouping;
+    var buttons;
+
     $(document).ready(function() {
         $('[data-toggle="popover"]').popover();
         $('#outlierToggle').bootstrapToggle();
         $('#orthologsToggle').bootstrapToggle();
         $('#orthologsToggle').bootstrapToggle('disable');
-        $('#toggle-3d').bootstrapToggle('disable');
+        //$('#toggle-3d').bootstrapToggle('disable');
 
         loadClusterPlots();
         randomizeClusterColors();
         initGeneNameSearch();
         $('#geneTable').DataTable();
         initDataTableClick();
-                
+
         // Percentile changes are handled separately, as every change would result in a plot update, but we want
         // this to happen when sliding is actually stopped.
         pSlider = $("#percentile").slider({
@@ -150,7 +112,7 @@
             value: [0.05, 0.95],
             tooltip_position: 'bottom'
         }).on('slideStop', updateGeneElements).data('slider');
-        
+        buttons = document.getElementsByClassName('modebar-btn');
     });
     $("#mCHLevelCol :input, #methylationTypeCol :input").change(function() {
         updateGeneElements();
@@ -159,26 +121,49 @@
     $("#gene-search-btn").click(function() {
         updateGeneElements();
     });
-    
+
     //wait for resizing to end, then reset axes.
     var resizeTimer;
     $(window).on('resize', function(e) {
         clearTimeout(resizeTimer);
         resizeTimer = setTimeout(function() {
-            var buttons = document.getElementsByClassName('modebar-btn');
-            for(i = 0; i < buttons.length; i++) {
-                if(buttons[i].getAttribute('data-title') == 'Autoscale'){
-                    buttons[i].click();
-                    console.log("wow");
+            if($("#geneName").select2('data').length > 0){  //if one or more genes have been selected
+                if($('#cluster_plots').hasClass("in")){
+                    try{
+                        buttons[8].click(); //button for autoscaling tsne_cluster
+                        buttons[20].click();  //button for autoscaling mch_cluster
+                    }
+                    catch(err) {
+                        console.log(err);
+                    }
+                }
+                if($('#mch_box').hasClass("in")){
+                    try{
+                        buttons[32].click();  //button for autoscaling mch_box/heatmap
+                    }
+                    catch(err) {
+                        console.log(err);
+                    }
+                }
+            }
+            else{
+                if($('#cluster_plots').hasClass("in")){
+                    try{
+                        buttons[8].click();  //button for autoscaling tsne_cluster
+                    }
+                    catch(err) {
+                        console.log(err);
+                    }
                 }
             }
         }, 250);
     });
-    
-    $('#back-btn').click(function() {
+
+    $('#clear-btn').click(function() {
         geneNameSelector.val(null).trigger("change");
+        $('#gene-search-btn').click();
     });
-    
+
     $("#outlierToggle, #orthologsToggle").change(function() {
         updateMCHBoxPlot();
     });

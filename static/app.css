@@ -3,17 +3,37 @@
     padding: 0;
 }
 
+/* Base Styles
+–––––––––––––––––––––––––––––––––––––––––––––––––– */
+/* NOTE
+html is set to 62.5% so that all the REM measurements throughout Skeleton
+are based on 10px sizing. So basically 1.5rem = 15px :) */
+html {
+    font-size: 62.5%; 
+    color: rgb(50, 50, 50); 
+    height: 100%;
+    width: 100%
+}
+body {
+    font-size: 1.5em; /* currently ems cause chrome bug misinterpreting rems on body element */
+    line-height: 1.6;
+    font-weight: 400;
+    font-family: "Open Sans", "HelveticaNeue", "Helvetica Neue", Helvetica, Arial, sans-serif;
+    /* CNDD website colour */
+    background-color: #F8F9F3 !important; 
+} 
+#outlierOptions {
+    text-align: right;
+    float: left;
+    right: 10%;
+}
 .panel-heading {
     font-size:1.5em;
 }
 .container {
     width:100%;
 }
-#outlierOptions {
-    text-align: right;
-    float: left;
-    right: 10%;
-}
+
 
 .slider {
     width: 80% !important;
@@ -27,12 +47,11 @@
 }
 
 .toggle.btn {
-    min-width: 110px;
+    min-width: 110px !important;
 }
 
-.panel-body .option-panel {
-    background: #DCDCDC;
-}
+
+
 /*from https://github.com/plotly/dash-oil-and-gas-demo */
 /* Table of contents
 ––––––––––––––––––––––––––––––––––––––––––––––––––
@@ -136,28 +155,6 @@
 
 }
 
-
-/* Base Styles
-–––––––––––––––––––––––––––––––––––––––––––––––––– */
-/* NOTE
-html is set to 62.5% so that all the REM measurements throughout Skeleton
-are based on 10px sizing. So basically 1.5rem = 15px :) */
-html {
-  font-size: 62.5%; 
-  color: rgb(50, 50, 50); 
-    height: 100%;
-    width: 100%
-}
-body {
-  font-size: 1.5em; /* currently ems cause chrome bug misinterpreting rems on body element */
-  line-height: 1.6;
-  font-weight: 400;
-  font-family: "Open Sans", "HelveticaNeue", "Helvetica Neue", Helvetica, Arial, sans-serif;
- /* CNDD website colour */
-  background-color: #F8F9F3 !important; 
-    
-    
-} 
 
 
 /* Typography
@@ -308,9 +305,6 @@ legend {
 fieldset {
   padding: 0;
   border-width: 0; }
-input[type="checkbox"],
-input[type="radio"] {
-  display: inline; }
 label > .label-body {
   display: inline-block;
   margin-left: .5rem;

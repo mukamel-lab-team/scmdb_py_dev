@@ -17,14 +17,14 @@ function loadClusterPlots() {
                 }
                 else {
                     save3DData(data["traces_3d"], data["layout3d"]);
-                    $('#toggle-3d').bootstrapToggle('enable');
+                    //$('#toggle-3d').bootstrapToggle('enable');
                 }
             }
             else {
                 save3DData(null, null);
             }
         }
-    });   
+    });
 }
 
 function initGeneNameSearch() {
@@ -56,32 +56,32 @@ function initGeneNameSearch() {
         minimumInputLength: 1
     });
 
-    // Initialise selector
-//    if (typeof(Storage) !== 'undefined') {
-//        var defaultGene = localStorage.getItem('lastViewed');
-//        if (defaultGene == null) {
-//            defaultGene = 'Gad2'; // No entry, set default to Gad2.
-//        }
-//    } else {
-//        // Browser has no localStorage support, we'll just do Gad2.
-//        var defaultGene = 'Gad2';
-//    }
-
-    var defaultGene = 'Gad2';
-
-    $.getJSON({
-        url: './gene/names/' + species + '?q=' + defaultGene,
-        success: function(data) {
-            data.forEach(function(gene) {
-                var option = new Option(gene.geneName, gene.geneID, true, true);
-                geneNameSelector.append(option);
-                $('#epiBrowserLink').attr('href', generateBrowserURL(gene));
-                $('#epiBrowserLink').removeClass('disabled');
-            });
-            updateGeneElements();
-            updateDataTable();
+    //Initialise selector
+    if (typeof(Storage) !== 'undefined') {
+        var defaultGene = localStorage.getItem('lastViewed');
+        if (defaultGene == null) {
+            defaultGene = 'none'; // No entry, set default to no gene,
         }
-    });
+    } else {
+        // Browser has no localStorage support, we'll just do no gene,.
+        var defaultGene = 'none';
+    }
+
+    if(defaultGene != 'none' ||  defaultGene != ''){
+        $.getJSON({
+            url: './gene/names/' + species + '?q=' + defaultGene,
+            success: function(data) {
+                data.forEach(function(gene) {
+                    var option = new Option(gene.geneName, gene.geneID, true, true);
+                    geneNameSelector.append(option);
+                    $('#epiBrowserLink').attr('href', generateBrowserURL(gene));
+                    $('#epiBrowserLink').removeClass('disabled');
+                });
+                updateGeneElements();
+                updateDataTable();
+            }
+        });
+    }
 }
 
 function updateMCHClusterPlot() {
@@ -91,7 +91,7 @@ function updateMCHClusterPlot() {
     var genes = $("#geneName").select2('data');
     var genes_query = "";
     for (i = 0; i < genes.length; i++) {
-        genes_query += (genes[i].text + ":" + genes[i].id + "+");
+        genes_query += (genes[i].id + "+");
     }
     genes_query = genes_query.slice(0,-1);
     if ($('#geneName option:selected').val() != 'Select..') {
@@ -147,8 +147,19 @@ function updateMCHCombinedBoxPlot(mmu_gid, hsa_gid) {
 }
 
 function updateGeneElements() {
+    buttons = document.getElementsByClassName('modebar-btn');
     var geneSelected = $('#geneName option:selected').val();
-    if (geneSelected != 'Select..') {
+    if (geneSelected != 'Select..' && $("#geneName").select2('data').length > 0) {
+        $('#tSNE_cluster_div').addClass("col-md-6");
+        $('#tSNE_cluster_div').removeClass("col-md-8 col-md-offset-2");
+        $('#methyl_scatter_div, #methyl_graphs_div').show();
+        try{
+            buttons[8].click();
+        }
+        catch(err) {
+            console.log(err);
+        }
+
         if (typeof(Storage) !== 'undefined') {
             localStorage.setItem('lastViewed', $('#geneName option:selected').text());
         }
@@ -170,7 +181,12 @@ function updateGeneElements() {
             });
             $('#epiBrowserLink').attr('href', annojURL);
         } catch (e) {}
-
+    }
+    else{
+        $('#methyl_scatter_div, #methyl_graphs_div').hide();
+        $('#tSNE_cluster_div').addClass("col-md-8 col-md-offset-2");
+        $('#tSNE_cluster_div').removeClass("col-md-6");
+        buttons[8].click();
     }
 }
 
@@ -227,7 +243,7 @@ function display3DPlotToggle() {
         $('#loading-3d-plot').html("");
         $('#plot-2d-cluster').hide();
         $('#plot-3d-cluster-div').show();
-        
+
     }
     else {
         Plotly.purge("plot-3d-cluster");
@@ -333,7 +349,7 @@ function createHeatMap() {
     var genes = $("#geneName").select2('data');
     var genes_query = "";
     for (i = 0; i < genes.length; i++) {
-        genes_query += (genes[i].text + ":" + genes[i].id + "+");
+        genes_query += (genes[i].id + "+");
     }
     genes_query = genes_query.slice(0,-1);
     $.ajax({
