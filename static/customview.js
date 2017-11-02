@@ -17,11 +17,12 @@ function loadClusterPlots() {
                 }
                 else {
                     save3DData(data["traces_3d"], data["layout3d"]);
-                    //$('#toggle-3d').bootstrapToggle('enable');
+                    $('#toggle-3d').removeAttr("disabled");
                 }
             }
             else {
                 save3DData(null, null);
+                $('#toggle-3d').attr("disabled", true);
             }
         }
     });
@@ -186,7 +187,8 @@ function updateGeneElements() {
         $('#methyl_scatter_div, #methyl_graphs_div').hide();
         $('#tSNE_cluster_div').addClass("col-md-8 col-md-offset-2");
         $('#tSNE_cluster_div').removeClass("col-md-6");
-        buttons[8].click();
+        try{buttons[8].click();}
+        catch(e) {}
     }
 }
 

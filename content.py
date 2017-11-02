@@ -312,7 +312,8 @@ def get_mult_gene_methylation(species, methylationType, genes):
         outliers (bool): Whether if outliers should be kept.
 
     Returns:
-        DataFrame:
+        Dict: mCH data for each sample. Keys are samp, tsne_x, tsne_y, cluster_label, cluster_ordered,
+         original, normalized.
     """
     if not species_exists(species):
         return []
@@ -362,7 +363,7 @@ def get_gene_methylation(species, methylationType, gene, outliers):
         outliers (bool): Whether if outliers should be kept.
 
     Returns:
-        list: dict with mCH data for each sample. Keys are samp, tsne_x, tsne_y, cluster_label, cluster_ordered,
+        Dict: mCH data for each sample. Keys are samp, tsne_x, tsne_y, cluster_label, cluster_ordered,
          original, normalized.
     """
     if not species_exists(species) or not gene_exists(species, methylationType, gene):
@@ -722,8 +723,6 @@ def get_cluster_plot(species, grouping = 'biosample'):
         return {'traces_2d': traces_2d, 'layout2d': layout2d}
 
 
-
-
 @cache.memoize(timeout=3600)
 def get_methylation_scatter(species, methylationType, query, level, ptile_start, ptile_end):
     """Generate gene body mCH scatter plot.
@@ -861,7 +860,6 @@ def get_methylation_scatter(species, methylationType, query, level, ptile_start,
             # 'range': [-20,20]
         },
         hovermode='closest')
-
 
     # Available colorscales:
     # https://community.plot.ly/t/what-colorscales-are-available-in-plotly-and-which-are-the-default/2079
@@ -1114,15 +1112,6 @@ def mean_cluster_mch(gene_info, level):
 
 
 @cache.memoize(timeout=3600)
-def mean_cell_mch(genes, level):
-    """Calculates average mch level of a gene for each individual cell.
-
-        Arguments:
-            gene_info(list):
-    """
-
-
-@cache.memoize(timeout=3600)
 def get_mch_box(species, methylationType, gene, level, outliers):
     """Generate gene body mCH box plot.
 
@@ -1276,8 +1265,7 @@ def get_mch_box_two_species(species, methylationType, gene_mmu, gene_hsa, level,
         y=list(i.get(level) for i in points_mmu if i.get('cluster_ortholog')),
         x=list(i.get('cluster_ortholog') for i in points_mmu if i.get('cluster_ortholog')),
         marker={'color': 'red', 'outliercolor': 'red'},
-        boxpoints='suspectedoutliers',
-        hoverinfo='text')
+        boxpoints='suspectedoutliers')
     traces_hsa = Box(
         y=list(i.get(level) for i in points_hsa if i.get('cluster_ortholog')),
         x=list(i.get('cluster_ortholog') for i in points_hsa if i.get('cluster_ortholog')),
