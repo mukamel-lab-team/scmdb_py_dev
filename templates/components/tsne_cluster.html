@@ -1,25 +1,29 @@
 <div class="panel-collapse collapse cluster_options_group" id="tsne_plots_options">
     <div class="panel-body option-panel" style="padding-top:0px; padding-bottom: 0px;">
-        <div class="row">
-            <div class="col-sm-4" id="tsneGrouping" style="display:inline-block;">
-                Group cells: <select id="tsne_grouping" name="grouping">
-                    <option value="cluster_ordered">by cluster</option>
-                    <option value="biosample">by biosample</option>
-                    <option value="layer">by dissection layer</option>
-                    <option value="cluster_biosample">by cluster+biosample</option>
-                </select>
+        <div class="container-fluid">
+            <div class="row-fluid">
+                <div class="span4 offset4 text-center">
+                <div id="tsneGrouping" class="col-sm-5" style="display:inline-block; padding:0px;">
+                    Group cells: <select id="tsne_grouping" name="grouping">
+                        <option value="cluster_ordered">by cluster</option>
+                        <option value="biosample" selected>by biosample</option>
+                        <option value="layer">by dissection layer</option>
+                        <option value="cluster_biosample">by cluster+biosample</option>
+                    </select>
+                </div>
+                <div id="toggle-3d-cluster-div" class="col-sm-3" style="display:inline-block; padding:0px;">
+                    <input id="toggle-3d" name="3d-checkbox" value="show3d" type="checkbox">
+                    <label for="toggle-3d">Display 3D Plot</label>
+                </div>
+                <div class="col-sm-4" style="display: inline-block; padding:0px;">
+                    <button type="button" class="btn btn-info btn-xs" id="randomizeColorBtn">Randomize Color</button>
+                </div>
             </div>
-            <div class="col-sm-4" id="toggle-3d-cluster-div" style="display:inline-block;">
-                <input id="toggle-3d" name="3d-checkbox" value="show3d" type="checkbox">
-                <label for="toggle-3d">Display 3D Plot</label>
-            </div>
-            <div class="col-sm-4" style="display: inline-block;">
-                <button type="button" class="btn btn-primary btn-sm" id="randomizeColorBtn">Randomize Color</button>
             </div>
         </div>
     </div>
 </div>
-<div class="panel-body">
+<div class="panel-body" style="padding-top:0px;">
 	<div id="loading_2dtsne">Loading..</div>
 	<div id="plot-2d-cluster"></div>
 	<div id="plot-3d-cluster-div">

@@ -8,7 +8,8 @@ from flask_nav.elements import Navbar, Link
 from .content import get_cluster_plot, search_gene_names, \
     get_methylation_scatter, get_mch_box, get_mch_box_two_species, \
     find_orthologs, FailToGraphException, get_corr_genes, \
-    gene_id_to_name, randomize_cluster_colors, get_mch_heatmap
+    gene_id_to_name, randomize_cluster_colors, get_mch_heatmap, all_gene_modules, \
+    get_genes_of_module
 from .nav import nav
 from .cache import cache
 from os import walk
@@ -127,6 +128,15 @@ def search_gene_by_id(species):
     else:
         return jsonify(gene_id_to_name(species, query))
 
+
+@cache.cached(timeout=3600)
+@frontend.route('/gene/modules')
+def gene_modules():
+    query = request.args.get('q')
+    if query == None or query == '':
+        return jsonify(all_gene_modules())
+    else:
+        return jsonify(get_genes_of_module(query))
 
 @frontend.route('/gene/orthologs/<species>/<geneID>')
 def orthologs(species, geneID):

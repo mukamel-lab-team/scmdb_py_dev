@@ -6,6 +6,7 @@ import glob
 import sqlite3
 from collections import OrderedDict
 import time
+from itertools import groupby
 
 import pandas
 import plotly
@@ -172,6 +173,41 @@ def find_orthologs(mmu_gid=str(), hsa_gid=str()):
 
 
 @cache.memoize(timeout=3600)
+def all_gene_modules():
+    """Generate list of gene modules for populating gene modules selector.
+    Arguments:
+        None
+    Returns:
+        list of dicts with geneName and geneID of each gene, grouped by module. 
+    """
+    try:
+        filename = glob.glob('{}/gene_modules.csv'.format(current_app.config[
+            'DATA_DIR']))[0]
+    except IndexError:
+        return []
+    
+    df = pandas.read_csv(filename, delimiter="\t").to_dict('records')
+    modules = []
+    for key, value in groupby(df, key = lambda gene: gene['group']):
+        modules.append({'module': key, 'genes': list(value)})
+    
+    return modules
+
+
+@cache.memoize(timeout=3600)
+def get_genes_of_module(module):
+    try:
+        filename = glob.glob('{}/gene_modules.csv'.format(current_app.config[
+            'DATA_DIR']))[0]
+    except IndexError:
+        return []
+
+    df = pandas.read_csv(filename, delimiter = "\t")
+    df = df[df['group'] == module].to_dict('records')
+    return df
+
+    
+@cache.memoize(timeout=3600)
 def get_cluster_points(species):
     """Generate points for the tSNE cluster.
     Arguments:
@@ -312,8 +348,7 @@ def get_mult_gene_methylation(species, methylationType, genes):
         outliers (bool): Whether if outliers should be kept.
 
     Returns:
-        Dict: mCH data for each sample. Keys are samp, tsne_x, tsne_y, cluster_label, cluster_ordered,
-         original, normalized.
+        DataFrame:
     """
     if not species_exists(species):
         return []
@@ -363,7 +398,7 @@ def get_gene_methylation(species, methylationType, gene, outliers):
         outliers (bool): Whether if outliers should be kept.
 
     Returns:
-        Dict: mCH data for each sample. Keys are samp, tsne_x, tsne_y, cluster_label, cluster_ordered,
+        list: dict with mCH data for each sample. Keys are samp, tsne_x, tsne_y, cluster_label, cluster_ordered,
          original, normalized.
     """
     if not species_exists(species) or not gene_exists(species, methylationType, gene):
@@ -553,7 +588,7 @@ def get_cluster_plot(species, grouping = 'biosample'):
                 'Cell': point.get('samp', 'N/A'),
                 'Layer': point.get('layer', 'N/A'),
                 'Biosample': point.get('biosample', 'N/A'),
-                'Cluster': str(cluster_num)
+                'Cluster': point.get('cluster_name', 'N/A')
             })
         )
 
@@ -671,7 +706,7 @@ def get_cluster_plot(species, grouping = 'biosample'):
                     'Cell': point.get('samp', 'N/A'),
                     'Layer': point.get('layer', 'N/A'),
                     'Biosample': point.get('biosample', 'N/A'),
-                    'Cluster': str(cluster_num)
+                    'Cluster': point.get('cluster_name', 'N/A')
                 })
             )
             trace3d = traces_3d.setdefault(cluster_sample_num,
@@ -721,6 +756,8 @@ def get_cluster_plot(species, grouping = 'biosample'):
                 traces_2d[i]['marker']['color'] = 'black'
                 traces_2d[i]['visible'] = "legendonly"
         return {'traces_2d': traces_2d, 'layout2d': layout2d}
+
+
 
 
 @cache.memoize(timeout=3600)
@@ -806,7 +843,7 @@ def get_methylation_scatter(species, methylationType, query, level, ptile_start,
                 'x': 1.05,
                 'len': 0.5,
                 'thickness': 20,
-                'title': level.capitalize() + ' mCH',
+                'title': level.capitalize() + ' ' + titleMType,
                 'titleside': 'right',
                 'tickmode': 'array',
                 'tickvals': colorbar_tickval,
@@ -860,6 +897,7 @@ def get_methylation_scatter(species, methylationType, query, level, ptile_start,
             # 'range': [-20,20]
         },
         hovermode='closest')
+
 
     # Available colorscales:
     # https://community.plot.ly/t/what-colorscales-are-available-in-plotly-and-which-are-the-default/2079
@@ -1112,6 +1150,15 @@ def mean_cluster_mch(gene_info, level):
 
 
 @cache.memoize(timeout=3600)
+def mean_cell_mch(genes, level):
+    """Calculates average mch level of a gene for each individual cell.
+
+        Arguments:
+            gene_info(list):
+    """
+
+
+@cache.memoize(timeout=3600)
 def get_mch_box(species, methylationType, gene, level, outliers):
     """Generate gene body mCH box plot.
 
@@ -1265,7 +1312,8 @@ def get_mch_box_two_species(species, methylationType, gene_mmu, gene_hsa, level,
         y=list(i.get(level) for i in points_mmu if i.get('cluster_ortholog')),
         x=list(i.get('cluster_ortholog') for i in points_mmu if i.get('cluster_ortholog')),
         marker={'color': 'red', 'outliercolor': 'red'},
-        boxpoints='suspectedoutliers')
+        boxpoints='suspectedoutliers',
+        hoverinfo='text')
     traces_hsa = Box(
         y=list(i.get(level) for i in points_hsa if i.get('cluster_ortholog')),
         x=list(i.get('cluster_ortholog') for i in points_hsa if i.get('cluster_ortholog')),

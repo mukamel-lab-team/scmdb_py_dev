@@ -85,6 +85,37 @@ function initGeneNameSearch() {
     }
 }
 
+function initGeneModules() {
+     geneModuleSelector = $('#geneModulesSelect').select2({
+        placeholder: 'Select..',
+        allowClear: true,
+		minimumResultsForSearch: Infinity
+    });
+
+	$.getJSON({
+		url: './gene/modules',
+		success: function(data){
+			data.forEach(function(gene) {
+				var option = new Option(gene.module, gene.module, false, false)
+				geneModuleSelector.append(option);
+			});
+		}
+	});
+}
+
+function updateSearchWithModules(module) {
+	$.getJSON({
+		url: './gene/modules?q=' + module.id,
+		success: function (data) {
+			data.forEach(function(gene) {
+				var option = new Option(gene.geneName, gene.geneID, true, true);
+				geneNameSelector.append(option);
+			});
+		}
+	});
+	
+}
+
 function updateMCHClusterPlot() {
     var levelType = $('input[name=levels]').filter(':checked').val();
     var methylationType = $('input[name=mType]').filter(':checked').val();
@@ -245,7 +276,6 @@ function display3DPlotToggle() {
         $('#loading-3d-plot').html("");
         $('#plot-2d-cluster').hide();
         $('#plot-3d-cluster-div').show();
-
     }
     else {
         Plotly.purge("plot-3d-cluster");

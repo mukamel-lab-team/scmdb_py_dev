@@ -95,11 +95,11 @@
         $('#outlierToggle').bootstrapToggle();
         $('#orthologsToggle').bootstrapToggle();
         $('#orthologsToggle').bootstrapToggle('disable');
-        $('#toggle-3d').attr("disable", true);
 
         loadClusterPlots();
         randomizeClusterColors();
         initGeneNameSearch();
+        initGeneModules();
         $('#geneTable').DataTable();
         initDataTableClick();
 
@@ -114,7 +114,8 @@
         }).on('slideStop', updateGeneElements).data('slider');
         buttons = document.getElementsByClassName('modebar-btn');
     });
-    $("#mCHLevelCol :input, #methylationTypeCol :input").change(function() {
+
+    $("#methylationLevelDiv :input, #methylationTypeDiv :input").change(function() {
         updateGeneElements();
     });
 
@@ -158,6 +159,12 @@
             }
         }, 250);
     });
+
+	$('#geneModulesSelect').on('select2:select', function(e) {
+		geneNameSelector.val(null).trigger("change");
+		var data = e.params.data;
+		updateSearchWithModules(data);
+	});
 
     $('#clear-btn').click(function() {
         geneNameSelector.val(null).trigger("change");
