@@ -1012,8 +1012,8 @@ def get_mch_heatmap(species, methylationType, level, ptile_start, ptile_end, que
         j = 0
         y.append(key)
         mch.append(list(gene_info[key].values()))
-        for cluster_label in list(gene_info[key].keys()):
-            x.append(cluster_label)
+        for cluster in list(gene_info[key].keys()):
+            x.append(cluster)
             text.append(build_hover_text({
                 'Gene': key,
                 'Cluster': x[j],
@@ -1033,7 +1033,7 @@ def get_mch_heatmap(species, methylationType, level, ptile_start, ptile_end, que
         colorbar={
             'x': 1.0,
             'len': 1,
-            'title': level.capitalize() + ' ' + methylationType,
+            'title': level.capitalize() + ' ' + titleMType,
             'titleside': 'right',
             'tickmode': 'array',
             'thickness': 20

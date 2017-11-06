@@ -160,13 +160,14 @@
         }, 250);
     });
 
-	$('#geneModulesSelect').on('select2:select', function(e) {
-		geneNameSelector.val(null).trigger("change");
-		var data = e.params.data;
-		updateSearchWithModules(data);
-	});
+    $('#geneModulesSelect').on('select2:select', function(e) {
+        geneNameSelector.val(null).trigger("change");
+        var data = e.params.data;
+        updateSearchWithModules(data);
+    });
 
     $('#clear-btn').click(function() {
+        geneModuleSelector.val(null).trigger("change");
         geneNameSelector.val(null).trigger("change");
         $('#gene-search-btn').click();
     });
