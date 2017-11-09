@@ -6,7 +6,7 @@ import glob
 import sqlite3
 from collections import OrderedDict
 import time
-from itertools import groupby
+from itertools import groupby, chain
 
 import pandas
 import plotly
@@ -1026,6 +1026,20 @@ def get_mch_heatmap(species, methylationType, level, ptile_start, ptile_end, que
         text = []
         i += 1
 
+    flat_mch = list(chain.from_iterable(mch))
+    mch_dataframe = pandas.DataFrame(flat_mch).dropna()
+    start = mch_dataframe.quantile(0.05)[0].tolist()
+    end = mch_dataframe.quantile(0.95).values[0].tolist()
+
+    colorbar_tickval = list(arange(start, end, (end - start) / 4))
+    colorbar_tickval[0] = start
+    colorbar_tickval.append(end)
+    colorbar_ticktext = [
+        str(round(x, 3)) for x in arange(start, end, (end - start) / 4)
+    ]
+    colorbar_ticktext[0] = '<' + str(round(start, 3))
+    colorbar_ticktext.append('>' + str(round(end, 3)))
+
     trace = Heatmap(
         x=x,
         y=y,
@@ -1038,6 +1052,8 @@ def get_mch_heatmap(species, methylationType, level, ptile_start, ptile_end, que
             'title': level.capitalize() + ' ' + titleMType,
             'titleside': 'right',
             'tickmode': 'array',
+            'tickvals': colorbar_tickval,
+            'ticktext': colorbar_ticktext,
             'thickness': 10,
             'tickfont': {'size': 10}
         },
