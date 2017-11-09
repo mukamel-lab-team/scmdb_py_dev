@@ -43,7 +43,7 @@ def species_exists(species):
     return os.path.isdir(
         '{}/{}'.format(current_app.config['DATA_DIR'], species))
 
-    
+
 @cache.memoize(timeout=50)
 def gene_exists(species, methylationType, gene):
     """Check if data for a given gene of species exists by looking for its data directory.
@@ -180,19 +180,19 @@ def all_gene_modules():
     Arguments:
         None
     Returns:
-        list of dicts with geneName and geneID of each gene, grouped by module. 
+        list of dicts with geneName and geneID of each gene, grouped by module.
     """
     try:
         filename = glob.glob('{}/gene_modules.csv'.format(current_app.config[
             'DATA_DIR']))[0]
     except IndexError:
         return []
-    
+
     df = pandas.read_csv(filename, delimiter="\t").to_dict('records')
     modules = []
     for key, value in groupby(df, key = lambda gene: gene['group']):
         modules.append({'module': key, 'genes': list(value)})
-    
+
     return modules
 
 
@@ -208,7 +208,7 @@ def get_genes_of_module(module):
     df = df[df['group'] == module].to_dict('records')
     return df
 
-    
+
 @cache.memoize(timeout=3600)
 def get_cluster_points(species):
     """Generate points for the tSNE cluster.
@@ -1149,8 +1149,7 @@ def mean_cluster_mch(gene_info, level):
             dict: Cluster_label (key) : mean mCH level (value).
     """
     df = pandas.DataFrame(gene_info)
-    return df.groupby('cluster_name')[level].mean().to_dict()
-
+    return df.sort_values('cluster_ordered').groupby('cluster_name',sort=False)[level].mean().to_dict(OrderedDict)
 
 @cache.memoize(timeout=3600)
 def get_mch_box(species, methylationType, gene, level, outliers):
