@@ -16,11 +16,12 @@ from .json import MiniJSONEncoder
 
 def create_app(configfile=None):
     app = Flask(__name__)
-        
+    app.config['MINIFY_PAGE'] = True
+    
     AppConfig(app)
     Bootstrap(app)
     # EAM : Set limit on the number of items in cache (RAM)
-    cache.init_app(app, config={'CACHE_TYPE': 'simple', 'CACHE_THRESHOLD': 1000})
+    cache.init_app(app)
 
     with app.app_context():
         from .frontend import frontend

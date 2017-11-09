@@ -60,12 +60,12 @@ function initGeneNameSearch() {
     //Initialise selector
     if (typeof(Storage) !== 'undefined') {
         var defaultGene = localStorage.getItem('lastViewed');
-        if (defaultGene == null) {
-            defaultGene = 'none'; // No entry, set default to no gene,
+        if (defaultGene === null) {
+            defaultGene = 'Gad2'; // No entry, set default to Gad2,
         }
     } else {
-        // Browser has no localStorage support, we'll just do no gene,.
-        var defaultGene = 'none';
+        // Browser has no localStorage support, we'll just do Gad2.
+        var defaultGene = 'Gad2';
     }
 
     if(defaultGene != 'none' ||  defaultGene != ''){
@@ -191,6 +191,7 @@ function updateGeneElements() {
         catch(err) {
             console.log(err);
         }
+        console.log($('#geneName option:selected').text());
 
         if (typeof(Storage) !== 'undefined') {
             localStorage.setItem('lastViewed', $('#geneName option:selected').text());
@@ -200,6 +201,8 @@ function updateGeneElements() {
             createHeatMap();
         }
         else{
+            $('#outlierToggle').bootstrapToggle('enable');
+            $('#orthologsToggle').bootstrapToggle('enable');
             updateOrthologToggle();
             updateMCHBoxPlot();
             updateDataTable();
@@ -207,7 +210,7 @@ function updateGeneElements() {
         try {
             var annojURL;
             geneSearchCache.forEach(function(gene) {
-                if (gene.geneID == geneSelected) {
+                if (gene.geneID === geneSelected) {
                     annojURL = generateBrowserURL(gene);
                 }
             });
@@ -224,13 +227,13 @@ function updateGeneElements() {
 }
 
 function generateBrowserURL(gene) {
-    if (species == 'mmu') {
+    if (species === 'mmu') {
         var base = 'http://brainome.ucsd.edu/annoj/CEMBA/index_mm.html'; // Mouse
     } else {
         var base = 'http://brainome.ucsd.edu/annoj/sc_wgbs/index_hs.html'; // Human
     }
 
-    if (gene.strand == '+') {
+    if (gene.strand === '+') {
         var position = gene.start;
     } else {
         var position = gene.end;
@@ -244,7 +247,7 @@ function updateOrthologToggle() {
         type: "GET",
         url: './gene/orthologs/' + species + '/' + geneSelected,
         success: function(data) {
-            if (data.mmu_gID == null || data.hsa_gID == null) {
+            if (data.mmu_gID === null || data.hsa_gID === null) {
                 $('#orthologsToggle').bootstrapToggle('off');
                 $('#orthologsToggle').bootstrapToggle('disable');
             } else {
@@ -268,7 +271,7 @@ function display3DPlotToggle() {
     if ($('#toggle-3d').prop('checked')){
         $('#loading-3d-plot').html("loading..");
         Plotly.newPlot("plot-3d-cluster", Object.values(trace_3d), layout_3d);
-        if($('#tsneGrouping option:selected').val() == 'biosample'){
+        if($('#tsneGrouping option:selected').val() === 'biosample'){
             for(i = 0; i < groups_3d.length; i++){
                 Plotly.restyle("plot-3d-cluster", updates_3d[i], groups_3d[i]);
             }
@@ -333,7 +336,7 @@ function updateDataTable() {
 }
 
 function storeUpdate(update, group, empty=false) {
-    if (empty == false){
+    if (empty === false){
         updates_3d.push(update);
         groups_3d.push(group);
     }
@@ -346,7 +349,7 @@ function storeUpdate(update, group, empty=false) {
 function randomizeClusterColors() {
     $('#randomizeColorBtn').click(function() {
         var grouping = $('#tsneGrouping option:selected').val();
-        if (grouping == 'biosample'){
+        if (grouping === 'biosample'){
             storeUpdate(empty=true);
             $.ajax({
                 type: "GET",
@@ -369,6 +372,7 @@ function randomizeClusterColors() {
             });
         }
         else {
+            $.get("/plot/delete_cache/" + species + "/" + grouping);
             loadClusterPlots();
         }
     });
@@ -389,6 +393,8 @@ function createHeatMap() {
         url: './plot/heat/' + species + '/' + methylationType + '/' + levelType + '/' + pValues[0] + '/' + pValues[1] + '?q=' + genes_query,
         success: function(data) {
             $('#plot-mch-box').html(data);
+            $('#outlierToggle').bootstrapToggle('disable');
+            $('#orthologsToggle').bootstrapToggle('disable');
         }
     });
 }

@@ -56,8 +56,8 @@ def box_combined(mmu_gid, hsa_gid):
 
 
 # API routes
-@cache.cached(timeout=3600)
 @frontend.route('/plot/cluster/<species>/<grouping>')
+@cache.memoize(timeout=3600)
 def plot_cluster(species, grouping):
     try:
         return jsonify(get_cluster_plot(species, grouping))
@@ -65,7 +65,6 @@ def plot_cluster(species, grouping):
         return 'Failed to produce cluster plot. Contact maintainer.'
 
 
-@cache.cached(timeout=3600)
 @frontend.route('/plot/scatter/<species>/<methylationType>/<level>/<ptile_start>/<ptile_end>')
 def plot_methylation_scatter(species, methylationType, level, ptile_start, ptile_end):
     genes = request.args.get('q', 'MustHaveAQueryString')
@@ -79,8 +78,8 @@ def plot_methylation_scatter(species, methylationType, level, ptile_start, ptile
         return 'Failed to produce mCH levels scatter plot. Contact maintainer.'
 
 
-@cache.cached(timeout=3600)
 @frontend.route('/plot/box/<species>/<methylationType>/<gene>/<level>/<outliers_toggle>')
+@cache.memoize(timeout=3600)
 def plot_mch_box(species, methylationType, gene, level, outliers_toggle):
     if outliers_toggle == 'outliers':
         outliers = True
@@ -94,7 +93,6 @@ def plot_mch_box(species, methylationType, gene, level, outliers_toggle):
         return 'Failed to produce mCH levels box plot. Contact maintainer.'
 
 
-@cache.cached(timeout=3600)
 @frontend.route('/plot/box_combined/<species>/<methylationType>/<gene_mmu>/<gene_hsa>/<level>/<outliers_toggle>')
 def plot_mch_box_two_species(species, methylationType, gene_mmu, gene_hsa, level, outliers_toggle):
     if outliers_toggle == 'outliers':
@@ -109,7 +107,6 @@ def plot_mch_box_two_species(species, methylationType, gene_mmu, gene_hsa, level
         return 'Failed to produce mCH levels box plot. Contact maintainer.'
 
 
-@cache.cached(timeout=3600)
 @frontend.route('/gene/names/<species>')
 def search_gene_by_name(species):
     query = request.args.get('q', 'MustHaveAQueryString')
@@ -119,7 +116,6 @@ def search_gene_by_name(species):
         return jsonify(search_gene_names(species, query))
 
 
-@cache.cached(timeout=3600)
 @frontend.route('/gene/id/<species>')
 def search_gene_by_id(species):
     query = request.args.get('q', 'MustHaveAQueryString')
@@ -129,7 +125,6 @@ def search_gene_by_id(species):
         return jsonify(gene_id_to_name(species, query))
 
 
-@cache.cached(timeout=3600)
 @frontend.route('/gene/modules')
 def gene_modules():
     query = request.args.get('q')
@@ -137,6 +132,7 @@ def gene_modules():
         return jsonify(all_gene_modules())
     else:
         return jsonify(get_genes_of_module(query))
+
 
 @frontend.route('/gene/orthologs/<species>/<geneID>')
 def orthologs(species, geneID):
@@ -147,6 +143,7 @@ def orthologs(species, geneID):
         return jsonify(find_orthologs(hsa_gid=geneID))
 
 
+@cache.memoize(timeout=3600)
 @frontend.route('/gene/corr/<species>/<geneID>')
 def correlated_genes(species, geneID):
     return jsonify(get_corr_genes(species, geneID))
@@ -155,6 +152,12 @@ def correlated_genes(species, geneID):
 @frontend.route('/plot/randomize_colors')
 def randomize_colors():
     return jsonify(randomize_cluster_colors())
+
+
+@frontend.route('/plot/delete_cache/<species>/<grouping>')
+def delete_cluster_cache(species, grouping):
+    cache.delete_memoized(plot_cluster, species, grouping)
+    return
 
 
 @frontend.route('/plot/heat/<species>/<methylationType>/<level>/<ptile_start>/<ptile_end>')

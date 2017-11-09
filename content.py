@@ -30,6 +30,7 @@ class FailToGraphException(Exception):
 
 
 # Utilities
+@cache.memoize(timeout=50)
 def species_exists(species):
     """Check if data for a given species exists by looking for its data directory.
 
@@ -42,7 +43,8 @@ def species_exists(species):
     return os.path.isdir(
         '{}/{}'.format(current_app.config['DATA_DIR'], species))
 
-
+    
+@cache.memoize(timeout=50)
 def gene_exists(species, methylationType, gene):
     """Check if data for a given gene of species exists by looking for its data directory.
 
@@ -172,7 +174,7 @@ def find_orthologs(mmu_gid=str(), hsa_gid=str()):
         return dict(query_results)
 
 
-@cache.memoize(timeout=3600)
+@cache.cached(timeout=3600)
 def all_gene_modules():
     """Generate list of gene modules for populating gene modules selector.
     Arguments:
@@ -194,7 +196,7 @@ def all_gene_modules():
     return modules
 
 
-@cache.memoize(timeout=3600)
+@cache.memoize(timeout=1800)
 def get_genes_of_module(module):
     try:
         filename = glob.glob('{}/gene_modules.csv'.format(current_app.config[
@@ -227,6 +229,8 @@ def get_cluster_points(species):
     except IOError:
         return None
 
+
+@cache.memoize(timeout=3600)
 def is_3D_data_exists(species):
     """Determines whether 3D tSNE data for a species exists.
     Arguments:
@@ -238,6 +242,7 @@ def is_3D_data_exists(species):
         '{}/{}/tsne_points_ordered_3D.csv'.format(current_app.config['DATA_DIR'], species))
     print(well)
     return well
+
 
 @cache.memoize(timeout=3600)
 def get_3D_cluster_points(species):
@@ -254,6 +259,7 @@ def get_3D_cluster_points(species):
                                                      species)) as fp:
         return list(
             csv.DictReader(fp, dialect='excel-tab'))
+
 
 @cache.memoize(timeout=3600)
 def search_gene_names(species, query):
@@ -304,7 +310,6 @@ def gene_id_to_name(species, query):
     return dict(query_results)
 
 
-@cache.memoize(timeout=3600)
 def get_corr_genes(species,query):
     """Get correlated genes of a certain gene of a species.
 
@@ -335,7 +340,6 @@ def get_corr_genes(species,query):
         return(1)
 
 
-@cache.memoize(timeout=3600)
 def get_mult_gene_methylation(species, methylationType, genes):
     """Return averaged methylation data ponts for a set of genes.
 
@@ -440,7 +444,7 @@ def get_gene_methylation(species, methylationType, gene, outliers):
         by='cluster_ordered', ascending=True).to_dict('records')
 
 
-@cache.memoize(timeout=3600)
+@cache.cached(timeout=3600)
 def get_ortholog_cluster_order():
     """Order cluster mm_hs_homologous_cluster.txt.
 
@@ -469,8 +473,7 @@ def get_ortholog_cluster_order():
     return clusters
 
 
-# Plot generating
-def get_cluster_plot(species, grouping = 'biosample'):
+def get_cluster_plot(species, grouping):
     """Generate tSNE cluster plot.
     Arguments:
         species (str): Name of species.
@@ -758,9 +761,7 @@ def get_cluster_plot(species, grouping = 'biosample'):
         return {'traces_2d': traces_2d, 'layout2d': layout2d}
 
 
-
-
-@cache.memoize(timeout=3600)
+@cache.memoize(timeout=1800)
 def get_methylation_scatter(species, methylationType, query, level, ptile_start, ptile_end):
     """Generate gene body mCH scatter plot.
 
@@ -842,12 +843,13 @@ def get_methylation_scatter(species, methylationType, query, level, ptile_start,
             'colorbar': {
                 'x': 1.05,
                 'len': 0.5,
-                'thickness': 20,
+                'thickness': 10,
                 'title': level.capitalize() + ' ' + titleMType,
                 'titleside': 'right',
                 'tickmode': 'array',
                 'tickvals': colorbar_tickval,
-                'ticktext': colorbar_ticktext
+                'ticktext': colorbar_ticktext,
+                'tickfont': {'size': 10}
             }
         },
         hoverinfo='text')
@@ -1036,7 +1038,8 @@ def get_mch_heatmap(species, methylationType, level, ptile_start, ptile_end, que
             'title': level.capitalize() + ' ' + titleMType,
             'titleside': 'right',
             'tickmode': 'array',
-            'thickness': 20
+            'thickness': 10,
+            'tickfont': {'size': 10}
         },
         hoverinfo='text'
 
@@ -1147,15 +1150,6 @@ def mean_cluster_mch(gene_info, level):
     """
     df = pandas.DataFrame(gene_info)
     return df.groupby('cluster_name')[level].mean().to_dict()
-
-
-@cache.memoize(timeout=3600)
-def mean_cell_mch(genes, level):
-    """Calculates average mch level of a gene for each individual cell.
-
-        Arguments:
-            gene_info(list):
-    """
 
 
 @cache.memoize(timeout=3600)
@@ -1453,11 +1447,12 @@ def randomize_cluster_colors():
             'cluster_color_#' = indexes of traces to be assigned the new color
 
     """
+    cache.delete_memoized(generate_cluster_colors)
     try:
         new_colors = {'colors': generate_cluster_colors(num_colors)}
         new_colors['num_colors'] = num_colors-1
         new_colors.update(trace_colors)
         return new_colors
     except NameError:
-        time.sleep(5)
+        time.sleep(2)
         randomize_cluster_colors()
