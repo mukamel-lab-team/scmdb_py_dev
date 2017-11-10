@@ -59,7 +59,7 @@ function initGeneNameSearch() {
 
     //Initialise selector
     if (typeof(Storage) !== 'undefined') {
-        var defaultGene = JSON.parse(localStorage.getItem('lastViewed'));
+        var defaultGene = JSON.parse(localStorage.getItem('lastViewedGenes'));
         if (defaultGene === null) {
             // No entry, set default to Gad2,
             defaultGene = [{geneName: 'Gad2', geneID: "ENSG00000136750.7"}];
@@ -197,7 +197,7 @@ function updateGeneElements() {
             lastViewedGenes.push({geneName: $('#geneName option:selected')[i].text, geneID: $('#geneName option:selected')[i].value});
         }
         if (typeof(Storage) !== 'undefined') {
-            localStorage.setItem('lastViewed', JSON.stringify(lastViewedGenes));
+            localStorage.setItem('lastViewedGenes', JSON.stringify(lastViewedGenes));
         }
         updateMCHClusterPlot();
         if($("#geneName").select2('data').length > 1) {
