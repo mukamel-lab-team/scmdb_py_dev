@@ -59,29 +59,31 @@ function initGeneNameSearch() {
 
     //Initialise selector
     if (typeof(Storage) !== 'undefined') {
-        var defaultGene = localStorage.getItem('lastViewed');
+        var defaultGene = JSON.parse(localStorage.getItem('lastViewed'));
         if (defaultGene === null) {
-            defaultGene = 'Gad2'; // No entry, set default to Gad2,
+            // No entry, set default to Gad2,
+            defaultGene = [{geneName: 'Gad2', geneID: "ENSG00000136750.7"}];
         }
     } else {
         // Browser has no localStorage support, we'll just do Gad2.
-        var defaultGene = 'Gad2';
+        var defaultGene = [{geneName: 'Gad2', geneID: "ENSG00000136750.7"}];
     }
 
     if(defaultGene != 'none' ||  defaultGene != ''){
-        $.getJSON({
-            url: './gene/names/' + species + '?q=' + defaultGene,
-            success: function(data) {
-                data.forEach(function(gene) {
-                    var option = new Option(gene.geneName, gene.geneID, true, true);
-                    geneNameSelector.append(option);
-                    $('#epiBrowserLink').attr('href', generateBrowserURL(gene));
+        for (i = 0; i < defaultGene.length; i++) {
+            var option = new Option(defaultGene[i].geneName, defaultGene[i].geneID, true, true);
+            geneNameSelector.append(option);
+        }
+        if (defaultGene.length === 1) {
+            $.getJSON({
+                url: './gene/id/' + species + '?q=' + defaultGene[0].geneID,
+                success: function(data){
+                    $('#epiBrowserLink').attr('href', generateBrowserURL(data));
                     $('#epiBrowserLink').removeClass('disabled');
-                });
-                updateGeneElements();
-                updateDataTable();
-            }
-        });
+                }
+            });
+        }
+        updateGeneElements();
     }
 }
 
@@ -113,7 +115,6 @@ function updateSearchWithModules(module) {
 			});
 		}
 	});
-	
 }
 
 function updateMCHClusterPlot() {
@@ -158,7 +159,6 @@ function updateMCHBoxPlot() {
             $('#plot-mch-box').html(data);
         }
     });
-
 }
 
 function updateMCHCombinedBoxPlot(mmu_gid, hsa_gid) {
@@ -191,21 +191,25 @@ function updateGeneElements() {
         catch(err) {
             console.log(err);
         }
-        console.log($('#geneName option:selected').text());
 
+        var lastViewedGenes = [];
+        for(i=0; i<$('#geneName').select2('data').length; i++){
+            lastViewedGenes.push({geneName: $('#geneName option:selected')[i].text, geneID: $('#geneName option:selected')[i].value});
+        }
         if (typeof(Storage) !== 'undefined') {
-            localStorage.setItem('lastViewed', $('#geneName option:selected').text());
+            localStorage.setItem('lastViewed', JSON.stringify(lastViewedGenes));
         }
         updateMCHClusterPlot();
         if($("#geneName").select2('data').length > 1) {
             createHeatMap();
+            updateDataTable("Select..");
         }
         else{
             $('#outlierToggle').bootstrapToggle('enable');
             $('#orthologsToggle').bootstrapToggle('enable');
             updateOrthologToggle();
             updateMCHBoxPlot();
-            updateDataTable();
+            updateDataTable($('#geneName option:selected').val());
         }
         try {
             var annojURL;
@@ -309,10 +313,9 @@ function initDataTableClick() {
     });
 }
 
-function updateDataTable() {
-    var geneSelected = $('#geneName option:selected').val();
-    if (geneSelected != 'Select..') {
-        var table = $('#geneTable').DataTable( {
+function updateDataTable(geneSelected) {
+    if (geneSelected !== 'Select..' || geneSelected !== "") {
+        table = $('#geneTable').DataTable( {
             "destroy": true,
             "ordering": false,
             "lengthChange": false,
@@ -332,6 +335,9 @@ function updateDataTable() {
                 { "data": "Corr" },
             ],
         });
+    }
+    else {
+        table.clear();
     }
 }
 

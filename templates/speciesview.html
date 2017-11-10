@@ -89,19 +89,13 @@
     var hsa_gID;
     var grouping;
     var buttons;
+    var table;
 
     $(document).ready(function() {
         $('[data-toggle="popover"]').popover();
         $('#outlierToggle').bootstrapToggle();
         $('#orthologsToggle').bootstrapToggle();
         $('#orthologsToggle').bootstrapToggle('disable');
-
-        loadClusterPlots();
-        randomizeClusterColors();
-        initGeneNameSearch();
-        initGeneModules();
-        $('#geneTable').DataTable();
-        initDataTableClick();
 
         // Percentile changes are handled separately, as every change would result in a plot update, but we want
         // this to happen when sliding is actually stopped.
@@ -112,7 +106,23 @@
             value: [0.05, 0.95],
             tooltip_position: 'bottom'
         }).on('slideStop', updateGeneElements).data('slider');
+        table = $('#geneTable').DataTable( {
+            "destroy": true,
+            "ordering": false,
+            "lengthChange": false,
+            "dom": "<'col-sm-12'<f>>" +
+                    "<<t>>" +
+                    "<'col-sm-12'<i>>" +
+                    "<'col-sm-12'<p>>",
+            "pagingType": "simple"
+        });
         buttons = document.getElementsByClassName('modebar-btn');
+        
+        loadClusterPlots();
+        randomizeClusterColors();
+        initGeneNameSearch();
+        initGeneModules();
+        initDataTableClick();
     });
 
     $("#methylationLevelDiv :input, #methylationTypeDiv :input").change(function() {

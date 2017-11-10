@@ -238,10 +238,8 @@ def is_3D_data_exists(species):
     Returns:
         bool: True if 3D tSNE data exists. Returns False otherwise.
     """
-    well = os.path.isfile(
+    return os.path.isfile(
         '{}/{}/tsne_points_ordered_3D.csv'.format(current_app.config['DATA_DIR'], species))
-    print(well)
-    return well
 
 
 @cache.memoize(timeout=3600)
