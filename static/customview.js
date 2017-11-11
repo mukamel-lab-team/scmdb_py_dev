@@ -2,6 +2,24 @@ var trace_3d, layout_3d;
 var updates_3d = [];
 var groups_3d = [];
 
+// HTML5 local storage with expiration
+// https://gist.github.com/anhang/1096149
+var storage = {
+	save : function(key, jsonData, expirationMin){
+		if (typeof (Storage) === "undefined"){return false;}
+        var expirationMS = expirationMin * 60 * 1000;
+		var record = {value: JSON.stringify(jsonData), timestamp: new Date().getTime() + expirationMS}
+		localStorage.setItem(key, JSON.stringify(record));
+		return jsonData;
+	},
+	load : function(key){
+		if (typeof (Storage) === "undefined"){return false;}
+		var record = JSON.parse(localStorage.getItem(key));
+		if (!record){return false;}
+		return (new Date().getTime() < record.timestamp && JSON.parse(record.value));
+	}
+}
+
 function loadClusterPlots() {
     var grouping = $('#tsneGrouping option:selected').val();
     $.ajax({
@@ -58,15 +76,11 @@ function initGeneNameSearch() {
     });
 
     //Initialise selector
-    if (typeof(Storage) !== 'undefined') {
-        var defaultGene = JSON.parse(localStorage.getItem('lastViewedGenes'));
-        if (defaultGene === null) {
-            // No entry, set default to Gad2,
-            defaultGene = [{geneName: 'Gad2', geneID: "ENSG00000136750.7"}];
-        }
-    } else {
-        // Browser has no localStorage support, we'll just do Gad2.
-        var defaultGene = [{geneName: 'Gad2', geneID: "ENSG00000136750.7"}];
+    var defaultGene = storage.load('lastViewedGenes');
+    console.log(defaultGene);
+    if (!defaultGene) {
+        //no entry or browser does not support localStorage, set default to none
+        defaultGene = [];
     }
 
     if(defaultGene != 'none' ||  defaultGene != ''){
@@ -197,7 +211,7 @@ function updateGeneElements() {
             lastViewedGenes.push({geneName: $('#geneName option:selected')[i].text, geneID: $('#geneName option:selected')[i].value});
         }
         if (typeof(Storage) !== 'undefined') {
-            localStorage.setItem('lastViewedGenes', JSON.stringify(lastViewedGenes));
+            storage.save('lastViewedGenes', lastViewedGenes, 5);  // store last viewed genes for 5 minutes
         }
         updateMCHClusterPlot();
         if($("#geneName").select2('data').length > 1) {
