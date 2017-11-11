@@ -79,11 +79,7 @@ function initGeneNameSearch() {
     var defaultGene = storage.load('lastViewedGenes');
     console.log(defaultGene);
     if (!defaultGene) {
-        //no entry, set default to none
-        defaultGene = [];
-    }
-    else {
-        //browser does not support localStorage
+        //no entry or browser does not support localStorage, set default to none
         defaultGene = [];
     }
 
