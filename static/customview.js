@@ -20,6 +20,15 @@ var storage = {
 	}
 }
 
+function getInitGeneInfo(species, geneID) {
+    return $.getJSON('./gene/id/' + species + '?q=' + geneID).then(function(data) {
+        return {
+            geneName: data.geneName,
+            geneID: data.geneID
+        }
+    });
+}
+
 function loadClusterPlots() {
     var grouping = $('#tsneGrouping option:selected').val();
     $.ajax({
@@ -77,23 +86,27 @@ function initGeneNameSearch() {
 
     //Initialise selector
     var defaultGene = storage.load('lastViewedGenes');
-    console.log(defaultGene);
     if (!defaultGene) {
         //no entry or browser does not support localStorage, set default to none
         defaultGene = [];
     }
-
-    if(defaultGene != 'none' ||  defaultGene != ''){
-        for (i = 0; i < defaultGene.length; i++) {
-            var option = new Option(defaultGene[i].geneName, defaultGene[i].geneID, true, true);
-            geneNameSelector.append(option);
-        }
-        if (defaultGene.length === 1) {
-            $.getJSON({
-                url: './gene/id/' + species + '?q=' + defaultGene[0].geneID,
-                success: function(data){
-                    $('#epiBrowserLink').attr('href', generateBrowserURL(data));
-                    $('#epiBrowserLink').removeClass('disabled');
+    if(defaultGene !== []){
+        var numGenes = defaultGene.length;
+        for (i = 0; i < numGenes; i++) {
+            $.ajax({
+                url: './gene/id/' + species + '?q=' + defaultGene[i].geneID,
+                dataType: 'json',
+                async: false,
+                success: function(data) {
+                    console.log(data);
+                    if (typeof(data.geneName) !== 'undefined' && typeof(data.geneID) !== 'undefined') {
+                        var option = new Option(data.geneName, data.geneID, true, true);
+                        geneNameSelector.append(option);
+                        if (numGenes === 1) {
+                            $('#epiBrowserLink').attr('href', generateBrowserURL(data));
+                            $('#epiBrowserLink').removeClass('disabled');
+                        }
+                    }
                 }
             });
         }
@@ -265,7 +278,7 @@ function updateOrthologToggle() {
         type: "GET",
         url: './gene/orthologs/' + species + '/' + geneSelected,
         success: function(data) {
-            if (data.mmu_gID === null || data.hsa_gID === null) {
+            if (data.mmu_gID === "" || data.hsa_gID === "") {
                 $('#orthologsToggle').bootstrapToggle('off');
                 $('#orthologsToggle').bootstrapToggle('disable');
             } else {

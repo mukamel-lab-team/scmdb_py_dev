@@ -120,7 +120,7 @@ def search_gene_by_name(species):
 def search_gene_by_id(species):
     query = request.args.get('q', 'MustHaveAQueryString')
     if query == 'none' or query == '':
-        return jsonify([])
+        return jsonify({})
     else:
         return jsonify(gene_id_to_name(species, convert_geneID_mmu_hsa(species, query)))
 
@@ -137,6 +137,7 @@ def gene_modules():
 @frontend.route('/gene/orthologs/<species>/<geneID>')
 def orthologs(species, geneID):
     geneID = geneID.split('.')[0]
+    geneID = convert_geneID_mmu_hsa(species,geneID) 
     if species == 'mmu' or species == 'mouse_published':
         return jsonify(find_orthologs(mmu_gid=geneID))
     else:

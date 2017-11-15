@@ -199,6 +199,12 @@ def all_gene_modules():
 
 @cache.memoize(timeout=1800)
 def get_genes_of_module(module):
+    """Generates list of genes in selected module.
+    Arguments:
+        module (str): Name of module to query for.
+    Returns:
+        Dataframe of geneName and geneID of each gene in the module.
+    """
     try:
         filename = glob.glob('{}/gene_modules.csv'.format(current_app.config[
             'DATA_DIR']))[0]
@@ -296,7 +302,7 @@ def gene_id_to_name(species, query):
         Returns:
             dict: information of gene found. See gene_id_to_names.csv of each species for dictionary keys.
     """
-    if not species_exists(species):
+    if not species_exists(species) or query == "":
         return []
 
     conn = sqlite3.connect('{}/{}/gene_names.sqlite3'.format(
