@@ -122,7 +122,7 @@ function initGeneModules() {
     });
 
 	$.getJSON({
-		url: './gene/modules',
+		url: './gene/modules/' + species,
 		success: function(data){
 			data.forEach(function(gene) {
 				var option = new Option(gene.module, gene.module, false, false)
@@ -134,7 +134,7 @@ function initGeneModules() {
 
 function updateSearchWithModules(module) {
 	$.getJSON({
-		url: './gene/modules?q=' + module.id,
+		url: './gene/modules/' + species + '?q=' + module.id,
 		success: function (data) {
 			data.forEach(function(gene) {
 				var option = new Option(gene.geneName, gene.geneID, true, true);

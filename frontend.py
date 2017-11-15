@@ -125,13 +125,13 @@ def search_gene_by_id(species):
         return jsonify(gene_id_to_name(species, convert_geneID_mmu_hsa(species, query)))
 
 
-@frontend.route('/gene/modules')
-def gene_modules():
+@frontend.route('/gene/modules/<species>')
+def gene_modules(species):
     query = request.args.get('q')
     if query == None or query == '':
         return jsonify(all_gene_modules())
     else:
-        return jsonify(get_genes_of_module(query))
+        return jsonify(get_genes_of_module(species, query))
 
 
 @frontend.route('/gene/orthologs/<species>/<geneID>')

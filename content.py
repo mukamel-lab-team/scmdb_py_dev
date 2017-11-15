@@ -181,7 +181,7 @@ def all_gene_modules():
     Arguments:
         None
     Returns:
-        list of dicts with geneName and geneID of each gene, grouped by module. 
+        list of gene module names. 
     """
     try:
         filename = glob.glob('{}/gene_modules.csv'.format(current_app.config[
@@ -191,19 +191,19 @@ def all_gene_modules():
     
     df = pandas.read_csv(filename, delimiter="\t").to_dict('records')
     modules = []
-    for key, value in groupby(df, key = lambda gene: gene['group']):
-        modules.append({'module': key, 'genes': list(value)})
+    for key, value in groupby(df, key = lambda gene: gene['module']):
+        modules.append({'module': key})
     
     return modules
 
-
 @cache.memoize(timeout=1800)
-def get_genes_of_module(module):
+def get_genes_of_module(species, module):
     """Generates list of genes in selected module.
     Arguments:
         module (str): Name of module to query for.
     Returns:
-        Dataframe of geneName and geneID of each gene in the module.
+        Dataframe of geneName and geneID of each gene in the module for the corresponding
+        species.
     """
     try:
         filename = glob.glob('{}/gene_modules.csv'.format(current_app.config[
@@ -212,10 +212,16 @@ def get_genes_of_module(module):
         return []
 
     df = pandas.read_csv(filename, delimiter = "\t")
-    df = df[df['group'] == module].to_dict('records')
-    return df
+    if 'mmu' in species or 'mouse' in species:
+        df = df[['module', 'mmu_geneName', 'mmu_gID']]
+        df.rename(columns={'mmu_geneName': 'geneName', 'mmu_gID': 'geneID'}, inplace=True)
+    else:
+        df = df[['module', 'hsa_geneName', 'hsa_gID']]
+        df.rename(columns={'hsa_geneName': 'geneName', 'hsa_gID': 'geneID'}, inplace=True)
 
-    
+    return df[df['module'] == module].to_dict('records')
+
+
 @cache.memoize(timeout=3600)
 def get_cluster_points(species):
     """Generate points for the tSNE cluster.
