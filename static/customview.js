@@ -227,13 +227,16 @@ function updateGeneElements() {
             storage.save('lastViewedGenes', lastViewedGenes, 5);  // store last viewed genes for 5 minutes
         }
         updateMCHClusterPlot();
+        console.log($("#geneName").select2('data').length); 
         if($("#geneName").select2('data').length > 1) {
             createHeatMap();
             updateDataTable("Select..");
+            $('#epiBrowserLink').addClass('disabled');
         }
         else{
             $('#outlierToggle').bootstrapToggle('enable');
             $('#orthologsToggle').bootstrapToggle('enable');
+            $('#epiBrowserLink').removeClass('disabled');
             updateOrthologToggle();
             updateMCHBoxPlot();
             updateDataTable($('#geneName option:selected').val());
@@ -333,7 +336,7 @@ function initDataTableClick() {
                 }
                 geneNameSelector.append(option);
                 $('#epiBrowserLink').attr('href', generateBrowserURL(data));
-                $('#epiBrowserLink').removeClass('disabled')
+                $('#epiBrowserLink').removeClass('disabled');
                 updateGeneElements();
             }
         });
