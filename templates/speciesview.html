@@ -11,7 +11,7 @@
         <div class="panel panel-info" id="options-panel">
             <div class="panel-heading">
                 <div class="panel-title">
-                    <h5>Search<a data-toggle="collapse" title="" data-placement="left" class="btn btn-sm btn-danger pull-right" style="margin-top: 0px;" data-original-title="Collapse Search Options" href="#search-panel-body"><span class="glyphicon glyphicon-resize-small"></span></a>
+                    <h5><a data-toggle="collapse" title="" style="margin-top: 0px;" data-original-title="Collapse Search Options" href="#search-panel-body"> Search <span class="glyphicon glyphicon-chevron-down"></span></a>
                     <a href="#" target="_blank" id="epiBrowserLink" class="btn btn-sm btn-info disabled pull-right" style="margin-top: 0px; margin-right:10px" role="button">
                         <small style="color:white;">Epigenome browser (AnnoJ)</small>
                     </a>
@@ -27,8 +27,8 @@
         <div class="col-md-12 col-sm-12">
             <div class="panel panel-default panel-main" style="overflow-x: auto; margin-left:auto; margin-right:auto;">
                 <div class="panel-heading">
-                    <div class="panel-title"><b>{{ species }}</b> Clustering{% if gene is defined %} - {{ gene }}{% endif %}
-                        <a data-toggle="collapse" title="" data-placement="left" href="#cluster_plots" class="btn btn-sm btn-basic pull-right" style="margin-top: 0px;" data-original-title="Collapse Search Options"><span class="glyphicon glyphicon-resize-small"></span></a>
+                    <div class="panel-title">
+                        <a data-toggle="collapse" title="" href="#cluster_plots" style="margin-top: 0px;" data-original-title="Collapse Search Options"><b>{{ species }}</b> Clustering{% if gene is defined %} - {{ gene }}{% endif %}&nbsp;<span class="glyphicon glyphicon-chevron-down"></span></a>
                         <a data-toggle="collapse" title="" data-placement="left" href=".cluster_options_group" class="btn btn-sm btn-basic pull-right" style="margin-top: 0px;" data-original-title="Collapse Search Options"><span class="glyphicon glyphicon-cog"></span></a>
                     </div>
                 </div>
@@ -51,8 +51,8 @@
         <div class="panel panel-default panel-main" style="overflow-x: auto; margin-left:auto; margin-right:auto; display:none;" id="methyl_graphs_div">
             <div class="panel-heading">
                 <div class="panel-title">
-                    Gene methylation level{% if gene is defined %} - {{ gene }}{% endif %}
-                    <a data-toggle="collapse" title="" data-placement="left" href="#mch_box" class="btn btn-sm btn-basic pull-right" style="margin-top: 0px;" data-original-title="Collapse Search Options"><span class="glyphicon glyphicon-resize-small"></span></a>
+                    <a data-toggle="collapse" title="" href="#mch_box" style="margin-top: 0px;">Gene methylation level{% if gene is defined %} - {{ gene }}{% endif %}&nbsp;<span class="glyphicon glyphicon-chevron-down"></span></a>
+                    <a data-toggle="collapse" title="" data-placement="left" href="#box-heatmap-options" class="btn btn-sm btn-basic pull-right" style="margin-top: 0px;"><span class="glyphicon glyphicon-cog"></span></a>
                 </div>
             </div>
             <div class="panel-collapse collapse in" id="mch_box">
@@ -184,6 +184,12 @@
 
     $("#outlierToggle, #orthologsToggle").change(function() {
         updateMCHBoxPlot();
+    });
+
+    $("#normalize-toggle").change(function() {
+        if ($('#geneName').select2('data').length > 1) { 
+            createHeatMap();
+        }
     });
 
     $("#toggle-3d").change(function() {

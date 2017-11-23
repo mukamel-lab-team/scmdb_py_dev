@@ -44,12 +44,12 @@ function loadClusterPlots() {
                 }
                 else {
                     save3DData(data["traces_3d"], data["layout3d"]);
-                    $('#toggle-3d').removeAttr("disabled");
+                    $('#toggle-3d').prop("disabled", false);
                 }
             }
             else {
                 save3DData(null, null);
-                $('#toggle-3d').attr("disabled", true);
+                $('#toggle-3d').prop("disabled", true);
             }
         }
     });
@@ -98,7 +98,6 @@ function initGeneNameSearch() {
                 dataType: 'json',
                 async: false,
                 success: function(data) {
-                    console.log(data);
                     if (typeof(data.geneName) !== 'undefined' && typeof(data.geneID) !== 'undefined') {
                         var option = new Option(data.geneName, data.geneID, true, true);
                         geneNameSelector.append(option);
@@ -227,8 +226,8 @@ function updateGeneElements() {
             storage.save('lastViewedGenes', lastViewedGenes, 5);  // store last viewed genes for 5 minutes
         }
         updateMCHClusterPlot();
-        console.log($("#geneName").select2('data').length); 
         if($("#geneName").select2('data').length > 1) {
+            $('#normalize-toggle').prop('disabled', false);
             createHeatMap();
             updateDataTable("Select..");
             $('#epiBrowserLink').addClass('disabled');
@@ -237,6 +236,7 @@ function updateGeneElements() {
             $('#outlierToggle').bootstrapToggle('enable');
             $('#orthologsToggle').bootstrapToggle('enable');
             $('#epiBrowserLink').removeClass('disabled');
+            $('#normalize-toggle').prop('disabled', true);
             updateOrthologToggle();
             updateMCHBoxPlot();
             updateDataTable($('#geneName option:selected').val());
@@ -423,10 +423,16 @@ function createHeatMap() {
     for (i = 0; i < genes.length; i++) {
         genes_query += (genes[i].id + "+");
     }
+    if ($('#normalize-toggle').prop('checked')) {
+        var normalize = 'true';
+    }
+    else {
+        var normalize = 'false';
+    }
     genes_query = genes_query.slice(0,-1);
     $.ajax({
         type: "GET",
-        url: './plot/heat/' + species + '/' + methylationType + '/' + levelType + '/' + pValues[0] + '/' + pValues[1] + '?q=' + genes_query,
+        url: './plot/heat/' + species + '/' + methylationType + '/' + levelType + '/' + pValues[0] + '/' + pValues[1] + '?q=' + genes_query + '&normalize=' + normalize,
         success: function(data) {
             $('#plot-mch-box').html(data);
             $('#outlierToggle').bootstrapToggle('disable');

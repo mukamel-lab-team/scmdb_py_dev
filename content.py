@@ -1017,7 +1017,7 @@ def get_methylation_scatter(species, methylationType, query, level, ptile_start,
 
 
 @cache.memoize(timeout=3600)
-def get_mch_heatmap(species, methylationType, level, ptile_start, ptile_end, query):
+def get_mch_heatmap(species, methylationType, level, ptile_start, ptile_end, normalize, query):
     """Generate mCH heatmap comparing multiple genes.
 
     Arguments:
@@ -1044,11 +1044,19 @@ def get_mch_heatmap(species, methylationType, level, ptile_start, ptile_end, que
     for gene in query:
         genes.append(convert_geneID_mmu_hsa(species, gene))
 
-    gene_info = {}
+    gene_info_df = pandas.DataFrame()
     for geneID in genes:
         geneName = gene_id_to_name(species, geneID)['geneName']
         title += geneName + "+"
-        gene_info[geneName] = mean_cluster_mch(get_gene_methylation(species, methylationType, geneID, True), level)
+        gene_info_df[geneName] = mean_cluster_mch(get_gene_methylation(species, methylationType, geneID, True), level)
+    
+    if normalize:
+        # Min-max normalization:
+        # gene_info_df = (gene_info_df - gene_info_df.stack().min()) / (gene_info_df.stack().max() - gene_info_df.stack().min())
+
+        # Z-score normalization:
+        gene_info_df = (gene_info_df - gene_info_df.stack().mean()) / (gene_info_df.stack().std(ddof=0))
+    gene_info = gene_info_df.to_dict(into=OrderedDict)    
     title = title[:-1]
 
     x, y, text, hover, mch = list(), list(), list(), list(), list()
@@ -1208,7 +1216,7 @@ def mean_cluster_mch(gene_info, level):
             dict: Cluster_label (key) : mean mCH level (value).
     """
     df = pandas.DataFrame(gene_info)
-    return df.sort_values('cluster_ordered').groupby('cluster_name', sort=False)[level].mean().to_dict(OrderedDict)
+    return df.sort_values('cluster_ordered').groupby('cluster_name', sort=False)[level].mean()
 
 
 @cache.memoize(timeout=3600)

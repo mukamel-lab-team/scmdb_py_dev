@@ -164,7 +164,11 @@ def delete_cluster_cache(species, grouping):
 @frontend.route('/plot/heat/<species>/<methylationType>/<level>/<ptile_start>/<ptile_end>')
 def plot_mch_heatmap(species, methylationType, level, ptile_start, ptile_end):
     query = request.args.get('q', 'MustHaveAQueryString')
-    return get_mch_heatmap(species, methylationType, level, ptile_start, ptile_end, query)
+    if request.args.get('normalize', 'MustSpecifyNormalization') == 'true':
+        normalize = True
+    else:
+        normalize = False
+    return get_mch_heatmap(species, methylationType, level, ptile_start, ptile_end, normalize, query)
 
 
 @frontend.route('/help')
