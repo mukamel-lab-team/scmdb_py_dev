@@ -93,18 +93,28 @@ def plot_mch_box(species, methylationType, gene, level, outliers_toggle):
         return 'Failed to produce mCH levels box plot. Contact maintainer.'
 
 
-@frontend.route('/plot/box_combined/<species>/<methylationType>/<gene_mmu>/<gene_hsa>/<level>/<outliers_toggle>')
-def plot_mch_box_two_species(species, methylationType, gene_mmu, gene_hsa, level, outliers_toggle):
+@frontend.route('/plot/box_combined/<methylationType>/<gene_mmu>/<gene_hsa>/<level>/<outliers_toggle>')
+def plot_mch_box_two_species(methylationType, gene_mmu, gene_hsa, level, outliers_toggle):
     if outliers_toggle == 'outliers':
         outliers = True
     else:
         outliers = False
 
     try:
-        return get_mch_box_two_species(species, methylationType, gene_mmu, gene_hsa, level, outliers)
+        return get_mch_box_two_species(methylationType, gene_mmu, gene_hsa, level, outliers)
     except (FailToGraphException, ValueError) as e:
         print(e)
         return 'Failed to produce mCH levels box plot. Contact maintainer.'
+
+
+@frontend.route('/plot/heat/<species>/<methylationType>/<level>/<ptile_start>/<ptile_end>')
+def plot_mch_heatmap(species, methylationType, level, ptile_start, ptile_end):
+    query = request.args.get('q', 'MustHaveAQueryString')
+    if request.args.get('normalize', 'MustSpecifyNormalization') == 'true':
+        normalize = True
+    else:
+        normalize = False
+    return get_mch_heatmap(species, methylationType, level, ptile_start, ptile_end, normalize, query)
 
 
 @frontend.route('/gene/names/<species>')
@@ -152,23 +162,14 @@ def correlated_genes(species, geneID):
 
 @frontend.route('/plot/randomize_colors')
 def randomize_colors():
-    return jsonify(randomize_cluster_colors())
+    num_colors = request.args.get('n', type=int)
+    return jsonify(randomize_cluster_colors(num_colors))
 
 
 @frontend.route('/plot/delete_cache/<species>/<grouping>')
 def delete_cluster_cache(species, grouping):
     cache.delete_memoized(plot_cluster, species, grouping)
-    return
-
-
-@frontend.route('/plot/heat/<species>/<methylationType>/<level>/<ptile_start>/<ptile_end>')
-def plot_mch_heatmap(species, methylationType, level, ptile_start, ptile_end):
-    query = request.args.get('q', 'MustHaveAQueryString')
-    if request.args.get('normalize', 'MustSpecifyNormalization') == 'true':
-        normalize = True
-    else:
-        normalize = False
-    return get_mch_heatmap(species, methylationType, level, ptile_start, ptile_end, normalize, query)
+    return (species + " cluster cache cleared") 
 
 
 @frontend.route('/help')

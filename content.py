@@ -97,6 +97,8 @@ def generate_cluster_colors(num):
 
     # Selects a random colorscale (RGB) depending on number of colors needed
     if num < 12:
+        if num < 3:
+            num = 3
         c = cl.scales[str(num)]['qual']
         c = c[random.choice(list(c))]
     else:
@@ -117,6 +119,31 @@ def generate_cluster_colors(num):
         c_rgb.append(rgb_str)
 
     return c_rgb
+    
+
+def randomize_cluster_colors(num):
+    """Generates random set of colors for tSNE cluster plot.
+
+    Arguments:
+        num (int): number of new colors to generate
+
+    Returns:
+        list: dict items.
+            'colors' = new set of colors for each trace in rgb.
+            'num_colors' = number of colors to be used
+            'cluster_color_#' = indexes of traces to be assigned the new color
+
+    """
+    cache.delete_memoized(generate_cluster_colors)
+    try:
+        new_colors = {'colors': generate_cluster_colors(num)}
+        print(trace_colors)
+        new_colors['num_colors'] = num
+        new_colors.update(trace_colors)
+        return new_colors
+    except NameError:
+        time.sleep(2)
+        randomize_cluster_colors(num)
 
 
 def set_color_by_percentile(this, start, end):
@@ -196,6 +223,7 @@ def all_gene_modules():
     
     return modules
 
+
 @cache.memoize(timeout=1800)
 def get_genes_of_module(species, module):
     """Generates list of genes in selected module.
@@ -220,6 +248,21 @@ def get_genes_of_module(species, module):
         df.rename(columns={'hsa_geneName': 'geneName', 'hsa_gID': 'geneID'}, inplace=True)
 
     return df[df['module'] == module].to_dict('records')
+
+
+@cache.memoize(timeout=3600)
+def median_cluster_mch(gene_info, level):
+    """Returns median mch level of a gene for each cluster.
+
+        Arguments:
+            gene_info (dict): mCH data for each sample. Keys are samp(cell), tsne_x, tsne_y, cluster_label, cluster_ordered, original, normalized.
+            level (str): Type of mCH data. Should be "original" or "normalized".
+
+        Returns:
+            dict: Cluster_label (key) : median mCH level (value).
+    """
+    df = pandas.DataFrame(gene_info)
+    return df.sort_values('cluster_ordered').groupby('cluster_name', sort=False)[level].median()
 
 
 @cache.memoize(timeout=3600)
@@ -583,24 +626,27 @@ def get_cluster_plot(species, grouping):
         titlefont={'color': 'rgba(1,2,2,1)',
                    'size': 16},
     )
-
+    print("hi")
     global trace_colors
     trace_colors = dict()
 
     traces_2d = OrderedDict()
 
-    global num_colors
     max_cluster = int(
         max(points_2d, key=lambda x: int(x['cluster_ordered']))['cluster_ordered']) + 1
     if species == 'mmu' or species == 'mouse_published':
         max_cluster = 16
     num_colors = int(
-            max(points_2d, key=lambda x: int(x[grouping]))[grouping]) + 1
+            max(points_2d, key=lambda x: int(x[grouping]))[grouping])
     colors = generate_cluster_colors(num_colors)
     symbols = ['circle', 'square', 'cross', 'triangle-up', 'triangle-down', 'octagon', 'star', 'diamond']
     for point in points_2d:
         cluster_num = int(point['cluster_ordered'])
-        biosample = int(point.get('biosample', 1)) - 1
+        name_biosample = ""
+        biosample = 0;
+        if 'biosample' in point:
+            biosample = int(point.get('biosample', 1)) - 1
+            name_biosample = ' hv' + str(biosample + 1) 
         cluster_sample_num = int(point['cluster_ordered']) + max_cluster * biosample
         color_num = int(point[grouping]) - 1
         trace2d = traces_2d.setdefault(cluster_sample_num,
@@ -610,14 +656,14 @@ def get_cluster_plot(species, grouping):
                                           text=list(),
                                           mode='markers',
                                           visible=True,
-                                          name=point['cluster_name'] + " Sample" + str(biosample + 1),
+                                          name=point['cluster_name'] + name_biosample,
                                           legendgroup=point[grouping],
                                           marker={
                                               'color': colors[color_num],
-                                              'size': 6,
+                                              'size': 4,
                                               'opacity':0.8,
                                               'symbol': symbols[biosample],  # Eran and Fangming 09/12/2017
-                                              'line': {'width': 0.5, 'color': 'black'}
+                                              'line': {'width': 0.1, 'color': 'black'}
                                           },
                                           hoverinfo='text'))
         trace2d['x'].append(point['tsne_x'])
@@ -1012,7 +1058,7 @@ def get_methylation_scatter(species, methylationType, query, level, ptile_start,
             'layout': layout
         },
         output_type='div',
-        show_link=False,
+        show_link=True,
         include_plotlyjs=False)
 
 
@@ -1027,7 +1073,8 @@ def get_mch_heatmap(species, methylationType, level, ptile_start, ptile_end, nor
         outliers (bool): Whether if outliers should be displayed.
         ptile_start (float): Lower end of color percentile. [0, 1].
         ptile_end (float): Upper end of color percentile. [0, 1].
-        query (str): Ensembl IDs of genes to display.
+        normalize (bool): Whether to normalize each gene. 
+        query ([str]): Ensembl IDs of genes to display.
 
     Returns:
         str: HTML generated by Plot.ly
@@ -1048,14 +1095,14 @@ def get_mch_heatmap(species, methylationType, level, ptile_start, ptile_end, nor
     for geneID in genes:
         geneName = gene_id_to_name(species, geneID)['geneName']
         title += geneName + "+"
-        gene_info_df[geneName] = mean_cluster_mch(get_gene_methylation(species, methylationType, geneID, True), level)
-    
-    if normalize:
-        # Min-max normalization:
-        # gene_info_df = (gene_info_df - gene_info_df.stack().min()) / (gene_info_df.stack().max() - gene_info_df.stack().min())
+        gene_info_df[geneName] = median_cluster_mch(get_gene_methylation(species, methylationType, geneID, True), level)
 
-        # Z-score normalization:
-        gene_info_df = (gene_info_df - gene_info_df.stack().mean()) / (gene_info_df.stack().std(ddof=0))
+    if normalize:
+        for gene in gene_info_df:
+            # z-score
+            # gene_info_df[gene] = (gene_info_df[gene] - gene_info_df[gene].mean()) / gene_info_df[gene].std()
+            # min-max
+            gene_info_df[gene] = (gene_info_df[gene] - gene_info_df[gene].min()) / (gene_info_df[gene].max() - gene_info_df[gene].min())
     gene_info = gene_info_df.to_dict(into=OrderedDict)    
     title = title[:-1]
 
@@ -1205,19 +1252,24 @@ def get_mch_heatmap(species, methylationType, level, ptile_start, ptile_end, nor
 
 
 @cache.memoize(timeout=3600)
-def mean_cluster_mch(gene_info, level):
-    """Calculates average mch level of a gene for each cluster.
+def get_mch_heatmap_two_species(methylationType, level, ptile_start, ptile_end, normalize, query_hsa, query_mmu):
+    """Generate gene body mCH heatmap for two species.
 
-        Arguments:
-            gene_info (dict): mCH data for each sample. Keys are samp(cell), tsne_x, tsne_y, cluster_label, cluster_ordered, original, normalized.
-            level (str): Type of mCH data. Should be "original" or "normalized".
+    Traces are grouped by cluster and ordered by mm_hs_homologous_cluster.txt.
 
-        Returns:
-            dict: Cluster_label (key) : mean mCH level (value).
+    Arguments:
+        methylationType (str): Type of methylation to visualize.        "mch" or "mcg"
+        level (str): Type of mCH data. Should be "original" or "normalized".
+        ptile_start (float): Lower end of color percentile. [0, 1].
+        ptile_end (float): Upper end of color percentile. [0, 1].
+        normalize (bool): Whether to normalize each gene. 
+        query_hsa ([str]):  List of ensembl IDs of genes for human.
+        query_mmu ([str]):  List of ensembl ID of genes for mouse.
+
+    Returns:
+        str: HTML generated by Plot.ly.
     """
-    df = pandas.DataFrame(gene_info)
-    return df.sort_values('cluster_ordered').groupby('cluster_name', sort=False)[level].mean()
-
+    return 1
 
 @cache.memoize(timeout=3600)
 def get_mch_box(species, methylationType, gene, level, outliers):
@@ -1339,12 +1391,12 @@ def get_mch_box(species, methylationType, gene, level, outliers):
             'layout': layout
         },
         output_type='div',
-        show_link=False,
+        show_link=True,
         include_plotlyjs=False)
 
 
 @cache.memoize(timeout=3600)
-def get_mch_box_two_species(species, methylationType, gene_mmu, gene_hsa, level, outliers):
+def get_mch_box_two_species(methylationType, gene_mmu, gene_hsa, level, outliers):
     """Generate gene body mCH box plot for two species.
 
     Traces are grouped by cluster and ordered by mm_hs_homologous_cluster.txt.
@@ -1352,8 +1404,8 @@ def get_mch_box_two_species(species, methylationType, gene_mmu, gene_hsa, level,
 
     Arguments:
         methylationType (str): Type of methylation to visualize.        "mch" or "mcg"
-        gene_mmu (str):  Ensembl ID of gene for that species for mouse.
-        gene_hsa (str):  Ensembl ID of gene for that species for human.
+        gene_mmu (str):  Ensembl ID of gene mouse.
+        gene_hsa (str):  Ensembl ID of gene human.
         level (str): Type of mCH data. Should be "original" or "normalized".
         outliers (bool): Whether if outliers should be displayed.
 
@@ -1500,29 +1552,5 @@ def get_mch_box_two_species(species, methylationType, gene_mmu, gene_hsa, level,
             'layout': layout
         },
         output_type='div',
-        show_link=False,
+        show_link=True,
         include_plotlyjs=False)
-
-
-def randomize_cluster_colors():
-    """Generates random set of colors for tSNE cluster plot.
-
-    Arguments:
-        None
-
-    Returns:
-        list: dict items.
-            'colors' = new set of colors for each trace in rgb.
-            'num_colors' = number of colors to be used
-            'cluster_color_#' = indexes of traces to be assigned the new color
-
-    """
-    cache.delete_memoized(generate_cluster_colors)
-    try:
-        new_colors = {'colors': generate_cluster_colors(num_colors)}
-        new_colors['num_colors'] = num_colors-1
-        new_colors.update(trace_colors)
-        return new_colors
-    except NameError:
-        time.sleep(2)
-        randomize_cluster_colors()
