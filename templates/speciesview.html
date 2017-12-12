@@ -41,7 +41,7 @@
                             <div class="col-md-6 col-sm-12" id="methyl_scatter_div" style="padding: 0px">
                                 {% include "components/mch_cluster.html" %}
                             </div>
-                        <div>
+                        </div>
                     </div>
                 </div>
             </div>
@@ -51,16 +51,16 @@
         <div class="panel panel-default panel-main" style="overflow-x: auto; margin-left:auto; margin-right:auto; display:none;" id="methyl_graphs_div">
             <div class="panel-heading">
                 <div class="panel-title">
-                    <a data-toggle="collapse" title="" href="#mch_box" style="margin-top: 0px;">Gene methylation level{% if gene is defined %} - {{ gene }}{% endif %}&nbsp;<span class="glyphicon glyphicon-chevron-down"></span></a>
+                    <a data-toggle="collapse" title="" href="#mch_box" style="margin-top: 0px;">Gene methylation level &nbsp;<span class="glyphicon glyphicon-chevron-down"></span></a>
                     <a data-toggle="collapse" title="" data-placement="left" href="#box-heatmap-options" class="btn btn-sm btn-basic pull-right" style="margin-top: 0px;"><span class="glyphicon glyphicon-cog"></span></a>
-                </div>
-            </div>
-            <div class="panel-collapse collapse in" id="mch_box">
+               </div>
+           </div>
+           <div class="panel-collapse collapse in" id="mch_box">
                 <div class="panel-body">
-                    <div class="col-md-9 col-sm-12">
+                    <div class="col-md-9 col-sm-12" id="mch_box_div">
                         {% include "components/mch_box.html" %}
                     </div>
-                    <div class="col-md-3 col-sm-12">
+                    <div class="col-md-3 col-sm-12" id="gene_table_div">
                         {% include "components/mch_table.html" %}
                     </div>
                 </div>
@@ -105,7 +105,8 @@
             step: 0.05,
             value: [0.05, 0.95],
             tooltip_position: 'bottom'
-        }).on('slideStop', updateGeneElements).data('slider');
+        }).on('slideStop', updateMCHClusterPlot).data('slider');
+
         table = $('#geneTable').DataTable( {
             "destroy": true,
             "ordering": false,
@@ -117,7 +118,7 @@
             "pagingType": "simple"
         });
         buttons = document.getElementsByClassName('modebar-btn');
-        
+
         loadClusterPlots();
         randomizeClusterColors();
         initGeneNameSearch();
@@ -179,16 +180,27 @@
     $('#clear-btn').click(function() {
         geneModuleSelector.val(null).trigger("change");
         geneNameSelector.val(null).trigger("change");
+        storage.save('lastViewedGenes', [], 5);  // store last viewed genes for 5 minutes
         $('#gene-search-btn').click();
     });
 
     $("#outlierToggle, #orthologsToggle").change(function() {
-        updateMCHBoxPlot();
+        if ($('#geneName').select2('data').length === 1)
+            updateMCHBoxPlot();
+        else {
+            if ($('#orthologsToggle').prop('checked'))
+                createHeatmapTwoSpecies();
+            else
+                createHeatmap();
+        }
     });
 
     $("#normalize-toggle").change(function() {
-        if ($('#geneName').select2('data').length > 1) { 
-            createHeatMap();
+        if ($('#geneName').select2('data').length > 1) {
+            if ($('#orthologsToggle').prop('checked'))
+                createHeatmapTwoSpecies();
+            else
+                createHeatmap();
         }
     });
 

@@ -8,8 +8,9 @@ from flask_nav.elements import Navbar, Link
 from .content import get_cluster_plot, search_gene_names, \
     get_methylation_scatter, get_mch_box, get_mch_box_two_species, \
     find_orthologs, FailToGraphException, get_corr_genes, \
-    gene_id_to_name, randomize_cluster_colors, get_mch_heatmap, all_gene_modules, \
-    get_genes_of_module, convert_geneID_mmu_hsa
+    gene_id_to_name, randomize_cluster_colors, get_mch_heatmap, \
+    get_mch_heatmap_two_species, all_gene_modules, get_genes_of_module, \
+    convert_geneID_mmu_hsa
 from .nav import nav
 from .cache import cache
 from os import walk
@@ -99,7 +100,6 @@ def plot_mch_box_two_species(methylationType, gene_mmu, gene_hsa, level, outlier
         outliers = True
     else:
         outliers = False
-
     try:
         return get_mch_box_two_species(methylationType, gene_mmu, gene_hsa, level, outliers)
     except (FailToGraphException, ValueError) as e:
@@ -111,11 +111,27 @@ def plot_mch_box_two_species(methylationType, gene_mmu, gene_hsa, level, outlier
 def plot_mch_heatmap(species, methylationType, level, ptile_start, ptile_end):
     query = request.args.get('q', 'MustHaveAQueryString')
     if request.args.get('normalize', 'MustSpecifyNormalization') == 'true':
-        normalize = True
+        normalize_row = True
     else:
-        normalize = False
-    return get_mch_heatmap(species, methylationType, level, ptile_start, ptile_end, normalize, query)
+        normalize_row = False
+    try:
+        return get_mch_heatmap(species, methylationType, level, ptile_start, ptile_end, normalize_row, query)
+    except (FailToGraphException, ValueError) as e:
+        print(e)
+        return 'Failed to produce mCH levels box plot. Contact maintainer.'
 
+@frontend.route('/plot/heat_two_species/<species>/<methylationType>/<level>/<ptile_start>/<ptile_end>')
+def plot_mch_heatmap_two_species(species, methylationType, level, ptile_start, ptile_end):
+    query = request.args.get('q', 'MustHaveAQueryString')
+    if request.args.get('normalize', 'MustSpecifyNormalization') == 'true':
+        normalize_row = True
+    else:
+        normalize_row = False
+    try:
+        return get_mch_heatmap_two_species(species, methylationType, level, ptile_start, ptile_end, normalize_row, query)
+    except (FailToGraphException, ValueError) as e:
+        print(e)
+        return 'Failed to produce mCH levels box plot. Contact maintainer.'
 
 @frontend.route('/gene/names/<species>')
 def search_gene_by_name(species):
