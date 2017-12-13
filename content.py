@@ -1243,12 +1243,16 @@ def get_mch_heatmap(species, methylationType, level, ptile_start, ptile_end, nor
         titlefont={'color': 'rgba(1,2,2,1)',
                    'size': 16},
         autosize=True,
-        xaxis={'side': 'bottom',
-               'tickangle': -45,
-               'tickfont': {
-                   'size': 12
-               }},
-        yaxis={'title': 'Genes'},
+        xaxis={
+            'side': 'bottom',
+            'tickangle': -45,
+            'tickfont': {'size': 12}
+               },
+        yaxis={
+            'title': 'Genes',
+            'tickangle': 15,
+            'tickfont': {'size': 12}
+            },
         hovermode='closest'
         )
 
@@ -1508,6 +1512,7 @@ def get_mch_heatmap_two_species(species, methylationType, level, ptile_start, pt
 
             hovermode='closest'
             )
+
     # Available colorscales:
     # https://community.plot.ly/t/what-colorscales-are-available-in-plotly-and-which-are-the-default/2079
     updatemenus = list([
@@ -1609,7 +1614,7 @@ def get_mch_heatmap_two_species(species, methylationType, level, ptile_start, pt
         'visible':True,
         'tickangle': 15,
         'tickfont': {
-            'size': 13  
+            'size': 12
             },
         })
 
@@ -1617,7 +1622,7 @@ def get_mch_heatmap_two_species(species, methylationType, level, ptile_start, pt
         'visible':True,
         'tickangle': 15,
         'tickfont': {
-            'size': 13
+            'size': 12
             },
         })
 

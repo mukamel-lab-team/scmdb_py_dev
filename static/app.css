@@ -58,6 +58,87 @@ body {
     stroke: rgb(169,169,169) !important;
 }
 
+/* ---------------------Footer----------------------*/
+
+#footer{
+	line-height:2em;
+    padding: 50px 0 0 0;
+    border-top: 2px solid #F8F9F3
+	}
+
+#footer, #footer a{
+	color:#F8F8F2;
+	background-color:#03274B;
+	}
+
+#footer .container {
+    width: 960px;
+    margin: 0 auto 0;
+}
+
+#footer h2, #footer p, #footer ul, #footer a, #footer address{
+	margin:0;
+	padding:0;
+	font-weight:normal;
+	list-style:none;
+	font-style:normal;
+	}
+
+#footer h2{
+	margin:0 0 30px 0;
+	padding:0;
+	font-size:22px;
+	color:#7F99A9;
+	background-color:#03274B;
+	}
+
+#footer .foot_contact{
+	display:block;
+	float:left;
+	width:380px;
+	margin:0 40px 0 0;
+	padding:0;
+	}
+
+#footer .foot_contact address{
+	margin-bottom:30px;
+	}
+
+#footer .footbox{
+	display:block;
+	float:left;
+	width:170px;
+	margin:0 15px 0 0;
+	padding:0;
+	font-size:12px;
+	}
+
+#footer .footbox h2{
+	margin-bottom:20px;
+	font-size:14px;
+	text-transform:uppercase;
+	}
+
+#footer .last{
+	margin:0;
+	}
+
+/* ---------------------Copyright----------------------*/
+
+#copyright{
+	padding:15px 0;
+	border-top:1px solid #2B4D71;
+	}
+
+#copyright p{
+	margin:0;
+	padding:0;
+	}
+
+#copyright, #copyright a{
+	color:#7F99A9;
+	background-color:#03274B;
+	}
 /*from https://github.com/plotly/dash-oil-and-gas-demo */
 /* Table of contents
 ––––––––––––––––––––––––––––––––––––––––––––––––––

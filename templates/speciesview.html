@@ -1,5 +1,5 @@
 {%- extends "base.html" %} {% import "bootstrap/utils.html" as utils %} {% block content %}
-<div class="container">
+<div class="container" style="border-bottom: 1px solid #03274B">
     {%- with messages = get_flashed_messages(with_categories=True) %} {%- if messages %}
     <div class="row">
         <div class="col-md-12">
@@ -68,6 +68,53 @@
         </div>
     </div>
 </div>
+<footer id="footer" class="footer">
+	<div class="container">
+		<span class="text-muted">
+			<h2>Contact</h2>
+			<div class="foot_contact">
+				<address>
+					<p> Browser developed by: <br>
+						Tomohiko Ishihara, Tianhao Xiao, and Junhao Li <br>
+						({tishihar94} [at] gmail.com, {hox017, jul307} [at] ucsd.edu)
+					</p>
+					<br>
+					Social Sciences Research Building, Floor 2<br>
+					Dept. of Cognitive Science<br>
+					University of California, San Diego<br>
+					9500 Gilman Dr. #0515<br>
+					La Jolla, CA 92037-0515<br>
+					<br>
+				</address>
+			</div>
+			<div class="footbox last">
+				Web: <a href="http://brainome.ucsd.edu">brainome.ucsd.edu</a><br>
+				Email: <a href="mailto:lab@brainome.ucsd.edu">lab@brainome.ucsd.edu</a><br>
+			</div>
+		</span>
+	</div>
+</footer>
+<!--
+<div id="footer" class="clear">
+	<h2>Contact</h2>
+	<div class="foot_contact">
+		<address>
+			Social Sciences Research Building, Floor 2<br>
+			Dept. of Cognitive Science<br>
+			University of California, San Diego<br>
+			9500 Gilman Dr. #0515<br>
+			La Jolla, CA 92037-0515<br>
+			<br>
+		</address>
+	</div>
+	<div class="footbox last">
+		Web: <a href="http://brainome.ucsd.edu">brainome.ucsd.edu</a><br>
+		<a name="contact">Email: </a><a href="mailto:lab@brainome.ucsd.edu">lab@brainome.ucsd.edu</a><br>
+		<ul>
+		</ul>
+	</div>
+</div>
+-->
 {%- endblock %} {% block scripts %} {{super()}}
 
 <script src="./static/plotly.min.js"></script>
