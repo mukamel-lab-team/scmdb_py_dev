@@ -712,10 +712,13 @@ def get_cluster_plot(species, grouping):
         traces_3d = OrderedDict()
         for point in points_3d:
             cluster_num = int(point['cluster_ordered'])
-            name_biosample = ""
+            biosample_name = ""
             if 'biosample' in point:
                 biosample = int(point.get('biosample', 1)) - 1
-                name_biosample = 'hv' + str(biosample + 1) 
+                if 'biosample_name' in point:
+                    biosample_name = str(point.get('biosample_name', 'N/A'))
+                else:
+                    biosample_name = 'hv' + str(biosample + 1) 
             cluster_sample_num = int(point[grouping]) + max_cluster * biosample
             color_num = int(point[grouping])-1
 
@@ -723,7 +726,7 @@ def get_cluster_plot(species, grouping):
                 legend_group = point['cluster_annotation']
                 if legend_group == '':
                     legend_group = "N/A"
-                trace_name_str = legend_group + " (" + name_biosample + ")"
+                trace_name_str = legend_group + " (" + biosample_name + ")"
                 cluster_sample_num = int(point[grouping]) + (max_cluster * biosample)
             elif grouping == 'cluster_ordered':
                 legend_group = point[grouping]
@@ -733,10 +736,10 @@ def get_cluster_plot(species, grouping):
                     if annotation == '' or annotation == None:
                         annotation = 'N/A'
                     cluster_annotation = "(" + annotation + ")"
-                trace_name_str = cluster_annotation + point['cluster_name'] + " " + name_biosample
+                trace_name_str = cluster_annotation + point['cluster_name'] + " " + biosample_name
             else: # If grouping == 'biosample'
                 legend_group = point[grouping]
-                trace_name_str = "Sample " + name_biosample
+                trace_name_str = "Sample " + biosample_name
 
             trace2d = traces_2d.setdefault(cluster_sample_num,
                 Scattergl(
@@ -762,7 +765,7 @@ def get_cluster_plot(species, grouping):
                     build_hover_text({
                         'Cell': point.get('samp', 'N/A'),
                         'Layer': point.get('layer', 'N/A'),
-                        'Biosample': point.get('biosample', 'N/A'),
+                        'Biosample': point.get('biosample_name', 'N/A'),
                         'Cluster': point.get('cluster_name', 'N/A'),
                         'Annotation': point.get('cluster_annotation', 'N/A')
                     })
@@ -772,7 +775,7 @@ def get_cluster_plot(species, grouping):
                     build_hover_text({
                         'Cell': point.get('samp', 'N/A'),
                         'Layer': point.get('layer', 'N/A'),
-                        'Biosample': point.get('biosample', 'N/A'),
+                        'Biosample': point.get('biosample_name', 'N/A'),
                         'Cluster': point.get('cluster_name', 'N/A')
                     })
                 )
@@ -834,18 +837,21 @@ def get_cluster_plot(species, grouping):
         symbols = ['circle', 'square', 'cross', 'triangle-up', 'triangle-down', 'octagon', 'star', 'diamond']
         for point in points_2d:
             cluster_num = int(point['cluster_ordered'])
-            name_biosample = ""
+            biosample_name = ""
             biosample = 0;
             if 'biosample' in point:
                 biosample = int(point.get('biosample', 1)) - 1
-                name_biosample = 'hv' + str(biosample + 1) 
+                if 'biosample_name' in point:
+                    biosample_name = str(point.get('biosample_name', 'N/A'))
+                else:
+                    biosample_name = 'hv' + str(biosample + 1) 
             cluster_sample_num = int(point['cluster_ordered']) + max_cluster * biosample
             color_num = int(point[grouping]) - 1
             if grouping == 'cluster_annotation_ordered':
                 legend_group = point['cluster_annotation']
                 if legend_group == '':
                     legend_group = "N/A"
-                trace_name_str = legend_group + " (" + name_biosample + ")"
+                trace_name_str = legend_group + " (" + biosample_name + ")"
                 cluster_sample_num = int(point[grouping]) + (max_cluster * biosample)
             elif grouping == 'cluster_ordered':
                 legend_group = point[grouping]
@@ -855,10 +861,10 @@ def get_cluster_plot(species, grouping):
                     if annotation == '' or annotation == None:
                         annotation = 'N/A'
                     cluster_annotation = "(" + annotation + ")"
-                trace_name_str = cluster_annotation + point['cluster_name'] + " " + name_biosample
+                trace_name_str = cluster_annotation + point['cluster_name'] + " " + biosample_name
             else: # If grouping == 'biosample'
                 legend_group = point[grouping]
-                trace_name_str = "Sample " + name_biosample
+                trace_name_str = "Sample " + biosample_name
 
             trace2d = traces_2d.setdefault(cluster_sample_num,
                                           Scattergl(
@@ -884,7 +890,7 @@ def get_cluster_plot(species, grouping):
                     build_hover_text({
                         'Cell': point.get('samp', 'N/A'),
                         'Layer': point.get('layer', 'N/A'),
-                        'Biosample': point.get('biosample', 'N/A'),
+                        'Biosample': point.get('biosample_name', 'N/A'),
                         'Cluster': point.get('cluster_name', 'N/A'),
                         'Annotation': point.get('cluster_annotation', 'N/A')
                     })
@@ -894,7 +900,7 @@ def get_cluster_plot(species, grouping):
                     build_hover_text({
                         'Cell': point.get('samp', 'N/A'),
                         'Layer': point.get('layer', 'N/A'),
-                        'Biosample': point.get('biosample', 'N/A'),
+                        'Biosample': point.get('biosample_name', 'N/A'),
                         'Cluster': point.get('cluster_name', 'N/A')
                     })
                 )
