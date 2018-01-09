@@ -25,7 +25,7 @@ WIDTH_IN_PERCENT_OF_PARENT = 60
 HEIGHT_IN_PERCENT_OF_PARENT = 80
 
 class FailToGraphException(Exception):
-    """Fail to generate data or graph due to an internal error.s"""
+    """Fail to generate data or graph due to an internal error."""
     pass
 
 
@@ -210,7 +210,7 @@ def all_gene_modules():
         list of gene module names. 
     """
     try:
-        filename = glob.glob('{}/gene_modules.csv'.format(current_app.config[
+        filename = glob.glob('{}/gene_modules.tsv'.format(current_app.config[
             'DATA_DIR']))[0]
     except IndexError:
         return []
@@ -233,7 +233,7 @@ def get_genes_of_module(species, module):
         species.
     """
     try:
-        filename = glob.glob('{}/gene_modules.csv'.format(current_app.config[
+        filename = glob.glob('{}/gene_modules.tsv'.format(current_app.config[
             'DATA_DIR']))[0]
     except IndexError:
         return []
@@ -270,14 +270,14 @@ def get_cluster_points(species):
     Arguments:
         species (str): Name of species.
     Returns:
-        list: cluster points in dict. See tsne_points_ordered.csv of each species for dictionary keys.
+        list: cluster points in dict. See tsne_points_ordered.tsv of each species for dictionary keys.
         None: if there is an error finding the file of the species.
     """
     if not species_exists(species):
         return None
 
     try:
-        with open('{}/{}/tsne_points_ordered.csv'.format(current_app.config['DATA_DIR'],
+        with open('{}/{}/tsne_points_ordered.tsv'.format(current_app.config['DATA_DIR'],
                                                  species)) as fp:
             return list(
                 csv.DictReader(fp, delimiter='\t', quoting=csv.QUOTE_NONE))
@@ -294,7 +294,7 @@ def is_3D_data_exists(species):
         bool: True if 3D tSNE data exists. Returns False otherwise.
     """
     return os.path.isfile(
-        '{}/{}/tsne_points_ordered_3D.csv'.format(current_app.config['DATA_DIR'], species))
+        '{}/{}/tsne_points_ordered_3D.tsv'.format(current_app.config['DATA_DIR'], species))
 
 
 @cache.memoize(timeout=3600)
@@ -303,12 +303,12 @@ def get_3D_cluster_points(species):
     Arguments:
         species (str): Name of species.
     Returns:
-        list: cluster points in dict. See 3D_tsne_points.csv of each species for dictionary keys.
+        list: cluster points in dict. See 3D_tsne_points.tsv of each species for dictionary keys.
     """
 
     if not species_exists(species):
         return None
-    with open('{}/{}/tsne_points_ordered_3D.csv' .format(current_app.config['DATA_DIR'],
+    with open('{}/{}/tsne_points_ordered_3D.tsv' .format(current_app.config['DATA_DIR'],
                                                      species)) as fp:
         return list(
             csv.DictReader(fp, dialect='excel-tab'))
@@ -323,7 +323,7 @@ def search_gene_names(species, query):
         query (str): Query string of gene name.
 
     Returns:
-        list: dict of genes found. See gene_id_to_names.csv of each species for dictionary keys. Empty if error during
+        list: dict of genes found. See gene_id_to_names.tsv of each species for dictionary keys. Empty if error during
             searching.
     """
     if not species_exists(species):
@@ -348,7 +348,7 @@ def gene_id_to_name(species, query):
             query (str): Query string of gene ID.
 
         Returns:
-            dict: information of gene found. See gene_id_to_names.csv of each species for dictionary keys.
+            dict: information of gene found. See gene_id_to_names.tsv of each species for dictionary keys.
     """
     if not species_exists(species) or query == "" or query == None:
         return []
