@@ -16,6 +16,7 @@ html {
 }
 body {
     font-size: 1.5em; /* currently ems cause chrome bug misinterpreting rems on body element */
+    margin: 0;
     line-height: 1.6;
     font-weight: 400;
     font-family: "Open Sans", "HelveticaNeue", "Helvetica Neue", Helvetica, Arial, sans-serif;
@@ -30,6 +31,17 @@ body {
 .panel-heading {
     font-size:1.5em;
 }
+
+.Site {
+    display: flex;
+    min-height: 100vh;
+    flex-direction: column;
+}
+
+.Site-content {
+    flex: 1;
+}
+
 .container {
     width:100%;
 }
@@ -62,7 +74,7 @@ body {
 
 #footer{
 	line-height:2em;
-    padding: 50px 0 0 0;
+    padding: 0 0 0 0;
     border-top: 2px solid #F8F9F3
 	}
 
