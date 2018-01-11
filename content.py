@@ -4,8 +4,10 @@ import math
 import csv
 import glob
 import sqlite3
+import sys
 from collections import OrderedDict
 import time
+import datetime
 from itertools import groupby, chain
 
 import pandas
@@ -213,6 +215,9 @@ def all_gene_modules():
         filename = glob.glob('{}/gene_modules.tsv'.format(current_app.config[
             'DATA_DIR']))[0]
     except IndexError:
+        now = datetime.datetime.now()
+        print("[{}] ERROR in app: Could not load gene_modules.tsv".format(str(now)))
+        sys.stdout.flush()
         return []
     
     df = pandas.read_csv(filename, delimiter="\t").to_dict('records')
@@ -236,6 +241,9 @@ def get_genes_of_module(species, module):
         filename = glob.glob('{}/gene_modules.tsv'.format(current_app.config[
             'DATA_DIR']))[0]
     except IndexError:
+        now = datetime.datetime.now()
+        print("[{}] Error in app: Could not load gene_modules.tsv".format(str(now)))
+        sys.stdout.flush()
         return []
 
     df = pandas.read_csv(filename, delimiter = "\t")
@@ -281,7 +289,10 @@ def get_cluster_points(species):
                                                  species)) as fp:
             return list(
                 csv.DictReader(fp, delimiter='\t', quoting=csv.QUOTE_NONE))
-    except IOError:
+    except OSError:
+        now = datetime.datetime.now()
+        print("[{}] ERROR in app: Failed to load tsne data for {}".format(str(now), species))
+        sys.stdout.flush()
         return None
 
 
@@ -308,10 +319,16 @@ def get_3D_cluster_points(species):
 
     if not species_exists(species):
         return None
-    with open('{}/{}/tsne_points_ordered_3D.tsv' .format(current_app.config['DATA_DIR'],
+    try:
+        with open('{}/{}/tsne_points_ordered_3D.tsv' .format(current_app.config['DATA_DIR'],
                                                      species)) as fp:
-        return list(
-            csv.DictReader(fp, dialect='excel-tab'))
+            return list(
+                csv.DictReader(fp, dialect='excel-tab'))
+    except OSError:
+        now = datetime.datetime.now()
+        print("[{}] ERROR in app: Could not load tsne_points_ordered_3D.tsv for {}".format(str(now)), species)
+        sys.stdout.flush()
+        return None
 
 
 @cache.memoize(timeout=3600)
@@ -329,14 +346,20 @@ def search_gene_names(species, query):
     if not species_exists(species):
         return []
 
-    conn = sqlite3.connect('{}/{}/gene_names.sqlite3'.format(
-        current_app.config['DATA_DIR'], species))
-    conn.row_factory = sqlite3.Row
-    cursor = conn.cursor()
-    cursor.execute('SELECT * FROM gene_names WHERE geneName LIKE ?',
-                   (query + '%',))
-    query_results = cursor.fetchall()
-    return [dict(x) for x in query_results][:50]
+    try:
+        conn = sqlite3.connect('{}/{}/gene_names.sqlite3'.format(
+            current_app.config['DATA_DIR'], species))
+        conn.row_factory = sqlite3.Row
+        cursor = conn.cursor()
+        cursor.execute('SELECT * FROM gene_names WHERE geneName LIKE ?',
+                       (query + '%',))
+        query_results = cursor.fetchall()
+        return [dict(x) for x in query_results][:50]
+    except OSError:
+        now = datetime.datetime.now()
+        print("[{}] ERROR in app: Could not open gene_names.sqlite3 for {}".format(str(now), species))
+        sys.stdout.flush()
+        return []
 
 
 @cache.memoize(timeout=3600)
@@ -353,15 +376,19 @@ def gene_id_to_name(species, query):
     if not species_exists(species) or query == "" or query == None:
         return []
 
-    conn = sqlite3.connect('{}/{}/gene_names.sqlite3'.format(
-        current_app.config['DATA_DIR'], species))
-    conn.row_factory = sqlite3.Row
-    cursor = conn.cursor()
-    cursor.execute('SELECT * FROM gene_names WHERE geneID LIKE ?',
-                    (query + '%',))
-    query_results = cursor.fetchone()
-    return dict(query_results)
-
+    try:
+        conn = sqlite3.connect('{}/{}/gene_names.sqlite3'.format(
+            current_app.config['DATA_DIR'], species))
+        conn.row_factory = sqlite3.Row
+        cursor = conn.cursor()
+        cursor.execute('SELECT * FROM gene_names WHERE geneID LIKE ?',
+                        (query + '%',))
+        query_results = cursor.fetchone()
+        return dict(query_results)
+    except IOError:
+        now = datetime.datetime.now()
+        print("[{}] ERROR in app: Could not load gene_names.sqlite3 for {}".format(str(now), species))
+        return None
 
 def convert_geneID_mmu_hsa(species, geneID):
     """Converts mmu geneIDs to hsa geneIDs and vice versa if the ID's do not correspond to
@@ -398,12 +425,11 @@ def get_corr_genes(species,query):
         Returns:
             dict: information of genes that are correlated with target gene.
     """
-    conn = sqlite3.connect('{}/{}/top_corr_genes.sqlite3'.format(
-        current_app.config['DATA_DIR'], species))
-    conn.row_factory = sqlite3.Row
-    cursor = conn.cursor()
-
     try:
+        conn = sqlite3.connect('{}/{}/top_corr_genes.sqlite3'.format(
+            current_app.config['DATA_DIR'], species))
+        conn.row_factory = sqlite3.Row
+        cursor = conn.cursor()
         cursor.execute('SELECT Gene2, Correlation FROM corr_genes WHERE Gene1 LIKE ? ORDER BY Correlation DESC LIMIT 50', (query + '%',))
         query_results = list(cursor.fetchall())
         table_data=[]
@@ -414,7 +440,10 @@ def get_corr_genes(species,query):
             geneInfo['Corr'] = gene['Correlation']
             table_data.append(geneInfo)
         return table_data
-    except:
+    except OSError:
+        now = datetime.datetime.now()
+        print("[{}] ERROR in app: Could not load top_corr_genes.sqlite3 for {}".format(str(now), species))
+        sys.stdout.flush()
         return(1)
 
 
@@ -444,15 +473,20 @@ def get_mult_gene_methylation(species, methylationType, genes):
                         current_app.config['DATA_DIR'],
                         species, methylationType, gene))[0]
             except IndexError as e:
-                print(e)
+                now = datetime.datetime.now()
+                print("[{}] ERROR in app: Could not load data for {} for {}".format(str(now), gene, species))
+                sys.stdout.flush()
             try:
                 df_methyl = df_methyl.append(
                     pandas.read_csv(
                         filename, index_col=False,
                         delimiter="\t", header=None,
                         names=['GeneID','samp','original','normalized']))
-            except FileNotFoundError as e:
-                print(e)
+            except OSError as e:
+                now = datetime.datetime.now()
+                print("[{}] ERROR in app: Could not load data for {} for {}".format(str(now), gene, species))
+                sys.stdout.flush()
+
     df_methyl = df_methyl.groupby(by='samp', as_index=False).mean()
 
     df_cluster = pandas.DataFrame(get_cluster_points(species))
@@ -492,6 +526,9 @@ def get_gene_methylation(species, methylationType, gene, outliers):
         filename = glob.glob('{}/{}/{}/{}*'.format(current_app.config[
             'DATA_DIR'], species, methylationType, gene))[0]
     except IndexError:
+        now = datetime.datetime.now()
+        print("[{}] ERROR in app: Could not load data for {} for {}".format(str(now), gene, species))
+        sys.stdout.flush()
         return []
 
     try:
@@ -538,7 +575,11 @@ def get_ortholog_cluster_order():
                 current_app.config['DATA_DIR']),
             sep='\t')
     except FileNotFoundError:
+        now = datetime.datetime.now()
+        print("[{}] ERROR in app: Could not load mm_hs_homologous_cluster.txt".format(str(now)))
+        sys.stdout.flush()
         return []
+
     clusters = list()
     for _, row in df.iterrows():
         mmu_cluster = ('mmu', int(row['Mouse Cluster']))
