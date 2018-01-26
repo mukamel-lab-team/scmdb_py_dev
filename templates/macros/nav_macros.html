@@ -1,0 +1,76 @@
+{% macro render_menu_items(endpoints) %}
+    {% for endpoint, name, icon in endpoints %}
+        <a class="item {% if request.endpoint == endpoint %}active{% endif %}" href="{{ url_for(endpoint) }}">
+            {% if icon %}
+                <i class="{{ icon }} icon"></i>
+            {% endif %}
+            {{ name | safe }}
+        </a>
+    {% endfor %}
+{% endmacro %}
+
+{% macro header_items(current_user) %}
+    {% set endpoints = [
+      ('frontend.index', 'Home', 'home'),
+      ('frontend.ensemble_tabular_screen', 'Ensembles', 'ensemble'),
+      ('frontend.data_set_tabular_screen', 'Data Sets', 'dataset')
+    ]%}
+    
+    {{ render_menu_items( endpoints ) }}
+{% endmacro %}
+
+{# This renders the right hand side of the navigation bar. If the user is logged in, it links to
+   manage their account and logout (account routes). Otherwise, it links to register and login.
+#}
+{% macro account_items(current_user) %}
+    {% set user = [] %}
+    {% if current_user.can(255) %}
+      {% set user = ([( 'frontend.admin',  'Administrator Dashboard', 
+                        'user')]) %}
+    {% endif %}
+    {% if current_user.is_authenticated %}
+      {% set endpoints = [
+        ('frontend.manage', 'Account', 'settings'),
+        ('frontend.logout', 'Logout', 'sign out')
+      ] %}
+    {% else %}
+      {% set endpoints = [
+        ('frontend.login', 'Login', 'sign in')
+      ] %}
+    {% endif %}
+    {{ render_menu_items(user + endpoints) }}
+{% endmacro %}
+
+{% macro create_dropdown(dropdown) %}
+  {% for item in dropdown %}
+    {% if item | length == 3 %}
+      {{ render_menu_items([item]) }}
+    {% elif item | length == 2 %}
+      <div class="ui dropdown item" onClick="changeMenu(this)">{{ item[0] }} <i class="dropdown icon"></i>
+        <div class="inverted black menu">
+          {{ create_dropdown(item[1]) }}
+        </div>
+      </div>
+    {% endif %}
+  {% endfor %}
+{% endmacro %}
+
+{% macro desktop_nav(current_user, dropdown=None) %}
+    <div class="computer tablet only row">
+        <div class="ui fixed inverted black main menu">
+            <div class="ui container">
+                {{ header_items(current_user) }}
+                {{ create_dropdown(dropdown) }}
+            </div>
+            <div class="right menu">
+                    {{ account_items(current_user) }}
+            </div>
+        </div>
+    </div>
+{% endmacro %}
+
+{% macro render_nav(current_user, dropdown=[]) %}
+    <nav class="ui navigation grid {% if endpoints %}has-submenu{% endif %}">
+        {{ desktop_nav(current_user, dropdown=dropdown) }}
+    </nav>
+{% endmacro %}

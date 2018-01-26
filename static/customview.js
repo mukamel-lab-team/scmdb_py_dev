@@ -112,9 +112,9 @@ function initGeneNameSearch() {
 
     //Initialise selector
     var defaultGene = storage.load('lastViewedGenes');
-    if (!defaultGene) {
-        //no entry or browser does not support localStorage, set default to none
-        defaultGene = [];
+    if (!defaultGene || defaultGene.length === 0) {
+        //no entry or browser does not support localStorage, set default to GAD2
+        defaultGene = [{geneName: 'GAD2', geneID: 'ENSG00000136750'}];
     }
     if(defaultGene !== []){
         var numGenes = defaultGene.length;
@@ -268,7 +268,7 @@ function loadClusterPlots() {
         url: './plot/cluster/' + species + '/' + grouping,
         success: function(data) {
             num_colors = getMax(data["traces_2d"], "legendgroup");
-            Plotly.newPlot("plot-2d-cluster", Object.values(data["traces_2d"]), data["layout2d"], {showLink: true});
+            Plotly.newPlot("plot-2d-cluster", Object.values(data["traces_2d"]), data["layout2d"], {showLink: false});
             $('#loading_2dtsne').html("");
             if("traces_3d" in data){
                 if($('#toggle-3d').prop('checked')) {

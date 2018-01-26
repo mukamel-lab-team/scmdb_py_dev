@@ -1,34 +1,78 @@
 """Functions used to generate content. """
-import os
-import math
+import datetime
 import csv
 import glob
-import sqlite3
+import json
+import math
+import os
 import sys
-from collections import OrderedDict
 import time
-import datetime
-from itertools import groupby, chain
 
-import pandas
-import plotly
+from collections import OrderedDict
+from itertools import groupby, chain
 from random import sample
+
 import colorlover as cl
 import colorsys
-
 from flask import current_app
+from flask import Blueprint
 from numpy import nan, arange, random
+import pandas
+import plotly
 from plotly import tools
 from plotly.graph_objs import Layout, Box, Scatter, Scattergl, Scatter3d, Heatmap
+import sqlite3
+from sqlite3 import Error
 
-from .cache import cache
+from . import cache
 
-WIDTH_IN_PERCENT_OF_PARENT = 60
-HEIGHT_IN_PERCENT_OF_PARENT = 80
+
+content = Blueprint('content', __name__) # Flask "bootstrap"
+
 
 class FailToGraphException(Exception):
     """Fail to generate data or graph due to an internal error."""
     pass
+
+
+@content.route('/content/metadata/<dataset>')
+def get_metadata(dataset):
+
+    dataset_path = "{}/datasets".format(current_app.config['DATA_DIR']) 
+    for root, dirs, files in os.walk(dataset_path):
+        for dir in dirs:
+            meta_path = "{}/{}/{}/metadata.csv".format(dataset_path, dir, dataset)
+            if os.path.isfile(meta_path):
+                f = open(meta_path, 'r')
+                reader = csv.DictReader(f)
+                out = json.dumps({"data":[row for row in reader]})
+                return out
+        break
+
+    return json.dumps({"data": None})
+
+
+@content.route('/content/ensemble_list')
+def get_ensemble_list():
+ 
+    ensemble_list = next(os.walk(
+        "{}/ensembles".format(current_app.config['DATA_DIR'])))[1]
+    ensembles_json_list = []
+ 
+    for ensemble in ensemble_list:
+ 
+        # Assuming each ensemble to be it's own dataset
+        dataset_dir = "{}/ensembles/{}/datasets/".format(current_app.config['DATA_DIR'], ensemble)
+        ens_datasets = next(os.walk(dataset_dir))[1]
+        ens_dict = {"ensemble": ensemble, "datasets": "\n".join(ens_datasets)}
+        for i in range(len(ens_datasets)):
+            ens_dict["dataset_{}".format(i+1)] = ens_datasets[i]
+        ensembles_json_list.append(ens_dict)
+ 
+    data_dict = {"data":ensembles_json_list}
+    ens_json = json.dumps(data_dict)
+ 
+    return ens_json
 
 
 # Utilities
@@ -43,27 +87,36 @@ def species_exists(species):
         bool: Whether if given species exists
     """
     return os.path.isdir(
-        '{}/{}'.format(current_app.config['DATA_DIR'], species))
+        '{}/ensembles/{}'.format(current_app.config['DATA_DIR'], species))
 
-    
+
 @cache.memoize(timeout=50)
 def gene_exists(species, methylationType, gene):
     """Check if data for a given gene of species exists by looking for its data directory.
 
     Arguments:
         species (str): Name of species.
-        methylationType (str): Type of methylation to visualize.        "mch" or "mcg"
+        methylationType (str): Type of methylation to visualize. "mch" or "mcg"
         gene (str): Ensembl ID of gene for that species.
 
     Returns:
         bool: Whether if given gene exists
     """
-    try:
-        filename = glob.glob('{}/{}/{}/{}*'.format(current_app.config[
-            'DATA_DIR'], species, methylationType, gene))[0]
-    except IndexError:
+
+    datasets_path = '{}/ensembles/{}/datasets'.format(
+            current_app.config['DATA_DIR'], species)
+
+    for root, dirs, files in os.walk(datasets_path):
+        for dir in dirs:
+            try:
+                filename = \
+                    glob.glob('{}/{}/{}/{}*'.format(root, dir, methylationType, gene))[0]
+                if filename:
+                    return True
+            except IndexError:
+                continue
+        
         return False
-    return True if filename else False
 
 
 def build_hover_text(labels):
@@ -99,8 +152,6 @@ def generate_cluster_colors(num):
 
     # Selects a random colorscale (RGB) depending on number of colors needed
     if num < 12:
-        if num < 3:
-            num = 3
         c = cl.scales[str(num)]['qual']
         c = c[random.choice(list(c))]
     else:
@@ -121,13 +172,13 @@ def generate_cluster_colors(num):
         c_rgb.append(rgb_str)
 
     return c_rgb
-    
+
 
 def randomize_cluster_colors(num):
     """Generates random set of colors for tSNE cluster plot.
 
     Arguments:
-        num (int): number of new colors to generate
+        None
 
     Returns:
         list: dict items.
@@ -183,22 +234,32 @@ def find_orthologs(mmu_gid=str(), hsa_gid=str()):
         dict: hsa_gID and mmu_gID as strings.
     """
     if not mmu_gid and not hsa_gid:  # Should have at least one.
-        return {'mmu_gID': "", 'hsa_gID': ""}
+        return {'mmu_gID': None, 'hsa_gID': None}
 
     conn = sqlite3.connect(
-        '{}/orthologs.sqlite3'.format(current_app.config['DATA_DIR']))
-    conn.row_factory = sqlite3.Row  # This ensures dictionaries are returned for fetch results.
-    cursor = conn.cursor()
+        '{}/datasets/orthologs.sqlite3'.format(current_app.config['DATA_DIR']))
 
+    # This ensures dictionaries are returned for fetch results.
+    conn.row_factory = sqlite3.Row  
+
+    cursor = conn.cursor()
     query_key = 'mmu_gID' if mmu_gid else 'hsa_gID'
     query_value = mmu_gid or hsa_gid
-    query_value = query_value.split('.')[0]
-    cursor.execute(
-        'SELECT * FROM orthologs WHERE {key} LIKE ?'.format(key=query_key),
-        (query_value + '%',))
+    query_value = query_value.split('.')[0] + '%'
+
+    try:
+        cursor.execute(
+            'SELECT * FROM orthologs WHERE {key} LIKE ?'.format(key=query_key),
+            (query_value,))
+    except sqlite3.Error:
+        now = datetime.datetime.now()
+        print("[{}] ERROR in app: Error querying for {} in  orthologs.sqlite3".format(str(now), query_value))
+        sys.stdout.flush()
+        return {'mmu_gID': None, 'hsa_gID': None}
+
     query_results = cursor.fetchone()
     if not query_results:
-        return {'mmu_gID': "", 'hsa_gID': ""}
+        return {'mmu_gID': None, 'hsa_gID': None}
     else:
         return dict(query_results)
 
@@ -220,7 +281,7 @@ def all_gene_modules():
         sys.stdout.flush()
         return []
     
-    df = pandas.read_csv(filename, delimiter="\t").to_dict('records')
+    df = pandas.read_csv(filename, delimiter="\t", engine='python').to_dict('records')
     modules = []
     for key, value in groupby(df, key = lambda gene: gene['module']):
         modules.append({'module': key})
@@ -246,7 +307,7 @@ def get_genes_of_module(species, module):
         sys.stdout.flush()
         return []
 
-    df = pandas.read_csv(filename, delimiter = "\t")
+    df = pandas.read_csv(filename, delimiter = "\t", engine='python')
     if 'mmu' in species or 'mouse' in species:
         df = df[['module', 'mmu_geneName', 'mmu_gID']]
         df.rename(columns={'mmu_geneName': 'geneName', 'mmu_gID': 'geneID'}, inplace=True)
@@ -285,11 +346,11 @@ def get_cluster_points(species):
         return None
 
     try:
-        with open('{}/{}/tsne_points_ordered.tsv'.format(current_app.config['DATA_DIR'],
-                                                 species)) as fp:
+        with open('{}/ensembles/{}/tsne_points_ordered.tsv'.format(
+                   current_app.config['DATA_DIR'], species)) as fp:
             return list(
                 csv.DictReader(fp, delimiter='\t', quoting=csv.QUOTE_NONE))
-    except OSError:
+    except IOError:
         now = datetime.datetime.now()
         print("[{}] ERROR in app: Failed to load tsne data for {}".format(str(now), species))
         sys.stdout.flush()
@@ -305,7 +366,7 @@ def is_3D_data_exists(species):
         bool: True if 3D tSNE data exists. Returns False otherwise.
     """
     return os.path.isfile(
-        '{}/{}/tsne_points_ordered_3D.tsv'.format(current_app.config['DATA_DIR'], species))
+        '{}/ensembles/{}/tsne_points_ordered_3D.tsv'.format(current_app.config['DATA_DIR'], species))
 
 
 @cache.memoize(timeout=3600)
@@ -315,21 +376,21 @@ def get_3D_cluster_points(species):
         species (str): Name of species.
     Returns:
         list: cluster points in dict. See 3D_tsne_points.tsv of each species for dictionary keys.
+        None: if there is an error finding the file of the species.
     """
 
     if not species_exists(species):
         return None
     try:
-        with open('{}/{}/tsne_points_ordered_3D.tsv' .format(current_app.config['DATA_DIR'],
-                                                     species)) as fp:
+        with open('{}/ensembles/{}/tsne_points_ordered_3D.tsv'.format(
+                  current_app.config['DATA_DIR'], species)) as fp:
             return list(
                 csv.DictReader(fp, dialect='excel-tab'))
-    except OSError:
+    except IOError:
         now = datetime.datetime.now()
         print("[{}] ERROR in app: Could not load tsne_points_ordered_3D.tsv for {}".format(str(now)), species)
         sys.stdout.flush()
         return None
-
 
 @cache.memoize(timeout=3600)
 def search_gene_names(species, query):
@@ -346,20 +407,22 @@ def search_gene_names(species, query):
     if not species_exists(species):
         return []
 
+    conn = sqlite3.connect('{}/ensembles/{}/species/gene_names.sqlite3'.format(
+        current_app.config['DATA_DIR'], species))
+    conn.row_factory = sqlite3.Row
+    cursor = conn.cursor()
+
     try:
-        conn = sqlite3.connect('{}/{}/gene_names.sqlite3'.format(
-            current_app.config['DATA_DIR'], species))
-        conn.row_factory = sqlite3.Row
-        cursor = conn.cursor()
         cursor.execute('SELECT * FROM gene_names WHERE geneName LIKE ?',
                        (query + '%',))
-        query_results = cursor.fetchall()
-        return [dict(x) for x in query_results][:50]
-    except OSError:
+    except sqlite3.Error:
         now = datetime.datetime.now()
         print("[{}] ERROR in app: Could not open gene_names.sqlite3 for {}".format(str(now), species))
         sys.stdout.flush()
         return []
+
+    query_results = cursor.fetchall()
+    return [dict(x) for x in query_results][:50]
 
 
 @cache.memoize(timeout=3600)
@@ -376,19 +439,23 @@ def gene_id_to_name(species, query):
     if not species_exists(species) or query == "" or query == None:
         return []
 
+    conn = sqlite3.connect('{}/ensembles/{}/species/gene_names.sqlite3'.format(
+        current_app.config['DATA_DIR'], species))
+
+    conn.row_factory = sqlite3.Row
+    cursor = conn.cursor()
+
     try:
-        conn = sqlite3.connect('{}/{}/gene_names.sqlite3'.format(
-            current_app.config['DATA_DIR'], species))
-        conn.row_factory = sqlite3.Row
-        cursor = conn.cursor()
         cursor.execute('SELECT * FROM gene_names WHERE geneID LIKE ?',
                         (query + '%',))
-        query_results = cursor.fetchone()
-        return dict(query_results)
-    except IOError:
+    except sqlite3.Error:
         now = datetime.datetime.now()
         print("[{}] ERROR in app: Could not load gene_names.sqlite3 for {}".format(str(now), species))
         return None
+
+    query_results = cursor.fetchone()
+    return dict(query_results)
+
 
 def convert_geneID_mmu_hsa(species, geneID):
     """Converts mmu geneIDs to hsa geneIDs and vice versa if the ID's do not correspond to
@@ -416,35 +483,38 @@ def convert_geneID_mmu_hsa(species, geneID):
 
 
 def get_corr_genes(species,query):
-    """Get correlated genes of a certain gene of a species.
-
+    """Get correlated genes of a certain gene of a species. 
+    
         Arguments:
             species(str): Name of species.
             query(str): Query string of gene ID.
-
+        
         Returns:
             dict: information of genes that are correlated with target gene.
     """
+    db_location = '{}/ensembles/{}/top_corr_genes.sqlite3'.format(
+        current_app.config['DATA_DIR'], species)
+    conn = sqlite3.connect(db_location)
+    conn.row_factory = sqlite3.Row
+    cursor = conn.cursor()
+
     try:
-        conn = sqlite3.connect('{}/{}/top_corr_genes.sqlite3'.format(
-            current_app.config['DATA_DIR'], species))
-        conn.row_factory = sqlite3.Row
-        cursor = conn.cursor()
         cursor.execute('SELECT Gene2, Correlation FROM corr_genes WHERE Gene1 LIKE ? ORDER BY Correlation DESC LIMIT 50', (query + '%',))
-        query_results = list(cursor.fetchall())
-        table_data=[]
-        for rank, item in enumerate(query_results, 1):
-            gene = dict(item)
-            geneInfo = gene_id_to_name(species, gene['Gene2'])
-            geneInfo['Rank'] = rank
-            geneInfo['Corr'] = gene['Correlation']
-            table_data.append(geneInfo)
-        return table_data
-    except OSError:
+    except sqlite3.Error:
         now = datetime.datetime.now()
         print("[{}] ERROR in app: Could not load top_corr_genes.sqlite3 for {}".format(str(now), species))
         sys.stdout.flush()
         return(1)
+
+    query_results = list(cursor.fetchall())
+    table_data=[]
+    for rank, item in enumerate(query_results, 1):
+        gene = dict(item)
+        geneInfo = gene_id_to_name(species, gene['Gene2'])
+        geneInfo['Rank'] = rank
+        geneInfo['Corr'] = gene['Correlation']
+        table_data.append(geneInfo)
+    return table_data
 
 
 def get_mult_gene_methylation(species, methylationType, genes):
@@ -464,28 +534,35 @@ def get_mult_gene_methylation(species, methylationType, genes):
     if not species_exists(species):
         return []
 
+    datasets_path = '{}/datasets'.format(current_app.config['DATA_DIR'])
+
     df_methyl = pandas.DataFrame()
+    root, dirs, files = next(os.walk(datasets_path))
     for gene in genes:
         if gene_exists(species, methylationType, gene):
-            try:
-                filename = glob.glob(
-                    '{}/{}/{}/{}*'.format(
-                        current_app.config['DATA_DIR'],
-                        species, methylationType, gene))[0]
-            except IndexError as e:
+            for dir in dirs: 
+                try:
+                    filename = glob.glob('{}/{}/{}/{}/{}*'.format(
+                            root, dir, species, methylationType, gene))[0]
+                except IndexError:
+                    continue
+
+            if not filename:
                 now = datetime.datetime.now()
-                print("[{}] ERROR in app: Could not load data for {} for {}".format(str(now), gene, species))
+                print("[{}] ERROR in app: Could not find data for {} for {}".format(str(now), gene, species))
                 sys.stdout.flush()
-            try:
-                df_methyl = df_methyl.append(
-                    pandas.read_csv(
-                        filename, index_col=False,
-                        delimiter="\t", header=None,
-                        names=['GeneID','samp','original','normalized']))
-            except OSError as e:
-                now = datetime.datetime.now()
-                print("[{}] ERROR in app: Could not load data for {} for {}".format(str(now), gene, species))
-                sys.stdout.flush()
+            else:
+                try:
+                    df_methyl = df_methyl.append(
+                        pandas.read_csv(
+                            filename, index_col=False,
+                            delimiter="\t", header=None,
+                            names=['GeneID','samp','original','normalized'],
+                            engine='python'))
+                except OSError as e:
+                    now = datetime.datetime.now()
+                    print("[{}] ERROR in app: Could not load data for {} for {}".format(str(now), gene, species))
+                    sys.stdout.flush()
 
     df_methyl = df_methyl.groupby(by='samp', as_index=False).mean()
 
@@ -510,56 +587,75 @@ def get_gene_methylation(species, methylationType, gene, outliers):
     Arguments:
         species (str): Name of species.
         methylationType (str): Type of methylation to visualize. "mch" or "mcg"
-        gene (str): Ensembl ID of gene for that species.
+        gene (str): Name of gene for that species.
         outliers (bool): Whether if outliers should be kept.
 
     Returns:
         list: dict with mCH data for each sample. Keys are samp, tsne_x, tsne_y, cluster_label, cluster_ordered,
          original, normalized.
     """
+
     if not species_exists(species) or not gene_exists(species, methylationType, gene):
         return []
 
     cluster = pandas.DataFrame(get_cluster_points(species))
 
-    try:
-        filename = glob.glob('{}/{}/{}/{}*'.format(current_app.config[
-            'DATA_DIR'], species, methylationType, gene))[0]
-    except IndexError:
-        now = datetime.datetime.now()
-        print("[{}] ERROR in app: Could not load data for {} for {}".format(str(now), gene, species))
-        sys.stdout.flush()
-        return []
+    datasets_path = '{}/datasets'.format(
+            current_app.config['DATA_DIR'])
 
-    try:
-        mch = pandas.read_csv(
-            filename,
-            sep='\t',
-            header=None,
-            names=['gene', 'samp', 'original', 'normalized'])
-    except FileNotFoundError:
+    dataframe_list = []
+    root, dirs, files = next(os.walk(datasets_path))
+    for dir in dirs:
+
+        try:
+            file_string = '{}/{}/{}/{}/{}*'.format(root, dir, species, methylationType, gene)
+            glob_list = glob.glob(file_string)
+            filename = glob_list[0]
+            
+        except IndexError:
+            continue
+
+        try:
+            mch = pandas.read_csv(
+                filename,
+                sep='\t',
+                header=None,
+                names=['gene', 'samp', 'original', 'normalized'],
+                engine='python')
+            dataframe_list.append(mch)
+        except FileNotFoundError:
+            continue
+
+    mch = None
+    if len(dataframe_list) == 0:
         return []
+    elif len(dataframe_list) == 1:
+        mch = dataframe_list[0]
+    else:
+        mch = dataframe_list[0].append(dataframe_list[1:], ignore_index=True)
+
 
     dataframe_merged = pandas.merge(
         cluster[['samp', 'tsne_x', 'tsne_y', 'cluster_label', 'cluster_name', 'cluster_ordered', 'cluster_ortholog']],
         mch[['samp', 'original', 'normalized']],
         on='samp',
         how='left')
+
     if not outliers:
         # Outliers not wanted, remove rows > 99%ile.
         three_std_dev = dataframe_merged['normalized'].quantile(0.99)
         dataframe_merged = dataframe_merged[dataframe_merged.normalized <
-                                            three_std_dev]
+                three_std_dev]
 
     dataframe_merged['cluster_ordered'] = pandas.to_numeric(
-        dataframe_merged['cluster_ordered'], errors='coerce')
+            dataframe_merged['cluster_ordered'], errors='coerce')
     dataframe_merged['cluster_ordered'] = dataframe_merged[
-        'cluster_ordered'].astype('category')
+            'cluster_ordered'].astype('category')
     return dataframe_merged.sort_values(
-        by='cluster_ordered', ascending=True).to_dict('records')
+            by='cluster_ordered', ascending=True).to_dict('records')
 
 
-@cache.cached(timeout=3600)
+@cache.memoize(timeout=3600)
 def get_ortholog_cluster_order():
     """Order cluster mm_hs_homologous_cluster.txt.
 
@@ -572,9 +668,10 @@ def get_ortholog_cluster_order():
     try:
         df = pandas.read_csv(
             '{}/mm_hs_homologous_cluster.txt'.format(
-                current_app.config['DATA_DIR']),
+                current_app.config['DATA_DIR'],
+                engine='python'),
             sep='\t')
-    except FileNotFoundError:
+    except IOError:
         now = datetime.datetime.now()
         print("[{}] ERROR in app: Could not load mm_hs_homologous_cluster.txt".format(str(now)))
         sys.stdout.flush()
@@ -592,6 +689,7 @@ def get_ortholog_cluster_order():
     return clusters
 
 
+# Plot generating
 def get_cluster_plot(species, grouping):
     """Generate tSNE cluster plot.
     Arguments:
@@ -672,6 +770,7 @@ def get_cluster_plot(species, grouping):
 
         layout3d = Layout(
             autosize=True,
+            height=450,
             title='3D Cell Cluster',
             titlefont={'color': 'rgba(1,2,2,1)',
                        'size': 16},
@@ -1058,6 +1157,7 @@ def get_methylation_scatter(species, methylationType, query, level, ptile_start,
         hoverinfo='text')
     layout = Layout(
         autosize=True,
+        height=450,
         title=title,
         titlefont={'color': 'rgba(1,2,2,1)',
                    'size': 16},
@@ -1176,7 +1276,7 @@ def get_methylation_scatter(species, methylationType, query, level, ptile_start,
             'layout': layout
         },
         output_type='div',
-        show_link=True,
+        show_link=False,
         include_plotlyjs=False)
 
 @cache.memoize(timeout=3600)
@@ -1201,8 +1301,12 @@ def get_mch_heatmap(species, methylationType, level, ptile_start, ptile_end, nor
         titleMType = 'mCH'
     else:
         titleMType = 'mCG'
+    if normalize_row:
+        normal_or_original = 'Normalized'
+    else:
+        normal_or_original = 'Original'
 
-    title = "Gene body " + titleMType + " by cluster: "
+    title = normal_or_original + " gene body " + titleMType + " by cluster: "
     genes = [convert_geneID_mmu_hsa(species,gene) for gene in query.split()]
 
     gene_info_df = pandas.DataFrame()
@@ -1210,15 +1314,19 @@ def get_mch_heatmap(species, methylationType, level, ptile_start, ptile_end, nor
         geneName = gene_id_to_name(species, geneID)['geneName']
         title += geneName + "+"
         gene_info_df[geneName] = median_cluster_mch(get_gene_methylation(species, methylationType, geneID, True), level)
+    title = title[:-1] # Gets rid of last '+'
 
+    normal_or_original = 'Original'
     if normalize_row:
         for gene in gene_info_df:
             # z-score
             # gene_info_df[gene] = (gene_info_df[gene] - gene_info_df[gene].mean()) / gene_info_df[gene].std()
             # min-max
             gene_info_df[gene] = (gene_info_df[gene] - gene_info_df[gene].min()) / (gene_info_df[gene].max() - gene_info_df[gene].min())
+        normal_or_original = 'Normalized'
+
+
     gene_info_dict = gene_info_df.to_dict(into=OrderedDict)    
-    title = title[:-1]
 
     x, y, text, hover, mch = list(), list(), list(), list(), list()
     i = 0
@@ -1287,6 +1395,7 @@ def get_mch_heatmap(species, methylationType, level, ptile_start, ptile_end, nor
 
     layout = Layout(
         title=title,
+        height=450,
         titlefont={'color': 'rgba(1,2,2,1)',
                    'size': 16},
         autosize=True,
@@ -1376,11 +1485,10 @@ def get_mch_heatmap(species, methylationType, level, ptile_start, ptile_end, nor
             'layout': layout
         },
         output_type='div',
-        show_link=True,
+        show_link=False,
         include_plotlyjs=False)
 
 
-@cache.memoize(timeout=3600)
 def get_mch_heatmap_two_species(species, methylationType, level, ptile_start, ptile_end, normalize_row, query):
     """Generate gene body mCH heatmap for two species.
 
@@ -1556,6 +1664,7 @@ def get_mch_heatmap_two_species(species, methylationType, level, ptile_start, pt
             titlefont={'color': 'rgba(1,2,2,1)',
                        'size': 16},
             autosize=True,
+            height=450,
 
             hovermode='closest'
             )
@@ -1676,7 +1785,7 @@ def get_mch_heatmap_two_species(species, methylationType, level, ptile_start, pt
     return plotly.offline.plot(
         figure_or_data=fig,
         output_type='div',
-        show_link=True,
+        show_link=False,
         include_plotlyjs=False)
 
 
@@ -1741,7 +1850,7 @@ def get_mch_box(species, methylationType, gene, level, outliers):
 
     layout = Layout(
         autosize=True,
-        height=400,
+        height=450,
         title='Gene body ' + titleMType + ' in each cluster: ' + geneName,
         titlefont={'color': 'rgba(1,2,2,1)',
                    'size': 20},
@@ -1772,7 +1881,7 @@ def get_mch_box(species, methylationType, gene, level, outliers):
             'mirror': True,
         },
         yaxis={
-            'title': geneName + ' ' + level.capitalize() + ' mCH',
+            'title': geneName + ' ' + level.capitalize() + ' ' + titleMType,
             'titlefont': {
                 'size': 15
             },
@@ -1800,7 +1909,7 @@ def get_mch_box(species, methylationType, gene, level, outliers):
             'layout': layout
         },
         output_type='div',
-        show_link=True,
+        show_link=False,
         include_plotlyjs=False)
 
 
@@ -1853,8 +1962,8 @@ def get_mch_box_two_species(methylationType, gene_mmu, gene_hsa, level, outliers
     layout = Layout(
         boxmode='group',
         autosize=True,
+        height=450,
         showlegend=False,
-        height=500,
         title='Gene body ' + titleMType + ' in each cluster: ' + geneName,
         titlefont={'color': 'rgba(1,2,2,1)',
                    'size': 20},
@@ -1960,5 +2069,6 @@ def get_mch_box_two_species(methylationType, gene_mmu, gene_hsa, level, outliers
             'layout': layout
         },
         output_type='div',
-        show_link=True,
+        show_link=False,
         include_plotlyjs=False)
+
