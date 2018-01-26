@@ -107,3 +107,14 @@ scripts/*.csv
 
 #Config Files
 default_config.py
+
+#Other stuff
+node_modules
+static
+static/bundle.js
+static/tablular_ensemble.js
+static/tabular_data_set.js
+*.sqlite
+*.swp
+*.webassets*
+*package-lock.json
