@@ -16,6 +16,13 @@ MINIFY_PAGE = True
 # PUBLISHED_DATA_DIR = '/srv/scmdb_py/data'
 # ALL_DATA_DIR = '/srv/scmdb_py_newdata/data'
 
-DATA_DIR = '/home/cogsci-cnddcollab/brainome_210/data/published_data'
-PUBLISHED_DATA_DIR = '/home/cogsci-cnddcollab/brainome_210/data/published_data'
-ALL_DATA_DIR = '/home/cogsci-cnddcollab/brainome_210/data/all_data'
+MYSQL_USER = 'tishihar'
+MYSQL_PW = 'password1234'
+MYSQL_DB = 'CEMBA_test'
+SQLALCHEMY_BINDS = { 'data': 'mysql://' + MYSQL_USER + ':' + MYSQL_PW + '@localhost/' + MYSQL_DB }
+
+DATA_DIR = '/srv/brainome_210/data/published_data'
+PUBLISHED_DATA_DIR = '/srv/brainome_210/data/published_data'
+ALL_DATA_DIR = '/srv/brainome_210/data/all_data'
+
+SECRET_KEY = 's3cr3t'

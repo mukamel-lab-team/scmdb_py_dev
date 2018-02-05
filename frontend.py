@@ -16,10 +16,10 @@ from flask_rq import get_queue
 
 from . import nav, cache, db, mail
 from .content import get_cluster_plot, search_gene_names, \
-    get_methylation_scatter, get_mch_box, get_mch_box_two_species, \
+    get_methylation_scatter, get_mch_box, get_mch_box_two_dataset, \
     find_orthologs, FailToGraphException, get_corr_genes, \
     gene_id_to_name, randomize_cluster_colors, get_mch_heatmap, \
-    get_mch_heatmap_two_species, all_gene_modules, get_genes_of_module, \
+    get_mch_heatmap_two_dataset, all_gene_modules, get_genes_of_module, \
     convert_geneID_mmu_hsa
 from .decorators import admin_required
 from .email import send_email
@@ -93,13 +93,13 @@ def index():
     # </script>
     # """
 
-@frontend.route('/<species>')
-def species(species):
-    return render_template('speciesview.html', species=species)
+@frontend.route('/<dataset>')
+def dataset(dataset):
+    return render_template('datasetview.html', dataset=dataset)
 
-@frontend.route('/standalone/<species>/<gene>')
-def standalone(species, gene):  # View gene body mCH plots alone
-    return render_template('mch_standalone.html', species=species, gene=gene)
+@frontend.route('/standalone/<dataset>/<gene>')
+def standalone(dataset, gene):  # View gene body mCH plots alone
+    return render_template('mch_standalone.html', dataset=dataset, gene=gene)
 
 
 @frontend.route('/compare/<mmu_gid>/<hsa_gid>')
@@ -129,20 +129,20 @@ def nav_bar_screen():
 
 
 # API routes
-@frontend.route('/plot/cluster/<species>/<grouping>')
+@frontend.route('/plot/cluster/<dataset>/<grouping>')
 @cache.memoize(timeout=3600)
-def plot_cluster(species, grouping):
+def plot_cluster(dataset, grouping):
     try:
-        return jsonify(get_cluster_plot(species, grouping))
+        return jsonify(get_cluster_plot(dataset, grouping))
     except FailToGraphException:
         return 'Failed to produce cluster plot. Contact maintainer.'
 
 
-@frontend.route('/plot/scatter/<species>/<methylationType>/<level>/<ptile_start>/<ptile_end>')
-def plot_methylation_scatter(species, methylationType, level, ptile_start, ptile_end):
+@frontend.route('/plot/scatter/<dataset>/<methylationType>/<level>/<ptile_start>/<ptile_end>')
+def plot_methylation_scatter(dataset, methylationType, level, ptile_start, ptile_end):
     genes = request.args.get('q', 'MustHaveAQueryString')
     try:
-        return get_methylation_scatter(species,
+        return get_methylation_scatter(dataset,
                                        methylationType,
                                        genes, level,
                                        float(ptile_start), float(ptile_end))
@@ -151,101 +151,101 @@ def plot_methylation_scatter(species, methylationType, level, ptile_start, ptile
         return 'Failed to produce mCH levels scatter plot. Contact maintainer.'
 
 
-@frontend.route('/plot/box/<species>/<methylationType>/<gene>/<level>/<outliers_toggle>')
+@frontend.route('/plot/box/<dataset>/<methylationType>/<gene>/<level>/<outliers_toggle>')
 @cache.memoize(timeout=3600)
-def plot_mch_box(species, methylationType, gene, level, outliers_toggle):
+def plot_mch_box(dataset, methylationType, gene, level, outliers_toggle):
     if outliers_toggle == 'outliers':
         outliers = True
     else:
         outliers = False
 
     try:
-        return get_mch_box(species, methylationType, gene, level, outliers)
+        return get_mch_box(dataset, methylationType, gene, level, outliers)
     except (FailToGraphException, ValueError) as e:
         print(e)
         return 'Failed to produce mCH levels box plot. Contact maintainer.'
 
 
 @frontend.route('/plot/box_combined/<methylationType>/<gene_mmu>/<gene_hsa>/<level>/<outliers_toggle>')
-def plot_mch_box_two_species(methylationType, gene_mmu, gene_hsa, level, outliers_toggle):
+def plot_mch_box_two_dataset(methylationType, gene_mmu, gene_hsa, level, outliers_toggle):
     if outliers_toggle == 'outliers':
         outliers = True
     else:
         outliers = False
     try:
-        return get_mch_box_two_species(methylationType, gene_mmu, gene_hsa, level, outliers)
+        return get_mch_box_two_dataset(methylationType, gene_mmu, gene_hsa, level, outliers)
     except (FailToGraphException, ValueError) as e:
         print(e)
         return 'Failed to produce mCH levels box plot. Contact maintainer.'
 
 
-@frontend.route('/plot/heat/<species>/<methylationType>/<level>/<ptile_start>/<ptile_end>')
-def plot_mch_heatmap(species, methylationType, level, ptile_start, ptile_end):
+@frontend.route('/plot/heat/<dataset>/<methylationType>/<level>/<ptile_start>/<ptile_end>')
+def plot_mch_heatmap(dataset, methylationType, level, ptile_start, ptile_end):
     query = request.args.get('q', 'MustHaveAQueryString')
     if request.args.get('normalize', 'MustSpecifyNormalization') == 'true':
         normalize_row = True
     else:
         normalize_row = False
     try:
-        return get_mch_heatmap(species, methylationType, level, ptile_start, ptile_end, normalize_row, query)
+        return get_mch_heatmap(dataset, methylationType, level, ptile_start, ptile_end, normalize_row, query)
     except (FailToGraphException, ValueError) as e:
         print(e)
         return 'Failed to produce mCH levels heatmap plot. Contact maintainer.'
 
-@frontend.route('/plot/heat_two_species/<species>/<methylationType>/<level>/<ptile_start>/<ptile_end>')
-def plot_mch_heatmap_two_species(species, methylationType, level, ptile_start, ptile_end):
+@frontend.route('/plot/heat_two_dataset/<dataset>/<methylationType>/<level>/<ptile_start>/<ptile_end>')
+def plot_mch_heatmap_two_dataset(dataset, methylationType, level, ptile_start, ptile_end):
     query = request.args.get('q', 'MustHaveAQueryString')
     if request.args.get('normalize', 'MustSpecifyNormalization') == 'true':
         normalize_row = True
     else:
         normalize_row = False
     try:
-        return get_mch_heatmap_two_species(species, methylationType, level, ptile_start, ptile_end, normalize_row, query)
+        return get_mch_heatmap_two_dataset(dataset, methylationType, level, ptile_start, ptile_end, normalize_row, query)
     except (FailToGraphException, ValueError) as e:
         print(e)
         return 'Failed to produce orthologous mCH levels heatmap plot. Contact maintainer.'
 
-@frontend.route('/gene/names/<species>')
-def search_gene_by_name(species):
+@frontend.route('/gene/names/<dataset>')
+def search_gene_by_name(dataset):
     query = request.args.get('q', 'MustHaveAQueryString')
     if query == 'none' or query == '':
         return jsonify([])
     else:
-        return jsonify(search_gene_names(species, query))
+        return jsonify(search_gene_names(dataset, query))
 
 
-@frontend.route('/gene/id/<species>')
-def search_gene_by_id(species):
+@frontend.route('/gene/id/<dataset>')
+def search_gene_by_id(dataset):
     query = request.args.get('q', 'MustHaveAQueryString')
     if query == 'none' or query == '':
         return jsonify({})
     else:
-        return jsonify(gene_id_to_name(species, convert_geneID_mmu_hsa(species, query)))
+        return jsonify(gene_id_to_name(dataset, convert_geneID_mmu_hsa(dataset, query)))
 
 
-@frontend.route('/gene/modules/<species>')
-def gene_modules(species):
+@frontend.route('/gene/modules/<dataset>')
+def gene_modules(dataset):
     query = request.args.get('q')
     if query == None or query == '':
         return jsonify(all_gene_modules())
     else:
-        return jsonify(get_genes_of_module(species, query))
+        return jsonify(get_genes_of_module(dataset, query))
 
 
-@frontend.route('/gene/orthologs/<species>/<geneID>')
-def orthologs(species, geneID):
+@frontend.route('/gene/orthologs/<dataset>/<geneID>')
+def orthologs(dataset, geneID):
     geneID = geneID.split('.')[0]
-    geneID = convert_geneID_mmu_hsa(species,geneID) 
-    if species == 'mmu' or species == 'mouse_published':
+    geneID = convert_geneID_mmu_hsa(dataset,geneID) 
+    if dataset == 'mmu' or dataset == 'mouse_published':
         return jsonify(find_orthologs(mmu_gid=geneID))
     else:
         return jsonify(find_orthologs(hsa_gid=geneID))
 
 
 @cache.memoize(timeout=3600)
-@frontend.route('/gene/corr/<species>/<geneID>')
-def correlated_genes(species, geneID):
-    return jsonify(get_corr_genes(species, geneID))
+@frontend.route('/gene/corr/<dataset>/<geneID>')
+def correlated_genes(dataset, geneID):
+    return jsonify(get_corr_genes(dataset, geneID))
 
 
 @frontend.route('/plot/randomize_colors')
@@ -254,10 +254,10 @@ def randomize_colors():
     return jsonify(randomize_cluster_colors(num_colors))
 
 
-@frontend.route('/plot/delete_cache/<species>/<grouping>')
-def delete_cluster_cache(species, grouping):
-    cache.delete_memoized(plot_cluster, species, grouping)
-    return (species + " cluster cache cleared") 
+@frontend.route('/plot/delete_cache/<dataset>/<grouping>')
+def delete_cluster_cache(dataset, grouping):
+    cache.delete_memoized(plot_cluster, dataset, grouping)
+    return (dataset + " cluster cache cleared") 
 
 
 # User related routes

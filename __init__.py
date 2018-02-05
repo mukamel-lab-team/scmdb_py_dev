@@ -37,7 +37,6 @@ class MiniJSONEncoder(JSONEncoder):
 
 def create_app(configfile=None):
     app = Flask(__name__)
-    app.secret_key = 's3cr3t'
     AppConfig(app)
     Bootstrap(app)
     app.config['SQLALCHEMY_DATABASE_URI'] = 'sqlite:///' + os.path.join(basedir, 'user-login.sqlite')

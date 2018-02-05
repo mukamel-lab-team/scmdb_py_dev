@@ -77,34 +77,34 @@ def get_ensemble_list():
 
 # Utilities
 @cache.memoize(timeout=50)
-def species_exists(species):
-    """Check if data for a given species exists by looking for its data directory.
+def dataset_exists(dataset):
+    """Check if data for a given dataset exists by looking for its data directory.
 
     Arguments:
-        species (str): Name of species.
+        dataset (str): Name of dataset.
 
     Returns:
-        bool: Whether if given species exists
+        bool: Whether if given dataset exists
     """
     return os.path.isdir(
-        '{}/ensembles/{}'.format(current_app.config['DATA_DIR'], species))
+        '{}/ensembles/{}'.format(current_app.config['DATA_DIR'], dataset))
 
 
 @cache.memoize(timeout=50)
-def gene_exists(species, methylationType, gene):
-    """Check if data for a given gene of species exists by looking for its data directory.
+def gene_exists(dataset, methylationType, gene):
+    """Check if data for a given gene of dataset exists by looking for its data directory.
 
     Arguments:
-        species (str): Name of species.
+        dataset (str): Name of dataset.
         methylationType (str): Type of methylation to visualize. "mch" or "mcg"
-        gene (str): Ensembl ID of gene for that species.
+        gene (str): Ensembl ID of gene for that dataset.
 
     Returns:
         bool: Whether if given gene exists
     """
 
     datasets_path = '{}/ensembles/{}/datasets'.format(
-            current_app.config['DATA_DIR'], species)
+            current_app.config['DATA_DIR'], dataset)
 
     for root, dirs, files in os.walk(datasets_path):
         for dir in dirs:
@@ -290,13 +290,13 @@ def all_gene_modules():
 
 
 @cache.memoize(timeout=1800)
-def get_genes_of_module(species, module):
+def get_genes_of_module(dataset, module):
     """Generates list of genes in selected module.
     Arguments:
         module (str): Name of module to query for.
     Returns:
         Dataframe of geneName and geneID of each gene in the module for the corresponding
-        species.
+        dataset.
     """
     try:
         filename = glob.glob('{}/gene_modules.tsv'.format(current_app.config[
@@ -308,7 +308,7 @@ def get_genes_of_module(species, module):
         return []
 
     df = pandas.read_csv(filename, delimiter = "\t", engine='python')
-    if 'mmu' in species or 'mouse' in species:
+    if 'mmu' in dataset or 'mouse' in dataset:
         df = df[['module', 'mmu_geneName', 'mmu_gID']]
         df.rename(columns={'mmu_geneName': 'geneName', 'mmu_gID': 'geneID'}, inplace=True)
     else:
@@ -334,81 +334,81 @@ def median_cluster_mch(gene_info, level, cluster_type = 'cluster_name'):
 
 
 @cache.memoize(timeout=3600)
-def get_cluster_points(species):
+def get_cluster_points(dataset):
     """Generate points for the tSNE cluster.
     Arguments:
-        species (str): Name of species.
+        dataset (str): Name of dataset.
     Returns:
-        list: cluster points in dict. See tsne_points_ordered.tsv of each species for dictionary keys.
-        None: if there is an error finding the file of the species.
+        list: cluster points in dict. See tsne_points_ordered.tsv of each dataset for dictionary keys.
+        None: if there is an error finding the file of the dataset.
     """
-    if not species_exists(species):
+    if not dataset_exists(dataset):
         return None
 
     try:
         with open('{}/ensembles/{}/tsne_points_ordered.tsv'.format(
-                   current_app.config['DATA_DIR'], species)) as fp:
+                   current_app.config['DATA_DIR'], dataset)) as fp:
             return list(
                 csv.DictReader(fp, delimiter='\t', quoting=csv.QUOTE_NONE))
     except IOError:
         now = datetime.datetime.now()
-        print("[{}] ERROR in app: Failed to load tsne data for {}".format(str(now), species))
+        print("[{}] ERROR in app: Failed to load tsne data for {}".format(str(now), dataset))
         sys.stdout.flush()
         return None
 
 
 @cache.memoize(timeout=3600)
-def is_3D_data_exists(species):
-    """Determines whether 3D tSNE data for a species exists.
+def is_3D_data_exists(dataset):
+    """Determines whether 3D tSNE data for a dataset exists.
     Arguments:
-        species (str): Name of species:
+        dataset (str): Name of dataset:
     Returns:
         bool: True if 3D tSNE data exists. Returns False otherwise.
     """
     return os.path.isfile(
-        '{}/ensembles/{}/tsne_points_ordered_3D.tsv'.format(current_app.config['DATA_DIR'], species))
+        '{}/ensembles/{}/tsne_points_ordered_3D.tsv'.format(current_app.config['DATA_DIR'], dataset))
 
 
 @cache.memoize(timeout=3600)
-def get_3D_cluster_points(species):
+def get_3D_cluster_points(dataset):
     """Generate points for the 3D tSNE cluster.
     Arguments:
-        species (str): Name of species.
+        dataset (str): Name of dataset.
     Returns:
-        list: cluster points in dict. See 3D_tsne_points.tsv of each species for dictionary keys.
-        None: if there is an error finding the file of the species.
+        list: cluster points in dict. See 3D_tsne_points.tsv of each dataset for dictionary keys.
+        None: if there is an error finding the file of the dataset.
     """
 
-    if not species_exists(species):
+    if not dataset_exists(dataset):
         return None
     try:
         with open('{}/ensembles/{}/tsne_points_ordered_3D.tsv'.format(
-                  current_app.config['DATA_DIR'], species)) as fp:
+                  current_app.config['DATA_DIR'], dataset)) as fp:
             return list(
                 csv.DictReader(fp, dialect='excel-tab'))
     except IOError:
         now = datetime.datetime.now()
-        print("[{}] ERROR in app: Could not load tsne_points_ordered_3D.tsv for {}".format(str(now)), species)
+        print("[{}] ERROR in app: Could not load tsne_points_ordered_3D.tsv for {}".format(str(now)), dataset)
         sys.stdout.flush()
         return None
 
 @cache.memoize(timeout=3600)
-def search_gene_names(species, query):
-    """Match gene names of a species.
+def search_gene_names(dataset, query):
+    """Match gene names of a dataset.
 
     Arguments:
-        species (str): Name of species.
+        dataset (str): Name of dataset.
         query (str): Query string of gene name.
 
     Returns:
-        list: dict of genes found. See gene_id_to_names.tsv of each species for dictionary keys. Empty if error during
+        list: dict of genes found. See gene_id_to_names.tsv of each dataset for dictionary keys. Empty if error during
             searching.
     """
-    if not species_exists(species):
+    if not dataset_exists(dataset):
         return []
 
     conn = sqlite3.connect('{}/ensembles/{}/species/gene_names.sqlite3'.format(
-        current_app.config['DATA_DIR'], species))
+        current_app.config['DATA_DIR'], dataset))
     conn.row_factory = sqlite3.Row
     cursor = conn.cursor()
 
@@ -417,7 +417,7 @@ def search_gene_names(species, query):
                        (query + '%',))
     except sqlite3.Error:
         now = datetime.datetime.now()
-        print("[{}] ERROR in app: Could not open gene_names.sqlite3 for {}".format(str(now), species))
+        print("[{}] ERROR in app: Could not open gene_names.sqlite3 for {}".format(str(now), dataset))
         sys.stdout.flush()
         return []
 
@@ -426,21 +426,21 @@ def search_gene_names(species, query):
 
 
 @cache.memoize(timeout=3600)
-def gene_id_to_name(species, query):
-    """Match gene ID of a species.
+def gene_id_to_name(dataset, query):
+    """Match gene ID of a dataset.
 
         Arguments:
-            species (str): Name of species.
+            dataset (str): Name of dataset.
             query (str): Query string of gene ID.
 
         Returns:
-            dict: information of gene found. See gene_id_to_names.tsv of each species for dictionary keys.
+            dict: information of gene found. See gene_id_to_names.tsv of each dataset for dictionary keys.
     """
-    if not species_exists(species) or query == "" or query == None:
+    if not dataset_exists(dataset) or query == "" or query == None:
         return []
 
     conn = sqlite3.connect('{}/ensembles/{}/species/gene_names.sqlite3'.format(
-        current_app.config['DATA_DIR'], species))
+        current_app.config['DATA_DIR'], dataset))
 
     conn.row_factory = sqlite3.Row
     cursor = conn.cursor()
@@ -450,25 +450,25 @@ def gene_id_to_name(species, query):
                         (query + '%',))
     except sqlite3.Error:
         now = datetime.datetime.now()
-        print("[{}] ERROR in app: Could not load gene_names.sqlite3 for {}".format(str(now), species))
+        print("[{}] ERROR in app: Could not load gene_names.sqlite3 for {}".format(str(now), dataset))
         return None
 
     query_results = cursor.fetchone()
     return dict(query_results)
 
 
-def convert_geneID_mmu_hsa(species, geneID):
+def convert_geneID_mmu_hsa(dataset, geneID):
     """Converts mmu geneIDs to hsa geneIDs and vice versa if the ID's do not correspond to
-    the species being viewed. Necessary due to caching of last viewed gene IDs.
+    the dataset being viewed. Necessary due to caching of last viewed gene IDs.
 
     Arguments:
-        species(str): Name of species.
+        dataset(str): Name of dataset.
         geneID(str): Ensembl ID of gene.of
 
     Returns:
-        str: correct geneID that corresponds with the species.
+        str: correct geneID that corresponds with the dataset.
     """
-    if species == 'mouse_published' or species == 'mmu':
+    if dataset == 'mouse_published' or dataset == 'mmu':
         if "ENSMUSG" not in geneID:   #ENSUMG is the Ensembl header for mouse genes
             mmu = find_orthologs(hsa_gid=geneID)['mmu_gID']
             return find_orthologs(hsa_gid=geneID)['mmu_gID']
@@ -482,18 +482,18 @@ def convert_geneID_mmu_hsa(species, geneID):
             return geneID
 
 
-def get_corr_genes(species,query):
-    """Get correlated genes of a certain gene of a species. 
+def get_corr_genes(dataset,query):
+    """Get correlated genes of a certain gene of a dataset. 
     
         Arguments:
-            species(str): Name of species.
+            dataset(str): Name of dataset.
             query(str): Query string of gene ID.
         
         Returns:
             dict: information of genes that are correlated with target gene.
     """
     db_location = '{}/ensembles/{}/top_corr_genes.sqlite3'.format(
-        current_app.config['DATA_DIR'], species)
+        current_app.config['DATA_DIR'], dataset)
     conn = sqlite3.connect(db_location)
     conn.row_factory = sqlite3.Row
     cursor = conn.cursor()
@@ -502,7 +502,7 @@ def get_corr_genes(species,query):
         cursor.execute('SELECT Gene2, Correlation FROM corr_genes WHERE Gene1 LIKE ? ORDER BY Correlation DESC LIMIT 50', (query + '%',))
     except sqlite3.Error:
         now = datetime.datetime.now()
-        print("[{}] ERROR in app: Could not load top_corr_genes.sqlite3 for {}".format(str(now), species))
+        print("[{}] ERROR in app: Could not load top_corr_genes.sqlite3 for {}".format(str(now), dataset))
         sys.stdout.flush()
         return(1)
 
@@ -510,20 +510,20 @@ def get_corr_genes(species,query):
     table_data=[]
     for rank, item in enumerate(query_results, 1):
         gene = dict(item)
-        geneInfo = gene_id_to_name(species, gene['Gene2'])
+        geneInfo = gene_id_to_name(dataset, gene['Gene2'])
         geneInfo['Rank'] = rank
         geneInfo['Corr'] = gene['Correlation']
         table_data.append(geneInfo)
     return table_data
 
 
-def get_mult_gene_methylation(species, methylationType, genes):
+def get_mult_gene_methylation(dataset, methylationType, genes):
     """Return averaged methylation data ponts for a set of genes.
 
     Data from ID-to-Name mapping and tSNE points are combined for plot generation.
 
     Arguments:
-        species (str): Name of species.
+        dataset (str): Name of dataset.
         methylationType (str): Type of methylation to visualize. "mch" or "mcg"
         genes ([str]): List of gene IDs to query.
         outliers (bool): Whether if outliers should be kept.
@@ -531,7 +531,7 @@ def get_mult_gene_methylation(species, methylationType, genes):
     Returns:
         DataFrame:
     """
-    if not species_exists(species):
+    if not dataset_exists(dataset):
         return []
 
     datasets_path = '{}/datasets'.format(current_app.config['DATA_DIR'])
@@ -539,17 +539,17 @@ def get_mult_gene_methylation(species, methylationType, genes):
     df_methyl = pandas.DataFrame()
     root, dirs, files = next(os.walk(datasets_path))
     for gene in genes:
-        if gene_exists(species, methylationType, gene):
+        if gene_exists(dataset, methylationType, gene):
             for dir in dirs: 
                 try:
                     filename = glob.glob('{}/{}/{}/{}/{}*'.format(
-                            root, dir, species, methylationType, gene))[0]
+                            root, dir, dataset, methylationType, gene))[0]
                 except IndexError:
                     continue
 
             if not filename:
                 now = datetime.datetime.now()
-                print("[{}] ERROR in app: Could not find data for {} for {}".format(str(now), gene, species))
+                print("[{}] ERROR in app: Could not find data for {} for {}".format(str(now), gene, dataset))
                 sys.stdout.flush()
             else:
                 try:
@@ -561,12 +561,12 @@ def get_mult_gene_methylation(species, methylationType, genes):
                             engine='python'))
                 except OSError as e:
                     now = datetime.datetime.now()
-                    print("[{}] ERROR in app: Could not load data for {} for {}".format(str(now), gene, species))
+                    print("[{}] ERROR in app: Could not load data for {} for {}".format(str(now), gene, dataset))
                     sys.stdout.flush()
 
     df_methyl = df_methyl.groupby(by='samp', as_index=False).mean()
 
-    df_cluster = pandas.DataFrame(get_cluster_points(species))
+    df_cluster = pandas.DataFrame(get_cluster_points(dataset))
 
     df_merged = pandas.merge(
         df_cluster[['samp', 'tsne_x', 'tsne_y', 'cluster_label', 'cluster_name', 'cluster_ordered', 'cluster_ortholog']],
@@ -579,15 +579,15 @@ def get_mult_gene_methylation(species, methylationType, genes):
 
 
 @cache.memoize(timeout=3600)
-def get_gene_methylation(species, methylationType, gene, outliers):
+def get_gene_methylation(dataset, methylationType, gene, outliers):
     """Return mCH data points for a given gene.
 
     Data from ID-to-Name mapping and tSNE points are combined for plot generation.
 
     Arguments:
-        species (str): Name of species.
+        dataset (str): Name of dataset.
         methylationType (str): Type of methylation to visualize. "mch" or "mcg"
-        gene (str): Name of gene for that species.
+        gene (str): Name of gene for that dataset.
         outliers (bool): Whether if outliers should be kept.
 
     Returns:
@@ -595,10 +595,10 @@ def get_gene_methylation(species, methylationType, gene, outliers):
          original, normalized.
     """
 
-    if not species_exists(species) or not gene_exists(species, methylationType, gene):
+    if not dataset_exists(dataset) or not gene_exists(dataset, methylationType, gene):
         return []
 
-    cluster = pandas.DataFrame(get_cluster_points(species))
+    cluster = pandas.DataFrame(get_cluster_points(dataset))
 
     datasets_path = '{}/datasets'.format(
             current_app.config['DATA_DIR'])
@@ -608,7 +608,7 @@ def get_gene_methylation(species, methylationType, gene, outliers):
     for dir in dirs:
 
         try:
-            file_string = '{}/{}/{}/{}/{}*'.format(root, dir, species, methylationType, gene)
+            file_string = '{}/{}/{}/{}/{}*'.format(root, dir, dataset, methylationType, gene)
             glob_list = glob.glob(file_string)
             filename = glob_list[0]
             
@@ -663,7 +663,7 @@ def get_ortholog_cluster_order():
         None
 
     Returns:
-        list: tuples of (species, cluster_number)
+        list: tuples of (dataset, cluster_number)
     """
     try:
         df = pandas.read_csv(
@@ -690,10 +690,10 @@ def get_ortholog_cluster_order():
 
 
 # Plot generating
-def get_cluster_plot(species, grouping):
+def get_cluster_plot(dataset, grouping):
     """Generate tSNE cluster plot.
     Arguments:
-        species (str): Name of species.
+        dataset (str): Name of dataset.
         grouping (str): Which variable to use for grouping. cluster_ordered, biosample, layer or cluster_biosample
     Returns:
         str: HTML generated by Plot.ly.
@@ -762,8 +762,8 @@ def get_cluster_plot(species, grouping):
 
     traces_2d = OrderedDict()
 
-    if(is_3D_data_exists(species)):
-        points_3d = get_3D_cluster_points(species)
+    if(is_3D_data_exists(dataset)):
+        points_3d = get_3D_cluster_points(dataset)
         if not (grouping in points_3d[0]):
             grouping = "cluster_ordered"
             print("**** Using cluster_ordered")
@@ -843,7 +843,7 @@ def get_cluster_plot(species, grouping):
 
         max_cluster = int(
             max(points_3d, key=lambda x: int(x['cluster_ordered']))['cluster_ordered']) + 1
-        if species == 'mmu' or species == 'mouse_published':
+        if dataset == 'mmu' or dataset == 'mouse_published':
             max_cluster = 16
         num_colors = int(
             max(points_3d, key=lambda x: int(x[grouping]))[grouping]) + 1
@@ -948,7 +948,7 @@ def get_cluster_plot(species, grouping):
                 trace_str = 'cluster_color_' + str(value['legendgroup'])
             trace_colors.setdefault(trace_str, []).append(i)
 
-        if species == 'mmu' or species == 'mouse_published':
+        if dataset == 'mmu' or dataset == 'mouse_published':
             for i in range(17, 23, 1):
                 traces_2d[i]['marker']['size'] = traces_3d[i]['marker']['size'] = 15
                 traces_2d[i]['marker']['symbol'] = traces_3d[i]['marker']['symbol'] = symbols[i % len(symbols)]
@@ -959,7 +959,7 @@ def get_cluster_plot(species, grouping):
 
     # 3D data does not exist, only process 2D data
     else:
-        points_2d = get_cluster_points(species)
+        points_2d = get_cluster_points(dataset)
 
         if not points_2d:
             raise FailToGraphException
@@ -969,7 +969,7 @@ def get_cluster_plot(species, grouping):
 
         max_cluster = int(
             max(points_2d, key=lambda x: int(x['cluster_ordered']))['cluster_ordered']) + 1
-        if species == 'mmu' or species == 'mouse_published':
+        if dataset == 'mmu' or dataset == 'mouse_published':
             max_cluster = 16
         num_colors = int(
                 max(points_2d, key=lambda x: int(x[grouping]))[grouping])
@@ -1051,7 +1051,7 @@ def get_cluster_plot(species, grouping):
                 trace_str = 'cluster_color_' + str(value['legendgroup'])
             trace_colors.setdefault(trace_str, []).append(i)
 
-        if species == 'mmu' or species == 'mouse_published':
+        if dataset == 'mmu' or dataset == 'mouse_published':
             for i in range(17, 23, 1):
                 traces_2d[i]['marker']['size'] = 15
                 traces_2d[i]['marker']['symbol'] = symbols[i % len(symbols)]
@@ -1061,15 +1061,15 @@ def get_cluster_plot(species, grouping):
 
 
 @cache.memoize(timeout=1800)
-def get_methylation_scatter(species, methylationType, query, level, ptile_start, ptile_end):
+def get_methylation_scatter(dataset, methylationType, query, level, ptile_start, ptile_end):
     """Generate gene body mCH scatter plot.
 
     x- and y-locations are based on tSNE cluster data.
 
     Arguments:
-        species (str): Name of species.
+        dataset (str): Name of dataset.
         methylationType (str): Type of methylation to visualize. "mch" or "mcg"
-        gene (str):  Ensembl ID of gene(s) for that species.
+        gene (str):  Ensembl ID of gene(s) for that dataset.
         level (str): Type of mCH data. Should be "original" or "normalized".
         ptile_start (float): Lower end of color percentile. [0, 1].
         ptile_end (float): Upper end of color percentile. [0, 1].
@@ -1080,7 +1080,7 @@ def get_methylation_scatter(species, methylationType, query, level, ptile_start,
     query = query.split()
     genes = []
     for gene in query:
-        genes.append(convert_geneID_mmu_hsa(species,gene))
+        genes.append(convert_geneID_mmu_hsa(dataset,gene))
 
     if methylationType == 'mch':
         titleMType = 'mCH'
@@ -1091,13 +1091,13 @@ def get_methylation_scatter(species, methylationType, query, level, ptile_start,
     x, y, text, mch = list(), list(), list(), list()
 
     if len(genes) == 1:
-        points = get_gene_methylation(species, methylationType, genes[0], True)
-        geneName = gene_id_to_name(species, genes[0])['geneName']
+        points = get_gene_methylation(dataset, methylationType, genes[0], True)
+        geneName = gene_id_to_name(dataset, genes[0])['geneName']
         title = 'Gene body ' + titleMType + ': ' + geneName
     else:
-        points = get_mult_gene_methylation(species, methylationType, genes)
+        points = get_mult_gene_methylation(dataset, methylationType, genes)
         for gene in genes:
-            geneName += gene_id_to_name(species, gene)['geneName'] + '+'
+            geneName += gene_id_to_name(dataset, gene)['geneName'] + '+'
         geneName = geneName[:-1]
         title = 'Avg. Gene body ' + titleMType + ': ' + geneName
 
@@ -1280,11 +1280,11 @@ def get_methylation_scatter(species, methylationType, query, level, ptile_start,
         include_plotlyjs=False)
 
 @cache.memoize(timeout=3600)
-def get_mch_heatmap(species, methylationType, level, ptile_start, ptile_end, normalize_row, query):
+def get_mch_heatmap(dataset, methylationType, level, ptile_start, ptile_end, normalize_row, query):
     """Generate mCH heatmap comparing multiple genes.
 
     Arguments:
-        species (str): Name of species.
+        dataset (str): Name of dataset.
         methylationType (str): Type of methylation to visualize.        "mch" or "mcg"
         level (str): Type of mCH data. Should be "original" or "normalized".
         outliers (bool): Whether if outliers should be displayed.
@@ -1307,13 +1307,13 @@ def get_mch_heatmap(species, methylationType, level, ptile_start, ptile_end, nor
         normal_or_original = 'Original'
 
     title = normal_or_original + " gene body " + titleMType + " by cluster: "
-    genes = [convert_geneID_mmu_hsa(species,gene) for gene in query.split()]
+    genes = [convert_geneID_mmu_hsa(dataset,gene) for gene in query.split()]
 
     gene_info_df = pandas.DataFrame()
     for geneID in genes:
-        geneName = gene_id_to_name(species, geneID)['geneName']
+        geneName = gene_id_to_name(dataset, geneID)['geneName']
         title += geneName + "+"
-        gene_info_df[geneName] = median_cluster_mch(get_gene_methylation(species, methylationType, geneID, True), level)
+        gene_info_df[geneName] = median_cluster_mch(get_gene_methylation(dataset, methylationType, geneID, True), level)
     title = title[:-1] # Gets rid of last '+'
 
     normal_or_original = 'Original'
@@ -1489,13 +1489,13 @@ def get_mch_heatmap(species, methylationType, level, ptile_start, ptile_end, nor
         include_plotlyjs=False)
 
 
-def get_mch_heatmap_two_species(species, methylationType, level, ptile_start, ptile_end, normalize_row, query):
-    """Generate gene body mCH heatmap for two species.
+def get_mch_heatmap_two_dataset(dataset, methylationType, level, ptile_start, ptile_end, normalize_row, query):
+    """Generate gene body mCH heatmap for two dataset.
 
     Traces are grouped by cluster and ordered by mm_hs_homologous_cluster.txt.
 
     Arguments:
-        species (str): Species being viewed.
+        dataset (str): Species being viewed.
         methylationType (str): Type of methylation to visualize. "mch" or "mcg"
         level (str): Type of mCH data. Should be "original" or "normalized".
         ptile_start (float): Lower end of color percentile. [0, 1].
@@ -1524,8 +1524,8 @@ def get_mch_heatmap_two_species(species, methylationType, level, ptile_start, pt
     gene_mch_mmu_df = pandas.DataFrame()
     gene_mch_combined_df = pandas.DataFrame()
 
-    if species == 'mouse_published' or species == 'mmu':
-        geneID_list_mmu = [ convert_geneID_mmu_hsa(species, geneID) for geneID in query.split() ]
+    if dataset == 'mouse_published' or dataset == 'mmu':
+        geneID_list_mmu = [ convert_geneID_mmu_hsa(dataset, geneID) for geneID in query.split() ]
         geneID_list_hsa = [ find_orthologs(mmu_gid = geneID)['hsa_gID'] for geneID in geneID_list_mmu ]
         for geneID in geneID_list_mmu:
             gene_label_mmu = gene_id_to_name('mouse_published', geneID)['geneName']
@@ -1540,7 +1540,7 @@ def get_mch_heatmap_two_species(species, methylationType, level, ptile_start, pt
                 gene_mch_hsa_df[gene_label_hsa] = median_cluster_mch(get_gene_methylation('human_hv1_published', methylationType, geneID, True), level, cluster_type = 'cluster_ortholog')
             index += 1
     else:
-        geneID_list_hsa = [ convert_geneID_mmu_hsa(species, geneID) for geneID in query.split() ]
+        geneID_list_hsa = [ convert_geneID_mmu_hsa(dataset, geneID) for geneID in query.split() ]
         geneID_list_mmu = [ find_orthologs(hsa_gid = geneID)['mmu_gID'] for geneID in geneID_list_hsa ]
         for geneID in geneID_list_hsa:
             gene_label_hsa = gene_id_to_name('human_hv1_published', geneID)['geneName'] 
@@ -1790,30 +1790,30 @@ def get_mch_heatmap_two_species(species, methylationType, level, ptile_start, pt
 
 
 @cache.memoize(timeout=3600)
-def get_mch_box(species, methylationType, gene, level, outliers):
+def get_mch_box(dataset, methylationType, gene, level, outliers):
     """Generate gene body mCH box plot.
 
     Traces are grouped by cluster.
 
     Arguments:
-        species (str): Name of species.
+        dataset (str): Name of dataset.
         methylationType (str): Type of methylation to visualize.        "mch" or "mcg"
-        gene (str):  Ensembl ID of gene for that species.
+        gene (str):  Ensembl ID of gene for that dataset.
         level (str): Type of mCH data. Should be "original" or "normalized".
         outliers (bool): Whether if outliers should be displayed.
 
     Returns:
         str: HTML generated by Plot.ly.
     """
-    gene = convert_geneID_mmu_hsa(species, gene)
-    points = get_gene_methylation(species, methylationType, gene, outliers)
+    gene = convert_geneID_mmu_hsa(dataset, gene)
+    points = get_gene_methylation(dataset, methylationType, gene, outliers)
     if not points:
         raise FailToGraphException
 
     traces = OrderedDict()
     max_cluster = int(
         max(points, key=lambda x: int(x['cluster_ordered']))['cluster_ordered']) + 1
-    if species == 'mmu' or species == 'mouse_published':
+    if dataset == 'mmu' or dataset == 'mouse_published':
         max_cluster = 16
     colors = generate_cluster_colors(max_cluster)
     for point in points:
@@ -1834,13 +1834,13 @@ def get_mch_box(species, methylationType, gene, level, outliers):
         else:
             trace['y'].append(point['original'])
 
-    if species == 'mmu' or species == 'mouse_published':
+    if dataset == 'mmu' or dataset == 'mouse_published':
         for i in range(17, 23, 1):
             traces[i]['marker']['color'] = 'black'
             traces[i]['marker']['outliercolor'] = 'black'
             traces[i]['visible'] = "legendonly"
 
-    geneName = gene_id_to_name(species, gene)
+    geneName = gene_id_to_name(dataset, gene)
     geneName = geneName['geneName']
 
     if methylationType == 'mch':
@@ -1914,8 +1914,8 @@ def get_mch_box(species, methylationType, gene, level, outliers):
 
 
 @cache.memoize(timeout=3600)
-def get_mch_box_two_species(methylationType, gene_mmu, gene_hsa, level, outliers):
-    """Generate gene body mCH box plot for two species.
+def get_mch_box_two_dataset(methylationType, gene_mmu, gene_hsa, level, outliers):
+    """Generate gene body mCH box plot for two dataset.
 
     Traces are grouped by cluster and ordered by mm_hs_homologous_cluster.txt.
     Mouse clusters red, human clusters black.
