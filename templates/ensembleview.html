@@ -14,7 +14,7 @@
                     <div class="panel panel-info" id="options-panel" style="overflow-x: auto; margin-left:auto; margin-right:auto; max-width:1400px">
                         <div class="panel-heading">
                             <div class="panel-title">
-                                <h5><a data-toggle="collapse" title="" style="margin-top: 0px;" data-original-title="Collapse Search Options" href="#search-panel-body"> Search <span class="glyphicon glyphicon-chevron-down"></span></a>
+                                <h5><a data-toggle="collapse" title="" style="margin-top: 0px;" data-original-title="Collapse Search Options" href="#search-panel-body"> Gene Search <span class="glyphicon glyphicon-chevron-down"></span></a>
                                 <a href="#" target="_blank" id="epiBrowserLink" class="btn btn-info disabled pull-right" style="margin-top: 0px; margin-right:10px" role="button">
                                     <small style="color:white;">Epigenome browser (AnnoJ)</small>
                                 </a>
@@ -32,7 +32,7 @@
 					<div class="panel panel-default panel-main" style="overflow-x: auto; margin-left:auto; margin-right:auto;">
 						<div class="panel-heading">
 							<div class="panel-title">
-								<a data-toggle="collapse" title="" href="#cluster_plots" style="margin-top: 0px;" data-original-title="Collapse Search Options"><b>{{ dataset }}</b> Clustering{% if gene is defined %} - {{ gene }}{% endif %}&nbsp;<span class="glyphicon glyphicon-chevron-down"></span></a>
+								<a data-toggle="collapse" title="" href="#cluster_plots" style="margin-top: 0px;" data-original-title="Collapse Search Options"><b>{{ ensemble }}</b> Clustering{% if gene is defined %} - {{ gene }}{% endif %}&nbsp;<span class="glyphicon glyphicon-chevron-down"></span></a>
 								<a data-toggle="collapse" title="" data-placement="left" href=".cluster_options_group" class="btn btn-sm btn-basic pull-right" style="margin-top: 0px;" data-original-title="Collapse Search Options"><span class="glyphicon glyphicon-cog"></span></a>
 							</div>
 						</div>
@@ -138,7 +138,7 @@
 <script src="./static/bootstrap-slider.min.js"></script>
 
 <script>
-    var dataset = "{{ dataset }}";
+    var ensemble = "{{ ensemble }}";
     var pSlider;
     var geneSearchCache;
     var mmu_gID;
