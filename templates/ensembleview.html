@@ -37,7 +37,7 @@
 							</div>
 						</div>
                         <div class="panel-collapse collapse in" id="cluster_plots">
-							<div class="panel-body flex-container">
+							<div class="panel-body flex-container" style="padding:0px">
                                 <div class="col-md-6 col-sm-12 flex-item" id="tSNE_cluster_div" style="padding: 0px;">
                                     {% include "components/tsne_cluster.html" %}
                                 </div>
@@ -172,8 +172,9 @@
                     "<'col-sm-12'<p>>",
             "pagingType": "simple"
         });
-        buttons = document.getElementsByClassName('modebar-btn');
+        buttons = $('.modebar-btn');
 
+        populateTSNEDropdowns();
         loadClusterPlots();
         randomizeClusterColors();
         initGeneNameSearch();
@@ -263,8 +264,16 @@
         display3DPlotToggle();
     });
 
-    $("#tsneGrouping :input").change(function() {
+    $(".tsne_option").change(function() {
         loadClusterPlots();
+    });
+
+    $("#tsne_types").change(function() {
+        updateMCHClusterPlot();
+    });
+     
+    $("#tsne_grouping, #tsne_clustering").change(function() {
+        updateGeneElements(updateMCHCluster=false);
     });
 
 </script>

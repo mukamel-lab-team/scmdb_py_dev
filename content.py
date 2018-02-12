@@ -30,6 +30,9 @@ from . import cache, db
 
 content = Blueprint('content', __name__) # Flask "bootstrap"
 
+cluster_annotation_order = ['mL2/3', 'mL4', 'mL5-1', 'mL5-2', 'mDL-1', 'mDL-2', \
+                            'mL6-1', 'mL6-2', 'mDL-3', 'mVip', 'mNdnf-1', \
+                            'mNdnf-2', 'mPv', 'mSst-1', 'mSst-2', 'None']
 
 class FailToGraphException(Exception):
     """Fail to generate data or graph due to an internal error."""
@@ -158,6 +161,9 @@ def generate_cluster_colors(num):
     """
 
     # Selects a random colorscale (RGB) depending on number of colors needed
+    if num == 1:
+        num = 3
+
     if num < 12:
         c = cl.scales[str(num)]['qual']
         c = c[random.choice(list(c))]
@@ -326,7 +332,7 @@ def get_genes_of_module(ensemble, module):
 
 
 @cache.memoize(timeout=3600)
-def median_cluster_mch(gene_info, level):
+def median_cluster_mch(gene_info, grouping, clustering):
     """Returns median mch level of a gene for each cluster.
 
         Arguments:
@@ -337,15 +343,43 @@ def median_cluster_mch(gene_info, level):
             dict: Cluster_label (key) : median mCH level (value).
     """
     
-    return gene_info.groupby('cluster', sort=False)[gene_info.columns[-1]].median()
+    if grouping == 'annotation':
+        gene_info.fillna({'annotation_'+clustering: 'None'}, inplace=True)
+    return gene_info.groupby(grouping+'_'+clustering, sort=False)[gene_info.columns[-1]].median()
 
 
 @cache.memoize(timeout=3600)
-def get_tsne_points(ensemble, methylation='mCH'):
+def get_tsne_options(ensemble):
+    """
+    Get all available options for tsne plot for selected ensemble.
+    """
+
+    query = "SELECT * FROM %(ensemble)s LIMIT 1" % {'ensemble': ensemble,}
+    
+    try:
+        df = pd.read_sql(query, db.get_engine(current_app, 'data'))
+    except exc.ProgrammingError as e:
+        now = datetime.datetime.now()
+        print("[{}] Error in app(get_tsne_options): {}".format(str(now), e))
+        sys.stdout.flush()
+        return None
+
+    df_tsne = df.filter(regex='^tsne_x_', axis='columns')
+    df_cluster = df.filter(regex='^cluster_', axis='columns')
+
+    list_tsne_types = [x.split('tsne_x_')[1] for x in df_tsne.columns.values]
+    list_cluster_types = [x.split('cluster_')[1] for x in df_cluster.columns.values]
+
+    return {'tsne_types': list_tsne_types, 'cluster_types': list_cluster_types}
+    
+
+@cache.memoize(timeout=3600)
+def get_tsne_and_cluster_points(ensemble, grouping, clustering):
     """Generate points for the tSNE cluster.
+
     Arguments:
         ensemble (str): Name of ensemble.
-        methylation (str): Type of methylation. mCH, mCG, or mCA
+
     Returns:
         DataFrame: tSNE coordinates, cluster number, and cluster annotation for each cell in selected ensemble.
         None: if there is an error finding the file of the ensemble.
@@ -353,32 +387,24 @@ def get_tsne_points(ensemble, methylation='mCH'):
 
     query = "SELECT cells.cell_name, cells.dataset, %(ensemble)s.* FROM cells \
         INNER JOIN %(ensemble)s \
-        ON cells.cell_id=%(ensemble)s.cell_id \
-        ORDER BY %(ensemble)s.cluster" % {'ensemble': ensemble,}
+        ON cells.cell_id=%(ensemble)s.cell_id" % {'ensemble': ensemble,}
 
     try:
         df = pd.read_sql(query, db.get_engine(current_app,'data'))
     except exc.ProgrammingError as e:
         now = datetime.datetime.now()
-        print("[{}] ERROR in app(get_tsne_points): {}".format(str(now), e))
+        print("[{}] ERROR in app(get_tsne_and_cluster_points): {}".format(str(now), e))
         sys.stdout.flush()
         return None
 
-    return df
-
-
-    # try:
-    #     with open('{}/ensembles/{}/tsne_points_ordered.tsv'.format(
-    #                current_app.config['DATA_DIR'], ensemble)) as fp:
-    #         return list(
-    #             csv.DictReader(fp, delimiter='\t', quoting=csv.QUOTE_NONE))
-    # except IOError:
-    #     now = datetime.datetime.now()
-    #     print("[{}] ERROR in app: Failed to load tsne data for {}".format(str(now), ensemble))
-    #     sys.stdout.flush()
-    #     return None
-
-    
+    if grouping == 'annotation':
+        df.fillna({'annotation_'+clustering: 'None'}, inplace=True)
+        df['annotation_cat'] = pd.Categorical(df['annotation_'+clustering], cluster_annotation_order)
+        return df.sort_values(by='annotation_cat')
+    elif grouping == 'cluster':
+        return df.sort_values(by='cluster_'+clustering)
+    else:
+        return df
 
 
 @cache.memoize(timeout=3600)
@@ -563,15 +589,17 @@ def get_corr_genes(ensemble,query):
     return table_data
 
 
-def get_mult_gene_methylation(ensemble, methylation_type, genes, level):
+def get_mult_gene_methylation(ensemble, tsne_type, methylation_type, genes, clustering, level):
     """Return averaged methylation data ponts for a set of genes.
 
     Data from ID-to-Name mapping and tSNE points are combined for plot generation.
 
     Arguments:
         ensemble (str): Name of ensemble.
+        tsne_type (str): Options for calculating tSNE. ndims = number of dimensions, perp = perplexity.
         methylation_type (str): Type of methylation to visualize. "mch" or "mcg"
         genes ([str]): List of gene IDs to query.
+        clustering (str): Different clustering algorithms and parameters. 'lv' = Louvain clustering.
         level (str): "original" or "normalized" methylation values.
 
     Returns:
@@ -593,25 +621,43 @@ def get_mult_gene_methylation(ensemble, methylation_type, genes, level):
     
     first = True
     for gene_table_name in gene_table_names:
-        query = "SELECT cells.cell_id, cells.cell_name, cells.global_%(methylation_type)s, \
-            %(ensemble)s.cluster, %(ensemble)s.annotation, %(ensemble)s.tsne_x_%(methylation_type)s, %(ensemble)s.tsne_y_%(methylation_type)s, \
-            %(gene_table_name)s.%(methylation_type)s, %(gene_table_name)s.%(context)s \
-            FROM cells \
-            INNER JOIN %(ensemble)s ON cells.cell_id = %(ensemble)s.cell_id \
-            INNER JOIN %(gene_table_name)s ON %(ensemble)s.cell_id = %(gene_table_name)s.cell_id" % {'ensemble': ensemble, 
-                                                                                                     'gene_table_name': gene_table_name,
-                                                                                                     'methylation_type': methylation_type,
-                                                                                                     'context': context}
+        if 'ndim2' in tsne_type:
+            query = "SELECT cells.cell_id, cells.cell_name, cells.global_%(methylation_type)s, \
+                %(ensemble)s.annotation_%(clustering)s, %(ensemble)s.cluster_%(clustering)s, \
+                %(ensemble)s.tsne_x_%(tsne_type)s, %(ensemble)s.tsne_y_%(tsne_type)s, \
+                %(gene_table_name)s.%(methylation_type)s, %(gene_table_name)s.%(context)s \
+                FROM cells \
+                INNER JOIN %(ensemble)s ON cells.cell_id = %(ensemble)s.cell_id \
+                INNER JOIN %(gene_table_name)s ON %(ensemble)s.cell_id = %(gene_table_name)s.cell_id" % {'ensemble': ensemble, 
+                                                                                                         'gene_table_name': gene_table_name,
+                                                                                                         'tsne_type': tsne_type,
+                                                                                                         'methylation_type': methylation_type,
+                                                                                                         'context': context,
+                                                                                                         'clustering': clustering,}
+        else:
+            query = "SELECT cells.cell_id, cells.cell_name, cells.global_%(methylation_type)s, \
+                %(ensemble)s.annotation_%(clustering)s, %(ensemble)s.cluster_%(clustering)s, \
+                %(ensemble)s.tsne_x_%(tsne_type)s, %(ensemble)s.tsne_y_%(tsne_type)s, %(ensemble)s.tsne_z_%(tsne_type)s, \
+                %(gene_table_name)s.%(methylation_type)s, %(gene_table_name)s.%(context)s \
+                FROM cells \
+                INNER JOIN %(ensemble)s ON cells.cell_id = %(ensemble)s.cell_id \
+                INNER JOIN %(gene_table_name)s ON %(ensemble)s.cell_id = %(gene_table_name)s.cell_id" % {'ensemble': ensemble, 
+                                                                                                         'gene_table_name': gene_table_name,
+                                                                                                         'tsne_type': tsne_type,
+                                                                                                         'methylation_type': methylation_type,
+                                                                                                         'context': context,
+                                                                                                         'clustering': clustering,}
         try:
             df_all = df_all.append(pd.read_sql(query, db.get_engine(current_app, bind='data')))
-            if first:
-                df_coords = df_all
-            first = False
         except exc.ProgrammingError as e:
             now = datetime.datetime.now()
-            print("[{}] ERROR in app(get_mult_gene_methylation): {}".format(str(now), e[:2]))
+            print("[{}] ERROR in app(get_mult_gene_methylation): {}".format(str(now), e))
             sys.stdout.flush()
             return None
+        
+        if first:
+            df_coords = df_all
+        first = False
 
     df_avg_methylation = df_all.groupby(by='cell_id', as_index=False)[[methylation_type, context]].mean()
     df_coords.update(df_avg_methylation)
@@ -628,7 +674,7 @@ def get_mult_gene_methylation(ensemble, methylation_type, genes, level):
 
 
 @cache.memoize(timeout=3600)
-def get_gene_methylation(ensemble, methylation_type, gene, level, outliers):
+def get_gene_methylation(ensemble, tsne_type, methylation_type, gene, clustering, level, outliers):
     """Return mCH data points for a given gene.
 
     Data from ID-to-Name mapping and tSNE points are combined for plot generation.
@@ -636,7 +682,9 @@ def get_gene_methylation(ensemble, methylation_type, gene, level, outliers):
     Arguments:
         ensemble (str): Name of ensemble.
         methylation_type (str): Type of methylation to visualize. "mCH", "mCG", or "mCA"
+        tsne_type (str): Options for calculating tSNE. ndims = number of dimensions, perp = perplexity.
         gene (str): Ensembl ID of gene.
+        clustering (str): Different clustering algorithms and parameters. 'lv' = Louvain clustering.
         level (str): "original" or "normalized" methylation values.
         outliers (bool): Whether if outliers should be kept.
 
@@ -644,29 +692,41 @@ def get_gene_methylation(ensemble, methylation_type, gene, level, outliers):
         DataFrame
     """
 
-
     # This query is just to fix gene id's missing the ensemble version number. 
     # Necessary because the table name must match exactly with whats on the MySQL database.
     # Ex. ENSMUSG00000026787 is fixed to ENSMUSG00000026787.3
     first_query = "SELECT gene_id FROM genes WHERE gene_id LIKE '%s'" % (gene+'%%',)
     result = db.get_engine(current_app, bind='data').execute(first_query).fetchone()
     gene_table_name = 'gene_' + result.gene_id.replace('.','_')
-    print(gene_table_name)
-
 
     context = methylation_type[1:]
-    query = "SELECT cells.cell_id, cells.cell_name, cells.global_%(methylation_type)s, \
-        %(ensemble)s.cluster, %(ensemble)s.annotation, %(ensemble)s.tsne_x_%(methylation_type)s, %(ensemble)s.tsne_y_%(methylation_type)s, \
-        %(gene_table_name)s.%(methylation_type)s, %(gene_table_name)s.%(context)s \
-        FROM cells \
-        INNER JOIN %(ensemble)s ON cells.cell_id = %(ensemble)s.cell_id \
-        INNER JOIN %(gene_table_name)s ON %(ensemble)s.cell_id = %(gene_table_name)s.cell_id \
-        ORDER BY %(ensemble)s.cluster" % {'ensemble': ensemble, 
-                                          'gene_table_name': gene_table_name,
-                                          'methylation_type': methylation_type,
-                                          'context': context}
 
-
+    if 'ndim2' in tsne_type:
+        query = "SELECT cells.cell_id, cells.cell_name, cells.global_%(methylation_type)s, \
+            %(ensemble)s.annotation_%(clustering)s, %(ensemble)s.cluster_%(clustering)s, \
+            %(ensemble)s.tsne_x_%(tsne_type)s, %(ensemble)s.tsne_y_%(tsne_type)s, \
+            %(gene_table_name)s.%(methylation_type)s, %(gene_table_name)s.%(context)s \
+            FROM cells \
+            INNER JOIN %(ensemble)s ON cells.cell_id = %(ensemble)s.cell_id \
+            INNER JOIN %(gene_table_name)s ON %(ensemble)s.cell_id = %(gene_table_name)s.cell_id" % {'ensemble': ensemble, 
+                                                                                                     'gene_table_name': gene_table_name,
+                                                                                                     'tsne_type': tsne_type,
+                                                                                                     'methylation_type': methylation_type,
+                                                                                                     'context': context,
+                                                                                                     'clustering': clustering,}
+    else:
+        query = "SELECT cells.cell_id, cells.cell_name, cells.global_%(methylation_type)s, \
+            %(ensemble)s.annotation_%(clustering)s, %(ensemble)s.cluster_%(clustering)s, \
+            %(ensemble)s.tsne_x_%(tsne_type)s, %(ensemble)s.tsne_y_%(tsne_type)s, %(ensemble)s.tsne_z_%(tsne_type)s, \
+            %(gene_table_name)s.%(methylation_type)s, %(gene_table_name)s.%(context)s \
+            FROM cells \
+            INNER JOIN %(ensemble)s ON cells.cell_id = %(ensemble)s.cell_id \
+            INNER JOIN %(gene_table_name)s ON %(ensemble)s.cell_id = %(gene_table_name)s.cell_id" % {'ensemble': ensemble, 
+                                                                                                     'gene_table_name': gene_table_name,
+                                                                                                     'tsne_type': tsne_type,
+                                                                                                     'methylation_type': methylation_type,
+                                                                                                     'context': context,
+                                                                                                     'clustering': clustering,}
     try:
         df = pd.read_sql(query, db.get_engine(current_app, 'data'))
     except exc.ProgrammingError as e:
@@ -687,6 +747,7 @@ def get_gene_methylation(ensemble, methylation_type, gene, level, outliers):
         # Outliers not wanted, remove rows > 99%ile
         three_std_dev = df[methylation_type + '/' + context + '_' + level].quantile(0.99) 
         df = df[df[methylation_type + '/' + context + '_' + level] < three_std_dev] 
+
     
     return df
 
@@ -725,450 +786,292 @@ def get_ortholog_cluster_order():
 
 
 # Plot generating
-def get_tsne_plot(ensemble, grouping='cluster', methylation='mCH'):
+def get_tsne_plot(ensemble, tsne_type, grouping, clustering):
     """Generate tSNE cluster plot.
 
     Arguments:
         ensemble (str): Name of ensemble.
+        tsne_type (str): Options for calculating tSNE. ndims = number of dimensions, perp = perplexity.
         grouping (str): Which variable to use for grouping. "cluster", "annotation", or "dataset".
-        methylation (str): Methylation type used to calculate tSNE coordinates. "mCH", "mCG", or "mCA".
-    Returns:
+        clustering (str): Different clustering algorithms and parameters. 'lv' = Louvain clustering.
+    Returnk:
         str: HTML generated by Plot.ly.
     """
     if not ensemble_exists(ensemble):
         return None
 
-    layout2d = Layout(
-        #autosize=True,
-        showlegend=True,
-        margin={'l': 49,
-                'r': 0,
-                'b': 30,
-                't': 50,
-                'pad': 10
-                },
-        legend={
-            'orientation': 'v',
-            'traceorder': 'grouped',
-            'tracegroupgap': 4,
-            'x': 1.03,
-            'font': {
-                'color': 'rgba(1,2,2,1)',
-                'size': 10
-            },
-        },
-        xaxis={
-            'title': 'tSNE 1',
-            'titlefont': {
-                'color': 'rgba(1,2,2,1)',
-                'size': 14,
-            },
-            'type': 'linear',
-            'ticks': '',
-            'showticklabels': False,
-            'tickwidth': 0, 'showline': True,
-            'showgrid': False,
-            'zeroline': False,
-            'linecolor': 'black',
-            'linewidth': 0.5,
-            'mirror': True
-        },
-        yaxis={
-            'title': 'tSNE 2',
-            'titlefont': {
-                'color': 'rgba(1,2,2,1)',
-                'size': 14,
-            },
-            'type': 'linear',
-            'ticks': '',
-            'showticklabels': False,
-            'tickwidth': 0,
-            'showline': True,
-            'showgrid': False,
-            'zeroline': False,
-            'linecolor': 'black',
-            'linewidth': 0.5,
-            'mirror': True,
-            # 'range': [-20,20]
-        },
-        title='Cell clusters',
-        titlefont={'color': 'rgba(1,2,2,1)',
-                   'size': 16},
-    )
+    points = get_tsne_and_cluster_points(ensemble, grouping, clustering)
+
+    if points is None:
+        raise FailToGraphException
+
+    if grouping != 'dataset':
+        if grouping+'_'+clustering not in points.columns or points[grouping+'_'+clustering].nunique() <= 1:
+            grouping = "cluster"
+            clustering = "mCH_lv_npc50_k30"
+            print("**** Using cluster_mCH_lv_npc50_k30")
+
+    datasets = points['dataset'].unique().tolist()
+    if grouping == 'dataset':
+        unique_groups = datasets
+        max_cluster = len(unique_groups)
+    else:
+        max_cluster = points['cluster_'+clustering].max()
+        unique_groups = points[grouping+'_'+clustering].unique().tolist()
+    num_colors = len(unique_groups)
+    
+    colors = generate_cluster_colors(num_colors)
+    symbols = ['circle', 'square', 'cross', 'triangle-up', 'triangle-down', 'octagon', 'star', 'diamond']
+
     global trace_colors
     trace_colors = dict()
 
-    traces_2d = OrderedDict()
+    if 'ndim2' in tsne_type:
 
-    points_2d = get_tsne_points(ensemble)
-
-    if points_2d is None:
-        raise FailToGraphException
-    if points_2d[grouping].unique() == None:
-        grouping = "cluster"
-        print("**** Using cluster_ordered")
-
-    max_cluster = points_2d['cluster'].max()
-    unique_groups = points_2d[grouping].unique().tolist()
-    num_colors = len(unique_groups)
-    datasets = points_2d['dataset'].unique().tolist()
-    colors = generate_cluster_colors(num_colors)
-    symbols = ['circle', 'square', 'cross', 'triangle-up', 'triangle-down', 'octagon', 'star', 'diamond']
-    for point in points_2d.to_dict('records'):
-        group = point[grouping]
-        color_num = unique_groups.index(group)
-        
-        if grouping == 'cluster':
-            group_name = 'cluster ' + str(group)
-        else:
-            group_name = group
-
-        trace2d = traces_2d.setdefault(group,
-                                      Scattergl(
-                                          x=list(),
-                                          y=list(),
-                                          text=list(),
-                                          mode='markers',
-                                          visible=True,
-                                          name=group_name,
-                                          legendgroup=group,
-                                          marker={
-                                              'color': colors[color_num],
-                                              'size': 4,
-                                              'opacity':0.8,
-                                              'symbol': symbols[datasets.index(point['dataset'])],  # Eran and Fangming 09/12/2017
-                                              'line': {'width': 0.1, 'color': 'black'}
-                                          },
-                                          hoverinfo='text'))
-        trace2d['x'].append(point['tsne_x_' + methylation])
-        trace2d['y'].append(point['tsne_y_' + methylation])
-        trace2d['text'].append(
-            build_hover_text({
-                'Cell': point.get('cell_name', 'N/A'),
-                # 'Layer': point.get('layer', 'N/A'),
-                'Biosample': point.get('dataset', 'N/A'),
-                'Cluster': point.get('cluster', 'N/A'),
-                'Annotation': point.get('annotation', 'N/A')
-            })
+        layout2d = Layout(
+            autosize=True,
+            showlegend=True,
+            margin={'l': 49,
+                    'r': 0,
+                    'b': 30,
+                    't': 50,
+                    'pad': 10
+                    },
+            legend={
+                'orientation': 'v',
+                'traceorder': 'grouped',
+                'tracegroupgap': 4,
+                'x': 1.03,
+                'font': {
+                    'color': 'rgba(1,2,2,1)',
+                    'size': 10
+                },
+            },
+            xaxis={
+                'title': 'tSNE 1',
+                'titlefont': {
+                    'color': 'rgba(1,2,2,1)',
+                    'size': 14,
+                },
+                'type': 'linear',
+                'ticks': '',
+                'showticklabels': False,
+                'tickwidth': 0, 'showline': True,
+                'showgrid': False,
+                'zeroline': False,
+                'linecolor': 'black',
+                'linewidth': 0.5,
+                'mirror': True
+            },
+            yaxis={
+                'title': 'tSNE 2',
+                'titlefont': {
+                    'color': 'rgba(1,2,2,1)',
+                    'size': 14,
+                },
+                'type': 'linear',
+                'ticks': '',
+                'showticklabels': False,
+                'tickwidth': 0,
+                'showline': True,
+                'showgrid': False,
+                'zeroline': False,
+                'linecolor': 'black',
+                'linewidth': 0.5,
+                'mirror': True,
+                # 'range': [-20,20]
+            },
+            title='Cell clusters',
+            titlefont={'color': 'rgba(1,2,2,1)',
+                       'size': 16},
         )
-    for i, (key, value) in enumerate(sorted(traces_2d.items())):
-        try:
-            trace_str = 'cluster_color_' + str(int(value['legendgroup'])-1)
-        except:
-            trace_str = 'cluster_color_' + str(value['legendgroup'])
-        trace_colors.setdefault(trace_str, []).append(i)
 
-    return {'traces_2d': traces_2d, 'layout2d': layout2d}
+        traces_2d = OrderedDict()
 
-    # if(is_3D_data_exists(ensemble)):
-    #     points_3d = get_3D_cluster_points(ensemble)
-    #     if not (grouping in points_3d[0]):
-    #         grouping = "cluster_ordered"
-    #         print("**** Using cluster_ordered")
+        for point in points.to_dict('records'):
 
-    #     layout3d = Layout(
-    #         autosize=True,
-    #         height=450,
-    #         title='3D Cell Cluster',
-    #         titlefont={'color': 'rgba(1,2,2,1)',
-    #                    'size': 16},
-    #         margin={'l': 49,
-    #                 'r': 0,
-    #                 'b': 30,
-    #                 't': 50,
-    #                 'pad': 10
-    #                 },
+            if grouping == 'dataset':
+                group = point['dataset']
+            else:
+                group = point[grouping+'_'+clustering]
+            color_num = unique_groups.index(group)
 
-    #         scene={
-    #             'camera':{
-    #                 'eye': dict(x=1.2, y=1.5, z=0.7),
-    #                 'center': dict(x=0.25, z=-0.1)
-    #                      },
-    #             'aspectmode':'data',
-    #             'xaxis':{
-    #                 'title': 'tSNE 1',
-    #                 'titlefont': {
-    #                     'color': 'rgba(1,2,2,1)',
-    #                     'size': 12
-    #                 },
-    #                 'type': 'linear',
-    #                 'ticks': '',
-    #                 'showticklabels': False,
-    #                 'tickwidth': 0,
-    #                 'showline': True,
-    #                 'showgrid': False,
-    #                 'zeroline': False,
-    #                 'linecolor': 'black',
-    #                 'linewidth': 0.5,
-    #                 'mirror': True
-    #             },
-    #             'yaxis':{
-    #                 'title': 'tSNE 2',
-    #                 'titlefont': {
-    #                     'color': 'rgba(1,2,2,1)',
-    #                     'size': 12
-    #                 },
-    #                 'type': 'linear',
-    #                 'ticks': '',
-    #                 'showticklabels': False,
-    #                 'tickwidth': 0,
-    #                 'showline': True,
-    #                 'showgrid': False,
-    #                 'zeroline': False,
-    #                 'linecolor': 'black',
-    #                 'linewidth': 0.5,
-    #                 'mirror': True
-    #             },
-    #             'zaxis':{
-    #                 'title': 'tSNE 3',
-    #                 'titlefont': {
-    #                     'color': 'rgba(1,2,2,1)',
-    #                     'size': 12
-    #                 },
-    #                 'type': 'linear',
-    #                 'ticks': '',
-    #                 'showticklabels': False,
-    #                 'tickwidth': 0,
-    #                 'showline': True,
-    #                 'showgrid': False,
-    #                 'zeroline': False,
-    #                 'linecolor': 'black',
-    #                 'linewidth': 0.5,
-    #                 'mirror': True
-    #             }
-    #         }
-    #     )
+            if group is None:
+                group = 'N/A'
+            if grouping == 'cluster':
+                group = 'cluster ' + str(group)
 
-    #     max_cluster = int(
-    #         max(points_3d, key=lambda x: int(x['cluster_ordered']))['cluster_ordered']) + 1
-    #     if ensemble == 'mmu' or ensemble == 'mouse_published':
-    #         max_cluster = 16
-    #     num_colors = int(
-    #         max(points_3d, key=lambda x: int(x[grouping]))[grouping]) + 1
-    #     colors = generate_cluster_colors(num_colors)
-    #     symbols = ['circle', 'square', 'cross', 'triangle-up', 'triangle-down', 'octagon', 'star', 'diamond']
-    #     traces_3d = OrderedDict()
-    #     for point in points_3d:
-    #         cluster_num = int(point['cluster_ordered'])
-    #         biosample_name = ""
-    #         if 'biosample' in point:
-    #             biosample = int(point.get('biosample', 1)) - 1
-    #             if 'biosample_name' in point:
-    #                 biosample_name = str(point.get('biosample_name', 'N/A'))
-    #             else:
-    #                 biosample_name = 'hv' + str(biosample + 1) 
-    #         cluster_sample_num = int(point[grouping]) + max_cluster * biosample
-    #         color_num = int(point[grouping])-1
+            trace2d = traces_2d.setdefault(color_num,
+                                          Scattergl(
+                                              x=list(),
+                                              y=list(),
+                                              text=list(),
+                                              mode='markers',
+                                              visible=True,
+                                              name=group,
+                                              legendgroup=group,
+                                              marker={
+                                                  'color': colors[color_num],
+                                                  'size': 4,
+                                                  'opacity':0.8,
+                                                  'symbol': symbols[datasets.index(point['dataset'])],  # Eran and Fangming 09/12/2017
+                                                  'line': {'width': 0.1, 'color': 'black'}
+                                              },
+                                              hoverinfo='text'))
+            trace2d['x'].append(point['tsne_x_' + tsne_type])
+            trace2d['y'].append(point['tsne_y_' + tsne_type])
+            trace2d['text'].append(
+                build_hover_text({
+                    'Cell': point.get('cell_name', 'N/A'),
+                    # 'Layer': point.get('layer', 'N/A'),
+                    'Biosample': point.get('dataset', 'N/A'),
+                    'Cluster': point.get('cluster_'+clustering, 'N/A'),
+                    'Annotation': point.get('annotation_'+clustering, 'N/A')
+                })
+            )
 
-    #         if grouping == 'cluster_annotation_ordered':
-    #             legend_group = point['cluster_annotation']
-    #             if legend_group == '':
-    #                 legend_group = "N/A"
-    #             trace_name_str = legend_group + " (" + biosample_name + ")"
-    #             cluster_sample_num = int(point[grouping]) + (max_cluster * biosample)
-    #         elif grouping == 'cluster_ordered':
-    #             legend_group = point[grouping]
-    #             cluster_annotation = ''
-    #             if 'cluster_annotation' in point:
-    #                 annotation = point['cluster_annotation']
-    #                 if annotation == '' or annotation == None:
-    #                     annotation = 'N/A'
-    #                 cluster_annotation = "(" + annotation + ")"
-    #             trace_name_str = cluster_annotation + point['cluster_name'] + " " + biosample_name
-    #         else: # If grouping == 'biosample'
-    #             legend_group = point[grouping]
-    #             trace_name_str = "Sample " + biosample_name
+        return {'traces': traces_2d, 'layout': layout2d}
 
-    #         trace2d = traces_2d.setdefault(cluster_sample_num,
-    #             Scattergl(
-    #                 x=list(),
-    #                 y=list(),
-    #                 text=list(),
-    #                 mode='markers',
-    #                 visible=True,
-    #                 name=trace_name_str,
-    #                 legendgroup=legend_group,
-    #                 marker={
-    #                     'color': colors[color_num],
-    #                     'size': 6,
-    #                     'opacity':0.8,
-    #                     'symbol': symbols[biosample],  # Eran and Fangming 09/12/2017
-    #                     'line': {'width': 0.5, 'color':'black'}
-    #                 },
-    #                 hoverinfo='text'))
-    #         trace2d['x'].append(point['tsne_x'])
-    #         trace2d['y'].append(point['tsne_y'])
-    #         if 'cluster_annotation' in point:
-    #             trace2d['text'].append(
-    #                 build_hover_text({
-    #                     'Cell': point.get('samp', 'N/A'),
-    #                     'Layer': point.get('layer', 'N/A'),
-    #                     'Biosample': point.get('biosample_name', 'N/A'),
-    #                     'Cluster': point.get('cluster_name', 'N/A'),
-    #                     'Annotation': point.get('cluster_annotation', 'N/A')
-    #                 })
-    #             )
-    #         else:
-    #             trace2d['text'].append(
-    #                 build_hover_text({
-    #                     'Cell': point.get('samp', 'N/A'),
-    #                     'Layer': point.get('layer', 'N/A'),
-    #                     'Biosample': point.get('biosample_name', 'N/A'),
-    #                     'Cluster': point.get('cluster_name', 'N/A')
-    #                 })
-    #             )
-    #         trace3d = traces_3d.setdefault(cluster_sample_num,
-    #             Scatter3d(
-    #                 x=list(),
-    #                 y=list(),
-    #                 z=list(),
-    #                 text=list(),
-    #                 mode='markers',
-    #                 visible=True,
-    #                 name=trace_name_str,
-    #                 legendgroup=legend_group,
-    #                 marker={
-    #                     'size': 4,
-    #                     'symbol': symbols[biosample],  # Eran and Fangming 09/12/2017
-    #                     'line': {'width': 1, 'color': 'black'},
-    #                     'color': colors[color_num],
-    #                 },
-    #                 hoverinfo='text'))
-    #         trace3d['x'].append(point['tsne_1'])
-    #         trace3d['y'].append(point['tsne_2'])
-    #         trace3d['z'].append(point['tsne_3'])
-    #         trace3d['text'] = trace2d['text']
+    else:
 
-    #     for i, (key, value) in enumerate(sorted(traces_2d.items())):
-    #         try:
-    #             trace_str = 'cluster_color_' + str(int(value['legendgroup']) - 1)
-    #         except:
-    #             trace_str = 'cluster_color_' + str(value['legendgroup'])
-    #         trace_colors.setdefault(trace_str, []).append(i)
+        traces_3d = OrderedDict()
 
-    #     if ensemble == 'mmu' or ensemble == 'mouse_published':
-    #         for i in range(17, 23, 1):
-    #             traces_2d[i]['marker']['size'] = traces_3d[i]['marker']['size'] = 15
-    #             traces_2d[i]['marker']['symbol'] = traces_3d[i]['marker']['symbol'] = symbols[i % len(symbols)]
-    #             traces_2d[i]['marker']['color'] = traces_3d[i]['marker']['color'] = 'black'
-    #             traces_2d[i]['visible'] = traces_3d[i]['visible'] = "legendonly"
+        layout3d = Layout(
+            autosize=True,
+            height=450,
+            title='3D tSNE',
+            titlefont={'color': 'rgba(1,2,2,1)',
+                       'size': 16},
+            margin={'l': 49,
+                    'r': 0,
+                    'b': 30,
+                    't': 50,
+                    'pad': 10
+                    },
 
-    #     return {'traces_2d': traces_2d, 'traces_3d': traces_3d, 'layout2d': layout2d, 'layout3d': layout3d}
+            scene={
+                'camera':{
+                    'eye': dict(x=1.2, y=1.5, z=0.7),
+                    'center': dict(x=0.25, z=-0.1)
+                         },
+                'aspectmode':'data',
+                'xaxis':{
+                    'title': 'tSNE 1',
+                    'titlefont': {
+                        'color': 'rgba(1,2,2,1)',
+                        'size': 12
+                    },
+                    'type': 'linear',
+                    'ticks': '',
+                    'showticklabels': False,
+                    'tickwidth': 0,
+                    'showline': True,
+                    'showgrid': False,
+                    'zeroline': False,
+                    'linecolor': 'black',
+                    'linewidth': 0.5,
+                    'mirror': True
+                },
+                'yaxis':{
+                    'title': 'tSNE 2',
+                    'titlefont': {
+                        'color': 'rgba(1,2,2,1)',
+                        'size': 12
+                    },
+                    'type': 'linear',
+                    'ticks': '',
+                    'showticklabels': False,
+                    'tickwidth': 0,
+                    'showline': True,
+                    'showgrid': False,
+                    'zeroline': False,
+                    'linecolor': 'black',
+                    'linewidth': 0.5,
+                    'mirror': True
+                },
+                'zaxis':{
+                    'title': 'tSNE 3',
+                    'titlefont': {
+                        'color': 'rgba(1,2,2,1)',
+                        'size': 12
+                    },
+                    'type': 'linear',
+                    'ticks': '',
+                    'showticklabels': False,
+                    'tickwidth': 0,
+                    'showline': True,
+                    'showgrid': False,
+                    'zeroline': False,
+                    'linecolor': 'black',
+                    'linewidth': 0.5,
+                    'mirror': True
+                }
+            }
+        )
 
-    # # 3D data does not exist, only process 2D data
-    # else:
-    #     points_2d = get_tsne_points(ensemble)
+        for point in points.to_dict('records'):
+            group = point[grouping+'_'+clustering]
+            color_num = unique_groups.index(group)
+            
+            if grouping == 'cluster':
+                group_name = 'cluster ' + str(group)
+            else:
+                group_name = group
 
-    #     if not points_2d:
-    #         raise FailToGraphException
-    #     if not (grouping in points_2d[0]):
-    #         grouping= "cluster"
-    #         print("**** Using cluster_ordered")
 
-    #     max_cluster = int(
-    #         max(points_2d, key=lambda x: int(x['cluster_ordered']))['cluster_ordered']) + 1
-    #     if ensemble == 'mmu' or ensemble == 'mouse_published':
-    #         max_cluster = 16
-    #     num_colors = int(
-    #             max(points_2d, key=lambda x: int(x[grouping]))[grouping])
-    #     colors = generate_cluster_colors(num_colors)
-    #     symbols = ['circle', 'square', 'cross', 'triangle-up', 'triangle-down', 'octagon', 'star', 'diamond']
-    #     for point in points_2d:
-    #         cluster_num = int(point['cluster_ordered'])
-    #         biosample_name = ""
-    #         biosample = 0;
-    #         if 'biosample' in point:
-    #             biosample = int(point.get('biosample', 1)) - 1
-    #             if 'biosample_name' in point:
-    #                 biosample_name = str(point.get('biosample_name', 'N/A'))
-    #             else:
-    #                 biosample_name = 'hv' + str(biosample + 1) 
-    #         cluster_sample_num = int(point['cluster_ordered']) + max_cluster * biosample
-    #         color_num = int(point[grouping]) - 1
-    #         if grouping == 'cluster_annotation_ordered':
-    #             legend_group = point['cluster_annotation']
-    #             if legend_group == '':
-    #                 legend_group = "N/A"
-    #             trace_name_str = legend_group + " (" + biosample_name + ")"
-    #             cluster_sample_num = int(point[grouping]) + (max_cluster * biosample)
-    #         elif grouping == 'cluster_ordered':
-    #             legend_group = point[grouping]
-    #             cluster_annotation = ''
-    #             if 'cluster_annotation' in point:
-    #                 annotation = point['cluster_annotation']
-    #                 if annotation == '' or annotation == None:
-    #                     annotation = 'N/A'
-    #                 cluster_annotation = "(" + annotation + ")"
-    #             trace_name_str = cluster_annotation + point['cluster_name'] + " " + biosample_name
-    #         else: # If grouping == 'biosample'
-    #             legend_group = point[grouping]
-    #             trace_name_str = "Sample " + biosample_name
+            trace3d = traces_3d.setdefault(color_num,
+                Scatter3d(
+                    x=list(),
+                    y=list(),
+                    z=list(),
+                    text=list(),
+                    mode='markers',
+                    visible=True,
+                    name=group_name,
+                    legendgroup=group,
+                    marker={
+                        'size': 4,
+                        'symbol': symbols[datasets.index(point['dataset'])],  # Eran and Fangming 09/12/2017
+                        'line': {'width': 1, 'color': 'black'},
+                        'color': colors[color_num],
+                    },
+                    hoverinfo='text'))
+            trace3d['x'].append(point['tsne_x_'+tsne_type])
+            trace3d['y'].append(point['tsne_y_'+tsne_type])
+            trace3d['z'].append(point['tsne_z_'+tsne_type])
 
-    #         trace2d = traces_2d.setdefault(cluster_sample_num,
-    #                                       Scattergl(
-    #                                           x=list(),
-    #                                           y=list(),
-    #                                           text=list(),
-    #                                           mode='markers',
-    #                                           visible=True,
-    #                                           name=trace_name_str,
-    #                                           legendgroup=legend_group,
-    #                                           marker={
-    #                                               'color': colors[color_num],
-    #                                               'size': 4,
-    #                                               'opacity':0.8,
-    #                                               'symbol': symbols[biosample],  # Eran and Fangming 09/12/2017
-    #                                               'line': {'width': 0.1, 'color': 'black'}
-    #                                           },
-    #                                           hoverinfo='text'))
-    #         trace2d['x'].append(point['tsne_x'])
-    #         trace2d['y'].append(point['tsne_y'])
-    #         if 'cluster_annotation' in point:
-    #             trace2d['text'].append(
-    #                 build_hover_text({
-    #                     'Cell': point.get('samp', 'N/A'),
-    #                     'Layer': point.get('layer', 'N/A'),
-    #                     'Biosample': point.get('biosample_name', 'N/A'),
-    #                     'Cluster': point.get('cluster_name', 'N/A'),
-    #                     'Annotation': point.get('cluster_annotation', 'N/A')
-    #                 })
-    #             )
-    #         else:
-    #             trace2d['text'].append(
-    #                 build_hover_text({
-    #                     'Cell': point.get('samp', 'N/A'),
-    #                     'Layer': point.get('layer', 'N/A'),
-    #                     'Biosample': point.get('biosample_name', 'N/A'),
-    #                     'Cluster': point.get('cluster_name', 'N/A')
-    #                 })
-    #             )
-    #     for i, (key, value) in enumerate(sorted(traces_2d.items())):
-    #         try:
-    #             trace_str = 'cluster_color_' + str(int(value['legendgroup'])-1)
-    #         except:
-    #             trace_str = 'cluster_color_' + str(value['legendgroup'])
-    #         trace_colors.setdefault(trace_str, []).append(i)
+            trace3d['text'].append(
+                build_hover_text({
+                    'Cell': point.get('cell_name', 'N/A'),
+                    # 'Layer': point.get('layer', 'N/A'),
+                    'Biosample': point.get('dataset', 'N/A'),
+                    'Cluster': point.get('cluster_'+clustering, 'N/A'),
+                    'Annotation': point.get('annotation_'+clustering, 'N/A')
+                })
+            )
+        # for i, (key, value) in enumerate(sorted(traces_3d.items())):
+        #     try:
+        #         trace_str = 'cluster_color_' + str(int(value['legendgroup'])-1)
+        #     except:
+        #         trace_str = 'cluster_color_' + str(value['legendgroup'])
+        #     trace_colors.setdefault(trace_str, []).append(i)
 
-    #     if ensemble == 'mmu' or ensemble == 'mouse_published':
-    #         for i in range(17, 23, 1):
-    #             traces_2d[i]['marker']['size'] = 15
-    #             traces_2d[i]['marker']['symbol'] = symbols[i % len(symbols)]
-    #             traces_2d[i]['marker']['color'] = 'black'
-    #             traces_2d[i]['visible'] = "legendonly"
-    #     return {'traces_2d': traces_2d, 'layout2d': layout2d}
+        return {'traces': traces_3d, 'layout': layout3d}
 
 
 @cache.memoize(timeout=1800)
-def get_methylation_scatter(ensemble, methylation_type, query, level, ptile_start, ptile_end):
+def get_methylation_scatter(ensemble, tsne_type, methylation_type, query, level, clustering, ptile_start, ptile_end):
     """Generate gene body mCH scatter plot.
 
     x- and y-locations are based on tSNE cluster data.
 
     Arguments:
         ensemble (str): Name of ensemble.
+        tsne_type (str): Options for calculating tSNE. ndims = number of dimensions, perp = perplexity.
         methylation_type (str): Type of methylation to visualize. "mCH", "mCG", or "mCA".
         gene (str):  Ensembl ID of gene(s) for that ensemble.
         level (str): "original" or "normalized" methylation values.
+        clustering (str): Different clustering algorithms and parameters. 'lv' = Louvain clustering.
         ptile_start (float): Lower end of color percentile. [0, 1].
         ptile_end (float): Upper end of color percentile. [0, 1].
 
@@ -1185,11 +1088,11 @@ def get_methylation_scatter(ensemble, methylation_type, query, level, ptile_star
     x, y, text, mch = list(), list(), list(), list()
 
     if len(genes) == 1:
-        points = get_gene_methylation(ensemble, methylation_type, genes[0], level, True)
+        points = get_gene_methylation(ensemble, tsne_type, methylation_type, genes[0], clustering, level, True)
         gene_name = get_gene_by_id(ensemble, genes[0])['gene_name']
         title = 'Gene body ' + methylation_type + ': ' + gene_name
     else:
-        points = get_mult_gene_methylation(ensemble, methylation_type, genes, level)
+        points = get_mult_gene_methylation(ensemble, tsne_type, methylation_type, genes, clustering, level)
         for gene in genes:
             gene_name += get_gene_by_id(ensemble, gene)['gene_name'] + '+'
         gene_name = gene_name[:-1]
@@ -1198,13 +1101,13 @@ def get_methylation_scatter(ensemble, methylation_type, query, level, ptile_star
     if points is None:
         raise FailToGraphException
 
-
-    x = points['tsne_x_' + methylation_type].tolist()
-    y = points['tsne_y_' + methylation_type].tolist()
+    x = points['tsne_x_' + tsne_type].tolist()
+    y = points['tsne_y_' + tsne_type].tolist()
     mch = points[methylation_type + '/' + context + '_' + level]
     text = [build_hover_text({methylation_type: round(point[-1], 6),
                               'Cell Name': point[1],
-                              'Cluster': point[3],})
+                              'Annotation': point[3],
+                              'Cluster': point[4]})
             for point in points.itertuples(index=False)]
 
 
@@ -1369,7 +1272,7 @@ def get_methylation_scatter(ensemble, methylation_type, query, level, ptile_star
         include_plotlyjs=False)
 
 @cache.memoize(timeout=3600)
-def get_mch_heatmap(ensemble, methylation_type, level, ptile_start, ptile_end, normalize_row, query):
+def get_mch_heatmap(ensemble, methylation_type, grouping, clustering, level, ptile_start, ptile_end, normalize_row, query):
     """Generate mCH heatmap comparing multiple genes.
 
     Arguments:
@@ -1386,6 +1289,8 @@ def get_mch_heatmap(ensemble, methylation_type, level, ptile_start, ptile_end, n
         str: HTML generated by Plot.ly
     """
 
+    tsne_type = 'mCH_ndim2_perp20'
+
     if normalize_row:
         normal_or_original = 'Normalized'
     else:
@@ -1398,8 +1303,19 @@ def get_mch_heatmap(ensemble, methylation_type, level, ptile_start, ptile_end, n
     for gene_id in genes:
         gene_name = get_gene_by_id(ensemble, gene_id)['gene_name']
         title += gene_name + "+"
-        gene_info_df[gene_name] = median_cluster_mch(get_gene_methylation(ensemble, methylation_type, gene_id, level, True), level)
+        gene_info_df[gene_name] = median_cluster_mch(get_gene_methylation(ensemble, tsne_type, methylation_type, gene_id, clustering, level, True), grouping, clustering)
+
+    print(gene_info_df.shape)
     title = title[:-1] # Gets rid of last '+'
+
+    gene_info_df.reset_index(inplace=True)
+    if grouping == 'annotation':
+        gene_info_df['annotation_cat'] = pd.Categorical(gene_info_df['annotation_'+clustering], cluster_annotation_order)
+        gene_info_df.sort_values(by='annotation_cat', inplace=True)
+        gene_info_df.drop('annotation_cat', axis=1, inplace=True)
+    elif grouping == 'cluster':
+        gene_info_df.sort_values(by='cluster_'+clustering, inplace=True)
+    gene_info_df.set_index(grouping+'_'+clustering, inplace=True)
 
     normal_or_original = 'Original'
     if normalize_row:
@@ -1410,17 +1326,19 @@ def get_mch_heatmap(ensemble, methylation_type, level, ptile_start, ptile_end, n
             gene_info_df[gene] = (gene_info_df[gene] - gene_info_df[gene].min()) / (gene_info_df[gene].max() - gene_info_df[gene].min())
         normal_or_original = 'Normalized'
 
-
     gene_info_dict = gene_info_df.to_dict(into=OrderedDict)    
 
     x, y, text, hover, mch = list(), list(), list(), list(), list()
     i = 0
+    name_prepend = ""
+    if grouping == 'cluster':
+        name_prepend = 'cluster_'
     for key in list(gene_info_dict.keys()):
         j = 0
         y.append(key)
         mch.append(list(gene_info_dict[key].values()))
         for cluster in list(gene_info_dict[key].keys()):
-            x.append('cluster_'+str(cluster))
+            x.append(name_prepend+str(cluster))
             text.append(build_hover_text({
                 'Gene': key,
                 'Cluster': x[j],
@@ -1875,7 +1793,7 @@ def get_mch_heatmap_two_ensemble(ensemble, methylation_type, level, ptile_start,
 
 
 @cache.memoize(timeout=3600)
-def get_mch_box(ensemble, methylation_type, gene, level, outliers):
+def get_mch_box(ensemble, methylation_type, gene, grouping, clustering, level, outliers):
     """Generate gene body mCH box plot.
 
     Traces are grouped by cluster.
@@ -1884,6 +1802,8 @@ def get_mch_box(ensemble, methylation_type, gene, level, outliers):
         ensemble (str): Name of ensemble.
         methylation_type (str): Type of methylation to visualize.        "mch" or "mcg"
         gene (str):  Ensembl ID of gene for that ensemble.
+        clustering (str): Different clustering algorithms and parameters. 'lv' = Louvain clustering.
+        grouping (str): Which variable to use for grouping. "cluster", "annotation".
         level (str): "original" or "normalized" methylation values.
         outliers (bool): Whether if outliers should be displayed.
 
@@ -1891,17 +1811,27 @@ def get_mch_box(ensemble, methylation_type, gene, level, outliers):
         str: HTML generated by Plot.ly.
     """
     gene = convert_gene_id_mmu_hsa(ensemble, gene)
-    points = get_gene_methylation(ensemble, methylation_type, gene, level, outliers)
+    points = get_gene_methylation(ensemble, 'mCH_ndim2_perp20', methylation_type, gene, clustering, level, outliers)
     context = methylation_type[1:]
-    grouping = "annotation"
+
     if points is None:
         raise FailToGraphException
-    if points['annotation'].unique() == None:
+    if points['annotation_'+clustering].nunique() <= 1:
         grouping = "cluster"
         print("**** Using cluster numbers")
 
+    if grouping == 'annotation':
+        points.fillna({'annotation_'+clustering: 'None'}, inplace=True)
+        points['annotation_cat'] = pd.Categorical(points['annotation_'+clustering], cluster_annotation_order)
+        points.sort_values(by='annotation_cat', inplace=True)
+    elif grouping == 'cluster':
+        points.sort_values(by='cluster_'+clustering, inplace=True)
+    else:
+        pass
+
+
     traces = OrderedDict()
-    unique_groups = points[grouping].unique()
+    unique_groups = points[grouping+'_'+clustering].unique()
     max_cluster = len(unique_groups)
 
     colors = generate_cluster_colors(max_cluster)
@@ -1909,10 +1839,11 @@ def get_mch_box(ensemble, methylation_type, gene, level, outliers):
         name_prepend = ""
         if grouping == "cluster":
             name_prepend="cluster_"
-        color = colors[int(np.where(unique_groups==point[grouping])[0]) % len(colors)]
-        trace = traces.setdefault(point[grouping], Box(
+        color = colors[int(np.where(unique_groups==point[grouping+'_'+clustering])[0]) % len(colors)]
+        group = point[grouping+'_'+clustering]
+        trace = traces.setdefault(group, Box(
                 y=list(),
-                name=name_prepend + str(point[grouping]),
+                name=name_prepend + str(group),
                 marker={
                     'color': color,
                     'outliercolor': color,

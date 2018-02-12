@@ -4,6 +4,7 @@ For actual content generation see the content.py module.
 """
 from os import walk
 import os.path
+import time
 
 import dominate
 from dominate.tags import img
@@ -15,7 +16,7 @@ from flask_nav.elements import Navbar, Link, View, Text, Subgroup
 from flask_rq import get_queue
 
 from . import nav, cache, db, mail
-from .content import get_tsne_plot, get_gene_by_name, \
+from .content import get_tsne_plot, get_tsne_options, get_gene_by_name, \
     get_methylation_scatter, get_mch_box, get_mch_box_two_ensemble, \
     find_orthologs, FailToGraphException, get_corr_genes, \
     get_gene_by_id, randomize_cluster_colors, get_mch_heatmap, \
@@ -53,6 +54,8 @@ def process_navbar():
                 ens_items.append(Link(ensemble, '/'+ensemble))
             else:
                 continue
+    # for i in range(100):
+    #     ens_items.append(Link(ensemble, '/'+ensemble))
 
     ensembles = Subgroup('Ensembles', *ens_items)
 
@@ -96,8 +99,8 @@ def index():
     html = \
     """To be redirected manually, click <a href="./hsa">here</a>.
     <script>
-        window.location = "./human_hv1_published"; 
-        window.location.replace("./human_hv1_published");
+        window.location = "./Ens1"; 
+        window.location.replace("./Ens1");
     </script>
     """
     return html
@@ -150,40 +153,57 @@ def nav_bar_screen():
 
 
 # API routes
-@frontend.route('/plot/cluster/<ensemble>/<grouping>/')
+@frontend.route('/plot/tsne/<ensemble>/<tsne_type>/<grouping>/<clustering>')
 @cache.memoize(timeout=3600)
-def plot_cluster(ensemble, grouping):
+def plot_tsne(ensemble, tsne_type, grouping, clustering):
+    if tsne_type == 'null':
+        tsne_type = 'mCH_ndim2_perp20'
+    if clustering == 'null':
+        clustering = 'mCH_lv_npc50_k5'
     try:
-        return jsonify(get_tsne_plot(ensemble, grouping))
+        return jsonify(get_tsne_plot(ensemble, tsne_type, grouping, clustering))
     except FailToGraphException:
         return 'Failed to produce cluster plot. Contact maintainer.'
 
 
-@frontend.route('/plot/scatter/<ensemble>/<methylation_type>/<level>/<ptile_start>/<ptile_end>')
-def plot_methylation_scatter(ensemble, methylation_type, level, ptile_start, ptile_end):
+@frontend.route('/plot/scatter/<ensemble>/<tsne_type>/<methylation_type>/<level>/<clustering>/<ptile_start>/<ptile_end>')
+def plot_methylation_scatter(ensemble, tsne_type, methylation_type, level, clustering, ptile_start, ptile_end):
     genes = request.args.get('q', 'MustHaveAQueryString')
+
+    if tsne_type == 'null':
+        tsne_type = 'mCH_ndim2_perp20'
+    if clustering == 'null':
+        clustering = 'mCH_lv_npc50_k5'
+
     try:
         return get_methylation_scatter(ensemble,
+                                       tsne_type,
                                        methylation_type,
-                                       genes, level,
+                                       genes, 
+                                       level,
+                                       clustering,
                                        float(ptile_start), float(ptile_end))
-    except (FailToGraphException, ValueError) as e:
-        print(e)
+    except Exception as e:
+        print("ERROR (plot_methylation_scatter): {}".format(e))
         return 'Failed to produce mCH levels scatter plot. Contact maintainer.'
 
 
-@frontend.route('/plot/box/<ensemble>/<methylation_type>/<gene>/<level>/<outliers_toggle>')
+@frontend.route('/plot/box/<ensemble>/<methylation_type>/<gene>/<grouping>/<clustering>/<level>/<outliers_toggle>')
 @cache.memoize(timeout=3600)
-def plot_mch_box(ensemble, methylation_type, gene, level, outliers_toggle):
+def plot_mch_box(ensemble, methylation_type, gene, grouping, clustering, level, outliers_toggle):
     if outliers_toggle == 'outliers':
         outliers = True
     else:
         outliers = False
+    if clustering == 'null':
+        clustering = 'mCH_lv_npc50_k5'
+    if grouping == 'NaN' or grouping == 'null' or grouping=='dataset':
+        grouping = 'annotation'
 
     try:
-        return get_mch_box(ensemble, methylation_type, gene, level, outliers)
+        return get_mch_box(ensemble, methylation_type, gene, grouping, clustering, level, outliers)
     except (FailToGraphException, ValueError) as e:
-        print(e)
+        print("ERROR (plot_mch_box): {}".format(e))
         return 'Failed to produce mCH levels box plot. Contact maintainer.'
 
 
@@ -196,21 +216,27 @@ def plot_mch_box_two_ensemble(methylation_type, gene_mmu, gene_hsa, level, outli
     try:
         return get_mch_box_two_ensemble(methylation_type, gene_mmu, gene_hsa, level, outliers)
     except (FailToGraphException, ValueError) as e:
-        print(e)
+        print("ERROR (plot_mch_box_two_ensemble): {}".format(e))
         return 'Failed to produce mCH levels box plot. Contact maintainer.'
 
 
-@frontend.route('/plot/heat/<ensemble>/<methylation_type>/<level>/<ptile_start>/<ptile_end>')
-def plot_mch_heatmap(ensemble, methylation_type, level, ptile_start, ptile_end):
+@frontend.route('/plot/heat/<ensemble>/<methylation_type>/<grouping>/<clustering>/<level>/<ptile_start>/<ptile_end>')
+def plot_mch_heatmap(ensemble, methylation_type, grouping, clustering, level, ptile_start, ptile_end):
     query = request.args.get('q', 'MustHaveAQueryString')
+
+    if clustering == 'null':
+        clustering = 'mCH_lv_npc50_k5'
+    if grouping == 'NaN' or grouping == 'null' or grouping=='dataset':
+        grouping = 'annotation'
+
     if request.args.get('normalize', 'MustSpecifyNormalization') == 'true':
         normalize_row = True
     else:
         normalize_row = False
     try:
-        return get_mch_heatmap(ensemble, methylation_type, level, ptile_start, ptile_end, normalize_row, query)
+        return get_mch_heatmap(ensemble, methylation_type, grouping, clustering, level, ptile_start, ptile_end, normalize_row, query)
     except (FailToGraphException, ValueError) as e:
-        print(e)
+        print("ERROR (plot_mch_heatmap): {}".format(e))
         return 'Failed to produce mCH levels heatmap plot. Contact maintainer.'
 
 @frontend.route('/plot/heat_two_ensemble/<ensemble>/<methylation_type>/<level>/<ptile_start>/<ptile_end>')
@@ -242,6 +268,15 @@ def search_gene_by_id(ensemble):
         return jsonify({})
     else:
         return jsonify(get_gene_by_id(ensemble, convert_gene_id_mmu_hsa(ensemble, query)))
+
+
+@frontend.route('/tsne_options')
+def tsne_options():
+    query = request.args.get('q', 'MustHaveAQueryString')
+    if query == 'none' or query == 'MustHaveAQueryString':
+        return jsonify({})
+    else:
+        return jsonify(get_tsne_options(query))
 
 
 @frontend.route('/gene/modules/<ensemble>')
