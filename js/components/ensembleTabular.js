@@ -9,6 +9,7 @@ class MyTable extends React.Component {
 
         this.state = {
             rows: [],
+            columns: [],
             columnSize: 0,
             filteredDataList: [],
             sortBy: 'ensemble',
@@ -25,16 +26,11 @@ class MyTable extends React.Component {
             }
         ).then(data => {
                 var d = data;
-                var columnSize = 0;
-                for (var i = 0; i < d.data.length; i++) {
-                    var dict_length = Object.keys(d.data[i]).length;
-                    if (dict_length - 2 > columnSize) {
-                        columnSize = dict_length - 2;
-                    }
-                }
+                var columnSize = d.columns.length;
 
                 this.setState({
                     rows: d.data,
+                    columns: d.columns,
                     filteredDataList: d.data,
                     columnSize
                 })
@@ -48,13 +44,13 @@ class MyTable extends React.Component {
         }
         var dataset_columns = []
         for (var index = 0; index < this.state.columnSize; index++) {
-            var column_tag = "dataset_" + (index + 1)
-            var column_name = "Data Set " + (index + 1)
-            dataset_columns.push(<Column key={column_tag} dataKey={column_tag} width={200} label={column_name + (this.state.sortBy === column_tag ? sortDirArrow : '')} headerRenderer={this._renderHeader.bind(this)}/>)
+            var column_tag = this.state.columns[index]
+            var column_name = column_tag
+            dataset_columns.push(<Column key={column_tag} dataKey={column_tag} width={100} label={column_name} headerRenderer={this._renderHeader.bind(this)}/>)
         }
         return <Table
             height={52+((this.state.filteredDataList.length+1) * 30)}
-            width={(this.state.columnSize + 1) * 200}
+            width={(this.state.columnSize * 100) + 200}
             rowsCount={this.state.filteredDataList.length}
             rowHeight={30}
             headerHeight={80}

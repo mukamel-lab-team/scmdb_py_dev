@@ -172,6 +172,17 @@ function updateSearchWithModules(module) {
 
 // Options for tSNE plot //
 function populateTSNEDropdowns() {
+    /*
+    var tsne_types_dimensions_dd = $('#tsne_types_dimensions');
+    var tsne_types_methylation_dd = $('#tsne_types_dimensions');
+    var tsne_types_perplexity_dd = $('#tsne_types_dimensions');
+
+    var tsne_clustering_algorithm_dd = $('#tsne_clustering_algorithm');
+    var tsne_clustering_methylation_dd = $('#tsne_clustering_algorithm');
+    var tsne_clustering_principal_comp_dd = $('#tsne_clustering_algorithm');
+    var tsne_clustering_k_dd = $('#tsne_clustering_k');
+    */
+
     var tsne_types_dropdown = $('#tsne_types');
     var tsne_cluster_dropdown = $('#tsne_clustering');
 
@@ -189,39 +200,6 @@ function populateTSNEDropdowns() {
     });
 }
 
-
-function randomizeClusterColors() {
-    $('#randomizeColorBtn').click(function() {
-        var grouping = $('#tsneGrouping option:selected').val();
-        $.ajax("/plot/delete_cache/"+ensemble+"/"+grouping);
-        if (grouping === 'biosample'){
-            storeUpdate(empty=true);
-            $.ajax({
-                type: "GET",
-                url: './plot/randomize_colors?n='+num_colors,
-                success: function(data){
-                    for(i = 0; i < data['num_colors']; i++){
-                        var group = 'cluster_color_' + String(i);
-                        var update = {
-                            'marker.color': data['colors'][i]
-                        };
-                        Plotly.restyle("plot-2d-cluster", update, data[group]);
-                        if($('#toggle-3d').prop('checked')) {
-                            Plotly.restyle("plot-3d-cluster", update, data[group]);
-                        }
-                        else{
-                            storeUpdate(update,data[group]);
-                        }
-                    }
-                }
-            });
-        }
-        else {
-            loadClusterPlots();
-        }
-    });
-}
-
 function updateGeneElements(updateMCHCluster=true) {
     buttons = document.getElementsByClassName('modebar-btn');
     var geneSelected = $('#geneName option:selected').val();
@@ -234,9 +212,7 @@ function updateGeneElements(updateMCHCluster=true) {
         try{
             buttons[8].click();
         }
-        catch(err) {
-            console.log(err);
-        }
+        catch(err) {}
 
         var lastViewedGenes = [];
         for(i=0; i<$('#geneName').select2('data').length; i++){
@@ -284,6 +260,7 @@ function updateGeneElements(updateMCHCluster=true) {
     }
 }
 
+/*
 function loadClusterPlots() {
     var grouping = $('#tsne_grouping').val();
     var clustering = $('#tsne_clustering').val();
@@ -299,15 +276,24 @@ function loadClusterPlots() {
         }
     });
 }
+*/
 
 function updateMCHClusterPlot() {
     var levelType = $('input[name=levels]').filter(':checked').val();
     var methylationType = $('input[name=mType]').filter(':checked').val();
     var pValues = pSlider.getValue();
     var genes = $("#geneName").select2('data');
+    var grouping = $('#tsne_grouping').val();
     var clustering = $('#tsne_clustering').val();
     var tsne_type = $('#tsne_types').val();
     var genes_query = "";
+
+    if ($('#tsneOutlierToggle').prop('checked')) {
+        var tsneOutlierOption = 'false';
+    } else {
+        var tsneOutlierOption = 'true';
+    }
+
     for (i = 0; i < genes.length; i++) {
         genes_query += (genes[i].id + "+");
     }
@@ -315,7 +301,7 @@ function updateMCHClusterPlot() {
     if ($('#geneName option:selected').val() != 'Select..') {
         $.ajax({
             type: "GET",
-            url: './plot/scatter/'+ensemble+'/'+tsne_type+'/' +methylationType+ '/'+levelType+'/'+clustering+'/'+pValues[0]+'/'+pValues[1]+'?q='+genes_query,
+            url: './plot/scatter/'+ensemble+'/'+tsne_type+'/' +methylationType+ '/'+levelType+'/'+grouping+'/'+clustering+'/'+pValues[0]+'/'+pValues[1]+'/'+tsneOutlierOption+'?q='+genes_query,
             success: function(data) {
                 $('#plot-mch-scatter').html("");
                 $('#plot-mch-scatter').html(data);

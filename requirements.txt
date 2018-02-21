@@ -6,7 +6,6 @@ bokeh==0.12.6
 certifi==2017.4.17
 chardet==3.0.4
 click==6.7
-colorlover==0.2.1
 cssmin==0.2.0
 decorator==4.1.1
 dominate==2.3.1

@@ -1,15 +1,53 @@
-<div class="panel-collapse collapse in cluster_options_group" id="mch_plots_options">
-    <div class="panel-body option-panel" style="padding-top:0px; padding-bottom: 0px;">
-    	<div class="container-fluid">
-	        <div class="row-fluid">
-		            <div class="col-xs-12 col-sm-5" id="percentileCol" style="white-space:nowrap">
-		                <label for="percentile" class="control-label" style="text-align: center">Color scale percentile:&nbsp;</label>
-		                <input id="percentile" type="text" value="" />
-		            </div>
-	        </div>
-	    </div>
+<div id="scatter-options-dialog" title="tSNE Options" role="dialog" class="ui-dialog ui-corner-all ui-widghet ui-widghet-content ui-front ui-dialog-buttons ui-draggable ui-resizable" style="display:none;">
+    <h5>tSNE Parameters: </h5>
+    <div id="tsneType" style="float:left; display:block;">
+        <!--
+        <label for="tsne_types_dimensions">Dimenstions: </label>
+        <select id="tsne_types_dimensions" class="tsne_options" name="tsne_types_dimensions"></select>
+        <label for="tsne_types_methylation">Methylation: </label>
+        <select id="tsne_types_methylation" class="tsne_option" name="tsne_types_methylation"></select>
+        <label for="tsne_types_perplexity">Perplexity: </label>
+        <select id="tsne_types_perplexity" class="tsne_option" name="tsne_types_perplexity"></select>
+        -->
+        <select id="tsne_types" class="tsne_option" name="tsne_types"></select>
     </div>
+    <br /><br />
+    <h5>Grouping: </h5>
+    <div id="tsneGrouping" style="float:left; display:block;">
+        <!--<label for="tsne_grouping">Grouping:</label>-->
+        <select id="tsne_grouping" class="tsne_option" name="tsne_grouping">
+            <option value="cluster">by cluster</option>
+            <option value="annotation" selected>by cluster annotation</option>
+            <option value="dataset">by dataset</option>
+            <!-- <option value="layer">by dissection layer</option> -->
+            <!-- <option value="cluster_biosample">by cluster+biosample</option> -->
+        </select>
+    </div>
+    <br /><br />
+    <h5>Clustering Options: </h5>
+    <div id="tsneClustering" style="float:left; display:block;">
+        <!--
+        <label for="tsne_clustering_algorithm">Algorithm: </label>
+        <select id="tsne_clustering_algorithm" class="tsne_options" name="tsne_clustering_algorithm"></select>
+        <label for="tsne_clustering_methylation">Methylation: </label>
+        <select id="tsne_clustering_methylation" class="tsne_option" name="tsne_clustering_methylation"></select>
+        <label for="tsne_clustering_principal_compon">Number of PC's: </label>
+        <select id="tsne_clustering_principal_compon" class="tsne_option" name="tsne_clustering_principal_compon"></select>
+        <label for="tsne_clustering_k">K-value: </label>
+        <select id ="tsne_clustering_k" class="tsne_option" name="tsne_clustering_k"></select>
+        -->
+        <select id="tsne_clustering" class="tsne_option" name="tsne_clustering"></select>
+    </div>
+    <br /><br /><br />
+    <button class="btn-sm btn-primary">Update</button>
 </div>
 <div class="panel-body" style="padding-top:0px;">
     <div id="plot-mch-scatter">Loading...</div>
+    <div id="tsneOutlierOptions" style="float:left;">
+        <input id="tsneOutlierToggle" data-toggle="toggle" data-on="Outliers On" data-off="Outliers Off" type="checkbox">
+    </div>
+    <div class="col-xs-12 col-sm-3" id="percentileCol" style="float:right;">
+        <label for="percentile" class="control-label" style="text-align: right">Color scale percentile:&nbsp;</label>
+        <input id="percentile" type="text" value="" />
+    </div>
 </div>

@@ -33,7 +33,7 @@ class MyTable extends React.Component {
     }
 
     jsonList() {
-        fetch('/content/metadata/human_MB_EB').then(
+        fetch('/content/metadata/').then(
             function(response){
                 return response.json();
             }
@@ -58,20 +58,24 @@ class MyTable extends React.Component {
             rowHeight={30}
             headerHeight={90}
             rowGetter={function(rowIndex) {return this.state.filteredDataList[rowIndex]; }.bind(this)}>
-            <Column dataKey="Sample" width={250} label={'Sample'+ (this.state.sortBy === 'Sample' ? sortDirArrow : '')} headerRenderer={this._renderHeader.bind(this)}/>
-            <Column  dataKey="Library pool" width={75} label={'Library Pool' + (this.state.sortBy === 'Library pool' ? sortDirArrow : '')} headerRenderer={this._renderHeader.bind(this)}/>
-            <Column  dataKey="Layer" width={75} label={'Layer' + (this.state.sortBy === 'Layer' ? sortDirArrow : '')} headerRenderer={this._renderHeader.bind(this)}/>
-            <Column  dataKey="Total reads" width={100} label={'Total Reads' + (this.state.sortBy === 'Total reads' ? sortDirArrow : '')} headerRenderer={this._renderHeader.bind(this)}/>
-            <Column  dataKey="Mapped reads" width={100} label={'Mapped reads' + (this.state.sortBy === 'Mapped reads' ? sortDirArrow : '')} headerRenderer={this._renderHeader.bind(this)}/>
-            <Column  dataKey="Mapping rate" width={100} label={'Mapping rate' + (this.state.sortBy === 'Mapping rate' ? sortDirArrow : '')} headerRenderer={this._renderHeader.bind(this)}/>
-            <Column  dataKey="Nonclonal reads" width={100} label={'Nonclonal reads' + (this.state.sortBy === 'Nonclonal reads' ? sortDirArrow : '')} headerRenderer={this._renderHeader.bind(this)}/>
-            <Column  dataKey="% Nonclonal rates" width={150} label={'% Nonclonal rates' + (this.state.sortBy === '% Nonclonal rates' ? sortDirArrow : '')} headerRenderer={this._renderHeader.bind(this)}/>
-            <Column  dataKey="mCCC/CCC" width={100} label={'mCCC/CCC' + (this.state.sortBy === 'mCCC/CCC' ? sortDirArrow : '')} headerRenderer={this._renderHeader.bind(this)}/>
-            <Column  dataKey="mCG/CG" width={100} label={'mCG/CG' + (this.state.sortBy === 'mCG/CG' ? sortDirArrow : '')} headerRenderer={this._renderHeader.bind(this)}/>
-            <Column  dataKey="mCH/CH" width={100} label={'mCH/CH' + (this.state.sortBy === 'mCH/CH' ? sortDirArrow : '')} headerRenderer={this._renderHeader.bind(this)}/>
-            <Column  dataKey="Estimated mCG/CG" width={100} label={'Estimated mCG/CG' + (this.state.sortBy === 'Estimated mCG/CG' ? sortDirArrow : '')} headerRenderer={this._renderHeader.bind(this)}/>
-            <Column  dataKey="% Genome covered" width={100} label={'% Genome covered' + (this.state.sortBy === '% Genome covered' ? sortDirArrow : '')} headerRenderer={this._renderHeader.bind(this)}/>
-            <Column  dataKey="allc file location (Mukamel lab)" width={200} label={'allc file location (Mukamel lab)' + (this.state.sortBy === 'allc file location (Mukamel lab)' ? sortDirArrow : '')} headerRenderer={this._renderHeader.bind(this)}/>
+            <Column dataKey="cell_name" width={250} label={'Cell Name'+ (this.state.sortBy === 'cell_name' ? sortDirArrow : '')} headerRenderer={this._renderHeader.bind(this)}/>
+            <Column  dataKey="dataset" width={175} label={'Dataset' + (this.state.sortBy === 'dataset' ? sortDirArrow : '')} headerRenderer={this._renderHeader.bind(this)}/>
+            <Column  dataKey="cell_type" width={75} label={'Cell Type' + (this.state.sortBy === 'cell_type' ? sortDirArrow : '')} headerRenderer={this._renderHeader.bind(this)}/>
+            <Column  dataKey="global_mCH" width={100} label={'Global mCH' + (this.state.sortBy === 'global_mCH' ? sortDirArrow : '')} headerRenderer={this._renderHeader.bind(this)}/>
+            <Column  dataKey="global_mCG" width={100} label={'Global mCG' + (this.state.sortBy === 'global_mCG' ? sortDirArrow : '')} headerRenderer={this._renderHeader.bind(this)}/>
+            <Column  dataKey="global_mCA" width={100} label={'Global mCA' + (this.state.sortBy === 'global_mCA' ? sortDirArrow : '')} headerRenderer={this._renderHeader.bind(this)}/>
+            <Column  dataKey="global_mCCC" width={100} label={'Global mCCC' + (this.state.sortBy === 'global_mCCC' ? sortDirArrow : '')} headerRenderer={this._renderHeader.bind(this)}/>
+            <Column  dataKey="estimated_mCH" width={100} label={'Estimated mCH' + (this.state.sortBy === 'estimated_mCH' ? sortDirArrow : '')} headerRenderer={this._renderHeader.bind(this)}/>
+            <Column  dataKey="estimated_mCG" width={100} label={'Estimated mCG' + (this.state.sortBy === 'estimated_mCG' ? sortDirArrow : '')} headerRenderer={this._renderHeader.bind(this)}/>
+            <Column  dataKey="percent_genome_covered" width={100} label={'% Genome Covered' + (this.state.sortBy === 'percent_genome_covered' ? sortDirArrow : '')} headerRenderer={this._renderHeader.bind(this)}/>
+            <Column  dataKey="total_reads" width={100} label={'Total Reads' + (this.state.sortBy === 'total_reads' ? sortDirArrow : '')} headerRenderer={this._renderHeader.bind(this)}/>
+            <Column  dataKey="mapped_reads" width={100} label={'Mapped Reads' + (this.state.sortBy === 'mapped_reads' ? sortDirArrow : '')} headerRenderer={this._renderHeader.bind(this)}/>
+            <Column  dataKey="mapping_rate" width={100} label={'Mapping Rate' + (this.state.sortBy === 'mapping_rate' ? sortDirArrow : '')} headerRenderer={this._renderHeader.bind(this)}/>
+            <Column  dataKey="nonclonal_reads" width={100} label={'Nonclonal Reads' + (this.state.sortBy === 'nonclonal_reads' ? sortDirArrow : '')} headerRenderer={this._renderHeader.bind(this)}/>
+            <Column  dataKey="percent_nonclonal_rate" width={125} label={'% Nonclonal Rate' + (this.state.sortBy === 'percent_nonclonal_rate' ? sortDirArrow : '')} headerRenderer={this._renderHeader.bind(this)}/>
+            <Column  dataKey="filtered_reads" width={100} label={'Filtered Reads' + (this.state.sortBy === 'filtered_reads' ? sortDirArrow : '')} headerRenderer={this._renderHeader.bind(this)}/>
+            <Column  dataKey="filtered_rate" width={100} label={'Filtered Rate' + (this.state.sortBy === 'filtered_rate' ? sortDirArrow : '')} headerRenderer={this._renderHeader.bind(this)}/>
+            <Column  dataKey="lambda_mC" width={75} label={'Lambda mC' + (this.state.sortBy === 'lambda_mC' ? sortDirArrow : '')} headerRenderer={this._renderHeader.bind(this)}/>
         </Table>;
     }
 

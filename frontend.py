@@ -16,12 +16,12 @@ from flask_nav.elements import Navbar, Link, View, Text, Subgroup
 from flask_rq import get_queue
 
 from . import nav, cache, db, mail
-from .content import get_tsne_plot, get_tsne_options, get_gene_by_name, \
+from .content import get_tsne_options, get_gene_by_name, \
     get_methylation_scatter, get_mch_box, get_mch_box_two_ensemble, \
     find_orthologs, FailToGraphException, get_corr_genes, \
-    get_gene_by_id, randomize_cluster_colors, get_mch_heatmap, \
+    get_gene_by_id, get_mch_heatmap, \
     get_mch_heatmap_two_ensemble, all_gene_modules, get_genes_of_module, \
-    convert_gene_id_mmu_hsa
+    convert_gene_id_mmu_hsa, get_ensemble_info
 from .decorators import admin_required
 from .email import send_email
 from .forms import LoginForm, ChangeUserEmailForm, ChangeAccountTypeForm, InviteUserForm, CreatePasswordForm, NewUserForm, RequestResetPasswordForm, ResetPasswordForm, ChangePasswordForm
@@ -30,10 +30,13 @@ from .user import User, Role
 
 frontend = Blueprint('frontend', __name__) # Flask "bootstrap"
 
+@frontend.route('/favicon.ico')
+def favicon():
+    return ('', 204)
 
-# HOTFIX: '/' character needed to prevent concatenation of url
+
 @frontend.before_request
-#@cache.memoize(timeout=3600)
+@cache.memoize(timeout=1800)
 def process_navbar():
 
     # get images here
@@ -46,7 +49,7 @@ def process_navbar():
     ens_items = []
     
     for ens in ens_list:
-        ensemble = 'Ens' + str(ens['ensemble_id'])
+        ensemble = str(ens['ensemble_name'])
         if current_user.is_authenticated:
             ens_items.append(Link(ensemble, '/'+ensemble))
         else:
@@ -97,10 +100,10 @@ def index():
     # Index is not needed since this site is embedded as a frame
     # We use JS redirect b/c reverse proxy will be confused about subdirectories
     html = \
-    """To be redirected manually, click <a href="./hsa">here</a>.
+    """To be redirected manually, click <a href="./CEMBA_3C_171206">here</a>.
     <script>
-        window.location = "./Ens1"; 
-        window.location.replace("./Ens1");
+        window.location = "./CEMBA_3C_171206"; 
+        window.location.replace("./CEMBA_3C_171206");
     </script>
     """
     return html
@@ -117,9 +120,10 @@ def index():
     # </script>
     # """
 
-@frontend.route('/<ensemble>')
-def ensemble(ensemble):
-    return render_template('ensembleview.html', ensemble=ensemble)
+@frontend.route('/<ensemble_name>')
+def ensemble(ensemble_name):
+    ensemble = 'Ens'+str(get_ensemble_info(ensemble_name=ensemble_name)['ensemble_id'])
+    return render_template('ensembleview.html', ensemble=ensemble, ensemble_name=ensemble_name)
 
 @frontend.route('/standalone/<ensemble>/<gene>')
 def standalone(ensemble, gene):  # View gene body mCH plots alone
@@ -142,7 +146,7 @@ def ensemble_tabular_screen():
     return render_template('tabular_ensemble.html')
 
 
-@frontend.route('/tabular/ensemble')
+@frontend.route('/tabular/dataset')
 def data_set_tabular_screen():
     return render_template('tabular_data_set.html')
 
@@ -153,39 +157,48 @@ def nav_bar_screen():
 
 
 # API routes
-@frontend.route('/plot/tsne/<ensemble>/<tsne_type>/<grouping>/<clustering>')
-@cache.memoize(timeout=3600)
-def plot_tsne(ensemble, tsne_type, grouping, clustering):
-    if tsne_type == 'null':
-        tsne_type = 'mCH_ndim2_perp20'
-    if clustering == 'null':
-        clustering = 'mCH_lv_npc50_k5'
-    try:
-        return jsonify(get_tsne_plot(ensemble, tsne_type, grouping, clustering))
-    except FailToGraphException:
-        return 'Failed to produce cluster plot. Contact maintainer.'
+# @frontend.route('/plot/tsne/<ensemble>/<tsne_type>/<grouping>/<clustering>')
+# @cache.memoize(timeout=3600)
+# def plot_tsne(ensemble, tsne_type, grouping, clustering):
+#     if tsne_type == 'null':
+#         tsne_type = 'mCH_ndim2_perp20'
+#     if clustering == 'null':
+#         clustering = 'mCH_lv_npc50_k5'
+#     try:
+#         return jsonify(get_tsne_plot(ensemble, tsne_type, grouping, clustering))
+#     except FailToGraphException:
+#         return 'Failed to produce cluster plot. Contact maintainer.'
 
 
-@frontend.route('/plot/scatter/<ensemble>/<tsne_type>/<methylation_type>/<level>/<clustering>/<ptile_start>/<ptile_end>')
-def plot_methylation_scatter(ensemble, tsne_type, methylation_type, level, clustering, ptile_start, ptile_end):
+@frontend.route('/plot/scatter/<ensemble>/<tsne_type>/<methylation_type>/<level>/<grouping>/<clustering>/<ptile_start>/<ptile_end>/<tsne_outlier>')
+def plot_methylation_scatter(ensemble, tsne_type, methylation_type, level, grouping, clustering, ptile_start, ptile_end, tsne_outlier):
     genes = request.args.get('q', 'MustHaveAQueryString')
 
     if tsne_type == 'null':
         tsne_type = 'mCH_ndim2_perp20'
     if clustering == 'null':
         clustering = 'mCH_lv_npc50_k5'
+    if grouping == 'NaN' or grouping == 'null':
+        grouping = 'annotation'
 
-    try:
-        return get_methylation_scatter(ensemble,
-                                       tsne_type,
-                                       methylation_type,
-                                       genes, 
-                                       level,
-                                       clustering,
-                                       float(ptile_start), float(ptile_end))
-    except Exception as e:
-        print("ERROR (plot_methylation_scatter): {}".format(e))
-        return 'Failed to produce mCH levels scatter plot. Contact maintainer.'
+    tsne_outlier_bool = False
+    if tsne_outlier == 'true':
+        tsne_outlier_bool = True
+
+    # try:
+    return get_methylation_scatter(ensemble,
+                                   tsne_type,
+                                   methylation_type,
+                                   genes, 
+                                   level,
+                                   grouping,
+                                   clustering,
+                                   float(ptile_start),
+                                   float(ptile_end),
+                                   tsne_outlier_bool)
+    # except Exception as e:
+    #     print("ERROR (plot_methylation_scatter): {}".format(e))
+    #     return 'Failed to produce mCH levels scatter plot. Contact maintainer.'
 
 
 @frontend.route('/plot/box/<ensemble>/<methylation_type>/<gene>/<grouping>/<clustering>/<level>/<outliers_toggle>')
@@ -304,10 +317,10 @@ def correlated_genes(ensemble, gene_id):
     return jsonify(get_corr_genes(ensemble, gene_id))
 
 
-@frontend.route('/plot/randomize_colors')
-def randomize_colors():
-    num_colors = request.args.get('n', type=int)
-    return jsonify(randomize_cluster_colors(num_colors))
+# @frontend.route('/plot/randomize_colors')
+# def randomize_colors():
+#     num_colors = request.args.get('n', type=int)
+#     return jsonify(randomize_cluster_colors(num_colors))
 
 
 @frontend.route('/plot/delete_cache/<ensemble>/<grouping>')
