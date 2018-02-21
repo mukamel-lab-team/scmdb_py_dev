@@ -16,6 +16,11 @@ from .assets import app_css, app_js, vendor_css, vendor_js
 import urllib.parse
 from flask_wtf import CsrfProtect
 
+
+# Necessary because brainome doesn't have mysql installed
+import pymysql
+pymysql.install_as_MySQLdb()
+
 cache = Cache(config={'CACHE_TYPE': 'simple', 'CACHE_THRESHOLD': 1000})
 nav = Nav()
 mail = Mail()
