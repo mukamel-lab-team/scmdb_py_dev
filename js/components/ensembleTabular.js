@@ -46,7 +46,7 @@ class MyTable extends React.Component {
         for (var index = 0; index < this.state.columnSize; index++) {
             var column_tag = this.state.columns[index]
             var column_name = column_tag
-            dataset_columns.push(<Column key={column_tag} dataKey={column_tag} width={100} label={column_name} headerRenderer={this._renderHeader.bind(this)}/>)
+            dataset_columns.push(<Column key={column_tag} dataKey={column_tag} width={100} label={column_name} headerRenderer={this._renderHeader.bind(this,this)}/>)
         }
         return <Table
             height={52+((this.state.filteredDataList.length+1) * 30)}
@@ -106,11 +106,15 @@ class MyTable extends React.Component {
     }
 
     _renderHeader(label, cellDataKey) {
+        if (typeof label === 'string') {
+            var input = <div><input type="text" style={{width:90+'%'}} onChange={this._onFilterChange.bind(this, cellDataKey)}/></div>;
+        }else{
+            var input = null;
+            label = cellDataKey;
+        }
         return <div>
             <a onClick={this._sortRowsBy.bind(this, cellDataKey)}>{label}</a>
-            <div>
-                <input type="text" style={{width:90+'%'}} onChange={this._onFilterChange.bind(this, cellDataKey)}/>
-            </div>
+            {input}
         </div>;
     }
 }

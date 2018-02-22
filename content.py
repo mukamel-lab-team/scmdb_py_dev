@@ -341,12 +341,6 @@ def get_tsne_options(ensemble):
         return None
 
     df_tsne = df.filter(regex='^tsne_x_', axis='columns')
-    # all_tsne = [x.split('tsne_x_')[1] for x in  df_tsne.columns]
-    # split_tsne = [x.split('_') for x in all_tsne]
-    # df = pd.DataFrame(split_tsne, columns=['methylation', 'ndim', 'perp'])
-    # 
-    # tsne_dict = OrderedDict() 
-    # 
     df_cluster = df.filter(regex='^cluster_', axis='columns')
 
     list_tsne_types = [x.split('tsne_x_')[1] for x in df_tsne.columns.values]
@@ -481,26 +475,6 @@ def get_gene_by_id(ensemble, gene_query):
         return {}
     else:
         return dict(result)
-
-    # if not ensemble_exists(ensemble) or query == "" or query == None:
-    #     return []
-
-    # conn = sqlite3.connect('{}/ensembles/{}/species/gene_names.sqlite3'.format(
-    #     current_app.config['DATA_DIR'], ensemble))
-
-    # conn.row_factory = sqlite3.Row
-    # cursor = conn.cursor()
-
-    # try:
-    #     cursor.execute('SELECT * FROM gene_names WHERE gene_id LIKE ?',
-    #                     (query + '%',))
-    # except sqlite3.Error:
-    #     now = datetime.datetime.now()
-    #     print("[{}] ERROR in app: Could not load gene_names.sqlite3 for {}".format(str(now), ensemble))
-    #     return None
-
-    # query_results = cursor.fetchone()
-    # return dict(query_results)
 
 
 def convert_gene_id_mmu_hsa(ensemble, gene_id):
@@ -1347,43 +1321,50 @@ def get_methylation_scatter(ensemble, tsne_type, methylation_type, query, level,
                 print_grid=False,
                 subplot_titles=("tSNE", "Methylation"),
                 )
+
+        for trace in traces_tsne.items():
+            fig.append_trace(trace[1], 1,1)
+        fig.append_trace(trace_methylation, 1,2)
+
+        fig['layout'].update(layout)
+
     ## 3D tSNE coordinates ##
     else: 
-        for dataset in datasets:
-            points_dataset = points[points['dataset']==dataset]
+        for i, group in enumerate(unique_groups):
 
-            for group in unique_groups:
-                if grouping == 'cluster':
-                    group_str = 'cluster_' + str(group)
-                else:
-                    group_str = group
+            points_group = points[points[grouping]==group]
+            if grouping.startswith('cluster'):
+                group_str = 'cluster_' + str(group)
+            else:
+                group_str = group
 
-                color_num = unique_groups.index(group)
-                
-                trace3d = traces_tsne.setdefault(color_num, Scatter3d(
-                    x=list(),
-                    y=list(),
-                    z=list(),
-                    text=list(),
-                    mode='markers',
-                    visible=True,
-                    name=group_str,
-                    legendgroup=group,
-                    marker={
-                           'color': colors[color_num],
-                           'size': 4,
-                           'opacity': 0.8,
-                           'symbol': symbols[datasets.index(dataset)],
-                    },
-                    hoverinfo='text'))
-                trace3d['x'] = points_dataset[points_dataset[grouping]==group]['tsne_x_'+tsne_type].values.tolist()
-                trace3d['y'] = points_dataset[points_dataset[grouping]==group]['tsne_y_'+tsne_type].values.tolist()
-                trace3d['z'] = points_dataset[points_dataset[grouping]==group]['tsne_z_'+tsne_type].values.tolist()
-                trace3d['text'] = [build_hover_text({'Cell Name': point[1],
-                                                     'Dataset': dataset,
-                                                     'Annotation': point[4],
-                                                     'Cluster': point[5]})
-                                   for point in points_dataset[points_dataset[grouping]==group].itertuples(index=False)]
+            color_num = i
+            
+            trace3d = traces_tsne.setdefault(color_num, Scatter3d(
+                x=list(),
+                y=list(),
+                z=list(),
+                text=list(),
+                mode='markers',
+                visible=True,
+                name=group_str,
+                legendgroup=group,
+                scene='scene1',
+                marker={
+                       'color': colors[color_num],
+                       'size': 4,
+                       'opacity': 0.8,
+                       #'symbol': symbols[datasets.index(dataset)],
+                },
+                hoverinfo='text'))
+            trace3d['x'] = points_group['tsne_x_'+tsne_type].values.tolist()
+            trace3d['y'] = points_group['tsne_y_'+tsne_type].values.tolist()
+            trace3d['z'] = points_group['tsne_z_'+tsne_type].values.tolist()
+            trace3d['text'] = [build_hover_text({'Cell Name': point[1],
+                                                 'Dataset': point[2],
+                                                 'Annotation': point[4],
+                                                 'Cluster': point[5]})
+                               for point in points_group.itertuples(index=False)]
 
         ### METHYLATION SCATTER ### 
         x = points['tsne_x_' + tsne_type].tolist()
@@ -1417,6 +1398,7 @@ def get_methylation_scatter(ensemble, tsne_type, methylation_type, query, level,
             y=y,
             z=z,
             text=text_methylation,
+            scene='scene2',
             marker={
                 'color': mch_colors,
                 'colorscale': 'Viridis',
@@ -1434,83 +1416,7 @@ def get_methylation_scatter(ensemble, tsne_type, methylation_type, query, level,
                 }
             },
             showlegend=False,
-            yaxis='y',
-            xaxis='x2',
             hoverinfo='text')
-
-        layout3d = Layout(
-            autosize=True,
-            height=450,
-            title='3D tSNE',
-            titlefont={'color': 'rgba(1,2,2,1)',
-                       'size': 16},
-            margin={'l': 49,
-                    'r': 0,
-                    'b': 30,
-                    't': 50,
-                    'pad': 10
-                    },
-
-            scene={
-                'camera':{
-                    'eye': dict(x=1.2, y=1.5, z=0.7),
-                    'center': dict(x=0.25, z=-0.1)
-                         },
-                'aspectmode':'data',
-                'xaxis':{
-                    'title': 'tSNE 1',
-                    'titlefont': {
-                        'color': 'rgba(1,2,2,1)',
-                        'size': 12
-                    },
-                    'type': 'linear',
-                    'ticks': '',
-                    'showticklabels': False,
-                    'tickwidth': 0,
-                    'showline': True,
-                    'showgrid': False,
-                    'zeroline': False,
-                    'linecolor': 'black',
-                    'linewidth': 0.5,
-                    'mirror': True
-                },
-                'yaxis':{
-                    'title': 'tSNE 2',
-                    'titlefont': {
-                        'color': 'rgba(1,2,2,1)',
-                        'size': 12
-                    },
-                    'type': 'linear',
-                    'ticks': '',
-                    'showticklabels': False,
-                    'tickwidth': 0,
-                    'showline': True,
-                    'showgrid': False,
-                    'zeroline': False,
-                    'linecolor': 'black',
-                    'linewidth': 0.5,
-                    'mirror': True
-                },
-                'zaxis':{
-                    'title': 'tSNE 3',
-                    'titlefont': {
-                        'color': 'rgba(1,2,2,1)',
-                        'size': 12
-                    },
-                    'type': 'linear',
-                    'ticks': '',
-                    'showticklabels': False,
-                    'tickwidth': 0,
-                    'showline': True,
-                    'showgrid': False,
-                    'zeroline': False,
-                    'linecolor': 'black',
-                    'linewidth': 0.5,
-                    'mirror': True
-                },
-            },
-            hovermode='closest',
-        )
 
         layout = Layout(
             autosize=True,
@@ -1523,144 +1429,92 @@ def get_methylation_scatter(ensemble, tsne_type, methylation_type, query, level,
                     'r': 0,
                     'b': 30,
                     't': 50,
-                    'pad': 0},
-            xaxis={
-                'domain': [0, 0.48],
+                    'pad': 10
+                    },
+
+            hovermode='closest',
+        )
+
+        scene={
+            'camera':{
+                'eye': dict(x=1.2, y=1.5, z=0.7),
+                'center': dict(x=0.25, z=-0.1)
+                     },
+            'aspectmode':'data',
+            'xaxis':{
+                'title': 'tSNE 1',
+                'titlefont': {
+                    'color': 'rgba(1,2,2,1)',
+                    'size': 12
+                },
                 'type': 'linear',
                 'ticks': '',
-                'tickwidth': 0,
                 'showticklabels': False,
-                'showline': False,
-                'showgrid': True,
+                'tickwidth': 0,
+                'showline': True,
+                'showgrid': False,
                 'zeroline': False,
                 'linecolor': 'black',
                 'linewidth': 0.5,
-                'mirror': False,
-                'scaleanchor': 'x2',
-                'range':[-100,100]
+                'mirror': True
             },
-            xaxis2={
-                'domain': [0.52, 1],
+            'yaxis':{
+                'title': 'tSNE 2',
+                'titlefont': {
+                    'color': 'rgba(1,2,2,1)',
+                    'size': 12
+                },
                 'type': 'linear',
                 'ticks': '',
-                'tickwidth': 0,
                 'showticklabels': False,
-                'showline': False,
-                'showgrid': True,
+                'tickwidth': 0,
+                'showline': True,
+                'showgrid': False,
                 'zeroline': False,
                 'linecolor': 'black',
                 'linewidth': 0.5,
-                'mirror': False,
-                'scaleanchor': 'y',
-                'range':[-100,100]
+                'mirror': True
             },
-            yaxis={
-                'domain': [0,1],
+            'zaxis':{
+                'title': 'tSNE 3',
+                'titlefont': {
+                    'color': 'rgba(1,2,2,1)',
+                    'size': 12
+                },
                 'type': 'linear',
                 'ticks': '',
-                'tickwidth': 0,
                 'showticklabels': False,
-                'showline': False,
-                'showgrid': True,
-                'side': 'right',
+                'tickwidth': 0,
+                'showline': True,
+                'showgrid': False,
                 'zeroline': False,
                 'linecolor': 'black',
                 'linewidth': 0.5,
-                'mirror': False,
-                # 'range': [-20,20]
-                'scaleanchor': 'x',
-                'range':[-100,100]
+                'mirror': True
             },
-            hovermode='closest')
+        }
 
-        
-        fig = tools.make_subplots(
-                rows=1,
-                cols=2,
-                shared_xaxes=True,
-                shared_yaxes=True,
-                print_grid=False,
-                subplot_titles=("tSNE", "Methylation"),
-                )
+        fig = tools.make_subplots(rows=1,
+                                  cols=2,
+                                  shared_xaxes=True,
+                                  #shared_yaxes=True,
+                                  print_grid=False,
+                                  subplot_titles=("tSNE", "Methylation"),
+                                  specs=[[{'is_3d':True}, {'is_3d':True}]])
 
-    for trace in traces_tsne.items():
-        fig.append_trace(trace[1], 1,1)
-    fig.append_trace(trace_methylation, 1,2)
+        for trace in traces_tsne.items():
+            fig.append_trace(trace[1], 1,1)
+        fig.append_trace(trace_methylation, 1,2)
 
-    fig['layout'].update(layout)
-
+        fig['layout'].update(layout)
+        fig['layout']['scene1'].update(scene)
+        fig['layout']['scene2'].update(scene)
 
     return plotly.offline.plot(
         figure_or_data=fig,
         output_type='div',
         show_link=False,
         include_plotlyjs=False)
-
-    # # Available colorscales:
-    # # https://community.plot.ly/t/what-colorscales-are-available-in-plotly-and-which-are-the-default/2079
-    # updatemenus = list([
-    #     dict(
-    #         buttons=list([
-    #             dict(
-    #                 args=['marker.colorscale', 'Viridis'],
-    #                 label='Viridis',
-    #                 method='restyle'
-    #             ),
-    #             dict(
-    #                 args=['marker.colorscale', 'Bluered'],
-    #                 label='Bluered',
-    #                 method='restyle'
-    #             ),
-    #             dict(
-    #                 args=['marker.colorscale', 'Blackbody'],
-    #                 label='Blackbody',
-    #                 method='restyle'
-    #             ),
-    #             dict(
-    #                 args=['marker.colorscale', 'Electric'],
-    #                 label='Electric',
-    #                 method='restyle'
-    #             ),
-    #             dict(
-    #                 args=['marker.colorscale', 'Earth'],
-    #                 label='Earth',
-    #                 method='restyle'
-    #             ),
-    #             dict(
-    #                 args=['marker.colorscale', 'Jet'],
-    #                 label='Jet',
-    #                 method='restyle'
-    #             ),
-    #             dict(
-    #                 args=['marker.colorscale', 'Rainbow'],
-    #                 label='Rainbow',
-    #                 method='restyle'
-    #             ),
-    #             dict(
-    #                 args=['marker.colorscale', 'Picnic'],
-    #                 label='Picnic',
-    #                 method='restyle'
-    #             ),
-    #             dict(
-    #                 args=['marker.colorscale', 'Portland'],
-    #                 label='Portland',
-    #                 method='restyle'
-    #             ),
-    #             dict(
-    #                 args=['marker.colorscale', 'YlGnBu'],
-    #                 label='YlGnBu',
-    #                 method='restyle'
-    #             )
-    #         ]),
-    #         direction='down',
-    #         showactive=True,
-    #         x=1,
-    #         xanchor='left',
-    #         y=1,
-    #         yanchor='top'
-    #     )
-    # ])
-    # layout['updatemenus'] = updatemenus
 
 
 @cache.memoize(timeout=3600)
