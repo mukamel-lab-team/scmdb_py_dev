@@ -268,13 +268,18 @@
         display3DPlotToggle();
     });
 
-    $(".tsne_option, #tsneOutlierToggle").change(function() {
+    $("#tsneUpdateBtn").click(function() {
+        updateGeneElements();
+    });
+
+    $("#tsneOutlierToggle").change(function() {
         updateMCHClusterPlot();
     });
      
+    /*
     $("#tsne_grouping, #tsne_clustering").change(function() {
         updateGeneElements(updateMCHCluster=false);
-    });
+    });*/
     
     $('#toggle-scatter-options-dialog').click(function() {
         if(!$("#scatter-options-dialog").dialog("isOpen")) {

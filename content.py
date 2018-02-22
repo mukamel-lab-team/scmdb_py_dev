@@ -1192,39 +1192,39 @@ def get_methylation_scatter(ensemble, tsne_type, methylation_type, query, level,
 
     ## 2D tSNE coordinates ##
     if 'ndim2' in tsne_type:
-        for dataset in datasets:
-            points_dataset = points[points['dataset']==dataset]
 
-            for group in unique_groups:
-                if grouping == 'cluster':
-                    group_str = 'cluster_' + str(group)
-                else:
-                    group_str = group
+        for i, group in enumerate(unique_groups):
 
-                color_num = unique_groups.index(group)
-                
-                trace2d = traces_tsne.setdefault(color_num, Scatter(
-                    x=list(),
-                    y=list(),
-                    text=list(),
-                    mode='markers',
-                    visible=True,
-                    name=group_str,
-                    legendgroup=group,
-                    marker={
-                           'color': colors[color_num],
-                           'size': 4,
-                           'opacity': 0.8,
-                           'symbol': symbols[datasets.index(dataset)],
-                    },
-                    hoverinfo='text'))
-                trace2d['x'] = points_dataset[points_dataset[grouping]==group]['tsne_x_'+tsne_type].values.tolist()
-                trace2d['y'] = points_dataset[points_dataset[grouping]==group]['tsne_y_'+tsne_type].values.tolist()
-                trace2d['text'] = [build_hover_text({'Cell Name': point[1],
-                                                     'Dataset': dataset,
-                                                     'Annotation': point[4],
-                                                     'Cluster': point[5]})
-                                   for point in points_dataset[points_dataset[grouping]==group].itertuples(index=False)]
+            points_group = points[points[grouping]==group]
+            if grouping.startswith('cluster'):
+                group_str = 'cluster_' + str(group)
+            else:
+                group_str = group
+
+            color_num = i
+            
+            trace2d = traces_tsne.setdefault(color_num, Scatter(
+                x=list(),
+                y=list(),
+                text=list(),
+                mode='markers',
+                visible=True,
+                name=group_str,
+                legendgroup=group,
+                marker={
+                       'color': colors[color_num],
+                       'size': 4,
+                       'opacity': 0.8,
+                       #'symbol': symbols[datasets.index(dataset)],
+                },
+                hoverinfo='text'))
+            trace2d['x'] = points_group['tsne_x_'+tsne_type].values.tolist()
+            trace2d['y'] = points_group['tsne_y_'+tsne_type].values.tolist()
+            trace2d['text'] = [build_hover_text({'Cell Name': point[1],
+                                                 'Dataset': point[2],
+                                                 'Annotation': point[4],
+                                                 'Cluster': point[5]})
+                               for point in points_group.itertuples(index=False)]
 
         ### METHYLATION SCATTER ### 
         x = points['tsne_x_' + tsne_type].tolist()
