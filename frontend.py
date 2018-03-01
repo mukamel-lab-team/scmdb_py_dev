@@ -2,6 +2,7 @@
 
 For actual content generation see the content.py module.
 """
+import json
 from os import walk
 import os.path
 import time
@@ -99,13 +100,23 @@ def process_navbar():
 def index():
     # Index is not needed since this site is embedded as a frame
     # We use JS redirect b/c reverse proxy will be confused about subdirectories
-    html = \
-    """To be redirected manually, click <a href="./CEMBA_3C_171206">here</a>.
-    <script>
-        window.location = "./CEMBA_3C_171206"; 
-        window.location.replace("./CEMBA_3C_171206");
-    </script>
-    """
+
+    if current_user is not None and current_user.is_authenticated:
+        html = \
+        """To be redirected manually, click <a href="./CEMBA_3C_171206">here</a>.
+        <script>
+            window.location = "./CEMBA_3C_171206"; 
+            window.location.replace("./CEMBA_3C_171206");
+        </script>
+        """
+    else: 
+        html = \
+        """To be redirected manually, click <a href="./login">here</a>.
+        <script>
+            window.location = "./login"; 
+            window.location.replace("./login");
+        </script>
+        """
     return html
     
     # TODO: May need to switch to code below 
@@ -142,11 +153,13 @@ def box_combined(mmu_gene_id, hsa_gene_id):
 
 
 @frontend.route('/tabular/ensemble')
+@login_required
 def ensemble_tabular_screen():
     return render_template('tabular_ensemble.html')
 
 
 @frontend.route('/tabular/dataset')
+@login_required
 def data_set_tabular_screen():
     return render_template('tabular_data_set.html')
 
@@ -172,8 +185,8 @@ def nav_bar_screen():
 
 @frontend.route('/plot/scatter/<ensemble>/<tsne_type>/<methylation_type>/<level>/<grouping>/<clustering>/<ptile_start>/<ptile_end>/<tsne_outlier>')
 def plot_methylation_scatter(ensemble, tsne_type, methylation_type, level, grouping, clustering, ptile_start, ptile_end, tsne_outlier):
-    genes = request.args.get('q', 'MustHaveAQueryString')
 
+    genes = request.args.get('q', 'MustHaveAQueryString')
     if tsne_type == 'null':
         tsne_type = 'mCH_ndim2_perp20'
     if clustering == 'null':
@@ -204,6 +217,7 @@ def plot_methylation_scatter(ensemble, tsne_type, methylation_type, level, group
 @frontend.route('/plot/box/<ensemble>/<methylation_type>/<gene>/<grouping>/<clustering>/<level>/<outliers_toggle>')
 @cache.memoize(timeout=3600)
 def plot_mch_box(ensemble, methylation_type, gene, grouping, clustering, level, outliers_toggle):
+
     if outliers_toggle == 'outliers':
         outliers = True
     else:
@@ -222,6 +236,7 @@ def plot_mch_box(ensemble, methylation_type, gene, grouping, clustering, level, 
 
 @frontend.route('/plot/box_combined/<methylation_type>/<gene_mmu>/<gene_hsa>/<level>/<outliers_toggle>')
 def plot_mch_box_two_ensemble(methylation_type, gene_mmu, gene_hsa, level, outliers_toggle):
+
     if outliers_toggle == 'outliers':
         outliers = True
     else:
@@ -235,6 +250,7 @@ def plot_mch_box_two_ensemble(methylation_type, gene_mmu, gene_hsa, level, outli
 
 @frontend.route('/plot/heat/<ensemble>/<methylation_type>/<grouping>/<clustering>/<level>/<ptile_start>/<ptile_end>')
 def plot_mch_heatmap(ensemble, methylation_type, grouping, clustering, level, ptile_start, ptile_end):
+
     query = request.args.get('q', 'MustHaveAQueryString')
 
     if clustering == 'null':
@@ -315,12 +331,6 @@ def orthologs(ensemble, gene_id):
 @frontend.route('/gene/corr/<ensemble>/<gene_id>')
 def correlated_genes(ensemble, gene_id):
     return jsonify(get_corr_genes(ensemble, gene_id))
-
-
-# @frontend.route('/plot/randomize_colors')
-# def randomize_colors():
-#     num_colors = request.args.get('n', type=int)
-#     return jsonify(randomize_cluster_colors(num_colors))
 
 
 @frontend.route('/plot/delete_cache/<ensemble>/<grouping>')
@@ -601,3 +611,5 @@ def change_password():
         else:
             flash('Original password is invalid.', 'form-error')
     return render_template('account/manage.html', form=form)
+
+

@@ -13,8 +13,8 @@ from itertools import groupby, chain
 from random import sample
 
 import colorsys
-from flask import current_app
-from flask import Blueprint
+import colorlover as cl
+from flask import Blueprint, current_app
 from sqlalchemy import exc
 import numpy as np
 from numpy import nan, linspace, arange, random
@@ -49,30 +49,55 @@ def get_metadata():
 
 @content.route('/content/ensemble_list')
 def get_ensemble_list():
- 
+    
     ensemble_list=[]
     ensemble_list = db.get_engine(current_app, 'data').execute("SELECT * FROM ensembles").fetchall()
+
+    total_cell_each_dataset = db.get_engine(current_app, 'data').execute("SELECT dataset, COUNT(*) as `num` FROM cells GROUP BY dataset").fetchall()
+    total_cell_each_dataset = [ {d['dataset']: d['num']} for d in total_cell_each_dataset ]
+    total_cell_each_dataset = { k.split('_',maxsplit=1)[1]: v for d in total_cell_each_dataset for k, v in d.items() }
+
+    ensembles_cell_counts = []
+    for ensemble in ensemble_list:
+        ensemble_tbl = 'Ens' + str(ensemble['ensemble_id'])
+        query = " SELECT dataset, COUNT(*) as `num` FROM cells INNER JOIN %(ens)s ON cells.cell_id = %(ens)s.cell_id GROUP BY dataset" % {'ens': ensemble_tbl,}
+        cell_counts = db.get_engine(current_app, 'data').execute(query).fetchall()
+        cell_counts = [ {d['dataset']: d['num']} for d in cell_counts]
+        cell_counts = { k.split('_',maxsplit=1)[1]: v for d in cell_counts for k, v in d.items() }
+        ensembles_cell_counts.append( {"ensemble": ensemble['ensemble_name'], "ens_counts": cell_counts} )
+    ensembles_json_list = []
+    for ens in ensembles_cell_counts:
+        datasets_in_ensemble = []
+        ens_dict = {}
+        for dataset, count in ens['ens_counts'].items():
+            datasets_in_ensemble.append(dataset)
+            ens_dict[dataset] = str(count) + '/' + str(total_cell_each_dataset[dataset])
+        ens_dict["ensemble"] = ens['ensemble']
+        ens_dict["datasets"] = "\n".join(datasets_in_ensemble)
+        ensembles_json_list.append(ens_dict)
 
     all_datasets = db.get_engine(current_app, 'data').execute("SELECT DISTINCT(dataset) FROM cells").fetchall()
     all_datasets = [d[0] for d in all_datasets]
     all_datasets = [d.split('_', maxsplit=1)[1] for d in all_datasets]
 
-    ensembles_json_list = []
-    for ensemble in ensemble_list:
-        datasets_in_ensemble = ensemble['datasets'].split(',')
-        datasets_in_ensemble = [d.split('_', maxsplit=1)[1] for d in datasets_in_ensemble]
+    ## Matches code in dataset name with Allen Brain Atlas regions. ex: 'CEMBA_3C_171206' -> '3C' -> 'MOp'(Primary Motor Cortex)
+    dataset_regions = [d.split('_', maxsplit=1)[0] for d in all_datasets]
+    zipped_regions = list(zip(all_datasets, dataset_regions))
+    ABA_regions = db.get_engine(current_app, 'data').execute("SELECT * FROM ABA_regions WHERE `code` IN (" + ",".join("'"+x+"'" for x in dataset_regions) + ")").fetchall()
+    ABA_regions = [tuple(d) for d in ABA_regions]
 
-        ens_dict = {"ensemble": ensemble['ensemble_name'], "datasets": "\n".join(datasets_in_ensemble)}
+    datasets_with_ABA_list = []
+    for dataset, region in zipped_regions:
+        for code, ABA_name in ABA_regions:
+            if region == code:
+                dataset_dict = {"dataset": dataset, "region": ABA_name}
+                break
+        datasets_with_ABA_list.append(dataset_dict)
 
-        for d in datasets_in_ensemble:
-            ens_dict[d] = '1'
-
-        ensembles_json_list.append(ens_dict)
-    
-    data_dict = {"columns": all_datasets,
+    data_dict = {"columns": datasets_with_ABA_list,
                  "data":ensembles_json_list}
     ens_json = json.dumps(data_dict)
- 
+
     return ens_json
 
 
@@ -129,7 +154,7 @@ def build_hover_text(labels):
     return text.strip('<br>')
 
 
-def generate_cluster_colors(num):
+def generate_cluster_colors(num, grouping):
     """Generate a list of colors given number needed.
 
     Arguments:
@@ -138,6 +163,10 @@ def generate_cluster_colors(num):
     Returns:
         list: strings containing RGB-style strings e.g. rgb(255,255,255).
     """
+
+    if grouping == 'dataset' and num > 2 and num <= 9:
+        c = cl.to_hsl( cl.scales[str(num)]['qual']['Set1'] )
+        return c
 
     if num>18:
         c = ['hsl('+str(round(h*1.8 % 360))+',50%,50%)' for h in linspace(0, 360, num)]
@@ -272,8 +301,7 @@ def get_genes_of_module(ensemble, module):
         ensemble.
     """
     try:
-        filename = glob.glob('{}/gene_modules.tsv'.format(current_app.config[
-            'DATA_DIR']))[0]
+        filename = glob.glob('{}/gene_modules.tsv'.format(current_app.config['DATA_DIR']))[0]
     except IndexError:
         now = datetime.datetime.now()
         print("[{}] Error in app(get_genes_of_module): Could not load gene_modules.tsv".format(str(now)))
@@ -1135,7 +1163,7 @@ def get_methylation_scatter(ensemble, tsne_type, methylation_type, query, level,
         unique_groups = points[grouping+'_'+clustering].unique().tolist()
     num_colors = len(unique_groups)
     
-    colors = generate_cluster_colors(num_colors)
+    colors = generate_cluster_colors(num_colors, grouping)
     symbols = ['circle', 'square', 'cross', 'triangle-up', 'triangle-down', 'octagon', 'star', 'diamond']
     
     traces_tsne = OrderedDict()
@@ -2072,7 +2100,7 @@ def get_mch_box(ensemble, methylation_type, gene, grouping, clustering, level, o
     unique_groups = points[grouping+'_'+clustering].unique()
     max_cluster = len(unique_groups)
 
-    colors = generate_cluster_colors(max_cluster)
+    colors = generate_cluster_colors(max_cluster, grouping)
     for point in points.to_dict('records'):
         name_prepend = ""
         if grouping == "cluster":

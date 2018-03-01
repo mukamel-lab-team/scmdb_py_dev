@@ -1,6 +1,20 @@
 import React from 'react';
-import {Table, Column, Cell} from 'fixed-data-table';
-import "fixed-data-table/dist/fixed-data-table.css";
+import {Table, Column, Cell} from 'fixed-data-table-2';
+import "fixed-data-table-2/dist/fixed-data-table.css";
+
+
+class MyTextCell extends React.Component {
+
+    render() {
+        const {rowIndex, data, field} = this.props;
+        return (
+            <Cell {...this.props}>
+                {data[rowIndex][field]}
+            </Cell>
+       );
+    }
+}
+
 
 class MyTable extends React.Component {
 
