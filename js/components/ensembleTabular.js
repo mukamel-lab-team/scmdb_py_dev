@@ -1,19 +1,68 @@
+/* rowGetter, label, dataKey, headerRenderer */
 import React from 'react';
-import {Table, Column, Cell} from 'fixed-data-table';
-import "fixed-data-table/dist/fixed-data-table.css";
+import {Table, Column, Cell} from 'fixed-data-table-2';
+import "fixed-data-table-2/dist/fixed-data-table.css";
+import ReactTooltip from 'react-tooltip';
+import {findDOMNode} from 'react-dom';
+
+
+class MyTextCell extends React.Component {
+    render() {
+        const {rowIndex, field, data} = this.props;
+        return (
+            <Cell {...this.props}>
+                {data[rowIndex][field]}
+            </Cell>
+       );
+    }
+}
+
+class MyLinkCell extends React.Component {
+    render() {
+        const {rowIndex, field, data} = this.props;
+        const link = '/' + data[rowIndex][field];
+        return (
+            <Cell {...this.props}> 
+                <a href={link}>{data[rowIndex][field]}</a>
+            </Cell>
+       );
+    }
+}
+
+class TooltipCell extends React.Component {
+    render() {
+        const {data, rowIndex, columnKey} = this.props;
+        //const value = data[rowIndex][columnKey];
+        const value = columnKey;
+        const toolTip = 'Region: ' + data['region'];
+        return (
+            <Cell
+                {...this.props}
+                onMouseEnter={() => { ReactTooltip.show(this.refs.valueDiv); }}
+                onMouseLeave={() => { ReactTooltip.hide(this.refs.valueDiv); }}>
+                <div ref='valueDiv' data-tip={toolTip}>
+                {value}
+                </div>
+            </Cell>
+        );
+    }
+}
+
 
 class MyTable extends React.Component {
 
-    constructor() {
-        super();
+    constructor(props) {
+        super(props);
 
         this.state = {
             rows: [],
+            columns: [],
             columnSize: 0,
             filteredDataList: [],
             sortBy: 'ensemble',
             sortDir: 'ASC'};
     }
+
     componentWillMount() {
         this.jsonList();
     }
@@ -25,18 +74,13 @@ class MyTable extends React.Component {
             }
         ).then(data => {
                 var d = data;
-                var columnSize = 0;
-                for (var i = 0; i < d.data.length; i++) {
-                    var dict_length = Object.keys(d.data[i]).length;
-                    if (dict_length - 2 > columnSize) {
-                        columnSize = dict_length - 2;
-                    }
-                }
+                var columnSize = d.columns.length;
 
                 this.setState({
                     rows: d.data,
+                    columns: d.columns,
                     filteredDataList: d.data,
-                    columnSize
+                    columnSize: columnSize
                 })
             })
     }
@@ -46,23 +90,58 @@ class MyTable extends React.Component {
         if (this.state.sortDir !== null){
             sortDirArrow = this.state.sortDir === 'DESC' ? ' ↓' : ' ↑';
         }
-        var dataset_columns = []
+        var dataset_columns = [];
         for (var index = 0; index < this.state.columnSize; index++) {
-            var column_tag = "dataset_" + (index + 1)
-            var column_name = "Data Set " + (index + 1)
-            dataset_columns.push(<Column key={column_tag} dataKey={column_tag} width={200} label={column_name + (this.state.sortBy === column_tag ? sortDirArrow : '')} headerRenderer={this._renderHeader.bind(this)}/>)
+            var column_tag = this.state.columns[index]['dataset']
+            var column_name = column_tag
+            dataset_columns.push(
+                <Column 
+                    columnKey={column_tag} 
+                    //header={<Cell>{column_tag}</Cell>}
+                    header={<TooltipCell data={this.state.columns[index]} columnKey={column_tag}></TooltipCell>}
+                    cell={<MyTextCell data={this.state.filteredDataList} field={column_tag} />}
+                    //cell={<TooltipCell data={this.state.filteredDataList} columnKey={column_tag} />}
+                    width={120} 
+                    //headerRenderer={this._renderHeader.bind(this,this)}/>)
+                />
+            )
         }
-        return <Table
-            height={52+((this.state.filteredDataList.length+1) * 30)}
-            width={(this.state.columnSize + 1) * 200}
-            rowsCount={this.state.filteredDataList.length}
-            rowHeight={30}
-            headerHeight={80}
-            rowGetter={function(rowIndex) {return this.state.filteredDataList[rowIndex]; }.bind(this)}>
-            <Column dataKey="ensemble" width={200} label={'Ensemble'+ (this.state.sortBy === 'ensemble' ? sortDirArrow : '')} headerRenderer={this._renderHeader.bind(this)}/>
-            {dataset_columns}
-        </Table>;
+        return (
+            <div>
+                <input
+                    onChange={this._onFilterChange.bind(this,'ensemble')}
+                    placeholder="Filter by Ensemble Name"
+                    style={{width:'200px'}}
+                />
+                <br />
+                <Table
+                    height={50+((this.state.filteredDataList.length+1) * 30)}
+                    width={(this.state.columnSize * 120) + 250}
+                    rowsCount={this.state.filteredDataList.length}
+                    rowHeight={30}
+                    headerHeight={60}>
+                    <Column
+                        columnKey="id"
+                        header={<Cell>{'#' + (this.state.sortBy === 'ensemble' ? sortDirArrow: '')}</Cell>}
+                        cell={<MyTextCell data={this.state.filteredDataList} field="id" />}
+                        width={50}
+                        fixed={true}
+                    />
+                    <Column 
+                        columnKey="ensemble"
+                        header={<Cell>{'Ensemble'+ (this.state.sortBy === 'ensemble' ? sortDirArrow : '')}</Cell>} 
+                        cell={<MyLinkCell data={this.state.filteredDataList} field="ensemble" />} 
+                        width={200} 
+                        fixed={true}
+                        //headerRenderer={this._renderHeader.bind(this)}
+                    />
+                    {dataset_columns}
+                </Table>
+                <ReactTooltip />
+            </div>
+        );
     }
+
     _onFilterChange(cellDataKey, event) {
         if (!event.target.value) {
             this.setState({
@@ -82,6 +161,7 @@ class MyTable extends React.Component {
             filteredDataList: filteredList,
         });
     }
+
     _sortRowsBy(cellDataKey) {
         var sortDir = this.state.sortDir;
         var sortBy = cellDataKey;
@@ -107,15 +187,6 @@ class MyTable extends React.Component {
         });
 
         this.setState({sortBy, sortDir, filteredDataList : rows});
-    }
-
-    _renderHeader(label, cellDataKey) {
-        return <div>
-            <a onClick={this._sortRowsBy.bind(this, cellDataKey)}>{label}</a>
-            <div>
-                <input type="text" style={{width:90+'%'}} onChange={this._onFilterChange.bind(this, cellDataKey)}/>
-            </div>
-        </div>;
     }
 }
 

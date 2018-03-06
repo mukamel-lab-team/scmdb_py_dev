@@ -11,11 +11,21 @@ JSONIFY_PRETTYPRINT_REGULAR = False
 # Minify HTML to conserve network transfer
 MINIFY_PAGE = True  
 
-# Note: This now points to brainome_210 which has a completely different layout
-# DATA_DIR = '/srv/scmdb_py/data'
-# PUBLISHED_DATA_DIR = '/srv/scmdb_py/data'
-# ALL_DATA_DIR = '/srv/scmdb_py_newdata/data'
+MAIL_SERVER = 'smtp.sendgrid.net'
+MAIL_PORT = 465
+MAIL_USE_TLS = False
+MAIL_USE_SSL = True
+MAIL_DEBUG =  True
+MAIL_USERNAME = 'brainome-admin@ucsd.edu'
+MAIL_PASSWORD = ''
 
-DATA_DIR = '/home/cogsci-cnddcollab/brainome_210/data/published_data'
-PUBLISHED_DATA_DIR = '/home/cogsci-cnddcollab/brainome_210/data/published_data'
-ALL_DATA_DIR = '/home/cogsci-cnddcollab/brainome_210/data/all_data'
+MYSQL_USER = ''
+MYSQL_PW = ''
+MYSQL_DB = ''
+SQLALCHEMY_BINDS = { 'data': 'mysql://' + MYSQL_USER + ':' + MYSQL_PW + '@banjo/' + MYSQL_DB }
+
+DATA_DIR = ''
+PUBLISHED_DATA_DIR = ''
+ALL_DATA_DIR = ''
+
+SECRET_KEY = ''

@@ -14,7 +14,7 @@
                     <div class="panel panel-info" id="options-panel" style="overflow-x: auto; margin-left:auto; margin-right:auto; max-width:1400px">
                         <div class="panel-heading">
                             <div class="panel-title">
-                                <h5><a data-toggle="collapse" title="" style="margin-top: 0px;" data-original-title="Collapse Search Options" href="#search-panel-body"> Search <span class="glyphicon glyphicon-chevron-down"></span></a>
+                                <h5><a data-toggle="collapse" title="" style="margin-top: 0px;" data-original-title="Collapse Search Options" href="#search-panel-body"> Gene Search <span class="glyphicon glyphicon-chevron-down"></span></a>
                                 <a href="#" target="_blank" id="epiBrowserLink" class="btn btn-info disabled pull-right" style="margin-top: 0px; margin-right:10px" role="button">
                                     <small style="color:white;">Epigenome browser (AnnoJ)</small>
                                 </a>
@@ -32,16 +32,14 @@
 					<div class="panel panel-default panel-main" style="overflow-x: auto; margin-left:auto; margin-right:auto;">
 						<div class="panel-heading">
 							<div class="panel-title">
-								<a data-toggle="collapse" title="" href="#cluster_plots" style="margin-top: 0px;" data-original-title="Collapse Search Options"><b>{{ species }}</b> Clustering{% if gene is defined %} - {{ gene }}{% endif %}&nbsp;<span class="glyphicon glyphicon-chevron-down"></span></a>
-								<a data-toggle="collapse" title="" data-placement="left" href=".cluster_options_group" class="btn btn-sm btn-basic pull-right" style="margin-top: 0px;" data-original-title="Collapse Search Options"><span class="glyphicon glyphicon-cog"></span></a>
+								<a data-toggle="collapse" title="" href="#cluster_plots" style="margin-top: 0px;" data-original-title="Collapse Search Options"><b>{{ ensemble_name }}</b> Clustering{% if gene is defined %} - {{ gene }}{% endif %}&nbsp;<span class="glyphicon glyphicon-chevron-down"></span></a>
+                                <!--<a onclick='tsneDialog()' title="" data-placement="left" href="" class="btn btn-sm btn-basic pull-right" style="margin-top: 0px;" data-original-title="Collapse Search Options"><span class="glyphicon glyphicon-cog"></span></a>-->
+                                <button id="toggle-scatter-options-dialog" class="pull-right" style="margin-top:0px;"><span class="glyphicon glyphicon-cog"></button>
 							</div>
 						</div>
                         <div class="panel-collapse collapse in" id="cluster_plots">
-							<div class="panel-body flex-container">
-                                <div class="col-md-6 col-sm-12 flex-item" id="tSNE_cluster_div" style="padding: 0px;">
-                                    {% include "components/tsne_cluster.html" %}
-                                </div>
-                                <div class="col-md-6 col-sm-12 flex-item" id="methyl_scatter_div" style="padding: 0px">
+							<div class="panel-body flex-container" style="padding:0px">
+                                <div class="col-md-12 col-sm-12 flex-item" id="methyl_scatter_div" style="padding: 0px">
                                     {% include "components/mch_cluster.html" %}
                                 </div>
 								</div>
@@ -126,8 +124,9 @@
 -->
 {%- endblock %} {% block scripts %} {{super()}}
 
+<script src="./static/jquery-ui.min.js"></script>
+<link href="./static/jquery-ui.min.css" rel="stylesheet" />
 <script src="./static/plotly.min.js"></script>
-<script src="./static/customview.js" type="text/javascript"></script>
 <link href="./static/datatables.min.css" rel="stylesheet" />
 <script src="./static/datatables.min.js"></script>
 <link href="./static/bootstrap-toggle.min.css" rel="stylesheet" />
@@ -136,9 +135,10 @@
 <script src="./static/select2.min.js"></script>
 <link href="./static/bootstrap-slider.min.css" rel="stylesheet" />
 <script src="./static/bootstrap-slider.min.js"></script>
+<script src="./static/customview.js" type="text/javascript"></script>
 
 <script>
-    var species = "{{ species }}";
+    var ensemble = "{{ ensemble }}";
     var pSlider;
     var geneSearchCache;
     var mmu_gID;
@@ -152,6 +152,7 @@
         $('#outlierToggle').bootstrapToggle();
         $('#orthologsToggle').bootstrapToggle();
         $('#orthologsToggle').bootstrapToggle('disable');
+        $('#tsneOutlierToggle').bootstrapToggle();
 
         // Percentile changes are handled separately, as every change would result in a plot update, but we want
         // this to happen when sliding is actually stopped.
@@ -172,13 +173,17 @@
                     "<'col-sm-12'<p>>",
             "pagingType": "simple"
         });
-        buttons = document.getElementsByClassName('modebar-btn');
+        buttons = $('.modebar-btn');
 
-        loadClusterPlots();
-        randomizeClusterColors();
+        var dialogOptions = {autoOpen: false};
+        $("#scatter-options-dialog").dialog(dialogOptions);
+        $("#scatter-options-dialog").css('display', 'inline-block');
+
+        populateTSNEDropdowns();
         initGeneNameSearch();
         initGeneModules();
         initDataTableClick();
+        updateGeneElements();
     });
 
     $("#methylationLevelDiv :input, #methylationTypeDiv :input").change(function() {
@@ -263,9 +268,26 @@
         display3DPlotToggle();
     });
 
-    $("#tsneGrouping :input").change(function() {
-        loadClusterPlots();
+    $("#tsneUpdateBtn").click(function() {
+        updateGeneElements();
+        $("#scatter-options-dialog").dialog("close");
     });
 
+    $("#tsneOutlierToggle").change(function() {
+        updateMCHClusterPlot();
+    });
+     
+    /*
+    $("#tsne_grouping, #tsne_clustering").change(function() {
+        updateGeneElements(updateMCHCluster=false);
+    });*/
+    
+    $('#toggle-scatter-options-dialog').click(function() {
+        if(!$("#scatter-options-dialog").dialog("isOpen")) {
+            $("#scatter-options-dialog").dialog("open");
+        } else {
+            $("#scatter-options-dialog").dialog("close");
+        }
+    });
 </script>
 {% endblock %}

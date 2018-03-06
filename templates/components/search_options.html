@@ -1,7 +1,7 @@
 <div class="col-sm-12">
     <div class="form-group col-md-4 col-sm-12" style="margin-bottom:0px;">
         <label for="geneName" class="control-label">
-            Search gene by name: <a href="#" data-toggle="popover" title="Gene name" data-content="Type a gene name."><span class="glyphicon glyphicon-info-sign"></span></a>
+            Search gene by name:
         </label><br>
         <select id="geneName" multiple style="width:100%">
             <option>Select..</option>
@@ -9,14 +9,15 @@
     </div>
     <div class="col-md-3 col-sm-6">
         <div style="display:inline-block;" id="methylationLevelDiv">
-            <label for="levels" class="control-label">mCH Levels</label><br>
+            <label for="levels" class="control-label">Methylation Levels</label><br>
             <input type="radio" name="levels" id="levelsOriginal" value="original">&nbsp;Original<br>
             <input type="radio" name="levels" id="levelsNormalized" value="normalized" checked>&nbsp;Normalized
         </div>
         <div style="display:inline-block; float:right;" id="methylationTypeDiv">
             <label for="mType" class="control-label">Methylation Type</label><br>
-            <input type="radio" name="mType" id="type_mch" value="mch" checked>&nbsp;mCH<br>
-            <input type="radio" name="mType" id="type_mcg" value="mcg">&nbsp;mCG
+            <input type="radio" name="mType" id="type_mch" value="mCH" checked>&nbsp;mCH<br>
+            <input type="radio" name="mType" id="type_mcg" value="mCG">&nbsp;mCG<br>
+            <input type="radio" name="mType" id="type_mcg" value="mCA">&nbsp;mCA<br>
         </div>
     </div>
     <div class="col-md-3 col-sm-12" id="geneModuleDiv">

@@ -2,8 +2,10 @@
 
 For actual content generation see the content.py module.
 """
+import json
 from os import walk
 import os.path
+import time
 
 import dominate
 from dominate.tags import img
@@ -11,16 +13,16 @@ from flask import Blueprint, render_template, jsonify, request, redirect, curren
 from flask_login import (current_user, login_required, login_user,
                          logout_user)
 from flask_mail import Mail, Message
-from flask_nav.elements import Navbar, Link, View, Text
+from flask_nav.elements import Navbar, Link, View, Text, Subgroup
 from flask_rq import get_queue
 
 from . import nav, cache, db, mail
-from .content import get_cluster_plot, search_gene_names, \
-    get_methylation_scatter, get_mch_box, get_mch_box_two_species, \
+from .content import get_tsne_options, get_gene_by_name, \
+    get_methylation_scatter, get_mch_box, get_mch_box_two_ensemble, \
     find_orthologs, FailToGraphException, get_corr_genes, \
-    gene_id_to_name, randomize_cluster_colors, get_mch_heatmap, \
-    get_mch_heatmap_two_species, all_gene_modules, get_genes_of_module, \
-    convert_geneID_mmu_hsa
+    get_gene_by_id, get_mch_heatmap, \
+    get_mch_heatmap_two_ensemble, all_gene_modules, get_genes_of_module, \
+    convert_gene_id_mmu_hsa, get_ensemble_info
 from .decorators import admin_required
 from .email import send_email
 from .forms import LoginForm, ChangeUserEmailForm, ChangeAccountTypeForm, InviteUserForm, CreatePasswordForm, NewUserForm, RequestResetPasswordForm, ResetPasswordForm, ChangePasswordForm
@@ -29,56 +31,92 @@ from .user import User, Role
 
 frontend = Blueprint('frontend', __name__) # Flask "bootstrap"
 
+@frontend.route('/favicon.ico')
+def favicon():
+    return ('', 204)
 
-# HOTFIX: '/' character needed to prevent concatenation of url
+
 @frontend.before_request
+@cache.memoize(timeout=1800)
 def process_navbar():
+
     # get images here
     lockimage = img(src='static/img/lock.png', height='20', width='20')
     unlockimage = img(src='static/img/unlock.png', height='20', width='20')
     separator = img(src='static/img/separate.png', height='25', width='10')
 
-    # Find all the samples in the data directory
-    dir_list = []
-    if current_user.is_authenticated:
-        current_app.config['DATA_DIR'] = current_app.config['ALL_DATA_DIR']
-    else:
-        current_app.config['DATA_DIR'] = current_app.config['PUBLISHED_DATA_DIR']
-    dir_list = next(walk(current_app.config['DATA_DIR'] + "/ensembles"))[1]
-    published_dir_list = next(walk(current_app.config['PUBLISHED_DATA_DIR'] + 
-            "/ensembles"))[1]
+    ens_list = db.get_engine(current_app, 'data').execute("SELECT * FROM ensembles").fetchall()
 
-    dir_list_links = []
-
-    first = True
-
-    for x in dir_list:
-        if not first:
-            dir_list_links.append(Text(separator))
-        dir_list_links.append(Link(x, "/" + x))
+    ens_items = []
+    
+    for ens in ens_list:
+        ensemble = str(ens['ensemble_name'])
         if current_user.is_authenticated:
-            # x is public: add unlockimage
-            if x in published_dir_list:
-                dir_list_links.append(Text(unlockimage))
-            # x is private: add lockimage
+            ens_items.append(Link(ensemble, '/'+ensemble))
+        else:
+            if bool(ens['public_access']) == True:
+                ens_items.append(Link(ensemble, '/'+ensemble))
             else:
-                dir_list_links.append(Text(lockimage))
-        first = False
+                continue
+    # for i in range(100):
+    #     ens_items.append(Link(ensemble, '/'+ensemble))
 
-    nav.register_element('frontend_top', Navbar('',*dir_list_links))
+    ensembles = Subgroup('Ensembles', *ens_items)
+
+    data_navbar = [ensembles]
+
+    # # Find all the samples in the data directory
+    # dir_list = []
+    # if current_user.is_authenticated:
+    #     current_app.config['DATA_DIR'] = current_app.config['ALL_DATA_DIR']
+    # else:
+    #     current_app.config['DATA_DIR'] = current_app.config['PUBLISHED_DATA_DIR']
+    # dir_list = next(walk(current_app.config['DATA_DIR'] + "/ensembles"))[1]
+    # published_dir_list = next(walk(current_app.config['PUBLISHED_DATA_DIR'] + 
+    #         "/ensembles"))[1]
+
+    # dir_list_links = []
+
+    # first = True
+
+    # for x in dir_list:
+    #     if not first:
+    #         dir_list_links.append(Text(separator))
+    #     dir_list_links.append(Link(x, "/" + x))
+    #     if current_user.is_authenticated:
+    #         # x is public: add unlockimage
+    #         if x in published_dir_list:
+    #             dir_list_links.append(Text(unlockimage))
+    #         # x is private: add lockimage
+    #         else:
+    #             dir_list_links.append(Text(lockimage))
+    #     first = False
+
+    # nav.register_element('frontend_top', Navbar('',*dir_list_links))
+    nav.register_element('frontend_top', Navbar('', *data_navbar))
 
 # Visitor routes
 @frontend.route('/')
 def index():
     # Index is not needed since this site is embedded as a frame
     # We use JS redirect b/c reverse proxy will be confused about subdirectories
-    html = \
-    """To be redirected manually, click <a href="./hsa">here</a>.
-    <script>
-        window.location = "./human_hv1_published"; 
-        window.location.replace("./human_hv1_published");
-    </script>
-    """
+
+    if current_user is not None and current_user.is_authenticated:
+        html = \
+        """To be redirected manually, click <a href="./CEMBA_3C_171206">here</a>.
+        <script>
+            window.location = "./CEMBA_3C_171206"; 
+            window.location.replace("./CEMBA_3C_171206");
+        </script>
+        """
+    else: 
+        html = \
+        """To be redirected manually, click <a href="./login">here</a>.
+        <script>
+            window.location = "./login"; 
+            window.location.replace("./login");
+        </script>
+        """
     return html
     
     # TODO: May need to switch to code below 
@@ -93,32 +131,35 @@ def index():
     # </script>
     # """
 
-@frontend.route('/<species>')
-def species(species):
-    return render_template('speciesview.html', species=species)
+@frontend.route('/<ensemble_name>')
+def ensemble(ensemble_name):
+    ensemble = 'Ens'+str(get_ensemble_info(ensemble_name=ensemble_name)['ensemble_id'])
+    return render_template('ensembleview.html', ensemble=ensemble, ensemble_name=ensemble_name)
 
-@frontend.route('/standalone/<species>/<gene>')
-def standalone(species, gene):  # View gene body mCH plots alone
-    return render_template('mch_standalone.html', species=species, gene=gene)
-
-
-@frontend.route('/compare/<mmu_gid>/<hsa_gid>')
-def compare(mmu_gid, hsa_gid):
-    return render_template('compareview.html', mmu_gid=mmu_gid, hsa_gid=hsa_gid)
+@frontend.route('/standalone/<ensemble>/<gene>')
+def standalone(ensemble, gene):  # View gene body mCH plots alone
+    return render_template('mch_standalone.html', ensemble=ensemble, gene=gene)
 
 
-@frontend.route('/box_combined/<mmu_gid>/<hsa_gid>')
-def box_combined(mmu_gid, hsa_gid):
+@frontend.route('/compare/<mmu_gene_id>/<hsa_gene_id>')
+def compare(mmu_gene_id, hsa_gene_id):
+    return render_template('compareview.html', mmu_gene_id=mmu_gene_id, hsa_gene_id=hsa_gene_id)
+
+
+@frontend.route('/box_combined/<mmu_gene_id>/<hsa_gene_id>')
+def box_combined(mmu_gene_id, hsa_gene_id):
     return render_template(
-        'combined_box_standalone.html', mmu_gid=mmu_gid, hsa_gid=hsa_gid)
+        'combined_box_standalone.html', mmu_gene_id=mmu_gene_id, hsa_gene_id=hsa_gene_id)
 
 
 @frontend.route('/tabular/ensemble')
+@login_required
 def ensemble_tabular_screen():
     return render_template('tabular_ensemble.html')
 
 
 @frontend.route('/tabular/dataset')
+@login_required
 def data_set_tabular_screen():
     return render_template('tabular_data_set.html')
 
@@ -129,135 +170,173 @@ def nav_bar_screen():
 
 
 # API routes
-@frontend.route('/plot/cluster/<species>/<grouping>')
-@cache.memoize(timeout=3600)
-def plot_cluster(species, grouping):
-    try:
-        return jsonify(get_cluster_plot(species, grouping))
-    except FailToGraphException:
-        return 'Failed to produce cluster plot. Contact maintainer.'
+# @frontend.route('/plot/tsne/<ensemble>/<tsne_type>/<grouping>/<clustering>')
+# @cache.memoize(timeout=3600)
+# def plot_tsne(ensemble, tsne_type, grouping, clustering):
+#     if tsne_type == 'null':
+#         tsne_type = 'mCH_ndim2_perp20'
+#     if clustering == 'null':
+#         clustering = 'mCH_lv_npc50_k5'
+#     try:
+#         return jsonify(get_tsne_plot(ensemble, tsne_type, grouping, clustering))
+#     except FailToGraphException:
+#         return 'Failed to produce cluster plot. Contact maintainer.'
 
 
-@frontend.route('/plot/scatter/<species>/<methylationType>/<level>/<ptile_start>/<ptile_end>')
-def plot_methylation_scatter(species, methylationType, level, ptile_start, ptile_end):
+@frontend.route('/plot/scatter/<ensemble>/<tsne_type>/<methylation_type>/<level>/<grouping>/<clustering>/<ptile_start>/<ptile_end>/<tsne_outlier>')
+def plot_methylation_scatter(ensemble, tsne_type, methylation_type, level, grouping, clustering, ptile_start, ptile_end, tsne_outlier):
+
     genes = request.args.get('q', 'MustHaveAQueryString')
-    try:
-        return get_methylation_scatter(species,
-                                       methylationType,
-                                       genes, level,
-                                       float(ptile_start), float(ptile_end))
-    except (FailToGraphException, ValueError) as e:
-        print(e)
-        return 'Failed to produce mCH levels scatter plot. Contact maintainer.'
+    if tsne_type == 'null':
+        tsne_type = 'mCH_ndim2_perp20'
+    if clustering == 'null':
+        clustering = 'mCH_lv_npc50_k5'
+    if grouping == 'NaN' or grouping == 'null':
+        grouping = 'annotation'
+
+    tsne_outlier_bool = False
+    if tsne_outlier == 'true':
+        tsne_outlier_bool = True
+
+    # try:
+    return get_methylation_scatter(ensemble,
+                                   tsne_type,
+                                   methylation_type,
+                                   genes, 
+                                   level,
+                                   grouping,
+                                   clustering,
+                                   float(ptile_start),
+                                   float(ptile_end),
+                                   tsne_outlier_bool)
+    # except Exception as e:
+    #     print("ERROR (plot_methylation_scatter): {}".format(e))
+    #     return 'Failed to produce mCH levels scatter plot. Contact maintainer.'
 
 
-@frontend.route('/plot/box/<species>/<methylationType>/<gene>/<level>/<outliers_toggle>')
+@frontend.route('/plot/box/<ensemble>/<methylation_type>/<gene>/<grouping>/<clustering>/<level>/<outliers_toggle>')
 @cache.memoize(timeout=3600)
-def plot_mch_box(species, methylationType, gene, level, outliers_toggle):
+def plot_mch_box(ensemble, methylation_type, gene, grouping, clustering, level, outliers_toggle):
+
     if outliers_toggle == 'outliers':
         outliers = True
     else:
         outliers = False
+    if clustering == 'null':
+        clustering = 'mCH_lv_npc50_k5'
+    if grouping == 'NaN' or grouping == 'null' or grouping=='dataset':
+        grouping = 'annotation'
 
     try:
-        return get_mch_box(species, methylationType, gene, level, outliers)
+        return get_mch_box(ensemble, methylation_type, gene, grouping, clustering, level, outliers)
     except (FailToGraphException, ValueError) as e:
-        print(e)
+        print("ERROR (plot_mch_box): {}".format(e))
         return 'Failed to produce mCH levels box plot. Contact maintainer.'
 
 
-@frontend.route('/plot/box_combined/<methylationType>/<gene_mmu>/<gene_hsa>/<level>/<outliers_toggle>')
-def plot_mch_box_two_species(methylationType, gene_mmu, gene_hsa, level, outliers_toggle):
+@frontend.route('/plot/box_combined/<methylation_type>/<gene_mmu>/<gene_hsa>/<level>/<outliers_toggle>')
+def plot_mch_box_two_ensemble(methylation_type, gene_mmu, gene_hsa, level, outliers_toggle):
+
     if outliers_toggle == 'outliers':
         outliers = True
     else:
         outliers = False
     try:
-        return get_mch_box_two_species(methylationType, gene_mmu, gene_hsa, level, outliers)
+        return get_mch_box_two_ensemble(methylation_type, gene_mmu, gene_hsa, level, outliers)
     except (FailToGraphException, ValueError) as e:
-        print(e)
+        print("ERROR (plot_mch_box_two_ensemble): {}".format(e))
         return 'Failed to produce mCH levels box plot. Contact maintainer.'
 
 
-@frontend.route('/plot/heat/<species>/<methylationType>/<level>/<ptile_start>/<ptile_end>')
-def plot_mch_heatmap(species, methylationType, level, ptile_start, ptile_end):
+@frontend.route('/plot/heat/<ensemble>/<methylation_type>/<grouping>/<clustering>/<level>/<ptile_start>/<ptile_end>')
+def plot_mch_heatmap(ensemble, methylation_type, grouping, clustering, level, ptile_start, ptile_end):
+
     query = request.args.get('q', 'MustHaveAQueryString')
+
+    if clustering == 'null':
+        clustering = 'mCH_lv_npc50_k5'
+    if grouping == 'NaN' or grouping == 'null' or grouping=='dataset':
+        grouping = 'annotation'
+
     if request.args.get('normalize', 'MustSpecifyNormalization') == 'true':
         normalize_row = True
     else:
         normalize_row = False
     try:
-        return get_mch_heatmap(species, methylationType, level, ptile_start, ptile_end, normalize_row, query)
+        return get_mch_heatmap(ensemble, methylation_type, grouping, clustering, level, ptile_start, ptile_end, normalize_row, query)
     except (FailToGraphException, ValueError) as e:
-        print(e)
+        print("ERROR (plot_mch_heatmap): {}".format(e))
         return 'Failed to produce mCH levels heatmap plot. Contact maintainer.'
 
-@frontend.route('/plot/heat_two_species/<species>/<methylationType>/<level>/<ptile_start>/<ptile_end>')
-def plot_mch_heatmap_two_species(species, methylationType, level, ptile_start, ptile_end):
+@frontend.route('/plot/heat_two_ensemble/<ensemble>/<methylation_type>/<level>/<ptile_start>/<ptile_end>')
+def plot_mch_heatmap_two_ensemble(ensemble, methylation_type, level, ptile_start, ptile_end):
     query = request.args.get('q', 'MustHaveAQueryString')
     if request.args.get('normalize', 'MustSpecifyNormalization') == 'true':
         normalize_row = True
     else:
         normalize_row = False
     try:
-        return get_mch_heatmap_two_species(species, methylationType, level, ptile_start, ptile_end, normalize_row, query)
+        return get_mch_heatmap_two_ensemble(ensemble, methylation_type, level, ptile_start, ptile_end, normalize_row, query)
     except (FailToGraphException, ValueError) as e:
         print(e)
         return 'Failed to produce orthologous mCH levels heatmap plot. Contact maintainer.'
 
-@frontend.route('/gene/names/<species>')
-def search_gene_by_name(species):
+@frontend.route('/gene/names/<ensemble>')
+def search_gene_by_name(ensemble):
     query = request.args.get('q', 'MustHaveAQueryString')
     if query == 'none' or query == '':
         return jsonify([])
     else:
-        return jsonify(search_gene_names(species, query))
+        return jsonify(get_gene_by_name(ensemble, query))
 
 
-@frontend.route('/gene/id/<species>')
-def search_gene_by_id(species):
+@frontend.route('/gene/id/<ensemble>')
+def search_gene_by_id(ensemble):
     query = request.args.get('q', 'MustHaveAQueryString')
     if query == 'none' or query == '':
         return jsonify({})
     else:
-        return jsonify(gene_id_to_name(species, convert_geneID_mmu_hsa(species, query)))
+        return jsonify(get_gene_by_id(ensemble, convert_gene_id_mmu_hsa(ensemble, query)))
 
 
-@frontend.route('/gene/modules/<species>')
-def gene_modules(species):
+@frontend.route('/tsne_options')
+def tsne_options():
+    query = request.args.get('q', 'MustHaveAQueryString')
+    if query == 'none' or query == 'MustHaveAQueryString':
+        return jsonify({})
+    else:
+        return jsonify(get_tsne_options(query))
+
+
+@frontend.route('/gene/modules/<ensemble>')
+def gene_modules(ensemble):
     query = request.args.get('q')
     if query == None or query == '':
         return jsonify(all_gene_modules())
     else:
-        return jsonify(get_genes_of_module(species, query))
+        return jsonify(get_genes_of_module(ensemble, query))
 
 
-@frontend.route('/gene/orthologs/<species>/<geneID>')
-def orthologs(species, geneID):
-    geneID = geneID.split('.')[0]
-    geneID = convert_geneID_mmu_hsa(species,geneID) 
-    if species == 'mmu' or species == 'mouse_published':
-        return jsonify(find_orthologs(mmu_gid=geneID))
+@frontend.route('/gene/orthologs/<ensemble>/<gene_id>')
+def orthologs(ensemble, gene_id):
+    gene_id = gene_id.split('.')[0]
+    gene_id = convert_gene_id_mmu_hsa(ensemble,gene_id) 
+    if ensemble == 'mmu' or ensemble == 'mouse_published':
+        return jsonify(find_orthologs(mmu_gene_id=gene_id))
     else:
-        return jsonify(find_orthologs(hsa_gid=geneID))
+        return jsonify(find_orthologs(hsa_gene_id=gene_id))
 
 
 @cache.memoize(timeout=3600)
-@frontend.route('/gene/corr/<species>/<geneID>')
-def correlated_genes(species, geneID):
-    return jsonify(get_corr_genes(species, geneID))
+@frontend.route('/gene/corr/<ensemble>/<gene_id>')
+def correlated_genes(ensemble, gene_id):
+    return jsonify(get_corr_genes(ensemble, gene_id))
 
 
-@frontend.route('/plot/randomize_colors')
-def randomize_colors():
-    num_colors = request.args.get('n', type=int)
-    return jsonify(randomize_cluster_colors(num_colors))
-
-
-@frontend.route('/plot/delete_cache/<species>/<grouping>')
-def delete_cluster_cache(species, grouping):
-    cache.delete_memoized(plot_cluster, species, grouping)
-    return (species + " cluster cache cleared") 
+@frontend.route('/plot/delete_cache/<ensemble>/<grouping>')
+def delete_cluster_cache(ensemble, grouping):
+    cache.delete_memoized(plot_cluster, ensemble, grouping)
+    return (ensemble + " cluster cache cleared") 
 
 
 # User related routes
@@ -396,7 +475,7 @@ def invite_user():
             user_id=user.id,
             token=token,
             _external=True)
-        send_email(recipient=user.email,subject='You Are Invited To Join',template='email/invite',user=user,invite_link=invite_link)
+        send_email(recipient=user.email, subject='You Are Invited To Join', template='email/invite', sender=current_app.config['MAIL_USERNAME'], user=user, invite_link=invite_link)
         flash('User {} successfully invited'.format(user.full_name()),
               'form-success')
     return render_template('admin/new_user.html', form=form)
@@ -441,8 +520,7 @@ def join_from_invite(user_id, token):
             user_id=user_id,
             token=token,
             _external=True)
-        send_email(recipient=new_user.email, subject='You Are Invited To Join', template='email/invite', user=new_user,
-                   invite_link=invite_link)
+        send_email(recipient=new_user.email, subject='You Are Invited To Join', template='email/invite', sender=current_app.config['MAIL_USERNAME'], user=new_user, invite_link=invite_link)
     return redirect(url_for('frontend.index'))
 
 @frontend.route('/new-user', methods=['GET', 'POST'])
@@ -489,6 +567,7 @@ def reset_password_request():
                 recipient=user.email,
                 subject='Reset Your Password',
                 template='account/email/reset_password',
+                sender=current_app.config['MAIL_USERNAME'],
                 user=user,
                 reset_link=reset_link,
                 next=request.args.get('next'))
@@ -532,3 +611,5 @@ def change_password():
         else:
             flash('Original password is invalid.', 'form-error')
     return render_template('account/manage.html', form=form)
+
+

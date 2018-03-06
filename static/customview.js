@@ -18,8 +18,7 @@ var storage = {
 		var record = JSON.parse(localStorage.getItem(key));
 		if (!record){return false;}
 		return (new Date().getTime() < record.timestamp && JSON.parse(record.value));
-	}
-}
+	} }
 
 function save3DData(trace, layout){
     trace_3d = trace;
@@ -67,7 +66,7 @@ function getMax(arr, prop) {
 }
 
 function generateBrowserURL(gene) {
-    if (species === 'mmu') {
+    if (ensemble === 'mmu') {
         var base = 'http://brainome.ucsd.edu/annoj/CEMBA/index_mm.html'; // Mouse
     } else {
         var base = 'http://brainome.ucsd.edu/annoj/sc_wgbs/index_hs.html'; // Human
@@ -78,7 +77,7 @@ function generateBrowserURL(gene) {
     } else {
         var position = gene.end;
     }
-    return base + '?assembly=' + gene.chrom + '&position=' + position;
+    return base+'?assembly='+gene.chrom+'&position='+position;
 }
 
 function initGeneNameSearch() {
@@ -86,7 +85,7 @@ function initGeneNameSearch() {
         placeholder: 'Search..',
         allowClear: true,
         ajax: {
-            url: './gene/names/' + species,
+            url: './gene/names/'+ensemble,
             dataType: 'json',
             delay: 500,
             data: function(params) {
@@ -99,8 +98,8 @@ function initGeneNameSearch() {
                 return {
                     results: $.map(data, function(gene) {
                         return {
-                            text: gene.geneName,
-                            id: gene.geneID
+                            text: gene.gene_name,
+                            id: gene.gene_id
                         }
                     })
                 }
@@ -114,18 +113,19 @@ function initGeneNameSearch() {
     var defaultGene = storage.load('lastViewedGenes');
     if (!defaultGene || defaultGene.length === 0) {
         //no entry or browser does not support localStorage, set default to GAD2
-        defaultGene = [{geneName: 'GAD2', geneID: 'ENSG00000136750'}];
+        defaultGene = [{gene_name: 'GAD2', gene_id: 'ENSMUSG00000026787'}];
     }
+    
     if(defaultGene !== []){
         var numGenes = defaultGene.length;
         for (i = 0; i < numGenes; i++) {
             $.ajax({
-                url: './gene/id/' + species + '?q=' + defaultGene[i].geneID,
+                url: './gene/id/'+ensemble+'?q='+defaultGene[i].gene_id,
                 dataType: 'json',
                 async: false,
                 success: function(data) {
-                    if (typeof(data.geneName) !== 'undefined' && typeof(data.geneID) !== 'undefined') {
-                        var option = new Option(data.geneName, data.geneID, true, true);
+                    if (typeof(data.gene_name) !== 'undefined' && typeof(data.gene_id) !== 'undefined') {
+                        var option = new Option(data.gene_name, data.gene_id, true, true);
                         geneNameSelector.append(option);
                         if (numGenes === 1) {
                             $('#epiBrowserLink').attr('href', generateBrowserURL(data));
@@ -147,7 +147,7 @@ function initGeneModules() {
     });
 
     $.getJSON({
-        url: './gene/modules/' + species,
+        url: './gene/modules/'+ensemble,
         success: function(data){
             data.forEach(function(gene) {
                 var option = new Option(gene.module, gene.module, false, false);
@@ -159,49 +159,48 @@ function initGeneModules() {
 
 function updateSearchWithModules(module) {
 	$.getJSON({
-		url: './gene/modules/' + species + '?q=' + module.id,
+		url: './gene/modules/'+ensemble+'?q='+module.id,
 		success: function (data) {
 			data.forEach(function(gene) {
-				var option = new Option(gene.geneName, gene.geneID, true, true);
+				var option = new Option(gene.gene_name, gene.gene_id, true, true);
 				geneNameSelector.append(option);
 			});
 		}
 	});
 }
 
-function randomizeClusterColors() {
-    $('#randomizeColorBtn').click(function() {
-        var grouping = $('#tsneGrouping option:selected').val();
-        $.ajax("/plot/delete_cache/" + species + "/" + grouping);
-        if (grouping === 'biosample'){
-            storeUpdate(empty=true);
-            $.ajax({
-                type: "GET",
-                url: './plot/randomize_colors?n=' + num_colors,
-                success: function(data){
-                    for(i = 0; i < data['num_colors']; i++){
-                        var group = 'cluster_color_' + String(i);
-                        var update = {
-                            'marker.color': data['colors'][i]
-                        };
-                        Plotly.restyle("plot-2d-cluster", update, data[group]);
-                        if($('#toggle-3d').prop('checked')) {
-                            Plotly.restyle("plot-3d-cluster", update, data[group]);
-                        }
-                        else{
-                            storeUpdate(update,data[group]);
-                        }
-                    }
-                }
-            });
-        }
-        else {
-            loadClusterPlots();
-        }
+
+// Options for tSNE plot //
+function populateTSNEDropdowns() {
+    /*
+    var tsne_types_dimensions_dd = $('#tsne_types_dimensions');
+    var tsne_types_methylation_dd = $('#tsne_types_dimensions');
+    var tsne_types_perplexity_dd = $('#tsne_types_dimensions');
+
+    var tsne_clustering_algorithm_dd = $('#tsne_clustering_algorithm');
+    var tsne_clustering_methylation_dd = $('#tsne_clustering_algorithm');
+    var tsne_clustering_principal_comp_dd = $('#tsne_clustering_algorithm');
+    var tsne_clustering_k_dd = $('#tsne_clustering_k');
+    */
+
+    var tsne_types_dropdown = $('#tsne_types');
+    var tsne_cluster_dropdown = $('#tsne_clustering');
+
+    $.getJSON('/tsne_options?q='+ensemble, function(data) {
+        $.each(data['tsne_types'], function(key, val) {
+            tsne_types_dropdown.append(
+                $('<option></option>').val(val).text(val)
+                );
+        });
+        $.each(data['cluster_types'], function(key, val) {
+            tsne_cluster_dropdown.append(
+                $('<option></option>').val(val).text(val)
+                );
+        });
     });
 }
 
-function updateGeneElements() {
+function updateGeneElements(updateMCHCluster=true) {
     buttons = document.getElementsByClassName('modebar-btn');
     var geneSelected = $('#geneName option:selected').val();
     if (geneSelected != 'Select..' && $("#geneName").select2('data').length > 0) {
@@ -213,18 +212,18 @@ function updateGeneElements() {
         try{
             buttons[8].click();
         }
-        catch(err) {
-            console.log(err);
-        }
+        catch(err) {}
 
         var lastViewedGenes = [];
         for(i=0; i<$('#geneName').select2('data').length; i++){
-            lastViewedGenes.push({geneName: $('#geneName option:selected')[i].text, geneID: $('#geneName option:selected')[i].value});
+            lastViewedGenes.push({gene_name: $('#geneName option:selected')[i].text, gene_id: $('#geneName option:selected')[i].value});
         }
         if (typeof(Storage) !== 'undefined') {
             storage.save('lastViewedGenes', lastViewedGenes, 5);  // store last viewed genes for 5 minutes
         }
-        updateMCHClusterPlot();
+        if (updateMCHCluster){
+            updateMCHClusterPlot();
+        }
         if($("#geneName").select2('data').length > 1) {
             $('#normalize-heatmap').show();
             $('#normalize-toggle').prop('disabled', false);
@@ -241,10 +240,10 @@ function updateGeneElements() {
             updateDataTable($('#geneName option:selected').val());
 
             $.ajax({
-                url: './gene/id/' + species + '?q=' + geneSelected,
+                url: './gene/id/'+ensemble+'?q='+geneSelected,
                 dataType: 'json',
                 success: function(data) {
-                    if (typeof(data.geneName) !== 'undefined' && typeof(data.geneID) !== 'undefined') {
+                    if (typeof(data.gene_name) !== 'undefined' && typeof(data.gene_id) !== 'undefined') {
                         $('#epiBrowserLink').attr('href', generateBrowserURL(data));
                         $('#epiBrowserLink').removeClass('disabled');
                     }
@@ -261,39 +260,40 @@ function updateGeneElements() {
     }
 }
 
+/*
 function loadClusterPlots() {
-    var grouping = $('#tsneGrouping option:selected').val();
+    var grouping = $('#tsne_grouping').val();
+    var clustering = $('#tsne_clustering').val();
+    var tsne_type = $('#tsne_types').val();
+
     $.ajax({
         type: "GET",
-        url: './plot/cluster/' + species + '/' + grouping,
+        url: './plot/tsne/'+ensemble+'/'+tsne_type+'/'+grouping+'/'+clustering, 
         success: function(data) {
-            num_colors = getMax(data["traces_2d"], "legendgroup");
-            Plotly.newPlot("plot-2d-cluster", Object.values(data["traces_2d"]), data["layout2d"], {showLink: false});
+            num_colors = getMax(data["traces"], "legendgroup");
+            Plotly.newPlot("plot-2d-cluster", Object.values(data["traces"]), data["layout"], {showLink: false});
             $('#loading_2dtsne').html("");
-            if("traces_3d" in data){
-                if($('#toggle-3d').prop('checked')) {
-                    Plotly.newPlot("plot-3d-cluster", Object.values(data["traces_3d"]), data["layout3d"], {showLink: true});
-                    save3DData(data["traces_3d"],data["layout3d"]);
-                }
-                else {
-                    save3DData(data["traces_3d"], data["layout3d"]);
-                    $('#toggle-3d').prop("disabled", false);
-                }
-            }
-            else {
-                save3DData(null, null);
-                $('#toggle-3d').prop("disabled", true);
-            }
         }
     });
 }
+*/
 
 function updateMCHClusterPlot() {
     var levelType = $('input[name=levels]').filter(':checked').val();
     var methylationType = $('input[name=mType]').filter(':checked').val();
     var pValues = pSlider.getValue();
     var genes = $("#geneName").select2('data');
+    var grouping = $('#tsne_grouping').val();
+    var clustering = $('#tsne_clustering').val();
+    var tsne_type = $('#tsne_types').val();
     var genes_query = "";
+
+    if ($('#tsneOutlierToggle').prop('checked')) {
+        var tsneOutlierOption = 'false';
+    } else {
+        var tsneOutlierOption = 'true';
+    }
+
     for (i = 0; i < genes.length; i++) {
         genes_query += (genes[i].id + "+");
     }
@@ -301,7 +301,7 @@ function updateMCHClusterPlot() {
     if ($('#geneName option:selected').val() != 'Select..') {
         $.ajax({
             type: "GET",
-            url: './plot/scatter/' + species + '/' + methylationType +  '/' + levelType + '/' + pValues[0] + '/' + pValues[1] + '?q=' + genes_query,
+            url: './plot/scatter/'+ensemble+'/'+tsne_type+'/' +methylationType+ '/'+levelType+'/'+grouping+'/'+clustering+'/'+pValues[0]+'/'+pValues[1]+'/'+tsneOutlierOption+'?q='+genes_query,
             success: function(data) {
                 $('#plot-mch-scatter').html("");
                 $('#plot-mch-scatter').html(data);
@@ -314,7 +314,7 @@ function updateOrthologToggle() {
     var geneSelected = $('#geneName option:selected').val();
     $.ajax({
         type: "GET",
-        url: './gene/orthologs/' + species + '/' + geneSelected,
+        url: './gene/orthologs/'+ensemble+'/'+geneSelected,
         success: function(data) {
             if (data.mmu_gID === "" || data.hsa_gID === "") {
                 $('#orthologsToggle').bootstrapToggle('off');
@@ -335,9 +335,9 @@ function initDataTableClick() {
     $('#geneTable tbody').on('click', 'tr', function () {
         var id = $(this).attr('id');
         $.getJSON({
-            url: './gene/id/' + species + '?q=' + id,
+            url: './gene/id/'+ensemble+'?q='+id,
             success: function (data) {
-                var option = new Option(data.geneName, data.geneID, true, true);
+                var option = new Option(data.gene_name, data.gene_id, true, true);
                 var i;
                 for(i=0; i < $("#geneName").select2('data').length; i++){
                     if($("#geneName").select2('data')[i].id === option.value){
@@ -365,13 +365,13 @@ function updateDataTable(geneSelected) {
                     "<'col-sm-12'<p>>",
             "pagingType": "simple",
             "ajax": {
-                "url": "./gene/corr/" + species + "/" + geneSelected,
+                "url": "./gene/corr/"+ensemble+"/"+geneSelected,
                 "dataSrc": ""
             },
-            "rowId": 'geneID',
+            "rowId": 'gene_id',
             "columns": [
                 { "data": "Rank" },
-                { "data": "geneName" },
+                { "data": "gene_name" },
                 { "data": "Corr" },
             ],
         });
@@ -385,6 +385,8 @@ function updateMCHBoxPlot() {
     var levelType = $('input[name=levels]').filter(':checked').val();
     var methylationType = $('input[name=mType]').filter(':checked').val();
     var geneSelected = $('#geneName option:selected').val();
+    var grouping = $('#tsne_grouping').val();
+    var clustering = $('#tsne_clustering').val();
     if ($('#orthologsToggle').prop('checked')) {
         return updateMCHCombinedBoxPlot(mmu_gID, hsa_gID);
     }
@@ -396,7 +398,7 @@ function updateMCHBoxPlot() {
 
     $.ajax({
         type: "GET",
-        url: './plot/box/' + species + '/' + methylationType + '/' + geneSelected + '/' + levelType + '/' + outlierOption,
+        url: './plot/box/'+ensemble+'/'+methylationType+'/'+geneSelected+'/'+grouping+'/'+clustering+'/'+levelType+'/'+outlierOption,
         success: function(data) {
             $('#plot-mch-heat').html("");
             $('#mch_box_div').addClass("col-md-9");
@@ -418,7 +420,7 @@ function updateMCHCombinedBoxPlot(mmu_gid, hsa_gid) {
 
     $.ajax({
         type: "GET",
-        url: './plot/box_combined/' + methylationType + '/' + mmu_gid + '/' + hsa_gid + '/' + levelType + '/' + outlierOption,
+        url: './plot/box_combined/'+methylationType+'/'+mmu_gid+'/'+hsa_gid+'/'+levelType+'/'+outlierOption,
         success: function(data) {
             $('#plot-mch-heat').html("");
             $('#mch_box_div').addClass("col-md-9");
@@ -435,6 +437,8 @@ function createHeatmap() {
     var pValues = pSlider.getValue();
     var genes = $("#geneName").select2('data');
     var genes_query = "";
+    var grouping = $('#tsne_grouping').val();
+    var clustering = $('#tsne_clustering').val();
 
     for (i = 0; i < genes.length; i++) {
         genes_query += (genes[i].id + "+");
@@ -449,7 +453,7 @@ function createHeatmap() {
 
     $.ajax({
         type: "GET",
-        url: './plot/heat/' + species + '/' + methylationType + '/' + levelType + '/' + pValues[0] + '/' + pValues[1] + '?q=' + genes_query + '&normalize=' + normalize,
+        url: './plot/heat/'+ensemble+'/'+methylationType+'/'+grouping+'/'+clustering+'/'+levelType+'/'+pValues[0]+'/'+pValues[1]+'?q='+genes_query+'&normalize='+normalize,
         success: function(data) {
             $('#plot-mch-box').html("");
             $('#gene_table_div').hide();
@@ -480,7 +484,7 @@ function createHeatmapTwoSpecies() {
 
     $.ajax({
         type: "GET",
-        url: './plot/heat_two_species/' + species + '/' + methylationType + '/' + levelType + '/' + pValues[0] + '/' + pValues[1] + '?q=' + genes_query + '&normalize=' + normalize,
+        url: './plot/heat_two_ensemble/'+ensemble+'/'+methylationType+'/'+levelType+'/'+pValues[0]+'/'+pValues[1]+'?q='+genes_query+'&normalize='+normalize,
         success: function(data) {
             $('#plot-mch-box').html("");
             $('#gene_table_div').hide();

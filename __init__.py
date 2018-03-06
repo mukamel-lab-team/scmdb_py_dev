@@ -16,6 +16,11 @@ from .assets import app_css, app_js, vendor_css, vendor_js
 import urllib.parse
 from flask_wtf import CsrfProtect
 
+
+# Necessary because brainome doesn't have mysql installed
+import pymysql
+pymysql.install_as_MySQLdb()
+
 cache = Cache(config={'CACHE_TYPE': 'simple', 'CACHE_THRESHOLD': 1000})
 nav = Nav()
 mail = Mail()
@@ -37,7 +42,6 @@ class MiniJSONEncoder(JSONEncoder):
 
 def create_app(configfile=None):
     app = Flask(__name__)
-    app.secret_key = 's3cr3t'
     AppConfig(app)
     Bootstrap(app)
     app.config['SQLALCHEMY_DATABASE_URI'] = 'sqlite:///' + os.path.join(basedir, 'user-login.sqlite')
@@ -50,13 +54,6 @@ def create_app(configfile=None):
     app.config['RQ_DEFAULT_PASSWORD'] = url.password
     app.config['RQ_DEFAULT_DB'] = 0
 
-    app.config['MAIL_SERVER'] = 'smtp.sendgrid.net'
-    app.config['MAIL_PORT'] = 465
-    app.config['MAIL_USE_TLS'] = False
-    app.config['MAIL_USE_SSL'] = True
-    app.config['MAIL_DEBUG'] = True
-    app.config['MAIL_USERNAME'] = ''
-    app.config['MAIL_PASSWORD'] = ''
     # EAM : Set limit on the number of items in cache (RAM)
     cache.init_app(app)
 
