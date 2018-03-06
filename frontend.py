@@ -475,7 +475,7 @@ def invite_user():
             user_id=user.id,
             token=token,
             _external=True)
-        send_email(recipient=user.email,subject='You Are Invited To Join',template='email/invite',user=user,invite_link=invite_link)
+        send_email(recipient=user.email, subject='You Are Invited To Join', template='email/invite', sender=current_app.config['MAIL_USERNAME'], user=user, invite_link=invite_link)
         flash('User {} successfully invited'.format(user.full_name()),
               'form-success')
     return render_template('admin/new_user.html', form=form)
@@ -520,8 +520,7 @@ def join_from_invite(user_id, token):
             user_id=user_id,
             token=token,
             _external=True)
-        send_email(recipient=new_user.email, subject='You Are Invited To Join', template='email/invite', user=new_user,
-                   invite_link=invite_link)
+        send_email(recipient=new_user.email, subject='You Are Invited To Join', template='email/invite', sender=current_app.config['MAIL_USERNAME'], user=new_user, invite_link=invite_link)
     return redirect(url_for('frontend.index'))
 
 @frontend.route('/new-user', methods=['GET', 'POST'])
@@ -568,6 +567,7 @@ def reset_password_request():
                 recipient=user.email,
                 subject='Reset Your Password',
                 template='account/email/reset_password',
+                sender=current_app.config['MAIL_USERNAME'],
                 user=user,
                 reset_link=reset_link,
                 next=request.args.get('next'))

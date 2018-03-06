@@ -90,7 +90,7 @@ class MyTable extends React.Component {
         if (this.state.sortDir !== null){
             sortDirArrow = this.state.sortDir === 'DESC' ? ' ↓' : ' ↑';
         }
-        var dataset_columns = []
+        var dataset_columns = [];
         for (var index = 0; index < this.state.columnSize; index++) {
             var column_tag = this.state.columns[index]['dataset']
             var column_name = column_tag
@@ -116,10 +116,17 @@ class MyTable extends React.Component {
                 <br />
                 <Table
                     height={50+((this.state.filteredDataList.length+1) * 30)}
-                    width={(this.state.columnSize * 120) + 200}
+                    width={(this.state.columnSize * 120) + 250}
                     rowsCount={this.state.filteredDataList.length}
                     rowHeight={30}
                     headerHeight={60}>
+                    <Column
+                        columnKey="id"
+                        header={<Cell>{'#' + (this.state.sortBy === 'ensemble' ? sortDirArrow: '')}</Cell>}
+                        cell={<MyTextCell data={this.state.filteredDataList} field="id" />}
+                        width={50}
+                        fixed={true}
+                    />
                     <Column 
                         columnKey="ensemble"
                         header={<Cell>{'Ensemble'+ (this.state.sortBy === 'ensemble' ? sortDirArrow : '')}</Cell>} 

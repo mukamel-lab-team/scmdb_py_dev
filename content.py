@@ -64,7 +64,7 @@ def get_ensemble_list():
         cell_counts = db.get_engine(current_app, 'data').execute(query).fetchall()
         cell_counts = [ {d['dataset']: d['num']} for d in cell_counts]
         cell_counts = { k.split('_',maxsplit=1)[1]: v for d in cell_counts for k, v in d.items() }
-        ensembles_cell_counts.append( {"ensemble": ensemble['ensemble_name'], "ens_counts": cell_counts} )
+        ensembles_cell_counts.append( {"id": ensemble['ensemble_id'], "ensemble": ensemble['ensemble_name'], "ens_counts": cell_counts} )
     ensembles_json_list = []
     for ens in ensembles_cell_counts:
         datasets_in_ensemble = []
@@ -72,6 +72,7 @@ def get_ensemble_list():
         for dataset, count in ens['ens_counts'].items():
             datasets_in_ensemble.append(dataset)
             ens_dict[dataset] = str(count) + '/' + str(total_cell_each_dataset[dataset])
+        ens_dict["id"] = ens["id"]
         ens_dict["ensemble"] = ens['ensemble']
         ens_dict["datasets"] = "\n".join(datasets_in_ensemble)
         ensembles_json_list.append(ens_dict)
@@ -165,13 +166,16 @@ def generate_cluster_colors(num, grouping):
     """
 
     if grouping == 'dataset' and num > 2 and num <= 9:
-        c = cl.to_hsl( cl.scales[str(num)]['qual']['Set1'] )
+        c = cl.scales[str(num)]['qual']['Set1'] 
         return c
 
     if num>18:
-        c = ['hsl('+str(round(h*1.8 % 360))+',50%,50%)' for h in linspace(0, 360, num)]
+        # c = ['hsl('+str(round(h*1.8 % 360))+',50%,50%)' for h in linspace(0, 360, num)]
+        c = ['rgb'+str(colorsys.hls_to_rgb((h*1.8/360), 0.5, 0.5)) for h in linspace(0, 360, num)]
     else:
-        c = ['hsl('+str(round(h*1.3 % 360))+',50%,50%)' for h in linspace(0, 360, num)]
+        # c = ['hsl('+str(round(h*1.3 % 360))+',50%,50%)' for h in linspace(0, 360, num)]
+        c = ['rgb'+str(colorsys.hls_to_rgb((h*1.3 / 360), 0.5, 0.5)) for h in linspace(0, 360, num)]
+
     c=c+c
     return c
 
@@ -1192,6 +1196,12 @@ def get_methylation_scatter(ensemble, tsne_type, methylation_type, query, level,
     top_y = top_y + range_y * 0.1
     bottom_y = bottom_y - range_y*0.1
 
+    if len(points) > 3000: 
+        marker_size = 2
+    else:
+        marker_size = 4
+
+
     ## 2D tSNE coordinates ##
     if 'ndim2' in tsne_type:
 
@@ -1200,8 +1210,12 @@ def get_methylation_scatter(ensemble, tsne_type, methylation_type, query, level,
             points_group = points[points[grouping]==group]
             if grouping.startswith('cluster'):
                 group_str = 'cluster_' + str(group)
+            elif grouping == "dataset":
+                group = group.strip('CEMBA_')
+                group_str = group
             else:
                 group_str = group
+
 
             color_num = i
             
@@ -1215,8 +1229,8 @@ def get_methylation_scatter(ensemble, tsne_type, methylation_type, query, level,
                 legendgroup=group,
                 marker={
                        'color': colors[color_num],
-                       'size': 4,
-                       'opacity': 0.8,
+                       'size': marker_size,
+                       #'opacity': 0.8,
                        #'symbol': symbols[datasets.index(dataset)],
                 },
                 hoverinfo='text'))
@@ -1261,7 +1275,7 @@ def get_methylation_scatter(ensemble, tsne_type, methylation_type, query, level,
             marker={
                 'color': mch_colors,
                 'colorscale': 'Viridis',
-                'size': 4,
+                'size': marker_size,
                 'colorbar': {
                     'x': 1.05,
                     'len': 0.5,
@@ -1341,7 +1355,8 @@ def get_methylation_scatter(ensemble, tsne_type, methylation_type, query, level,
                 'scaleanchor': 'x',
                 'range':[bottom_y,top_y]
             },
-            hovermode='closest')
+            hovermode='closest',
+            hoverdistance='10',)
 
         
         fig = tools.make_subplots(
@@ -1366,6 +1381,9 @@ def get_methylation_scatter(ensemble, tsne_type, methylation_type, query, level,
             points_group = points[points[grouping]==group]
             if grouping.startswith('cluster'):
                 group_str = 'cluster_' + str(group)
+            elif grouping == "dataset":
+                group = group.strip('CEMBA_')
+                group_str = group
             else:
                 group_str = group
 
@@ -1383,7 +1401,7 @@ def get_methylation_scatter(ensemble, tsne_type, methylation_type, query, level,
                 scene='scene1',
                 marker={
                        'color': colors[color_num],
-                       'size': 4,
+                       'size': marker_size,
                        'opacity': 0.8,
                        #'symbol': symbols[datasets.index(dataset)],
                 },
@@ -1433,7 +1451,7 @@ def get_methylation_scatter(ensemble, tsne_type, methylation_type, query, level,
             marker={
                 'color': mch_colors,
                 'colorscale': 'Viridis',
-                'size': 4,
+                'size': marker_size,
                 'colorbar': {
                     'x': 1.05,
                     'len': 0.5,
@@ -1540,6 +1558,8 @@ def get_methylation_scatter(ensemble, tsne_type, methylation_type, query, level,
         fig['layout'].update(layout)
         fig['layout']['scene1'].update(scene)
         fig['layout']['scene2'].update(scene)
+    
+    # return json.dumps(fig)
 
     return plotly.offline.plot(
         figure_or_data=fig,
