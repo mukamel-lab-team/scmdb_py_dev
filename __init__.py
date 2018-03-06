@@ -54,13 +54,6 @@ def create_app(configfile=None):
     app.config['RQ_DEFAULT_PASSWORD'] = url.password
     app.config['RQ_DEFAULT_DB'] = 0
 
-    app.config['MAIL_SERVER'] = 'smtp.sendgrid.net'
-    app.config['MAIL_PORT'] = 465
-    app.config['MAIL_USE_TLS'] = False
-    app.config['MAIL_USE_SSL'] = True
-    app.config['MAIL_DEBUG'] = True
-    app.config['MAIL_USERNAME'] = ''
-    app.config['MAIL_PASSWORD'] = ''
     # EAM : Set limit on the number of items in cache (RAM)
     cache.init_app(app)
 
