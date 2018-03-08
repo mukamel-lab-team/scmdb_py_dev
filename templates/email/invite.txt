@@ -1,6 +1,6 @@
 Dear {{ user.full_name() }},
 
-You are invited to join {{ Brainome }}!
+You are invited to view CEMBA data.
 
 To set your password, please click on the following link:
 
@@ -10,7 +10,7 @@ Once completed, please log in as {{ user.email }} with the password you set.
 
 Sincerely,
 
-The {{ Brainome }} Team
+The CNDD Team
 
 Note: replies to this email address are not monitored.
 
