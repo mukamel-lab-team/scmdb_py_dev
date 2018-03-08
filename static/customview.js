@@ -69,7 +69,7 @@ function generateBrowserURL(gene) {
     if (ensemble === 'mmu') {
         var base = 'http://brainome.ucsd.edu/annoj/CEMBA/index_mm.html'; // Mouse
     } else {
-        var base = 'http://brainome.ucsd.edu/annoj/sc_wgbs/index_hs.html'; // Human
+        var base = 'http://brainome.ucsd.edu/annoj/CEMBA/index_mm.html'; // Mouse
     }
 
     if (gene.strand === '+') {
@@ -300,10 +300,12 @@ function updateMCHClusterPlot() {
     genes_query = genes_query.slice(0,-1);
     if ($('#geneName option:selected').val() != 'Select..') {
         $.ajax({
+        //$.getJSON({
             type: "GET",
             url: './plot/scatter/'+ensemble+'/'+tsne_type+'/' +methylationType+ '/'+levelType+'/'+grouping+'/'+clustering+'/'+pValues[0]+'/'+pValues[1]+'/'+tsneOutlierOption+'?q='+genes_query,
             success: function(data) {
                 $('#plot-mch-scatter').html("");
+                //Plotly.newPlot('plot-mch-scatter', data);
                 $('#plot-mch-scatter').html(data);
             }
         });

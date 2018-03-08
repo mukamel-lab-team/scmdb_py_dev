@@ -57,9 +57,9 @@ class MyTable extends React.Component {
         this.state = {
             rows: [],
             columns: [],
-            columnSize: 0,
-            filteredDataList: [],
-            sortBy: 'ensemble',
+            filteredEnsembles: [],
+            filteredDatasets: [],
+            sortBy: 'id',
             sortDir: 'ASC'};
     }
 
@@ -74,13 +74,12 @@ class MyTable extends React.Component {
             }
         ).then(data => {
                 var d = data;
-                var columnSize = d.columns.length;
 
                 this.setState({
                     rows: d.data,
                     columns: d.columns,
-                    filteredDataList: d.data,
-                    columnSize: columnSize
+                    filteredEnsembles: d.data,
+                    filteredDatasets: d.columns,
                 })
             })
     }
@@ -91,46 +90,60 @@ class MyTable extends React.Component {
             sortDirArrow = this.state.sortDir === 'DESC' ? ' ↓' : ' ↑';
         }
         var dataset_columns = [];
-        for (var index = 0; index < this.state.columnSize; index++) {
-            var column_tag = this.state.columns[index]['dataset']
-            var column_name = column_tag
+        for (var index = 0; index < this.state.filteredDatasets.length; index++) {
+            var column_tag = this.state.filteredDatasets[index]['dataset'];
+            var column_name = column_tag;
             dataset_columns.push(
                 <Column 
+                    key={column_tag}
                     columnKey={column_tag} 
-                    //header={<Cell>{column_tag}</Cell>}
-                    header={<TooltipCell data={this.state.columns[index]} columnKey={column_tag}></TooltipCell>}
-                    cell={<MyTextCell data={this.state.filteredDataList} field={column_tag} />}
-                    //cell={<TooltipCell data={this.state.filteredDataList} columnKey={column_tag} />}
+                    header={<TooltipCell data={this.state.filteredDatasets[index]} columnKey={column_tag}></TooltipCell>}
+                    cell={<MyTextCell data={this.state.filteredEnsembles} field={column_tag} />}
+                    //cell={<TooltipCell data={this.state.filteredEnsembles} columnKey={column_tag} />}
                     width={120} 
-                    //headerRenderer={this._renderHeader.bind(this,this)}/>)
+                    allowCellsRecycling={true}
                 />
-            )
+            );
         }
         return (
             <div>
+                <br />
                 <input
-                    onChange={this._onFilterChange.bind(this,'ensemble')}
-                    placeholder="Filter by Ensemble Name"
+                    onChange={this._onFilterChangeEnsemblesByName.bind(this,'ensemble')}
+                    placeholder="Filter Ensembles by Name"
                     style={{width:'200px'}}
+                />
+                <input 
+                    onChange={this._onFilterChangeDatasetsByName.bind(this, 'dataset')}
+                    placeholder="Filter Datasets by Name"
+                    style={{width:'200px'}}
+                />
+                <input 
+                    onChange={this._onFilterChangeDatasetsByABA.bind(this, 'dataset')}
+                    placeholder="Filter Datasets by ABA Region"
+                    style={{width:'220px'}}
                 />
                 <br />
                 <Table
-                    height={50+((this.state.filteredDataList.length+1) * 30)}
-                    width={(this.state.columnSize * 120) + 250}
-                    rowsCount={this.state.filteredDataList.length}
+                    key={'table'}
+                    height={50+((this.state.filteredEnsembles.length+1) * 30)}
+                    width={(this.state.filteredDatasets.length * 120) + 250}
+                    rowsCount={this.state.filteredEnsembles.length}
                     rowHeight={30}
                     headerHeight={60}>
                     <Column
+                        key={'ens_id'}
                         columnKey="id"
-                        header={<Cell>{'#' + (this.state.sortBy === 'ensemble' ? sortDirArrow: '')}</Cell>}
-                        cell={<MyTextCell data={this.state.filteredDataList} field="id" />}
+                        header={<Cell><a onClick={this._sortRowsBy.bind(this, 'id')}>{'#' + (this.state.sortBy === 'id' ? sortDirArrow: '')}</a></Cell>}
+                        cell={<MyTextCell data={this.state.filteredEnsembles} field="id" />}
                         width={50}
                         fixed={true}
                     />
                     <Column 
+                        key={'ens_name'}
                         columnKey="ensemble"
-                        header={<Cell>{'Ensemble'+ (this.state.sortBy === 'ensemble' ? sortDirArrow : '')}</Cell>} 
-                        cell={<MyLinkCell data={this.state.filteredDataList} field="ensemble" />} 
+                        header={<Cell>{'Ensemble'}</Cell>} 
+                        cell={<MyLinkCell data={this.state.filteredEnsembles} field="ensemble" />} 
                         width={200} 
                         fixed={true}
                         //headerRenderer={this._renderHeader.bind(this)}
@@ -142,24 +155,118 @@ class MyTable extends React.Component {
         );
     }
 
-    _onFilterChange(cellDataKey, event) {
+    _onFilterChangeEnsemblesByName(cellDataKey, event) {
         if (!event.target.value) {
             this.setState({
-                filteredDataList: this.state.rows,
+                filteredEnsembles: this.state.rows,
+            });
+        }else{
+            var filterBy = event.target.value.toString().toLowerCase().split(/[ ,]+/);
+            var filteredList = [];
+            for (var index = 0; index < this.state.rows.length; index++) {
+                var v = this.state.rows[index][cellDataKey];
+                for (var jndex = 0; jndex < filterBy.length; jndex++) {
+                    var compareString = filterBy[jndex];
+                    if (v.toString().toLowerCase().indexOf(compareString) !== -1 && compareString !== "") {
+                        if (!filteredList.includes(this.state.rows[index])){ 
+                            filteredList.push(this.state.rows[index]);
+                        }
+                    }
+                }
+            }
+            this.setState({
+                filteredEnsembles: filteredList,
             });
         }
-        var filterBy = event.target.value.toString().toLowerCase();
-        var size = this.state.rows.length;
-        var filteredList = [];
-        for (var index = 0; index < size; index++) {
-            var v = this.state.rows[index][cellDataKey];
-            if (v.toString().toLowerCase().indexOf(filterBy) !== -1) {
-                filteredList.push(this.state.rows[index]);
+    }
+
+    _onFilterChangeDatasetsByName(cellDataKey, event) {
+        if (!event.target.value) {
+            this.setState({
+                filteredEnsembles: this.state.rows,
+                filteredDatasets: this.state.columns,
+            });
+        }else{
+            var filterBy = event.target.value.toString().toLowerCase().split(/[ ,]+/);
+            var filteredList_ds = [];
+            var filteredList_ens = [];
+            for (var index_filter = 0; index_filter < filterBy.length; index_filter++) {
+                var compareString = filterBy[index_filter];
+                for (var index_ds = 0; index_ds < this.state.columns.length; index_ds++) {
+                    var v = this.state.columns[index_ds]['dataset'];
+                    if (v.toString().toLowerCase().indexOf(compareString) !== -1 && compareString !== "") {
+                        if (!filteredList_ds.includes(this.state.columns[index_ds])){ 
+                            filteredList_ds.push(this.state.columns[index_ds]);
+                        }
+                    }
+                }
+                for (var index_ens = 0; index_ens < this.state.rows.length; index_ens++) {
+                    var datasetsInEns = this.state.rows[index_ens]['datasets'].toString().toLowerCase().split(/[\n]+/);
+
+                    for (var jndex = 0; jndex < datasetsInEns.length; jndex++) {
+                        if (datasetsInEns[jndex].indexOf(compareString) !== -1 && compareString !== "") {
+                            if (!filteredList_ens.includes(this.state.rows[index_ens])) {
+                                filteredList_ens.push(this.state.rows[index_ens]);
+                            }
+                        }
+                    }
+                }
             }
+            this.setState({
+                filteredEnsembles: filteredList_ens,
+                filteredDatasets: filteredList_ds,
+            });
         }
-        this.setState({
-            filteredDataList: filteredList,
-        });
+
+        this.render.bind(this);
+    }
+
+    _onFilterChangeDatasetsByABA(cellDataKey, event) {
+        if (!event.target.value) {
+            this.setState({
+                filteredEnsembles: this.state.rows,
+                filteredDatasets: this.state.columns,
+            });
+        }else{
+            var filterBy = event.target.value.toString().toLowerCase().split(/[ ,]+/);
+            var size = this.state.columns.length;
+            var filteredList_ds = [];
+
+            //Filter through columns (datasets) first
+            for (var index_ds = 0; index_ds < size; index_ds++) {
+                var v = this.state.columns[index_ds]['region'];
+                for (var jndex = 0; jndex < size; jndex++) {
+                    var compareString = filterBy[jndex]
+                    if (v.toString().toLowerCase().indexOf(compareString) !== -1 && compareString !== "") {
+                        if (!filteredList_ds.includes(this.state.columns[index_ds])){ 
+                            filteredList_ds.push(this.state.columns[index_ds]);
+                        }
+                    }
+                }
+            }
+            //Use filtered columns (datasets) list to get list of ensembles (rows) that contain datasets
+            var filteredList_ens = [];
+            for (var index_ens = 0; index_ens < this.state.rows.length; index_ens++) {
+                var datasetsInEns = this.state.rows[index_ens]['datasets'].toString().toLowerCase().split(/[\n]+/);
+                for (var index_f = 0; index_f < filteredList_ds.length; index_f++) {
+                    var compareString = filteredList_ds[index_f]['dataset'].toString().toLowerCase();
+                    if (compareString !== "") {
+                        for (var jndex = 0; jndex < datasetsInEns.length; jndex++) {
+                            if (datasetsInEns[jndex].indexOf(compareString) !== -1) {
+                                if (!filteredList_ens.includes(this.state.rows[index_ens])) {
+                                    filteredList_ens.push(this.state.rows[index_ens]);
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+            this.setState({
+                filteredEnsembles: filteredList_ens,
+                filteredDatasets: filteredList_ds,
+            });
+        }
+        this.render.bind(this);
     }
 
     _sortRowsBy(cellDataKey) {
@@ -170,7 +277,7 @@ class MyTable extends React.Component {
         } else {
             sortDir = 'DESC';
         }
-        var rows = this.state.filteredDataList.slice();
+        var rows = this.state.filteredEnsembles.slice();
         rows.sort((a, b) => {
             var sortVal = 0;
             if (a[sortBy] > b[sortBy]) {
@@ -186,7 +293,7 @@ class MyTable extends React.Component {
             return sortVal;
         });
 
-        this.setState({sortBy, sortDir, filteredDataList : rows});
+        this.setState({sortBy, sortDir, filteredEnsembles : rows});
     }
 }
 

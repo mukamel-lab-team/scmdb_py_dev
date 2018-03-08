@@ -163,6 +163,10 @@ def ensemble_tabular_screen():
 def data_set_tabular_screen():
     return render_template('tabular_data_set.html')
 
+@frontend.route('/CEMBA_lims')
+@login_required
+def CEMBA_lims():
+    return redirect('https://brainome.ucsd.edu/CEMBA/lims.html')
 
 @frontend.route('/navbar')
 def nav_bar_screen():

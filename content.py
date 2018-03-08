@@ -1246,7 +1246,7 @@ def get_methylation_scatter(ensemble, tsne_type, methylation_type, query, level,
         x = points['tsne_x_' + tsne_type].tolist()
         y = points['tsne_y_' + tsne_type].tolist()
         mch = points[methylation_type + '/' + context + '_' + level]
-        text_methylation = [build_hover_text({methylation_type: round(point[-2], 6),
+        text_methylation = [build_hover_text({level.title()+' '+methylation_type: round(point[-2], 6),
                                   'Cell Name': point[1],
                                   'Annotation': point[4],
                                   'Cluster': point[5]})
@@ -1365,7 +1365,7 @@ def get_methylation_scatter(ensemble, tsne_type, methylation_type, query, level,
                 shared_xaxes=False,
                 shared_yaxes=True,
                 print_grid=False,
-                subplot_titles=("tSNE", "Methylation"),
+                subplot_titles=("tSNE", level.title()+" Methylation ("+methylation_type+")"),
                 )
 
         for trace in traces_tsne.items():
