@@ -32,6 +32,7 @@ content = Blueprint('content', __name__) # Flask "bootstrap"
 cluster_annotation_order = ['mL2/3', 'mL4', 'mL5-1', 'mL5-2', 'mDL-1', 'mDL-2', \
                             'mL6-1', 'mL6-2', 'mDL-3', 'mVip', 'mNdnf-1', \
                             'mNdnf-2', 'mPv', 'mSst-1', 'mSst-2', 'None']
+methylation_types_order = ['mCH', 'mCG', 'mCA', 'mCHmCG', 'mCHmCA', 'mCAmCG']
 
 class FailToGraphException(Exception):
     """Fail to generate data or graph due to an internal error."""
@@ -67,14 +68,22 @@ def get_ensemble_list():
         ensembles_cell_counts.append( {"id": ensemble['ensemble_id'], "ensemble": ensemble['ensemble_name'], "ens_counts": cell_counts} )
     ensembles_json_list = []
     for ens in ensembles_cell_counts:
+        total_cells = 0
         datasets_in_ensemble = []
         ens_dict = {}
         for dataset, count in ens['ens_counts'].items():
+            total_cells = total_cells + count
             datasets_in_ensemble.append(dataset)
             ens_dict[dataset] = str(count) + '/' + str(total_cell_each_dataset[dataset])
         ens_dict["id"] = ens["id"]
         ens_dict["ensemble"] = ens['ensemble']
         ens_dict["datasets"] = "\n".join(datasets_in_ensemble)
+        ens_dict["total_cells"] = total_cells
+
+        ens_regions_query = "SELECT DISTINCT(ABA_name) FROM ABA_regions WHERE `code` IN (" + ",".join("'"+x.split('_')[0]+"'" for x in datasets_in_ensemble) + ")"
+        ens_regions_result = db.get_engine(current_app, 'data').execute(ens_regions_query).fetchall()
+        ens_regions_result = [d[0] for d in ens_regions_result]
+        ens_dict["regions"] = ", ".join(ens_regions_result)
         ensembles_json_list.append(ens_dict)
 
     all_datasets = db.get_engine(current_app, 'data').execute("SELECT DISTINCT(dataset) FROM cells").fetchall()
@@ -376,9 +385,26 @@ def get_tsne_options(ensemble):
     df_cluster = df.filter(regex='^cluster_', axis='columns')
 
     list_tsne_types = [x.split('tsne_x_')[1] for x in df_tsne.columns.values]
-    list_cluster_types = [x.split('cluster_')[1] for x in df_cluster.columns.values]
+    list_mc_types_tsne = sorted(list(set([x.split('_')[0] for x in list_tsne_types])), key=lambda mC_type: methylation_types_order.index(mC_type))
+    list_dims_tsne_first = sorted(list(set([int(x.split('_')[1].replace('ndim','')) for x in list_tsne_types if list_mc_types_tsne[0] == x.split('_')[0]])))
+    list_perp_tsne_first = sorted(list(set([int(x.split('_')[2].replace('perp', '')) for x in list_tsne_types if (list_mc_types_tsne[0]+'_ndim'+str(list_dims_tsne_first[0])) == (x.split('_')[0] +'_'+ x.split('_')[1])])))
 
-    return {'tsne_types': list_tsne_types, 'cluster_types': list_cluster_types}
+    list_clustering_types = [x.split('cluster_')[1] for x in df_cluster.columns.values]
+    list_mc_types_clustering = sorted(list(set([x.split('_')[0] for x in list_clustering_types])), key=lambda mC_type: methylation_types_order.index(mC_type))
+    list_algorithms_clustering = sorted(list(set([x.split('_')[1] for x in list_clustering_types if list_mc_types_clustering[0] == x.split('_')[0]])))
+    list_npc_clustering = sorted(list(set([int(x.split('_')[2].replace('npc', '')) for x in list_clustering_types if (list_mc_types_clustering[0]+'_'+list_algorithms_clustering[0]) in x])))
+    list_k_clustering = sorted(list(set([int(x.split('_')[3].replace('k', '')) for x in list_clustering_types if (list_mc_types_clustering[0]+'_'+list_algorithms_clustering[0]+'_npc'+str(list_npc_clustering[0])) in x])))
+
+    return {'all_tsne_types': list_tsne_types, 
+            'tsne_methylation': list_mc_types_tsne,
+            'tsne_dimensions': list_dims_tsne_first,
+            'tsne_perplexity': list_perp_tsne_first,
+            'all_clustering_types': list_clustering_types,
+            'clustering_methylation': list_mc_types_clustering,
+            'clustering_algorithms': list_algorithms_clustering,
+            'clustering_npc': list_npc_clustering,
+            'clustering_k': list_k_clustering,}
+
     
 
 # @cache.memoize(timeout=3600)
@@ -1109,6 +1135,10 @@ def get_ortholog_cluster_order():
 
 
 @cache.memoize(timeout=1800)
+def get_snATAC_scatter(ensemble, tsne_type, methylation_type, query, level, grouping, clustering, ptile_start, ptile_end, tsne_outlier_bool):
+    return
+
+@cache.memoize(timeout=1800)
 def get_methylation_scatter(ensemble, tsne_type, methylation_type, query, level, grouping, clustering, ptile_start, ptile_end, tsne_outlier_bool):
     """Generate cluster plot and gene body mCH scatter plot using tSNE coordinates.
 
@@ -1352,7 +1382,6 @@ def get_methylation_scatter(ensemble, tsne_type, methylation_type, query, level,
                 'linecolor': 'black',
                 'linewidth': 0.5,
                 'mirror': False,
-                'scaleanchor': 'x',
                 'range':[bottom_y,top_y]
             },
             hovermode='closest',

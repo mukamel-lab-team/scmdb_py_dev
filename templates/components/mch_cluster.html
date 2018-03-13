@@ -1,45 +1,70 @@
-<div id="scatter-options-dialog" title="tSNE Options" role="dialog" class="ui-dialog ui-corner-all ui-widghet ui-widghet-content ui-front ui-dialog-buttons ui-draggable ui-resizable" style="display:none;">
-    <h5>tSNE Parameters: </h5>
-    <div id="tsneType" style="float:left; display:block;">
-        <!--
-        <label for="tsne_types_dimensions">Dimenstions: </label>
-        <select id="tsne_types_dimensions" class="tsne_options" name="tsne_types_dimensions"></select>
-        <label for="tsne_types_methylation">Methylation: </label>
-        <select id="tsne_types_methylation" class="tsne_option" name="tsne_types_methylation"></select>
-        <label for="tsne_types_perplexity">Perplexity: </label>
-        <select id="tsne_types_perplexity" class="tsne_option" name="tsne_types_perplexity"></select>
-        -->
-        <select id="tsne_types" class="tsne_option" name="tsne_types"></select>
+<div class="panel-collapse collapse cluster_options_group" id="tsne_plots_options">
+    <div class="panel-body option-panel" style="padding-top:0px; padding-bottom: 0px;">
+        <div class="container-fluid">
+            <div class="row-fluid">
+                <div id="tsneType" class="col-xsm-12 col-md-5" style=" display:block; padding:0px;">
+                    <h6>tSNE: </h6>
+                    <!--
+                    <label for="tsne_types">tSNE:</label>
+                    <select id="tsne_types" class="tsne_option" name="tsne_types">
+                    </select>
+                    -->
+                    <label for="tsne_methylation">
+                        <a href="#" class="hover-tooltip" data-toggle="popover" data-trigger="hover" data-placement="bottom" title="Methylation Type" data-content="Type of methylation used to calculate tSNE coordinates.">Methylation Type: </a>
+                    </label>
+                    <select id="tsne_methylation" class="tsne_option" name="tsne_methylation">
+                    </select>
+                    &nbsp;
+                    <label for="tsne_dimensions"># Dimensions:</label>
+                    <select id="tsne_dimensions" class="tsne_option" name="tsne_dimensions">
+                    </select>
+                    &nbsp;
+                    <label for="tsne_perplexity">Perplexity:</label>
+                    <select id="tsne_perplexity" class="tsne_option" name="tsne_perplexity">
+                    </select>
+                </div>
+                <div class="col-xsm-12 col-sm-4 col-md-2" id="tsneGrouping" style="display:block;">
+                    <h6>Grouping: </h6>
+                    <select id="tsne_grouping" class="tsne_option" name="tsne_grouping">
+                        <option value="cluster">by cluster</option>
+                        <option value="annotation" selected>by cluster annotation</option>
+                        <option value="dataset">by dataset</option>
+                        <!-- <option value="layer">by dissection layer</option> -->
+                        <!-- <option value="cluster_biosample">by cluster+biosample</option> -->
+                    </select>
+                </div>
+                <div class="col-xsm-12 col-sm-12 col-md-5" id="tsneClustering" style="display:block; padding:0px">
+                    <h6>Clustering: </h6>
+                    <!--
+                    <label for="tsne_clustering">Clustering: </label>
+                    <select id ="tsne_clustering" class="tsne_option" name="tsne_clustering">
+                    </select>
+                    -->
+                    <label for="clustering_algorithms">
+                        <a class="hover-tooltip" href="#" data-toggle="popover" data-trigger="hover" data-placement="bottom" title="Algorithm name" data-content="lv = Louvain.">Algorithm: </a>
+                    </label>
+                    <select id="clustering_algorithms" class="tsne_option" name="clustering_algorithms"></select>
+                    &nbsp;
+                    <label for="clustering_methylation">
+                        <a class="hover-tooltip" href="#" data-toggle="popover" data-trigger="hover" data-placement="bottom" title="Methylation Type" data-content="Types of methylation used for clustering">Methylation Type: </a>
+                    </label>
+                    <select id="clustering_methylation" class="tsne_option" name="clustering_methylation"></select>
+                    &nbsp;
+                    <label for="clustering_npc">
+                        <a class="hover-tooltip" href="#" data-toggle="popover" data-trigger="hover" data-placement="bottom" title="Principal Components" data-content="Number of principal components kept for clustering"># of PC's: </a>
+                    </label>
+                    <select id="clustering_npc" class="tsne_option" name="clustering_npc"></select>
+                    &nbsp;
+                    <label for="clustering_k">K-value: </label>
+                    <select id="clustering_k" class="tsne_option" name="clustering_k"></select>
+                </div>
+            </div>
+            <div class="col-sm-1 col-sm-offset-5" style="padding-bottom:10px;">
+                <br />
+                <button class="btn-sm btn-primary" id="tsneUpdateBtn">Update</button>
+            </div>
+        </div>
     </div>
-    <br /><br />
-    <h5>Grouping: </h5>
-    <div id="tsneGrouping" style="float:left; display:block;">
-        <!--<label for="tsne_grouping">Grouping:</label>-->
-        <select id="tsne_grouping" class="tsne_option" name="tsne_grouping">
-            <option value="cluster">by cluster</option>
-            <option value="annotation" selected>by cluster annotation</option>
-            <option value="dataset">by dataset</option>
-            <!-- <option value="layer">by dissection layer</option> -->
-            <!-- <option value="cluster_biosample">by cluster+biosample</option> -->
-        </select>
-    </div>
-    <br /><br />
-    <h5>Clustering Options: </h5>
-    <div id="tsneClustering" style="float:left; display:block;">
-        <!--
-        <label for="tsne_clustering_algorithm">Algorithm: </label>
-        <select id="tsne_clustering_algorithm" class="tsne_options" name="tsne_clustering_algorithm"></select>
-        <label for="tsne_clustering_methylation">Methylation: </label>
-        <select id="tsne_clustering_methylation" class="tsne_option" name="tsne_clustering_methylation"></select>
-        <label for="tsne_clustering_principal_compon">Number of PC's: </label>
-        <select id="tsne_clustering_principal_compon" class="tsne_option" name="tsne_clustering_principal_compon"></select>
-        <label for="tsne_clustering_k">K-value: </label>
-        <select id ="tsne_clustering_k" class="tsne_option" name="tsne_clustering_k"></select>
-        -->
-        <select id="tsne_clustering" class="tsne_option" name="tsne_clustering"></select>
-    </div>
-    <br /><br /><br />
-    <button class="btn-sm btn-primary" id="tsneUpdateBtn">Update</button>
 </div>
 <div class="panel-body" style="padding-top:0px;">
     <div id="plot-mch-scatter">Loading...</div>

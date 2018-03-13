@@ -21,9 +21,16 @@ class MyLinkCell extends React.Component {
     render() {
         const {rowIndex, field, data} = this.props;
         const link = '/' + data[rowIndex][field];
+        const toolTip = 'Total Cells: ' + data[rowIndex]['total_cells'] + 
+            '<br />Regions: ' + data[rowIndex]['regions'];
         return (
-            <Cell {...this.props}> 
+            <Cell 
+                {...this.props}
+                onMouseEnter={() => { ReactTooltip.show(this.refs.valueDiv); }}
+                onMouseLeave={() => { ReactTooltip.hide(this.refs.valueDiv); }}>
                 <a href={link}>{data[rowIndex][field]}</a>
+                <div ref='valueDiv' data-tip={toolTip}>
+                </div>
             </Cell>
        );
     }
@@ -150,7 +157,7 @@ class MyTable extends React.Component {
                     />
                     {dataset_columns}
                 </Table>
-                <ReactTooltip />
+                <ReactTooltip html={true}/>
             </div>
         );
     }
