@@ -485,8 +485,10 @@ function updateMCHClusterPlot() {
         });
     }
 
-    $("#tsne_options_heading").text("tSNE Settings: " + tsne_type + " | ");
-    $("#clustering_options_heading").text("Clustering Settings: " + clustering);
+    $("#tsne_heading_num_dimensions").text($("#tsne_dimensions").val() + "D ");
+    $("#tsne_options_heading").text("Methylation Type: " + $("#tsne_methylation").val() + ", Perplexity: " + $("#tsne_perplexity").val());
+
+    $("#clustering_options_heading").text("Algorithm: " + $("#clustering_algorithms").val() + ", Methylation Type: " + $("#clustering_methylation").val() + ", # of PCs: " + $("#clustering_npc").val() + ", K-value: " + $("#clustering_k").val());
 }
 
 function updateOrthologToggle() {

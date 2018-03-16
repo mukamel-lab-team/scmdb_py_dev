@@ -10,16 +10,20 @@
                     </select>
                     -->
                     <label for="tsne_methylation">
-                        <a href="#" class="hover-tooltip" data-toggle="popover" data-trigger="hover" data-placement="bottom" title="Methylation Type" data-content="Type of methylation used to calculate tSNE coordinates.">Methylation Type: </a>
+                        <a href="#" class="hover-tooltip" data-toggle="popover" data-trigger="hover" title="Methylation Type" data-content="Type of methylation used to calculate tSNE coordinates.">Methylation Type: </a>
                     </label>
                     <select id="tsne_methylation" class="tsne_option" name="tsne_methylation">
                     </select>
                     &nbsp;
-                    <label for="tsne_dimensions"># Dimensions:</label>
+                    <label for="tsne_dimensions">
+                        <a href="#" class="hover-tooltip" data-toggle="popover" data-trigger="hover" data-placement="bottom" title="Number of Dimensions" data-content="Choose between 2D or 3D (if available) tSNE coordinates."># Dimensions: </a>
+                    </label>
                     <select id="tsne_dimensions" class="tsne_option" name="tsne_dimensions">
                     </select>
                     &nbsp;
-                    <label for="tsne_perplexity">Perplexity:</label>
+                    <label for="tsne_perplexity">
+                        <a href="#" class="hover-tooltip" data-toggle="popover" data-trigger="hover" data-placement="bottom" title="Perplexity" data-content="Parameter for tuning tSNE.">Perplexity: </a>
+                    </label>
                     <select id="tsne_perplexity" class="tsne_option" name="tsne_perplexity">
                     </select>
                 </div>
@@ -41,21 +45,23 @@
                     </select>
                     -->
                     <label for="clustering_algorithms">
-                        <a class="hover-tooltip" href="#" data-toggle="popover" data-trigger="hover" data-placement="bottom" title="Algorithm name" data-content="lv = Louvain.">Algorithm: </a>
+                        <a class="hover-tooltip" href="#" data-toggle="popover" data-trigger="hover" data-placement="bottom" title="Algorithm" data-content="lv = Louvain Modularity.">Algorithm: </a>
                     </label>
                     <select id="clustering_algorithms" class="tsne_option" name="clustering_algorithms"></select>
                     &nbsp;
                     <label for="clustering_methylation">
-                        <a class="hover-tooltip" href="#" data-toggle="popover" data-trigger="hover" data-placement="bottom" title="Methylation Type" data-content="Types of methylation used for clustering">Methylation Type: </a>
+                        <a class="hover-tooltip" href="#" data-toggle="popover" data-trigger="hover" data-placement="bottom" title="Methylation Type" data-content="Types of methylation used for clustering.">Methylation Type: </a>
                     </label>
                     <select id="clustering_methylation" class="tsne_option" name="clustering_methylation"></select>
                     &nbsp;
                     <label for="clustering_npc">
-                        <a class="hover-tooltip" href="#" data-toggle="popover" data-trigger="hover" data-placement="bottom" title="Principal Components" data-content="Number of principal components kept for clustering"># of PC's: </a>
+                        <a class="hover-tooltip" href="#" data-toggle="popover" data-trigger="hover" data-placement="bottom" title="Principal Components" data-content="Number of principal components kept for clustering."># of PC's: </a>
                     </label>
                     <select id="clustering_npc" class="tsne_option" name="clustering_npc"></select>
                     &nbsp;
-                    <label for="clustering_k">K-value: </label>
+                    <label for="clustering_k">
+                        <a class="hover-tooltip" href="#" data-toggle="popover" data-trigger="hover" data-placement="bottom" title="K-value" data-content="Number of nearest neighbors (neighboring cells).">K-value: </a>
+                    </label>
                     <select id="clustering_k" class="tsne_option" name="clustering_k"></select>
                 </div>
             </div>

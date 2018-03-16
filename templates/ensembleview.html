@@ -33,8 +33,10 @@
 						<div class="panel-heading">
 							<div class="panel-title">
                                 <a data-toggle="collapse" title="" href="#cluster_plots" style="margin-top: 0px;" data-original-title="Collapse Search Options"><b>{{ ensemble_name }}</b>{% if gene is defined %} - {{ gene }}{% endif %}&nbsp;
-                                    <span id="tsne_options_heading">&nbsp;</span>
-                                    <span id="clustering_options_heading">&nbsp;</span>
+                                    <span id="tsne_heading_num_dimensions">&nbsp;</span> tSNE: 
+                                    <span id="tsne_options_heading" style="font-size:0.8em;">&nbsp;</span>
+                                    &nbsp;| Clustering: 
+                                    <span id="clustering_options_heading" style="font-size:0.8em;">&nbsp;</span>
                                     <span class="glyphicon glyphicon-chevron-down"></span>
                                 </a>
                                 <a data-toggle="collapse" title="" data-placement="left" href="#tsne_plots_options" class="btn btn-sm btn-basic pull-right" style="margin-top: 0px;" data-original-title="Collapse Search Options"><span class="glyphicon glyphicon-cog"></span></a>

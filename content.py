@@ -21,7 +21,7 @@ from numpy import nan, linspace, arange, random
 import pandas as pd
 import plotly
 from plotly import tools
-from plotly.graph_objs import Layout, Box, Scatter, Scattergl, Scatter3d, Heatmap
+from plotly.graph_objs import Layout, Annotation, Box, Scatter, Scattergl, Scatter3d, Heatmap
 import sqlite3
 from sqlite3 import Error
 
@@ -287,20 +287,10 @@ def all_gene_modules():
     Returns:
         list of gene module names. 
     """
-    try:
-        filename = glob.glob('{}/gene_modules.tsv'.format(current_app.config[
-            'DATA_DIR']))[0]
-    except IndexError:
-        now = datetime.datetime.now()
-        print("[{}] ERROR in app(all_gene_modules): Could not load gene_modules.tsv".format(str(now)))
-        sys.stdout.flush()
-        return []
-    
-    df = pd.read_csv(filename, delimiter="\t", engine='python').to_dict('records')
-    modules = []
-    for key, value in groupby(df, key = lambda gene: gene['module']):
-        modules.append({'module': key})
-    
+
+    modules_result = db.get_engine(current_app, 'data').execute("SELECT DISTINCT(module) FROM gene_modules").fetchall()
+    modules = [{'module': module[0]} for module in modules_result]
+
     return modules
 
 
@@ -313,23 +303,11 @@ def get_genes_of_module(ensemble, module):
         Dataframe of gene_name and gene_id of each gene in the module for the corresponding
         ensemble.
     """
-    try:
-        filename = glob.glob('{}/gene_modules.tsv'.format(current_app.config['DATA_DIR']))[0]
-    except IndexError:
-        now = datetime.datetime.now()
-        print("[{}] Error in app(get_genes_of_module): Could not load gene_modules.tsv".format(str(now)))
-        sys.stdout.flush()
-        return []
 
-    df = pd.read_csv(filename, delimiter = "\t", engine='python')
-    if 'CEMBA' in ensemble or 'Ens' in ensemble:
-        df = df[['module', 'mmu_gene_name', 'mmu_gene_id']]
-        df.rename(columns={'mmu_gene_name': 'gene_name', 'mmu_gene_id': 'gene_id'}, inplace=True)
-    else:
-        df = df[['module', 'hsa_gene_name', 'hsa_gene_id']]
-        df.rename(columns={'hsa_gene_name': 'gene_name', 'hsa_gene_id': 'gene_id'}, inplace=True)
+    modules_result = db.get_engine(current_app, 'data').execute("SELECT module, mmu_gene_id, mmu_gene_name FROM gene_modules WHERE module='{}'".format(module)).fetchall()
+    genes_in_module = [ {'module': d[0], 'gene_id': d[1], 'gene_name': d[2]} for d in query_result ]
 
-    return df[df['module'] == module].to_dict('records')
+    return genes_in_module
 
 
 @cache.memoize(timeout=3600)
@@ -390,6 +368,20 @@ def get_tsne_options(ensemble):
     list_perp_tsne_first = sorted(list(set([int(x.split('_')[2].replace('perp', '')) for x in list_tsne_types if (list_mc_types_tsne[0]+'_ndim'+str(list_dims_tsne_first[0])) == (x.split('_')[0] +'_'+ x.split('_')[1])])))
 
     list_clustering_types = [x.split('cluster_')[1] for x in df_cluster.columns.values]
+
+    #generate query for getting number clusters for each clustering type
+    num_clusters_query = "SELECT "
+    for i, clustering in enumerate(list_clustering_types):
+        num_clusters_query += "MAX(cluster_{0}) as {0}, ".format(clustering)
+    num_clusters_query = num_clusters_query[:-2] #Gets rid of last ", " which causes a MySQL syntax error
+    num_clusters_query += " FROM {}".format(ensemble)
+
+    result = db.get_engine(current_app, "data").execute(num_clusters_query).fetchone()
+
+    dict_clustering_types_and_numclusters = OrderedDict()
+    for clustering_type, num_clusters in zip(list_clustering_types, result):
+        dict_clustering_types_and_numclusters[clustering_type] = num_clusters
+
     list_mc_types_clustering = sorted(list(set([x.split('_')[0] for x in list_clustering_types])), key=lambda mC_type: methylation_types_order.index(mC_type))
     list_algorithms_clustering = sorted(list(set([x.split('_')[1] for x in list_clustering_types if list_mc_types_clustering[0] == x.split('_')[0]])))
     list_npc_clustering = sorted(list(set([int(x.split('_')[2].replace('npc', '')) for x in list_clustering_types if (list_mc_types_clustering[0]+'_'+list_algorithms_clustering[0]) in x])))
@@ -400,6 +392,7 @@ def get_tsne_options(ensemble):
             'tsne_dimensions': list_dims_tsne_first,
             'tsne_perplexity': list_perp_tsne_first,
             'all_clustering_types': list_clustering_types,
+            'all_clustering_types2': dict_clustering_types_and_numclusters,
             'clustering_methylation': list_mc_types_clustering,
             'clustering_algorithms': list_algorithms_clustering,
             'clustering_npc': list_npc_clustering,
@@ -1189,10 +1182,13 @@ def get_methylation_scatter(ensemble, tsne_type, methylation_type, query, level,
             print("**** Using cluster_mCH_lv_npc50_k30")
 
     datasets = points['dataset'].unique().tolist()
+    annotation_additional_y = 0.00 
     if grouping == 'dataset':
         unique_groups = datasets
         max_cluster = len(unique_groups)
     else:
+        if grouping == 'cluster':
+            annotation_additional_y = 0.025 # Necessary because legend items overlap with legend title (annotation) when there are many legend items
         max_cluster = points['cluster_'+clustering].max()
         unique_groups = points[grouping+'_'+clustering].unique().tolist()
     num_colors = len(unique_groups)
@@ -1202,10 +1198,13 @@ def get_methylation_scatter(ensemble, tsne_type, methylation_type, query, level,
     
     traces_tsne = OrderedDict()
 
+    legend_x = -.11
+    grouping_clustering = grouping
     if grouping != 'dataset':
-        grouping = grouping+'_'+clustering
+        legend_x = -.10
+        grouping_clustering = grouping+'_'+clustering
 
-    unique_groups = points[grouping].unique().tolist()
+    unique_groups = points[grouping_clustering].unique().tolist()
 
     if tsne_outlier_bool:
         top_x = points['tsne_x_'+tsne_type].quantile(0.999)
@@ -1231,21 +1230,17 @@ def get_methylation_scatter(ensemble, tsne_type, methylation_type, query, level,
     else:
         marker_size = 4
 
-
     ## 2D tSNE coordinates ##
     if 'ndim2' in tsne_type:
-
         for i, group in enumerate(unique_groups):
-
-            points_group = points[points[grouping]==group]
-            if grouping.startswith('cluster'):
+            points_group = points[points[grouping_clustering]==group]
+            if grouping_clustering.startswith('cluster'):
                 group_str = 'cluster_' + str(group)
-            elif grouping == "dataset":
+            elif grouping_clustering== "dataset":
                 group = group.strip('CEMBA_')
                 group_str = group
             else:
                 group_str = group
-
 
             color_num = i
             
@@ -1323,14 +1318,15 @@ def get_methylation_scatter(ensemble, tsne_type, methylation_type, query, level,
             xaxis='x2',
             hoverinfo='text')
 
-
         layout = Layout(
             autosize=True,
             height=450,
             title=title,
             titlefont={'color': 'rgba(1,2,2,1)',
                        'size': 16},
-            legend={'x':-.1, 'y':1},
+            legend={'x':legend_x,
+                    'y':0.95,
+                    'tracegroupgap': 0.5},
             margin={'l': 49,
                     'r': 0,
                     'b': 30,
@@ -1402,15 +1398,27 @@ def get_methylation_scatter(ensemble, tsne_type, methylation_type, query, level,
         fig.append_trace(trace_methylation, 1,2)
 
         fig['layout'].update(layout)
+        fig['layout']['annotations'].extend([Annotation(text="Cluster Labels",
+                                                        x=legend_x+0.01,
+                                                        y=1.02 + annotation_additional_y,
+                                                        xanchor="left",
+                                                        yanchor="top",
+                                                        showarrow=False,
+                                                        xref="paper",
+                                                        yref="paper",
+                                                        font={'size': 12,
+                                                              'color': 'gray',})])
+
+
 
     ## 3D tSNE coordinates ##
     else: 
         for i, group in enumerate(unique_groups):
 
-            points_group = points[points[grouping]==group]
-            if grouping.startswith('cluster'):
+            points_group = points[points[grouping_clustering]==group]
+            if grouping_clustering.startswith('cluster'):
                 group_str = 'cluster_' + str(group)
-            elif grouping == "dataset":
+            elif grouping_clustering== "dataset":
                 group = group.strip('CEMBA_')
                 group_str = group
             else:
@@ -1588,7 +1596,16 @@ def get_methylation_scatter(ensemble, tsne_type, methylation_type, query, level,
         fig['layout']['scene1'].update(scene)
         fig['layout']['scene2'].update(scene)
     
-    # return json.dumps(fig)
+        fig['layout']['annotations'].extend([Annotation(text="Cluster Labels",
+                                                        x=-.09,
+                                                        y=1.03 + annotation_additional_y,
+                                                        xanchor="left",
+                                                        yanchor="top",
+                                                        showarrow=False,
+                                                        xref="paper",
+                                                        yref="paper",
+                                                        font={'size': 12,
+                                                              'color': 'gray',})])
 
     return plotly.offline.plot(
         figure_or_data=fig,

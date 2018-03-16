@@ -1,28 +1,36 @@
+{%- extends "bootstrap/base.html" %}
 {% import 'macros/nav_macros.html' as nav %}
-<!DOCTYPE html>
-<html>
-    <head>
-        {% include 'partials/_head.html' %}
-        {# Any templates that extend this template can set custom_head_tags to add scripts to their page #}
-        {% block custom_head_tags %}{% endblock %}
-    </head>
-    <body>
-        {% block nav %}
-          {# add dropdown variable here to the render_nav method to render dropdowns #}
-          {{ nav.render_nav(current_user) }}
-        {% endblock %}
+{% import "bootstrap/fixes.html" as fixes %}
 
-        {% include 'partials/_flashes.html' %}
-        {# When extended, the content block contains all the html of the webpage #}
-        {% block content %}
-        {% endblock %}
+{% block head%}
+    {{super ()}}
+    {{fixes.ie8()}}
+    {% include 'partials/_head.html' %}
+    {% block title %}Ensemble Tabular{% endblock %}
+    {# Any templates that extend this template can set custom_head_tags to add scripts to their page #}
+    {% block custom_head_tags %}{% endblock custom_head_tags %}
+{%- endblock head %}
 
-        {# Implement CSRF protection for site #}
-        {% if csrf_token()|safe %}
-            <div style="visibility: hidden; display: none">
-              <input type="hidden" name="csrf_token" value="{{ csrf_token()|safe }}">
-            </div>
-        {% endif %}
+{% block styles -%}
+    {{super()}}  {# do not forget to call super or Bootstrap's own stylesheets will disappear! #}
+{% endblock %}
 
-    </body>
-</html>
+{% block body %}
+    {% block navbar %}
+      {# add dropdown variable here to the render_nav method to render dropdowns #}
+      {{ nav.render_nav(current_user) }}
+    {% endblock navbar %}
+
+    {% include 'partials/_flashes.html' %}
+    {# When extended, the content block contains all the html of the webpage #}
+    {% block content %}
+    {% endblock content %}
+
+    {# Implement CSRF protection for site #}
+    {% if csrf_token()|safe %}
+        <div style="visibility: hidden; display: none">
+          <input type="hidden" name="csrf_token" value="{{ csrf_token()|safe }}">
+        </div>
+    {% endif %}
+{% endblock body %}
+
