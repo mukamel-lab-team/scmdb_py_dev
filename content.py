@@ -305,7 +305,7 @@ def get_genes_of_module(ensemble, module):
     """
 
     modules_result = db.get_engine(current_app, 'data').execute("SELECT module, mmu_gene_id, mmu_gene_name FROM gene_modules WHERE module='{}'".format(module)).fetchall()
-    genes_in_module = [ {'module': d[0], 'gene_id': d[1], 'gene_name': d[2]} for d in query_result ]
+    genes_in_module = [ {'module': d[0], 'gene_id': d[1], 'gene_name': d[2]} for d in modules_result ]
 
     return genes_in_module
 
