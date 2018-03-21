@@ -490,10 +490,6 @@ function updateGeneElements(updateMCHScatter=true) {
         $('#methyl_scatter_div, #methyl_graphs_div').show();
         $('#orthologsToggle').bootstrapToggle('off');
         $('#orthologsToggle').bootstrapToggle('enable');
-        try{
-            buttons[8].click();
-        }
-        catch(err) {}
 
         var lastViewedGenes = [];
         for(i=0; i<$('#geneName').select2('data').length; i++){
@@ -511,9 +507,14 @@ function updateGeneElements(updateMCHScatter=true) {
         if($("#geneName").select2('data').length > 1) {
             $('#normalize-heatmap').show();
             $('#methylation-box-heat-normalize-toggle').prop('disabled', false);
-            createHeatmap();
+            updateMethylationHeatmap();
             updateDataTable("Select..");
             $('#epiBrowserLink').addClass('disabled');
+
+            if (snATAC_data_available === 1) {
+                updatesnATACHeatmap();
+                $('#snATAC-box-heat-normalize-toggle').prop('disabled', false);
+            }
         }
         else{
             $('#epiBrowserLink').removeClass('disabled');
@@ -522,6 +523,10 @@ function updateGeneElements(updateMCHScatter=true) {
             updateOrthologToggle();
             updateMCHBoxPlot();
             updateDataTable($('#geneName option:selected').val());
+            if (snATAC_data_available === 1) {
+                updatesnATACBoxPlot();
+                $('#snATAC-box-heat-normalize-toggle').prop('disabled', true);
+            }
 
             $.ajax({
                 url: './gene/id/'+ensemble+'?q='+geneSelected,
@@ -739,6 +744,27 @@ function updateMCHBoxPlot() {
 
 }
 
+function updatesnATACBoxPlot() {
+    var geneSelected = $('#geneName option:selected').val();
+    var grouping = $('#snATAC_tsne_grouping').val();
+
+    if ($('#snATAC-box-heat-outlierToggle').prop('checked')) {
+        var outlierOption = 'outliers';
+    } else {
+        var outlierOption = 'false';
+    }
+
+    $.ajax({
+        type: "GET",
+        url: './plot/snATAC/box/'+ensemble+'/'+geneSelected+'/'+grouping+'/'+outlierOption,
+        success: function(data) {
+            $('#plot-snATAC-heat').html("");
+            $('#plot-snATAC-box').html(data);
+        }
+    });
+
+}
+
 function updateMCHCombinedBoxPlot(mmu_gid, hsa_gid) {
     var levelType = $('input[name=levels]').filter(':checked').val();
     var methylationType = $('input[name=mType]').filter(':checked').val();
@@ -761,7 +787,7 @@ function updateMCHCombinedBoxPlot(mmu_gid, hsa_gid) {
 
 }
 
-function createHeatmap() {
+function updateMethylationHeatmap() {
     var levelType = $('input[name=levels]').filter(':checked').val();
     var methylationType = $('input[name=mType]').filter(':checked').val();
     var methylation_color_percentile_Values = methylation_color_percentile_Slider.getValue();
@@ -794,7 +820,36 @@ function createHeatmap() {
     });
 }
 
-function createHeatmapTwoSpecies() {
+function updatesnATACHeatmap() {
+    var levelType = $('input[name=levels]').filter(':checked').val();
+    var snATAC_color_percentile_Values = snATAC_color_percentile_Slider.getValue();
+    var genes = $("#geneName").select2('data');
+    var genes_query = "";
+    var grouping = $("#snATAC_tsne_grouping").val();
+
+    for (i = 0; i < genes.length; i++) {
+        genes_query += (genes[i].id + "+");
+    }
+    if ($('#snATAC-box-heat-normalize-toggle').prop('checked')) {
+        var normalize = 'true';
+    }
+    else {
+        var normalize = 'false';
+    }
+    genes_query = genes_query.slice(0,-1);
+
+    $.ajax({
+        type: "GET",
+        url: './plot/snATAC/heat/'+ensemble+'/'+grouping+'/'+snATAC_color_percentile_Values[0]+'/'+snATAC_color_percentile_Values[1]+'?q='+genes_query+'&normalize='+normalize,
+        success: function(data) {
+            $('#plot-snATAC-box').html("");
+            $('#plot-snATAC-heat').html(data);
+            $('#snATAC-box-heat-outlierToggle').bootstrapToggle('disable');
+        }
+    });
+}
+
+function updateMethylationHeatmapTwoSpecies() {
     var levelType = $('input[name=levels]').filter(':checked').val();
     var methylationType = $('input[name=mType]').filter(':checked').val();
     var methylation_color_percentile_Values = methylation_color_percentile_Slider.getValue();

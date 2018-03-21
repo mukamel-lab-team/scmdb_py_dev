@@ -265,6 +265,24 @@ def plot_mch_box(ensemble, methylation_type, gene, grouping, clustering, level, 
         return 'Failed to produce mCH levels box plot. Contact maintainer.'
 
 
+@frontend.route('/plot/snATAC/box/<ensemble>/<gene>/<grouping>/<outliers_toggle>')
+@cache.memoize(timeout=3600)
+def plot_snATAC_box(ensemble, gene, grouping, outliers_toggle):
+
+    if outliers_toggle == 'outliers':
+        outliers = True
+    else:
+        outliers = False
+    if grouping == 'NaN' or grouping == 'null' or grouping  == 'dataset':
+        grouping = 'cluster'
+
+    try:
+        return get_snATAC_box(ensemble, gene, grouping, outliers)
+    except (FailToGraphException, ValueError) as e:
+        print("ERROR (plot_snATAC_box): {}".format(e))
+        return 'Failed to produce snATAC normalized counts box plot. Contact maintainer.'
+
+
 @frontend.route('/plot/box_combined/<methylation_type>/<gene_mmu>/<gene_hsa>/<level>/<outliers_toggle>')
 def plot_mch_box_two_ensemble(methylation_type, gene_mmu, gene_hsa, level, outliers_toggle):
 
@@ -298,6 +316,26 @@ def plot_mch_heatmap(ensemble, methylation_type, grouping, clustering, level, pt
     except (FailToGraphException, ValueError) as e:
         print("ERROR (plot_mch_heatmap): {}".format(e))
         return 'Failed to produce mCH levels heatmap plot. Contact maintainer.'
+
+
+@frontend.route('/plot/snATAC/heat/<ensemble>/<grouping>/<ptile_start>/<ptile_end>')
+def plot_snATAC_heatmap(ensemble, grouping, ptile_start, ptile_end):
+
+    query = request.args.get('q', 'MustHaveAQueryString')
+
+    if grouping == 'NaN' or grouping == 'null' or grouping=='dataset':
+        grouping = 'cluster'
+
+    if request.args.get('normalize', 'MustSpecifyNormalization') == 'true':
+        normalize_row = True
+    else:
+        normalize_row = False
+    try:
+        return get_snATAC_heatmap(ensemble, grouping, ptile_start, ptile_end, normalize_row, query)
+    except (FailToGraphException, ValueError) as e:
+        print("ERROR (plot_snATAC_heatmap): {}".format(e))
+        return 'Failed to produce snATAC normalized counts heatmap plot. Contact maintainer.'
+
 
 @frontend.route('/plot/heat_two_ensemble/<ensemble>/<methylation_type>/<level>/<ptile_start>/<ptile_end>')
 def plot_mch_heatmap_two_ensemble(ensemble, methylation_type, level, ptile_start, ptile_end):
