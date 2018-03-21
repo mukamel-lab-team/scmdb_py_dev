@@ -55,8 +55,8 @@
                 </div>
             </div>
 
-            {% if snATAC_data_available == 1 %}
             <!-- tSNE (snATAC) Scatter Plots -->
+            {% if snATAC_data_available == 1 %}
 			<div style="position:relative; left:0; z-index:2;">
 				<div class="col-md-12 col-sm-12">
 					<div class="panel panel-default panel-main" style="overflow-x: auto; margin-left:auto; margin-right:auto;">
@@ -72,7 +72,7 @@
                                 <a data-toggle="collapse" title="" data-placement="left" href="#snATAC_tsne_plots_options" class="btn btn-sm btn-basic pull-right" style="margin-top: 0px;" data-original-title="Collapse snATAC tSNE Options"><span class="glyphicon glyphicon-cog"></span></a>
 							</div>
 						</div>
-                        <div class="panel-collapse collapse in" id="snATAC_cluster_plots">
+                        <div class="panel-collapse collapse in" id="snATAC_scatter_plots">
 							<div class="panel-body flex-container" style="padding:0px">
                                 <div class="col-md-12 col-sm-12 flex-item" id="snATAC_scatter_div" style="padding: 0px">
                                     {% include "components/snATAC_scatter.html" %}
