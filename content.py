@@ -455,7 +455,7 @@ def get_snATAC_tsne_options(ensemble):
         df = pd.read_sql(query, db.get_engine(current_app, 'snATAC_data'))
     except exc.ProgrammingError as e:
         now = datetime.datetime.now()
-        print("[{}] Error in app(get_snATAC_tsne_options): {}".format(str(now), e))
+        print("[{}] ERROR in app(get_snATAC_tsne_options): {}".format(str(now), e))
         sys.stdout.flush()
         return None
 
@@ -940,6 +940,7 @@ def get_mult_gene_snATAC(ensemble, genes, grouping):
         df_coords.fillna({'annotation_ATAC': 'None'}, inplace=True)
         df_coords['annotation_cat'] = pd.Categorical(df_coords['annotation_ATAC'], cluster_annotation_order)
         df_coords.sort_values(by='annotation_cat', inplace=True)
+        df_coords.drop('annotation_cat', axis=1, inplace=True)
     elif grouping == 'cluster':
         df_coords.sort_values(by='cluster_ATAC', inplace=True)
     return df_coords
