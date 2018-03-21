@@ -17,12 +17,7 @@ from flask_nav.elements import Navbar, Link, View, Text, Subgroup
 from flask_rq import get_queue
 
 from . import nav, cache, db, mail
-from .content import get_tsne_options, get_gene_by_name, \
-    get_methylation_scatter, get_mch_box, get_mch_box_two_ensemble, \
-    find_orthologs, FailToGraphException, get_corr_genes, \
-    get_gene_by_id, get_mch_heatmap, \
-    get_mch_heatmap_two_ensemble, all_gene_modules, get_genes_of_module, \
-    convert_gene_id_mmu_hsa, get_ensemble_info
+from .content import *
 from .decorators import admin_required
 from .email import send_email
 from .forms import LoginForm, ChangeUserEmailForm, ChangeAccountTypeForm, InviteUserForm, CreatePasswordForm, NewUserForm, RequestResetPasswordForm, ResetPasswordForm, ChangePasswordForm
@@ -45,7 +40,7 @@ def process_navbar():
     unlockimage = img(src='static/img/unlock.png', height='20', width='20')
     separator = img(src='static/img/separate.png', height='25', width='10')
 
-    ens_list = db.get_engine(current_app, 'data').execute("SELECT * FROM ensembles").fetchall()
+    ens_list = db.get_engine(current_app, 'methylation_data').execute("SELECT * FROM ensembles").fetchall()
 
     ens_items = []
     
@@ -133,8 +128,13 @@ def index():
 
 @frontend.route('/<ensemble_name>')
 def ensemble(ensemble_name):
-    ensemble = 'Ens'+str(get_ensemble_info(ensemble_name=ensemble_name)['ensemble_id'])
-    return render_template('ensembleview.html', ensemble=ensemble, ensemble_name=ensemble_name)
+    ensemble_info = get_ensemble_info(ensemble_name=ensemble_name)
+    snATAC_exists = snATAC_data_exists(ensemble_info['ensemble_id'])
+    ensemble = 'Ens'+str(ensemble_info['ensemble_id'])
+    return render_template('ensembleview.html', 
+                           ensemble = ensemble, 
+                           ensemble_name = ensemble_name,
+                           snATAC_data_available = snATAC_exists)
 
 @frontend.route('/standalone/<ensemble>/<gene>')
 def standalone(ensemble, gene):  # View gene body mCH plots alone
@@ -156,6 +156,13 @@ def box_combined(mmu_gene_id, hsa_gene_id):
 @login_required
 def ensemble_tabular_screen():
     return render_template('tabular_ensemble.html')
+
+
+## TESTER ## 
+@frontend.route('/tabular/ensemble_dt')
+@login_required
+def ensemble_tabular_screen_dt():
+    return render_template('tabular_ensemble-dt.html')
 
 
 @frontend.route('/tabular/dataset')
@@ -187,7 +194,7 @@ def nav_bar_screen():
 #         return 'Failed to produce cluster plot. Contact maintainer.'
 
 
-@frontend.route('/plot/scatter/<ensemble>/<tsne_type>/<methylation_type>/<level>/<grouping>/<clustering>/<ptile_start>/<ptile_end>/<tsne_outlier>')
+@frontend.route('/plot/methylation/scatter/<ensemble>/<tsne_type>/<methylation_type>/<level>/<grouping>/<clustering>/<ptile_start>/<ptile_end>/<tsne_outlier>')
 def plot_methylation_scatter(ensemble, tsne_type, methylation_type, level, grouping, clustering, ptile_start, ptile_end, tsne_outlier):
 
     genes = request.args.get('q', 'MustHaveAQueryString')
@@ -202,23 +209,43 @@ def plot_methylation_scatter(ensemble, tsne_type, methylation_type, level, group
     if tsne_outlier == 'true':
         tsne_outlier_bool = True
 
-    # try:
-    return get_methylation_scatter(ensemble,
-                                   tsne_type,
-                                   methylation_type,
-                                   genes, 
-                                   level,
-                                   grouping,
-                                   clustering,
-                                   float(ptile_start),
-                                   float(ptile_end),
-                                   tsne_outlier_bool)
-    # except Exception as e:
-    #     print("ERROR (plot_methylation_scatter): {}".format(e))
-    #     return 'Failed to produce mCH levels scatter plot. Contact maintainer.'
+    try:
+        return get_methylation_scatter(ensemble,
+                                       tsne_type,
+                                       methylation_type,
+                                       genes, 
+                                       level,
+                                       grouping,
+                                       clustering,
+                                       float(ptile_start),
+                                       float(ptile_end),
+                                       tsne_outlier_bool)
+    except FailToGraphException:
+        return "Failed to load methylation data for {}, please contact maintainer".format(ensemble)
 
 
-@frontend.route('/plot/box/<ensemble>/<methylation_type>/<gene>/<grouping>/<clustering>/<level>/<outliers_toggle>')
+@frontend.route('/plot/snATAC/scatter/<ensemble>/<grouping>/<ptile_start>/<ptile_end>/<tsne_outlier>')
+def plot_snATAC_scatter(ensemble, grouping, ptile_start, ptile_end, tsne_outlier):
+
+    genes_query = request.args.get('q', 'MustHaveAQueryString')
+    if grouping == 'NaN' or grouping == 'null':
+        grouping = 'cluster'
+
+    tsne_outlier_bool = False
+    if tsne_outlier == 'true':
+        tsne_outlier_bool = True
+
+    try:
+        return get_snATAC_scatter(ensemble,
+                                  genes_query, 
+                                  grouping,
+                                  float(ptile_start),
+                                  float(ptile_end),
+                                  tsne_outlier_bool)
+    except FailToGraphException:
+        return "Failed to load snATAC-seq data for {}, please contact maintainer".format(ensemble)
+
+@frontend.route('/plot/methylation/box/<ensemble>/<methylation_type>/<gene>/<grouping>/<clustering>/<level>/<outliers_toggle>')
 @cache.memoize(timeout=3600)
 def plot_mch_box(ensemble, methylation_type, gene, grouping, clustering, level, outliers_toggle):
 
@@ -252,7 +279,7 @@ def plot_mch_box_two_ensemble(methylation_type, gene_mmu, gene_hsa, level, outli
         return 'Failed to produce mCH levels box plot. Contact maintainer.'
 
 
-@frontend.route('/plot/heat/<ensemble>/<methylation_type>/<grouping>/<clustering>/<level>/<ptile_start>/<ptile_end>')
+@frontend.route('/plot/methylation/heat/<ensemble>/<methylation_type>/<grouping>/<clustering>/<level>/<ptile_start>/<ptile_end>')
 def plot_mch_heatmap(ensemble, methylation_type, grouping, clustering, level, ptile_start, ptile_end):
 
     query = request.args.get('q', 'MustHaveAQueryString')
@@ -303,13 +330,20 @@ def search_gene_by_id(ensemble):
         return jsonify(get_gene_by_id(ensemble, convert_gene_id_mmu_hsa(ensemble, query)))
 
 
-@frontend.route('/tsne_options')
-def tsne_options():
-    query = request.args.get('q', 'MustHaveAQueryString')
-    if query == 'none' or query == 'MustHaveAQueryString':
+@frontend.route('/methylation_tsne_options/<ensemble>')
+def methylation_tsne_options(ensemble):
+    if ensemble == None or ensemble == "":
         return jsonify({})
     else:
-        return jsonify(get_tsne_options(query))
+        return jsonify(get_methylation_tsne_options(ensemble))
+
+
+@frontend.route('/snATAC_tsne_options/<ensemble>')
+def snATAC_tsne_options(ensemble):
+    if ensemble == None or ensemble == '':
+        return jsonify({})
+    else:
+        return jsonify(get_snATAC_tsne_options(ensemble))
 
 
 @frontend.route('/gene/modules/<ensemble>')
@@ -321,11 +355,13 @@ def gene_modules(ensemble):
         return jsonify(get_genes_of_module(ensemble, query))
 
 
+# Legacy code from when the browser was used to also display human data
+# This function is not necessary due to CEMBA only containing mouse data
 @frontend.route('/gene/orthologs/<ensemble>/<gene_id>')
 def orthologs(ensemble, gene_id):
     gene_id = gene_id.split('.')[0]
     gene_id = convert_gene_id_mmu_hsa(ensemble,gene_id) 
-    if ensemble == 'mmu' or ensemble == 'mouse_published':
+    if 'Ens' in ensemble:
         return jsonify(find_orthologs(mmu_gene_id=gene_id))
     else:
         return jsonify(find_orthologs(hsa_gene_id=gene_id))

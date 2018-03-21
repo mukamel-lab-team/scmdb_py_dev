@@ -40,7 +40,7 @@ function display3DPlotToggle() {
     if ($('#toggle-3d').prop('checked')){
         $('#loading-3d-plot').html("Loading..");
         Plotly.newPlot("plot-3d-cluster", Object.values(trace_3d), layout_3d);
-        if($('#tsneGrouping option:selected').val() === 'biosample'){
+        if($('#methylation_tsneGrouping option:selected').val() === 'biosample'){
             for(i = 0; i < groups_3d.length; i++){
                 Plotly.restyle("plot-3d-cluster", updates_3d[i], groups_3d[i]);
             }
@@ -174,61 +174,48 @@ function updateSearchWithModules(module) {
 }
 
 
-// Options for tSNE plot //
-function populateTSNEDropdowns() {
-    var tsne_cluster_dropdown = $('#tsne_clustering');
-
+// Options for tSNE (methylation) plot //
+function populateMethylationTSNEDropdowns() {
     $.ajax({
-        url: '/tsne_options?q='+ensemble,
+        url: '/methylation_tsne_options/'+ensemble,
         dataType: 'json',
         async: false,
         success: function(data) {
-            window.global_all_tsne_types = data['all_tsne_types'];
-            window.global_all_clustering_types = data['all_clustering_types'];
-            /*
-            $.each(data['tsne_types'], function(key, val) {
-                tsne_types_dropdown.append(
-                    $('<option></option>').val(val).text(val)
-                );
-            });
-            */
+            window.global_all_methylation_methylation_tsne_settings = data['all_tsne_settings'];
+            window.global_all_methylation_methylation_clustering_settings = data['all_clustering_settings'];
+
             $.each(data['tsne_methylation'], function(key, val) {
-                $("#tsne_methylation").append(
+                $("#methylation_tsne_methylation").append(
                     $('<option></option>').val(val).text(val)
                 );
             });
             $.each(data["tsne_dimensions"], function(key, val) {
-                $("#tsne_dimensions").append(
+                $("#methylation_tsne_dimensions").append(
                     $('<option></option>').val(val).text(val)
                 );
             });
             $.each(data["tsne_perplexity"], function(key, val) {
-                $("#tsne_perplexity").append(
-                    $('<option></option>').val(val).text(val)
-                );
-            });
-            $.each(data["all_clustering_types"], function(key, val) {
-                tsne_cluster_dropdown.append(
+                $("#methylation_tsne_perplexity").append(
                     $('<option></option>').val(val).text(val)
                 );
             });
             $.each(data["clustering_methylation"], function(key, val) {
-                $("#clustering_methylation").append(
+                $("#methylation_clustering_methylation").append(
                     $('<option></option>').val(val).text(val)
                 );
             });
             $.each(data["clustering_algorithms"], function(key, val) {
-                $("#clustering_algorithms").append(
+                $("#methylation_clustering_algorithms").append(
                     $('<option></option>').val(val).text(val)
                 );
             });
             $.each(data["clustering_npc"], function(key, val) {
-                $("#clustering_npc").append(
+                $("#methylation_clustering_npc").append(
                     $('<option></option>').val(val).text(val)
                 );
             });
             $.each(data["clustering_k"], function(key, val) {
-                $("#clustering_k").append(
+                $("#methylation_clustering_k").append(
                     $('<option></option>').val(val).text(val)
                 );
             });
@@ -236,13 +223,51 @@ function populateTSNEDropdowns() {
     });
 }
 
-function dynamicTSNEOptions_methylation() {
-    var matching_tsne_options = [];
-    var regex = new RegExp($("#tsne_methylation").val() + "_\\w+");
+// Options for tSNE (snATAC) plot //
+function populatesnATACTSNEDropdowns() {
+    $.ajax({
+        url: '/snATAC_tsne_options/'+ensemble,
+        dataType: 'json',
+        async: false,
+        success: function(data) {
+            window.global_all_snATAC_tsne_settings = data['all_tsne_settings'];
+            window.global_all_snATAC_clustering_settings = data['all_clustering_settings'];
+            $.each(data["tsne_dimensions"], function(key, val) {
+                $("#snATAC_tsne_dimensions").append(
+                    $('<option></option>').val(val).text(val)
+                );
+            });
+            $.each(data["tsne_perplexity"], function(key, val) {
+                $("#snATAC_tsne_perplexity").append(
+                    $('<option></option>').val(val).text(val)
+                );
+            });
+            $.each(data["clustering_algorithms"], function(key, val) {
+                $("#snATAC_clustering_algorithms").append(
+                    $('<option></option>').val(val).text(val)
+                );
+            });
+            $.each(data["clustering_npc"], function(key, val) {
+                $("#snATAC_clustering_npc").append(
+                    $('<option></option>').val(val).text(val)
+                );
+            });
+            $.each(data["clustering_k"], function(key, val) {
+                $("#snATAC_clustering_k").append(
+                    $('<option></option>').val(val).text(val)
+                );
+            });
+        }
+    });
+}
 
-    for (var i = 0; i < global_all_tsne_types.length; i++) {
-        if (global_all_tsne_types[i].match(regex) !== null) {
-            matching_tsne_options.push(global_all_tsne_types[i]);
+function dynamicMethylationTSNEOptions_methylation() {
+    var matching_tsne_options = [];
+    var regex = new RegExp($("#methylation_tsne_methylation").val() + "_\\w+");
+
+    for (var i = 0; i < global_all_methylation_tsne_settings.length; i++) {
+        if (global_all_methylation_tsne_settings[i].match(regex) !== null) {
+            matching_tsne_options.push(global_all_methylation_tsne_settings[i]);
         }
     }
 
@@ -253,24 +278,24 @@ function dynamicTSNEOptions_methylation() {
     }
     var dimensions_list = [...dimensions_set];
 
-    $("#tsne_dimensions").empty();
-    $("#tsne_perplexity").empty();
+    $("#methylation_tsne_dimensions").empty();
+    $("#methylation_tsne_perplexity").empty();
     for (var i = 0; i < dimensions_list.length; i++) {
-        $("#tsne_dimensions").append(
+        $("#methylation_tsne_dimensions").append(
             $("<option></option>").val(dimensions_list[i]).text(dimensions_list[i])
         );
     }
 
-    dynamicTSNEOptions_dimensions(matching_tsne_options);
+    dynamicMethylationTSNEOptions_dimensions(matching_tsne_options);
 }   
 
-function dynamicTSNEOptions_dimensions(matching_tsne_options = []) {
+function dynamicMethylationTSNEOptions_dimensions(matching_tsne_options = []) {
     if (matching_tsne_options.length === 0) {
         var matching_tsne_options = [];
-        var regex = new RegExp($("#tsne_methylation").val() + "_ndim" + $("#tsne_dimensions").val() + "_\\w+");
-        for (var i = 0; i < global_all_tsne_types.length; i++) {
-            if (global_all_tsne_types[i].match(regex) !== null) {
-                matching_tsne_options.push(global_all_tsne_types[i]);
+        var regex = new RegExp($("#methylation_tsne_methylation").val() + "_ndim" + $("#methylation_tsne_dimensions").val() + "_\\w+");
+        for (var i = 0; i < global_all_methylation_tsne_settings.length; i++) {
+            if (global_all_methylation_tsne_settings[i].match(regex) !== null) {
+                matching_tsne_options.push(global_all_methylation_tsne_settings[i]);
             }
         }
     }
@@ -282,21 +307,21 @@ function dynamicTSNEOptions_dimensions(matching_tsne_options = []) {
     }
     var perplexity_list = [...perplexity_set];
 
-    $("#tsne_perplexity").empty();
+    $("#methylation_tsne_perplexity").empty();
     for (var i = 0; i < perplexity_list.length; i++) {
-        $("#tsne_perplexity").append(
+        $("#methylation_tsne_perplexity").append(
             $("<option></option>").val(perplexity_list[i]).text(perplexity_list[i])
         );
     }
 }
 
-function dynamicClusteringOptions_methylation() {
+function dynamicMethylationClusteringOptions_methylation() {
     var matching_clustering_options = [];
-    var regex = new RegExp($("#clustering_methylation").val() + "_\\w+");
+    var regex = new RegExp($("#methylation_clustering_methylation").val() + "_\\w+");
 
-    for (var i = 0; i < global_all_clustering_types.length; i++) {
-        if (global_all_clustering_types[i].match(regex) !== null) {
-            matching_clustering_options.push(global_all_clustering_types[i]);
+    for (var i = 0; i < global_all_methylation_clustering_settings.length; i++) {
+        if (global_all_methylation_clustering_settings[i].match(regex) !== null) {
+            matching_clustering_options.push(global_all_methylation_clustering_settings[i]);
         }
     }
 
@@ -307,24 +332,24 @@ function dynamicClusteringOptions_methylation() {
     }
     var algorithms_list = [...algorithms_set];
 
-    $("#clustering_algorithms").empty();
+    $("#methylation_clustering_algorithms").empty();
     for (var i = 0; i < algorithms_list.length; i++) {
-        $("#clustering_algorithms").append(
+        $("#methylation_clustering_algorithms").append(
             $("<option></option>").val(algorithms_list[i]).text(algorithms_list[i])
         );
     }
 
-    dynamicClusteringOptions_algorithm(matching_clustering_options);
+    dynamicMethylationClusteringOptions_algorithm(matching_clustering_options);
 }
 
-function dynamicClusteringOptions_algorithm(matching_clustering_options = []) {
+function dynamicMethylationClusteringOptions_algorithm(matching_clustering_options = []) {
     if (matching_clustering_options.length === 0) {
         var matching_clustering_options = [];
-        var regex = new RegExp($("#clustering_methylation").val()+'_'+$("#clustering_algorithms").val() + "_\\w+");
+        var regex = new RegExp($("#methylation_clustering_methylation").val()+'_'+$("#methylation_clustering_algorithms").val() + "_\\w+");
 
-        for (var i = 0; i < global_all_clustering_types.length; i++) {
-            if (global_all_clustering_types[i].match(regex) !== null) {
-                matching_clustering_options.push(global_all_clustering_types[i]);
+        for (var i = 0; i < global_all_methylation_clustering_settings.length; i++) {
+            if (global_all_methylation_clustering_settings[i].match(regex) !== null) {
+                matching_clustering_options.push(global_all_methylation_clustering_settings[i]);
             }
         }
     }
@@ -336,24 +361,24 @@ function dynamicClusteringOptions_algorithm(matching_clustering_options = []) {
     }
     var npc_list = [...npc_set];
 
-    $("#clustering_npc").empty();
+    $("#methylation_clustering_npc").empty();
     for (var i = 0; i < npc_list.length; i++) {
-        $("#clustering_npc").append(
+        $("#methylation_clustering_npc").append(
             $("<option></option>").val(npc_list[i]).text(npc_list[i])
         );
     }
 
-    dynamicClusteringOptions_npc(matching_clustering_options);
+    dynamicMethylationClusteringOptions_npc(matching_clustering_options);
 }
 
-function dynamicClusteringOptions_npc(matching_clustering_options = []) {
+function dynamicMethylationClusteringOptions_npc(matching_clustering_options = []) {
     if (matching_clustering_options.length === 0) {
         var matching_clustering_options = [];
-        var regex = new RegExp($("#clustering_methylation").val()+'_'+$("#clustering_algorithms").val()+'_npc'+$("#clustering_npc").val() + "_\\w+");
+        var regex = new RegExp($("#methylation_clustering_methylation").val()+'_'+$("#methylation_clustering_algorithms").val()+'_npc'+$("#methylation_clustering_npc").val() + "_\\w+");
 
-        for (var i = 0; i < global_all_clustering_types.length; i++) {
-            if (global_all_clustering_types[i].match(regex) !== null) {
-                matching_clustering_options.push(global_all_clustering_types[i]);
+        for (var i = 0; i < global_all_methylation_clustering_settings.length; i++) {
+            if (global_all_methylation_clustering_settings[i].match(regex) !== null) {
+                matching_clustering_options.push(global_all_methylation_clustering_settings[i]);
             }
         }
     }
@@ -365,15 +390,98 @@ function dynamicClusteringOptions_npc(matching_clustering_options = []) {
     }
     var k_list = [...k_set];
 
-    $("#clustering_k").empty();
+    $("#methylation_clustering_k").empty();
     for (var i = 0; i < k_list.length; i++) {
-        $("#clustering_k").append(
+        $("#methylation_clustering_k").append(
             $("<option></option>").val(k_list[i]).text(k_list[i])
         );
     }
 }
 
-function updateGeneElements(updateMCHCluster=true) {
+function dynamicsnATACTSNEOptions_dimensions(matching_tsne_options = []) {
+    if (matching_tsne_options.length === 0) {
+        var matching_tsne_options = [];
+        var regex = new RegExp("ATAC_ndim" + $("#snATAC_tsne_dimensions").val() + "_\\w+");
+        for (var i = 0; i < global_all_snATAC_tsne_settings.length; i++) {
+            if (global_all_snATAC_tsne_settings[i].match(regex) !== null) {
+                matching_tsne_options.push(global_all_snATAC_tsne_settings[i]);
+            }
+        }
+    }
+
+    var perplexity_set = new Set();
+    for (var i = 0; i < matching_tsne_options.length; i++) {
+        var perplexity = matching_tsne_options[i].split('_')[2];
+        perplexity_set.add(perplexity.replace("perp",""));
+    }
+    var perplexity_list = [...perplexity_set];
+
+    $("#snATAC_tsne_perplexity").empty();
+    for (var i = 0; i < perplexity_list.length; i++) {
+        $("#snATAC_tsne_perplexity").append(
+            $("<option></option>").val(perplexity_list[i]).text(perplexity_list[i])
+        );
+    }
+}
+
+
+function dynamicsnATACClusteringOptions_algorithm(matching_clustering_options = []) {
+    if (matching_clustering_options.length === 0) {
+        var matching_clustering_options = [];
+        var regex = new RegExp('ATAC_'+$("#methylation_clustering_algorithms").val() + "_\\w+");
+
+        for (var i = 0; i < global_all_snATAC_clustering_settings.length; i++) {
+            if (global_all_snATAC_clustering_settings[i].match(regex) !== null) {
+                matching_clustering_options.push(global_all_snATAC_clustering_settings[i]);
+            }
+        }
+    }
+
+    var npc_set = new Set();
+    for (var i = 0; i < matching_clustering_options.length; i++) {
+        var npc = matching_clustering_options[i].split('_')[2].replace("npc","");
+        npc_set.add(npc);
+    }
+    var npc_list = [...npc_set];
+
+    $("#snATAC_clustering_npc").empty();
+    for (var i = 0; i < npc_list.length; i++) {
+        $("#snATAC_clustering_npc").append(
+            $("<option></option>").val(npc_list[i]).text(npc_list[i])
+        );
+    }
+
+    dynamicsnATACClusteringOptions_npc(matching_clustering_options);
+}
+
+function dynamicsnATACClusteringOptions_npc(matching_clustering_options = []) {
+    if (matching_clustering_options.length === 0) {
+        var matching_clustering_options = [];
+        var regex = new RegExp('ATAC_'+$("#snATAC_clustering_algorithms").val()+'_npc'+$("#snATAC_clustering_npc").val() + "_\\w+");
+
+        for (var i = 0; i < global_all_snATAC_clustering_settings.length; i++) {
+            if (global_all_snATAC_clustering_settings[i].match(regex) !== null) {
+                matching_clustering_options.push(global_all_snATAC_clustering_settings[i]);
+            }
+        }
+    }
+
+    var k_set = new Set();
+    for (var i = 0; i < matching_clustering_options.length; i++) {
+        var k = matching_clustering_options[i].split('_')[3].replace("k","");
+        k_set.add(k);
+    }
+    var k_list = [...k_set];
+
+    $("#snATAC_clustering_k").empty();
+    for (var i = 0; i < k_list.length; i++) {
+        $("#snATAC_clustering_k").append(
+            $("<option></option>").val(k_list[i]).text(k_list[i])
+        );
+    }
+}
+
+function updateGeneElements(updateMCHScatter=true) {
     buttons = document.getElementsByClassName('modebar-btn');
     var geneSelected = $('#geneName option:selected').val();
     if (geneSelected != 'Select..' && $("#geneName").select2('data').length > 0) {
@@ -394,8 +502,11 @@ function updateGeneElements(updateMCHCluster=true) {
         if (typeof(Storage) !== 'undefined') {
             storage.save('lastViewedGenes', lastViewedGenes, 5);  // store last viewed genes for 5 minutes
         }
-        if (updateMCHCluster){
-            updateMCHClusterPlot();
+        if (updateMCHScatter){
+            updateMCHScatterPlot();
+            if (snATAC_data_available === 1) {
+                updatesnATACScatterPlot();
+            }
         }
         if($("#geneName").select2('data').length > 1) {
             $('#normalize-heatmap').show();
@@ -435,13 +546,13 @@ function updateGeneElements(updateMCHCluster=true) {
 
 /*
 function loadClusterPlots() {
-    var grouping = $('#tsne_grouping').val();
-    var clustering = $('#tsne_clustering').val();
-    var tsne_type = $('#tsne_types').val();
+    var grouping = $('#methylation_tsne_grouping').val();
+    var clustering = $('#methylation_tsne_clustering').val();
+    var tsne_setting = $('#methylation_tsne_settings').val();
 
     $.ajax({
         type: "GET",
-        url: './plot/tsne/'+ensemble+'/'+tsne_type+'/'+grouping+'/'+clustering, 
+        url: './plot/tsne/'+ensemble+'/'+tsne_setting+'/'+grouping+'/'+clustering, 
         success: function(data) {
             num_colors = getMax(data["traces"], "legendgroup");
             Plotly.newPlot("plot-2d-cluster", Object.values(data["traces"]), data["layout"], {showLink: false});
@@ -451,18 +562,18 @@ function loadClusterPlots() {
 }
 */
 
-function updateMCHClusterPlot() {
+function updateMCHScatterPlot() {
     var levelType = $('input[name=levels]').filter(':checked').val();
     var methylationType = $('input[name=mType]').filter(':checked').val();
-    var pValues = pSlider.getValue();
+    var methylation_color_percentile_Values = methylation_color_percentile_Slider.getValue();
     var genes = $("#geneName").select2('data');
-    var grouping = $('#tsne_grouping').val();
+    var grouping = $('#methylation_tsne_grouping').val();
     var genes_query = "";
 
-    var tsne_type = $("#tsne_methylation").val() + "_ndim" + $("#tsne_dimensions").val() + "_perp" + $("#tsne_perplexity").val();
-    var clustering = $("#clustering_methylation").val()+"_"+$("#clustering_algorithms").val()+"_npc"+$("#clustering_npc").val()+"_k"+$("#clustering_k").val();
+    var tsne_setting = $("#methylation_tsne_methylation").val() + "_ndim" + $("#methylation_tsne_dimensions").val() + "_perp" + $("#methylation_tsne_perplexity").val();
+    var clustering = $("#methylation_clustering_methylation").val()+"_"+$("#methylation_clustering_algorithms").val()+"_npc"+$("#methylation_clustering_npc").val()+"_k"+$("#methylation_clustering_k").val();
 
-    if ($('#tsneOutlierToggle').prop('checked')) {
+    if ($('#methylation_tsneOutlierToggle').prop('checked')) {
         var tsneOutlierOption = 'false';
     } else {
         var tsneOutlierOption = 'true';
@@ -476,7 +587,7 @@ function updateMCHClusterPlot() {
         $.ajax({
         //$.getJSON({
             type: "GET",
-            url: './plot/scatter/'+ensemble+'/'+tsne_type+'/' +methylationType+ '/'+levelType+'/'+grouping+'/'+clustering+'/'+pValues[0]+'/'+pValues[1]+'/'+tsneOutlierOption+'?q='+genes_query,
+            url: './plot/methylation/scatter/'+ensemble+'/'+tsne_setting+'/' +methylationType+ '/'+levelType+'/'+grouping+'/'+clustering+'/'+methylation_color_percentile_Values[0]+'/'+methylation_color_percentile_Values[1]+'/'+tsneOutlierOption+'?q='+genes_query,
             success: function(data) {
                 $('#plot-mch-scatter').html("");
                 //Plotly.newPlot('plot-mch-scatter', data);
@@ -485,10 +596,48 @@ function updateMCHClusterPlot() {
         });
     }
 
-    $("#tsne_heading_num_dimensions").text($("#tsne_dimensions").val() + "D ");
-    $("#tsne_options_heading").text("Methylation Type: " + $("#tsne_methylation").val() + ", Perplexity: " + $("#tsne_perplexity").val());
+    $("#methylation_tsne_heading_num_dimensions").text($("#methylation_tsne_dimensions").val() + "D ");
+    $("#methylation_tsne_options_heading").text("Methylation Type: " + $("#methylation_tsne_methylation").val() + ", Perplexity: " + $("#methylation_tsne_perplexity").val());
 
-    $("#clustering_options_heading").text("Algorithm: " + $("#clustering_algorithms").val() + ", Methylation Type: " + $("#clustering_methylation").val() + ", # of PCs: " + $("#clustering_npc").val() + ", K-value: " + $("#clustering_k").val());
+    $("#methylation_clustering_options_heading").text("Algorithm: " + $("#methylation_clustering_algorithms").val() + ", Methylation Type: " + $("#methylation_clustering_methylation").val() + ", # of PCs: " + $("#methylation_clustering_npc").val() + ", K-value: " + $("#methylation_clustering_k").val());
+}
+
+function updatesnATACScatterPlot() {
+    var tsne_settings = "ATAC_ndim"+$("#snATAC_tsne_dimensions").val()+"_perp"+$("#snATAC_tsne_perplexity").val();
+    //var grouping = $("#snATAC_tsne_grouping").val();
+    var grouping = "cluster";
+    var clustering_settings = "ATAC_"+$("#snATAC_clustering_algorithms").val()+"_npc"+$("#snATAC_clustering_npc").val()+"_k"+$("#snATAC_clustering_k").val();
+    var snATAC_color_percentile_Values = snATAC_color_percentile_Slider.getValue();
+    var genes = $("#geneName").select2('data');
+    var genes_query = "";
+
+    if ($('#snATAC_tsneOutlierToggle').prop('checked')) {
+        var tsneOutlierOption = 'false';
+    } else {
+        var tsneOutlierOption = 'true';
+    }
+
+    for (i = 0; i < genes.length; i++) {
+        genes_query += (genes[i].id + "+");
+    }
+    genes_query = genes_query.slice(0,-1);
+    if ($('#geneName option:selected').val() != 'Select..') {
+        $.ajax({
+        //$.getJSON({
+            type: "GET",
+            url: './plot/snATAC/scatter/'+ensemble+'/'+grouping+'/'+snATAC_color_percentile_Values[0]+'/'+snATAC_color_percentile_Values[1]+'/'+tsneOutlierOption+'?q='+genes_query,
+            success: function(data) {
+                $('#plot-snATAC-scatter').html("");
+                //Plotly.newPlot('plot-mch-scatter', data);
+                $('#plot-snATAC-scatter').html(data);
+            }
+        });
+    }
+
+    $("#snATAC_tsne_heading_num_dimensions").text($("#snATAC_tsne_dimensions").val() + "D ");
+    $("#snATAC_tsne_options_heading").text("Perplexity: " + $("#snATAC_tsne_perplexity").val());
+
+    $("#snATAC_clustering_options_heading").text("Algorithm: " + $("#snATAC_clustering_algorithms").val() + ", # of PCs: " + $("#snATAC_clustering_npc").val() + ", K-value: " + $("#snATAC_clustering_k").val());
 }
 
 function updateOrthologToggle() {
@@ -566,8 +715,8 @@ function updateMCHBoxPlot() {
     var levelType = $('input[name=levels]').filter(':checked').val();
     var methylationType = $('input[name=mType]').filter(':checked').val();
     var geneSelected = $('#geneName option:selected').val();
-    var grouping = $('#tsne_grouping').val();
-    var clustering = $("#clustering_methylation").val()+"_"+$("#clustering_algorithms").val()+"_npc"+$("#clustering_npc").val()+"_k"+$("#clustering_k").val();
+    var grouping = $('#methylation_tsne_grouping').val();
+    var clustering = $("#methylation_clustering_methylation").val()+"_"+$("#methylation_clustering_algorithms").val()+"_npc"+$("#methylation_clustering_npc").val()+"_k"+$("#methylation_clustering_k").val();
     if ($('#orthologsToggle').prop('checked')) {
         return updateMCHCombinedBoxPlot(mmu_gID, hsa_gID);
     }
@@ -579,7 +728,7 @@ function updateMCHBoxPlot() {
 
     $.ajax({
         type: "GET",
-        url: './plot/box/'+ensemble+'/'+methylationType+'/'+geneSelected+'/'+grouping+'/'+clustering+'/'+levelType+'/'+outlierOption,
+        url: './plot/methylation/box/'+ensemble+'/'+methylationType+'/'+geneSelected+'/'+grouping+'/'+clustering+'/'+levelType+'/'+outlierOption,
         success: function(data) {
             $('#plot-mch-heat').html("");
             $('#mch_box_div').addClass("col-md-9");
@@ -615,11 +764,11 @@ function updateMCHCombinedBoxPlot(mmu_gid, hsa_gid) {
 function createHeatmap() {
     var levelType = $('input[name=levels]').filter(':checked').val();
     var methylationType = $('input[name=mType]').filter(':checked').val();
-    var pValues = pSlider.getValue();
+    var methylation_color_percentile_Values = methylation_color_percentile_Slider.getValue();
     var genes = $("#geneName").select2('data');
     var genes_query = "";
-    var grouping = $('#tsne_grouping').val();
-    var clustering = $("#clustering_methylation").val()+"_"+$("#clustering_algorithms").val()+"_npc"+$("#clustering_npc").val()+"_k"+$("#clustering_k").val();
+    var grouping = $("#methylation_tsne_grouping").val();
+    var clustering = $("#methylation_clustering_methylation").val()+"_"+$("#methylation_clustering_algorithms").val()+"_npc"+$("#methylation_clustering_npc").val()+"_k"+$("#methylation_clustering_k").val();
 
     for (i = 0; i < genes.length; i++) {
         genes_query += (genes[i].id + "+");
@@ -634,7 +783,7 @@ function createHeatmap() {
 
     $.ajax({
         type: "GET",
-        url: './plot/heat/'+ensemble+'/'+methylationType+'/'+grouping+'/'+clustering+'/'+levelType+'/'+pValues[0]+'/'+pValues[1]+'?q='+genes_query+'&normalize='+normalize,
+        url: './plot/methylation/heat/'+ensemble+'/'+methylationType+'/'+grouping+'/'+clustering+'/'+levelType+'/'+methylation_color_percentile_Values[0]+'/'+methylation_color_percentile_Values[1]+'?q='+genes_query+'&normalize='+normalize,
         success: function(data) {
             $('#plot-mch-box').html("");
             $('#gene_table_div').hide();
@@ -648,7 +797,7 @@ function createHeatmap() {
 function createHeatmapTwoSpecies() {
     var levelType = $('input[name=levels]').filter(':checked').val();
     var methylationType = $('input[name=mType]').filter(':checked').val();
-    var pValues = pSlider.getValue();
+    var methylation_color_percentile_Values = methylation_color_percentile_Slider.getValue();
     var genes = $("#geneName").select2('data');
     var genes_query = "";
     
@@ -665,7 +814,7 @@ function createHeatmapTwoSpecies() {
 
     $.ajax({
         type: "GET",
-        url: './plot/heat_two_ensemble/'+ensemble+'/'+methylationType+'/'+levelType+'/'+pValues[0]+'/'+pValues[1]+'?q='+genes_query+'&normalize='+normalize,
+        url: './plot/heat_two_ensemble/'+ensemble+'/'+methylationType+'/'+levelType+'/'+methylation_color_percentile_Values[0]+'/'+methylation_color_percentile_Values[1]+'?q='+genes_query+'&normalize='+normalize,
         success: function(data) {
             $('#plot-mch-box').html("");
             $('#gene_table_div').hide();

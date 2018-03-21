@@ -27,33 +27,64 @@
                     </div>
                 </div>
             </div>
+
+            <!-- tSNE (methylation) SCATTER PLOTS -->
 			<div style="position:relative; left:0; z-index:2;">
 				<div class="col-md-12 col-sm-12">
 					<div class="panel panel-default panel-main" style="overflow-x: auto; margin-left:auto; margin-right:auto;">
 						<div class="panel-heading">
 							<div class="panel-title">
-                                <a data-toggle="collapse" title="" href="#cluster_plots" style="margin-top: 0px;" data-original-title="Collapse Search Options"><b>{{ ensemble_name }}</b>{% if gene is defined %} - {{ gene }}{% endif %}&nbsp;
-                                    <span id="tsne_heading_num_dimensions">&nbsp;</span> tSNE: 
-                                    <span id="tsne_options_heading" style="font-size:0.8em;">&nbsp;</span>
+                                <a data-toggle="collapse" title="" href="#methylation_scatter_plots" style="margin-top: 0px;" data-original-title="Collapse Methylation Scatter Plot Container"><b>{{ ensemble_name }} (sn-Methylation)</b>{% if gene is defined %} - {{ gene }}{% endif %}&nbsp;
+                                    <span id="methylation_tsne_heading_num_dimensions">&nbsp;</span> tSNE: 
+                                    <span id="methylation_tsne_options_heading" style="font-size:0.8em;">&nbsp;</span>
                                     &nbsp;| Clustering: 
-                                    <span id="clustering_options_heading" style="font-size:0.8em;">&nbsp;</span>
+                                    <span id="methylation_clustering_options_heading" style="font-size:0.8em;">&nbsp;</span>
                                     <span class="glyphicon glyphicon-chevron-down"></span>
                                 </a>
-                                <a data-toggle="collapse" title="" data-placement="left" href="#tsne_plots_options" class="btn btn-sm btn-basic pull-right" style="margin-top: 0px;" data-original-title="Collapse Search Options"><span class="glyphicon glyphicon-cog"></span></a>
-                                <!--<button id="toggle-scatter-options-dialog" class="pull-right" style="margin-top:0px;"><span class="glyphicon glyphicon-cog"></button>-->
+                                <a data-toggle="collapse" title="" data-placement="left" href="#methylation_tsne_plots_options" class="btn btn-sm btn-basic pull-right" style="margin-top: 0px;" data-original-title="Collapse Methylation tSNE Options"><span class="glyphicon glyphicon-cog"></span></a>
 							</div>
 						</div>
-                        <div class="panel-collapse collapse in" id="cluster_plots">
+                        <div class="panel-collapse collapse in" id="methylation_scatter_plots">
 							<div class="panel-body flex-container" style="padding:0px">
                                 <div class="col-md-12 col-sm-12 flex-item" id="methyl_scatter_div" style="padding: 0px">
-                                    {% include "components/mch_cluster.html" %}
+                                    {% include "components/mch_scatter.html" %}
                                 </div>
-								</div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            {% if snATAC_data_available == 1 %}
+            <!-- tSNE (snATAC) Scatter Plots -->
+			<div style="position:relative; left:0; z-index:2;">
+				<div class="col-md-12 col-sm-12">
+					<div class="panel panel-default panel-main" style="overflow-x: auto; margin-left:auto; margin-right:auto;">
+						<div class="panel-heading">
+							<div class="panel-title">
+                                <a data-toggle="collapse" title="" href="#snATAC_scatter_plots" style="margin-top: 0px;" data-original-title="Collapse snATAC Scatter Plot Container"><b>{{ ensemble_name }} (snATAC)</b>{% if gene is defined %} - {{ gene }}{% endif %}&nbsp;
+                                    <!--<span id="snATAC_tsne_heading_num_dimensions">&nbsp;</span> tSNE: 
+                                    <span id="snATAC_tsne_options_heading" style="font-size:0.8em;">&nbsp;</span>
+                                    &nbsp;| Clustering: 
+                                    <span id="snATAC_clustering_options_heading" style="font-size:0.8em;">&nbsp;</span>-->
+                                    <span class="glyphicon glyphicon-chevron-down"></span>
+                                </a>
+                                <a data-toggle="collapse" title="" data-placement="left" href="#snATAC_tsne_plots_options" class="btn btn-sm btn-basic pull-right" style="margin-top: 0px;" data-original-title="Collapse snATAC tSNE Options"><span class="glyphicon glyphicon-cog"></span></a>
 							</div>
 						</div>
-					</div>
-				</div>
-			</div>
+                        <div class="panel-collapse collapse in" id="snATAC_cluster_plots">
+							<div class="panel-body flex-container" style="padding:0px">
+                                <div class="col-md-12 col-sm-12 flex-item" id="snATAC_scatter_div" style="padding: 0px">
+                                    {% include "components/snATAC_scatter.html" %}
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            {% endif %}
+
+            <!-- Methylation Box plot/Heatmap -->
 			<div class="col-sm-12" style="position:relative; z-index:2;">
 				<div class="panel panel-default panel-main" style="overflow-x: auto; margin-left:auto; margin-right:auto; display:none;" id="methyl_graphs_div">
 					<div class="panel-heading">
@@ -142,7 +173,9 @@
 <script src="./static/customview.js" type="text/javascript"></script> 
 <script>
     var ensemble = "{{ ensemble }}";
-    var pSlider;
+    var snATAC_data_available = {{ snATAC_data_available }};
+    var methylation_color_percentile_Slider;
+    var snATAC_color_percentile_Slider;
     var geneSearchCache;
     var mmu_gID;
     var hsa_gID;
@@ -155,18 +188,32 @@
         $('#outlierToggle').bootstrapToggle();
         $('#orthologsToggle').bootstrapToggle();
         $('#orthologsToggle').bootstrapToggle('disable');
-        $('#tsneOutlierToggle').bootstrapToggle();
+        $('#methylation_tsneOutlierToggle').bootstrapToggle();
 
-        $('#tsne_header').append($('#tsne_types').val());
+        $('#methylation_tsne_header').append($('#methylation_tsne_settings').val());
+
         // Percentile changes are handled separately, as every change would result in a plot update, but we want
         // this to happen when sliding is actually stopped.
-        pSlider = $("#percentile").slider({
+        methylation_color_percentile_Slider = $("#methylation_color_percentile").slider({
             min: 0,
             max: 1,
             step: 0.05,
             value: [0.05, 0.95],
-        }).on('slideStop', updateMCHClusterPlot).data('slider');
+        }).on('slideStop', updateMCHScatterPlot).data('slider');
 
+        if (snATAC_data_available === 1) {
+            snATAC_color_percentile_Slider = $("#snATAC_color_percentile").slider({
+                min: 0,
+                max: 1,
+                step: 0.05,
+                value: [0.05, 0.95],
+            }).on('slideStop', updatesnATACScatterPlot).data('slider');
+
+            $('#snATAC_tsneOutlierToggle').bootstrapToggle();
+
+            //populatesnATACTSNEDropdowns();
+        }
+        
         table = $('#geneTable').DataTable( {
             "destroy": true,
             "ordering": false,
@@ -179,11 +226,12 @@
         });
         buttons = $('.modebar-btn');
 
-        populateTSNEDropdowns();
+        populateMethylationTSNEDropdowns();
         initGeneNameSearch();
         initGeneModules();
         initDataTableClick();
         updateGeneElements();
+
     });
 
     $("#methylationLevelDiv :input, #methylationTypeDiv :input").change(function() {
@@ -200,32 +248,25 @@
         clearTimeout(resizeTimer);
         resizeTimer = setTimeout(function() {
             if($("#geneName").select2('data').length > 0){  //if one or more genes have been selected
-                if($('#cluster_plots').hasClass("in")){
+                if($('#methylation_scatter_plots').hasClass("in")){
                     try{
-                        buttons[8].click(); //button for autoscaling tsne_cluster
-                        buttons[20].click();  //button for autoscaling mch_cluster
+                        buttons[8].click(); //button for autoscaling methylation_tsne_scatter
                     }
-                    catch(err) {
-                        console.log(err);
-                    }
+                    catch(err) {}
                 }
                 if($('#mch_box').hasClass("in")){
                     try{
-                        buttons[32].click();  //button for autoscaling mch_box/heatmap
+                        buttons[20].click();  //button for autoscaling mch_box/heatmap
                     }
-                    catch(err) {
-                        console.log(err);
-                    }
+                    catch(err) {}
                 }
             }
             else{
-                if($('#cluster_plots').hasClass("in")){
+                if($('#methylation_scatter_plots').hasClass("in")){
                     try{
-                        buttons[8].click();  //button for autoscaling tsne_cluster
+                        buttons[8].click();  //button for autoscaling methylation_tsne_scatter
                     }
-                    catch(err) {
-                        console.log(err);
-                    }
+                    catch(err) {}
                 }
             }
         }, 250);
@@ -237,11 +278,10 @@
         updateSearchWithModules(data);
     });
 
-    $('#clear-btn').click(function() {
+    $('#clear-gene-search-btn').click(function() {
         geneModuleSelector.val(null).trigger("change");
         geneNameSelector.val(null).trigger("change");
         storage.save('lastViewedGenes', [], 5);  // store last viewed genes for 5 minutes
-        $('#gene-search-btn').click();
     });
 
     $("#outlierToggle, #orthologsToggle").change(function() {
@@ -268,38 +308,41 @@
         display3DPlotToggle();
     });
 
-    $("#tsneUpdateBtn").click(function() {
+    $("#methylation_tsneUpdateBtn").click(function() {
         updateGeneElements();
     });
 
-    $("#tsneOutlierToggle").change(function() {
-        updateMCHClusterPlot();
+    $("#methylation_tsneOutlierToggle").change(function() {
+        updateMCHScatterPlot();
+    });
+
+    $("#snATAC_tsneOutlierToggle").change(function() {
+        updatesnATACScatterPlot();
+    });
+
+    /* DYNAMIC TSNE (methylation) DROPDOWN OPTIONS */
+    $("#methylation_tsne_methylation").change(function() {
+        dynamicMethylationTSNEOptions_methylation();
+    });
+    $("#methylation_tsne_dimensions").change(function() {
+        dynamicMethylationTSNEOptions_dimensions();
     });
 
 
-    /* DYNAMIC TSNE DROPDOWN OPTIONS */
-    $("#tsne_methylation").change(function() {
-        dynamicTSNEOptions_methylation();
+    /* DYNAMIC CLUSTERING (methylation) DROPDOWN OPTIONS */
+    $("#methylation_clustering_methylation").change(function() {
+        dynamicMethylationClusteringOptions_methylation();
     });
-    $("#tsne_dimensions").change(function() {
-        dynamicTSNEOptions_dimensions();
+    $("#methylation_clustering_algorithms").change(function() {
+        dynamicMethylationClusteringOptions_algorithm();
     });
-
-
-    /* DYNAMIC CLUSTERING DROPDOWN OPTIONS */
-    $("#clustering_methylation").change(function() {
-        dynamicClusteringOptions_methylation();
-    });
-    $("#clustering_algorithms").change(function() {
-        dynamicClusteringOptions_algorithm();
-    });
-    $("#clustering_npc").change(function() {
-        dynamicClusteringOptions_npc();
+    $("#methylation_clustering_npc").change(function() {
+        dynamicMethylationClusteringOptions_npc();
     });
 
     /*
-    $("#tsne_grouping, #tsne_clustering").change(function() {
-        updateGeneElements(updateMCHCluster=false);
+    $("#methylation_tsne_grouping, #methylation_tsne_clustering").change(function() {
+        updateGeneElements(updateMCHScatter=false);
     });*/
     
 </script>

@@ -1,0 +1,62 @@
+<!--<div class="panel-collapse collapse cluster_options_group" id="snATAC_tsne_plots_options">
+    <div class="panel-body option-panel" style="padding-top:0px; padding-bottom: 0px;">
+        <div class="container-fluid">
+            <div class="row-fluid">
+                <div id="snATAC_tsneType" class="col-xsm-12 col-md-5" style=" display:block; padding:0px;">
+                    <h6>tSNE: </h6>
+                    <label for="snATAC_tsne_dimensions">
+                        <a href="#" class="hover-tooltip" data-toggle="popover" data-trigger="hover" data-placement="right" title="Number of Dimensions" data-content="Choose between 2D or 3D (if available) tSNE coordinates."># Dimensions: </a>
+                    </label>
+                    <select id="snATAC_tsne_dimensions" class="snATAC_tsne_option" name="snATAC_tsne_dimensions">
+                    </select>
+                    &nbsp;
+                    <label for="snATAC_tsne_perplexity">
+                        <a href="#" class="hover-tooltip" data-toggle="popover" data-trigger="hover" data-placement="bottom" title="Perplexity" data-content="Parameter for tuning tSNE.">Perplexity: </a>
+                    </label>
+                    <select id="snATAC_tsne_perplexity" class="snATAC_tsne_option" name="snATAC_tsne_perplexity">
+                    </select>
+                </div>
+                <div class="col-xsm-12 col-sm-4 col-md-2" id="snATAC_tsneGrouping" style="display:block;">
+                    <h6>Grouping: </h6>
+                    <select id="snATAC_tsne_grouping" class="snATAC_tsne_option" name="snATAC_tsne_grouping">
+                        <option value="cluster">by cluster</option>
+                        <option value="annotation" selected>by cluster annotation</option>
+                        <option value="dataset">by dataset</option>
+                    </select>
+                </div>
+                <div class="col-xsm-12 col-sm-12 col-md-5" id="snATAC_tsneClustering" style="display:block; padding:0px">
+                    <h6>Clustering: </h6>
+                    <label for="snATAC_clustering_algorithms">
+                        <a class="hover-tooltip" href="#" data-toggle="popover" data-trigger="hover" data-placement="bottom" title="Algorithm" data-content="lv = Louvain Modularity.">Algorithm: </a>
+                    </label>
+                    <select id="snATAC_clustering_algorithms" class="snATAC_tsne_option" name="snATAC_clustering_algorithms"></select>
+                    &nbsp;
+                    <label for="snATAC_clustering_npc">
+                        <a class="hover-tooltip" href="#" data-toggle="popover" data-trigger="hover" data-placement="bottom" title="Principal Components" data-content="Number of principal components kept for clustering."># of PC's: </a>
+                    </label>
+                    <select id="snATAC_clustering_npc" class="snATAC_tsne_option" name="snATAC_clustering_npc"></select>
+                    &nbsp;
+                    <label for="snATAC_clustering_k">
+                        <a class="hover-tooltip" href="#" data-toggle="popover" data-trigger="hover" data-placement="bottom" title="K-value" data-content="Number of nearest neighbors (neighboring cells).">K-value: </a>
+                    </label>
+                    <select id="snATAC_clustering_k" class="snATAC_tsne_option" name="snATAC_clustering_k"></select>
+                </div>
+            </div>
+            <div class="col-sm-1 col-sm-offset-5" style="padding-bottom:10px;">
+                <br />
+                <button class="btn-sm btn-primary" id="snATAC_tsneUpdateBtn">Update</button>
+            </div>
+        </div>
+    </div>
+</div>
+-->
+<div class="panel-body" style="padding-top:0px;">
+    <div id="plot-snATAC-scatter">Loading...</div>
+    <div id="snATAC_tsneOutlierOptions" style="float:left;">
+        <input id="snATAC_tsneOutlierToggle" data-toggle="toggle" data-on="Outliers On" data-off="Outliers Off" type="checkbox">
+    </div>
+    <div class="col-xs-12 col-sm-3" id="snATAC_color_percentileCol" style="float:right;">
+        <label for="snATAC_color_percentile" class="control-label" style="text-align: right">Color scale percentile:&nbsp;</label>
+        <input id="snATAC_color_percentile" type="text" value="" />
+    </div>
+</div>
