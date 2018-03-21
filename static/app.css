@@ -38,7 +38,7 @@ body {
     width:100%;
 }
 
-#outlierOptions {
+.outlierOptions {
     text-align: right;
     float: left;
     right: 10%;

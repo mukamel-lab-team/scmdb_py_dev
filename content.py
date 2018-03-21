@@ -836,12 +836,12 @@ def get_gene_snATAC(ensemble, gene, grouping, outliers):
     if grouping == 'annotation':
         df.fillna({'annotation_ATAC': 'None'}, inplace=True)
         df['annotation_cat'] = pd.Categorical(df['annotation_ATAC'], cluster_annotation_order)
-        return df.sort_values(by='annotation_cat')
+        df.sort_values(by='annotation_cat', inplace=True)
+        df.drop('annotation_cat', axis=1, inplace=True)
     elif grouping == 'cluster':
-        return df.sort_values(by='cluster_ATAC')
-    else:
-        return df
+        df.sort_values(by='cluster_ATAC', inplace=True)
 
+    return df
 
 @cache.memoize(timeout=1800)
 def get_mult_gene_snATAC(ensemble, genes, grouping):
@@ -1006,8 +1006,12 @@ def get_snATAC_scatter(ensemble, genes_query, grouping, ptile_start, ptile_end, 
 
     ### TSNE ### 
     if grouping != 'dataset':
-        if grouping+'_ATAC' not in points.columns or points[grouping+'_ATAC'].nunique() <= 1:
+        if grouping+'_ATAC' not in points.columns: # If no cluster annotations available, group by cluster number instead
             grouping = "cluster"
+            if len(genes) == 1:
+                points = get_gene_snATAC(ensemble, genes[0], grouping, True)
+            else:
+                points = get_mult_gene_snATAC(ensemble, genes, grouping)
             print("**** Grouping by cluster")
 
     datasets = points['dataset'].unique().tolist()
@@ -1095,7 +1099,7 @@ def get_snATAC_scatter(ensemble, genes_query, grouping, ptile_start, ptile_end, 
                                              'Cluster': point[4]})
                            for point in points_group.itertuples(index=False)]
 
-    ### snATAC reads SCATTER ### 
+    ### snATAC normalized counts scatter plot ### 
     x = points['tsne_x_ATAC'].tolist()
     y = points['tsne_y_ATAC'].tolist()
     ATAC_counts = points['normalized_counts']

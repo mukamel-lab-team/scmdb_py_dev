@@ -1,8 +1,8 @@
-<!--<div class="panel-collapse collapse cluster_options_group" id="snATAC_tsne_plots_options">
+<div class="panel-collapse collapse cluster_options_group" id="snATAC_tsne_plots_options">
     <div class="panel-body option-panel" style="padding-top:0px; padding-bottom: 0px;">
         <div class="container-fluid">
             <div class="row-fluid">
-                <div id="snATAC_tsneType" class="col-xsm-12 col-md-5" style=" display:block; padding:0px;">
+                <!--<div id="snATAC_tsneType" class="col-xsm-12 col-md-5" style=" display:block; padding:0px;">
                     <h6>tSNE: </h6>
                     <label for="snATAC_tsne_dimensions">
                         <a href="#" class="hover-tooltip" data-toggle="popover" data-trigger="hover" data-placement="right" title="Number of Dimensions" data-content="Choose between 2D or 3D (if available) tSNE coordinates."># Dimensions: </a>
@@ -15,16 +15,16 @@
                     </label>
                     <select id="snATAC_tsne_perplexity" class="snATAC_tsne_option" name="snATAC_tsne_perplexity">
                     </select>
-                </div>
+                </div>-->
                 <div class="col-xsm-12 col-sm-4 col-md-2" id="snATAC_tsneGrouping" style="display:block;">
                     <h6>Grouping: </h6>
                     <select id="snATAC_tsne_grouping" class="snATAC_tsne_option" name="snATAC_tsne_grouping">
-                        <option value="cluster">by cluster</option>
-                        <option value="annotation" selected>by cluster annotation</option>
+                        <option value="cluster" selected>by cluster</option>
+                        <option value="annotation">by cluster annotation</option>
                         <option value="dataset">by dataset</option>
                     </select>
                 </div>
-                <div class="col-xsm-12 col-sm-12 col-md-5" id="snATAC_tsneClustering" style="display:block; padding:0px">
+                <!--<div class="col-xsm-12 col-sm-12 col-md-5" id="snATAC_tsneClustering" style="display:block; padding:0px">
                     <h6>Clustering: </h6>
                     <label for="snATAC_clustering_algorithms">
                         <a class="hover-tooltip" href="#" data-toggle="popover" data-trigger="hover" data-placement="bottom" title="Algorithm" data-content="lv = Louvain Modularity.">Algorithm: </a>
@@ -40,7 +40,7 @@
                         <a class="hover-tooltip" href="#" data-toggle="popover" data-trigger="hover" data-placement="bottom" title="K-value" data-content="Number of nearest neighbors (neighboring cells).">K-value: </a>
                     </label>
                     <select id="snATAC_clustering_k" class="snATAC_tsne_option" name="snATAC_clustering_k"></select>
-                </div>
+                </div>-->
             </div>
             <div class="col-sm-1 col-sm-offset-5" style="padding-bottom:10px;">
                 <br />
@@ -49,7 +49,6 @@
         </div>
     </div>
 </div>
--->
 <div class="panel-body" style="padding-top:0px;">
     <div id="plot-snATAC-scatter">Loading...</div>
     <div id="snATAC_tsneOutlierOptions" style="float:left;">

@@ -89,8 +89,8 @@
 				<div class="panel panel-default panel-main" style="overflow-x: auto; margin-left:auto; margin-right:auto; display:none;" id="methyl_graphs_div">
 					<div class="panel-heading">
 						<div class="panel-title">
-							<a data-toggle="collapse" title="" href="#mch_box" style="margin-top: 0px;">Gene methylation level &nbsp;<span class="glyphicon glyphicon-chevron-down"></span></a>
-							<a data-toggle="collapse" title="" data-placement="left" href="#box-heatmap-options" class="btn btn-sm btn-basic pull-right" style="margin-top: 0px;"><span class="glyphicon glyphicon-cog"></span></a>
+                            <a data-toggle="collapse" title="" href="#mch_box" style="margin-top: 0px;"><b>Gene body methylation level &nbsp;</b><span class="glyphicon glyphicon-chevron-down"></span></a>
+							<a data-toggle="collapse" title="" data-placement="left" href="#methylation-box-heatmap-options" class="btn btn-sm btn-basic pull-right" style="margin-top: 0px;"><span class="glyphicon glyphicon-cog"></span></a>
 					   </div>
 				   </div>
 				   <div class="panel-collapse collapse in" id="mch_box">
@@ -105,6 +105,32 @@
 					</div>
 				</div>
 			</div>
+
+            <!-- snATAC Box plot/Heatmap -->
+            {% if snATAC_data_available == 1 %}
+            <!--
+			<div class="col-sm-12" style="position:relative; z-index:2;">
+				<div class="panel panel-default panel-main" style="overflow-x: auto; margin-left:auto; margin-right:auto; display:none;" id="methyl_graphs_div">
+					<div class="panel-heading">
+						<div class="panel-title">
+                            <a data-toggle="collapse" title="" href="#snATAC_box" style="margin-top: 0px;"><b>Gene body snATAC normalized counts &nbsp;</b><span class="glyphicon glyphicon-chevron-down"></span></a>
+							<a data-toggle="collapse" title="" data-placement="left" href="#snATAC-box-heatmap-options" class="btn btn-sm btn-basic pull-right" style="margin-top: 0px;"><span class="glyphicon glyphicon-cog"></span></a>
+					   </div>
+				   </div>
+				   <div class="panel-collapse collapse in" id="snATAC_box">
+						<div class="panel-body">
+							<div class="col-md-9 col-sm-12" id="snATAC_box_div">
+								{% include "components/snATAC_box.html" %}
+							</div>
+                            {# <div class="col-md-3 col-sm-12" id="gene_table_div">
+								{% include "components/mch_table.html" %}
+                            </div> #}
+						</div>
+					</div>
+				</div>
+			</div>
+            -->
+            {% endif %}
 		</div>
 	</div>
     <footer id="footer" class="footer">
@@ -185,7 +211,7 @@
 
     $(document).ready(function() {
         $('[data-toggle="popover"]').popover();
-        $('#outlierToggle').bootstrapToggle();
+        $('#methylation-box-heat-outlierToggle').bootstrapToggle();
         $('#orthologsToggle').bootstrapToggle();
         $('#orthologsToggle').bootstrapToggle('disable');
         $('#methylation_tsneOutlierToggle').bootstrapToggle();
@@ -247,28 +273,36 @@
     $(window).on('resize', function(e) {
         clearTimeout(resizeTimer);
         resizeTimer = setTimeout(function() {
-            if($("#geneName").select2('data').length > 0){  //if one or more genes have been selected
-                if($('#methylation_scatter_plots').hasClass("in")){
+            if($('#methylation_scatter_plots').hasClass("in")){
+                try{
+                    buttons[8].click(); //button for autoscaling methylation_tsne_scatter
+                }
+                catch(err) {}
+            }
+            if (snATAC_data_available === 1) {
+                if ($("#snATAC_scatter_plots").hasClass("in")){
                     try{
-                        buttons[8].click(); //button for autoscaling methylation_tsne_scatter
+                        buttons[22].click(); // button for autoscaling snATAC_tsne_scatter
                     }
                     catch(err) {}
                 }
+
                 if($('#mch_box').hasClass("in")){
                     try{
-                        buttons[20].click();  //button for autoscaling mch_box/heatmap
+                        buttons[34].click();  //button for autoscaling methylation mch_box/heatmap when snATAC data is displayed.
                     }
                     catch(err) {}
                 }
             }
-            else{
-                if($('#methylation_scatter_plots').hasClass("in")){
+            else {
+                if ($("#mch_box").hasClass("in")) {
                     try{
-                        buttons[8].click();  //button for autoscaling methylation_tsne_scatter
+                        buttons[20].click(); // button for autoscaling methylation mch_box/heatmap when snATAC is NOT displayed.
                     }
                     catch(err) {}
                 }
             }
+
         }, 250);
     });
 
@@ -284,7 +318,7 @@
         storage.save('lastViewedGenes', [], 5);  // store last viewed genes for 5 minutes
     });
 
-    $("#outlierToggle, #orthologsToggle").change(function() {
+    $("#methylation-box-heat-outlierToggle, #orthologsToggle").change(function() {
         if ($('#geneName').select2('data').length === 1)
             updateMCHBoxPlot();
         else {
@@ -295,7 +329,7 @@
         }
     });
 
-    $("#normalize-toggle").change(function() {
+    $("#methylation-box-heat-normalize-toggle").change(function() {
         if ($('#geneName').select2('data').length > 1) {
             if ($('#orthologsToggle').prop('checked'))
                 createHeatmapTwoSpecies();
@@ -309,7 +343,11 @@
     });
 
     $("#methylation_tsneUpdateBtn").click(function() {
-        updateGeneElements();
+        updateMCHScatterPlot();
+    });
+
+    $("#snATAC_tsneUpdateBtn").click(function() {
+        updatesnATACScatterPlot();
     });
 
     $("#methylation_tsneOutlierToggle").change(function() {
@@ -327,7 +365,6 @@
     $("#methylation_tsne_dimensions").change(function() {
         dynamicMethylationTSNEOptions_dimensions();
     });
-
 
     /* DYNAMIC CLUSTERING (methylation) DROPDOWN OPTIONS */
     $("#methylation_clustering_methylation").change(function() {
