@@ -939,11 +939,10 @@ def get_mult_gene_snATAC(ensemble, genes, grouping):
     if grouping == 'annotation':
         df_coords.fillna({'annotation_ATAC': 'None'}, inplace=True)
         df_coords['annotation_cat'] = pd.Categorical(df_coords['annotation_ATAC'], cluster_annotation_order)
-        return df_coords.sort_values(by='annotation_cat')
+        df_coords.sort_values(by='annotation_cat', inplace=True)
     elif grouping == 'cluster':
-        return df_coords.sort_values(by='cluster_ATAC')
-    else:
-        return df_coords
+        df_coords.sort_values(by='cluster_ATAC', inplace=True)
+    return df_coords
 
 
 @cache.memoize(timeout=3600)
