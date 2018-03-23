@@ -485,9 +485,6 @@ function updateGeneElements(updateMCHScatter=true) {
     buttons = document.getElementsByClassName('modebar-btn');
     var geneSelected = $('#geneName option:selected').val();
     if (geneSelected != 'Select..' && $("#geneName").select2('data').length > 0) {
-        $('#tSNE_cluster_div').addClass("col-md-6");
-        $('#tSNE_cluster_div').removeClass("col-md-8 col-md-offset-2");
-        $('#methyl_scatter_div, #methyl_graphs_div').show();
         $('#orthologsToggle').bootstrapToggle('off');
         $('#orthologsToggle').bootstrapToggle('enable');
 
@@ -539,13 +536,6 @@ function updateGeneElements(updateMCHScatter=true) {
                 }
             });
         }
-    }
-    else{
-        $('#methyl_scatter_div, #methyl_graphs_div').hide();
-        $('#tSNE_cluster_div').addClass("col-md-8 col-md-offset-2");
-        $('#tSNE_cluster_div').removeClass("col-md-6");
-        try{buttons[8].click();}
-        catch(e) {}
     }
 }
 

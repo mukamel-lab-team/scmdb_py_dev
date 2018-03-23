@@ -28,26 +28,39 @@
                 </div>
             </div>
 
-            <!-- tSNE (methylation) SCATTER PLOTS -->
+            <!-- Methylation PLOTS -->
 			<div style="position:relative; left:0; z-index:2;">
 				<div class="col-md-12 col-sm-12">
 					<div class="panel panel-default panel-main" style="overflow-x: auto; margin-left:auto; margin-right:auto;">
 						<div class="panel-heading">
 							<div class="panel-title">
-                                <a data-toggle="collapse" title="" href="#methylation_scatter_plots" style="margin-top: 0px;" data-original-title="Collapse Methylation Scatter Plot Container"><b>{{ ensemble_name }} (sn-Methylation)</b>{% if gene is defined %} - {{ gene }}{% endif %}&nbsp;
+                                <a data-toggle="collapse" title="" href="#methylation-plots" style="margin-top: 0px;" data-original-title="Collapse Methylation Scatter Plot Container"><b>{{ ensemble_name }} (snmC-seq)</b>{% if gene is defined %} - {{ gene }}{% endif %}&nbsp;
                                     <span id="methylation_tsne_heading_num_dimensions">&nbsp;</span> tSNE: 
                                     <span id="methylation_tsne_options_heading" style="font-size:0.8em;">&nbsp;</span>
                                     &nbsp;| Clustering: 
                                     <span id="methylation_clustering_options_heading" style="font-size:0.8em;">&nbsp;</span>
                                     <span class="glyphicon glyphicon-chevron-down"></span>
                                 </a>
-                                <a data-toggle="collapse" title="" data-placement="left" href="#methylation_tsne_plots_options" class="btn btn-sm btn-basic pull-right" style="margin-top: 0px;" data-original-title="Collapse Methylation tSNE Options"><span class="glyphicon glyphicon-cog"></span></a>
+                                <a data-toggle="collapse" title="" data-placement="left" href=".methylation-plots-options" class="btn btn-sm btn-basic pull-right" style="margin-top: 0px;" data-original-title="Collapse Methylation tSNE Options"><i class="glyphicon glyphicon-cog"></i> Options</a>
 							</div>
 						</div>
-                        <div class="panel-collapse collapse in" id="methylation_scatter_plots">
+                        <div class="panel-collapse collapse in" id="methylation-plots">
 							<div class="panel-body flex-container" style="padding:0px">
-                                <div class="col-md-12 col-sm-12 flex-item" id="methyl_scatter_div" style="padding: 0px">
-                                    {% include "components/mch_scatter.html" %}
+                                <div class="col-sm-12" id="methylation_tabs">
+                                    <div class="col-sm-12">
+                                        <ul class="nav nav-tabs" role="tablist">
+                                            <li role="presentation" class="active"><a id="methylation-box-tab-btn" href="#methylation-scatter" role="tab" data-toggle="tab">Scatter</a></li>
+                                            <li role="presentation"><a id="methylation-box-tab-btn" href="#methylation-box" role="tab" data-toggle="tab">Box plot / Heatmap</a></li>
+                                        </ul>
+                                    </div>
+                                    <div class="col-md-12 col-sm-12 flex-item tab-content" id="methyl_scatter_div" style="padding: 0px">
+                                        <div class="tab-pane active in" id="methylation-scatter">
+                                            {% include "components/mch_scatter.html" %}
+                                        </div>
+                                        <div class="tab-pane" id="methylation-box">
+                                            {% include "components/mch_box.html" %}
+                                        </div>
+                                    </div>
                                 </div>
                             </div>
                         </div>
@@ -55,27 +68,40 @@
                 </div>
             </div>
 
-            <!-- tSNE (snATAC) Scatter Plots -->
+            <!-- snATAC Plots -->
             {% if snATAC_data_available == 1 %}
 			<div style="position:relative; left:0; z-index:2;">
 				<div class="col-md-12 col-sm-12">
 					<div class="panel panel-default panel-main" style="overflow-x: auto; margin-left:auto; margin-right:auto;">
 						<div class="panel-heading">
 							<div class="panel-title">
-                                <a data-toggle="collapse" title="" href="#snATAC_scatter_plots" style="margin-top: 0px;" data-original-title="Collapse snATAC Scatter Plot Container"><b>{{ ensemble_name }} (snATAC)</b>{% if gene is defined %} - {{ gene }}{% endif %}&nbsp;
+                                <a data-toggle="collapse" title="" href="#snATAC-plots" style="margin-top: 0px;" data-original-title="Collapse snATAC Scatter Plot Container"><b>{{ ensemble_name }} (snATAC-seq)</b>{% if gene is defined %} - {{ gene }}{% endif %}&nbsp;
                                     <!--<span id="snATAC_tsne_heading_num_dimensions">&nbsp;</span> tSNE: 
                                     <span id="snATAC_tsne_options_heading" style="font-size:0.8em;">&nbsp;</span>
                                     &nbsp;| Clustering: 
                                     <span id="snATAC_clustering_options_heading" style="font-size:0.8em;">&nbsp;</span>-->
                                     <span class="glyphicon glyphicon-chevron-down"></span>
                                 </a>
-                                <a data-toggle="collapse" title="" data-placement="left" href="#snATAC_tsne_plots_options" class="btn btn-sm btn-basic pull-right" style="margin-top: 0px;" data-original-title="Collapse snATAC tSNE Options"><span class="glyphicon glyphicon-cog"></span></a>
+                                <a data-toggle="collapse" title="" data-placement="left" href=".snATAC-plots-options" class="btn btn-sm btn-basic pull-right" style="margin-top: 0px;" data-original-title="Collapse snATAC tSNE Options"><i class="glyphicon glyphicon-cog"></i> Options</a>
 							</div>
 						</div>
-                        <div class="panel-collapse collapse in" id="snATAC_scatter_plots">
+                        <div class="panel-collapse collapse in" id="snATAC-plots">
 							<div class="panel-body flex-container" style="padding:0px">
-                                <div class="col-md-12 col-sm-12 flex-item" id="snATAC_scatter_div" style="padding: 0px">
-                                    {% include "components/snATAC_scatter.html" %}
+                                <div class="col-sm-12" id="snATAC_tabs">
+                                    <div class="col-sm-12">
+                                        <ul class="nav nav-tabs" role="tablist">
+                                            <li role="presentation" class="active"><a id="snATAC-scatter-tab-btn" href="#snATAC-scatter" role="tab" data-toggle="tab">Scatter</a></li>
+                                            <li role="presentation"><a id="snATAC-box-tab-btn" href="#snATAC-box" role="tab" data-toggle="tab">Box plot / Heatmap</a></li>
+                                        </ul>
+                                    </div>
+                                    <div class="col-md-12 col-sm-12 flex-item tab-content" id="snATAC_scatter_div" style="padding: 0px">
+                                        <div class="tab-pane active in" id="snATAC-scatter">
+                                            {% include "components/snATAC_scatter.html" %}
+                                        </div>
+                                        <div class="tab-pane" id="snATAC-box">
+                                            {% include "components/snATAC_box.html" %}
+                                        </div>
+                                    </div>
                                 </div>
                             </div>
                         </div>
@@ -84,6 +110,7 @@
             </div>
             {% endif %}
 
+            {#
             <!-- Methylation Box plot/Heatmap -->
 			<div class="col-sm-12" style="position:relative; z-index:2;">
 				<div class="panel panel-default panel-main" style="overflow-x: auto; margin-left:auto; margin-right:auto; display:none;" id="methyl_graphs_div">
@@ -96,7 +123,7 @@
 				   <div class="panel-collapse collapse in" id="mch_box">
 						<div class="panel-body">
 							<div class="col-md-9 col-sm-12" id="mch_box_div">
-								{% include "components/mch_box.html" %}
+                                {% include "components/mch_box.html" %}
 							</div>
 							<div class="col-md-3 col-sm-12" id="gene_table_div">
 								{% include "components/mch_table.html" %}
@@ -105,7 +132,6 @@
 					</div>
 				</div>
 			</div>
-
             <!-- snATAC Box plot/Heatmap -->
             {% if snATAC_data_available == 1 %}
 			<div class="col-sm-12" style="position:relative; z-index:2;">
@@ -121,14 +147,12 @@
 							<div class="col-sm-12" id="snATAC_box_div">
 								{% include "components/snATAC_box.html" %}
 							</div>
-                            {# <div class="col-md-3 col-sm-12" id="gene_table_div">
-								{% include "components/mch_table.html" %}
-                            </div> #}
 						</div>
 					</div>
 				</div>
 			</div>
             {% endif %}
+            #}
 		</div>
 	</div>
     <footer id="footer" class="footer">
@@ -253,9 +277,7 @@
         populateMethylationTSNEDropdowns();
         initGeneNameSearch();
         initGeneModules();
-        initDataTableClick();
-        updateGeneElements();
-
+        //initDataTableClick();
     });
 
     $("#methylationLevelDiv :input, #methylationTypeDiv :input").change(function() {
@@ -266,54 +288,64 @@
         updateGeneElements();
     });
 
+    /*
     //wait for resizing to end, then reset axes.
     var resizeTimer;
     $(window).on('resize', function(e) {
         clearTimeout(resizeTimer);
         resizeTimer = setTimeout(function() {
-            if($('#methylation_scatter_plots').hasClass("in")){
-                try{
-                    buttons[8].click(); //button for autoscaling methylation_tsne_scatter
+            if ($('#methylation-plots').hasClass("in")) {
+                if($('#methylation-scatter').hasClass("active")){
+                    try{
+                        buttons[8].click(); //button for autoscaling methylation_tsne_scatter when snATAC data is also displayed.
+                    }
+                    catch(err) {}
+                } else if ($('#methylation-box').hasClass("active")) {
+                    try {
+                        buttons[20].click(); //button for autoscaling methylation boxplots/heatmap when snATAC data is also displayed.
+                    }
+                    catch(err) {}
                 }
-                catch(err) {}
             }
+                    
             if (snATAC_data_available === 1) {
-                if ($("#snATAC_scatter_plots").hasClass("in")){
-                    try{
-                        buttons[22].click(); // button for autoscaling snATAC_tsne_scatter
+                if ($('#snATAC-plots').hasClass("in")) {
+                    if ($("#snATAC-scatter").hasClass("active")){
+                        try{
+                            buttons[34].click(); // button for autoscaling snATAC_tsne_scatter when snATAC data is also displayed.
+                        }
+                        catch(err) {}
+                    } else if ($('#snATAC-box').hasClass("active")){
+                        try{
+                            buttons[46].click();  //button for autoscaling snATAC box/heatmap when snATAC data is displayed.
+                        }
+                        catch(err) {}
                     }
-                    catch(err) {}
-                }
-
-                if($('#mch_box').hasClass("in")){
-                    try{
-                        buttons[34].click();  //button for autoscaling methylation mch_box/heatmap when snATAC data is displayed.
-                    }
-                    catch(err) {}
-                }
-            }
-            else {
-                if ($("#mch_box").hasClass("in")) {
-                    try{
-                        buttons[20].click(); // button for autoscaling methylation mch_box/heatmap when snATAC is NOT displayed.
-                    }
-                    catch(err) {}
                 }
             }
-
         }, 250);
     });
+    */
 
     $('#geneModulesSelect').on('select2:select', function(e) {
         geneNameSelector.val(null).trigger("change");
         var data = e.params.data;
         updateSearchWithModules(data);
+        $('#gene-search-btn').removeClass("disabled");
     });
 
     $('#clear-gene-search-btn').click(function() {
         geneModuleSelector.val(null).trigger("change");
         geneNameSelector.val(null).trigger("change");
         storage.save('lastViewedGenes', [], 5);  // store last viewed genes for 5 minutes
+    });
+
+    $('#geneName').change(function() {
+        if ($(this).val() === null) {
+            $('#gene-search-btn').addClass("disabled");
+        } else {
+            $('#gene-search-btn').removeClass("disabled");
+        }
     });
 
     $("#methylation-box-heat-outlierToggle, #orthologsToggle").change(function() {
@@ -388,10 +420,5 @@
         dynamicMethylationClusteringOptions_npc();
     });
 
-    /*
-    $("#methylation_tsne_grouping, #methylation_tsne_clustering").change(function() {
-        updateGeneElements(updateMCHScatter=false);
-    });*/
-    
 </script>
 {% endblock %}

@@ -54,35 +54,57 @@ def get_ensemble_list():
     ensemble_list=[]
     ensemble_list = db.get_engine(current_app, 'methylation_data').execute("SELECT * FROM ensembles").fetchall()
 
-    total_cell_each_dataset = db.get_engine(current_app, 'methylation_data').execute("SELECT dataset, COUNT(*) as `num` FROM cells GROUP BY dataset").fetchall()
-    total_cell_each_dataset = [ {d['dataset']: d['num']} for d in total_cell_each_dataset ]
-    total_cell_each_dataset = { k.split('_',maxsplit=1)[1]: v for d in total_cell_each_dataset for k, v in d.items() }
+    total_methylation_cell_each_dataset = db.get_engine(current_app, 'methylation_data').execute("SELECT dataset, COUNT(*) as `num` FROM cells GROUP BY dataset").fetchall()
+    total_methylation_cell_each_dataset = [ {d['dataset']: d['num']} for d in total_methylation_cell_each_dataset ]
+    total_methylation_cell_each_dataset = { k.split('_',maxsplit=1)[1]: v for d in total_methylation_cell_each_dataset for k, v in d.items() }
 
     ensembles_cell_counts = []
     for ensemble in ensemble_list:
         ensemble_tbl = 'Ens' + str(ensemble['ensemble_id'])
-        query = "SELECT dataset, COUNT(*) as `num` FROM cells INNER JOIN {} ON cells.cell_id = {}.cell_id GROUP BY dataset".format(ensemble_tbl, ensemble_tbl)
-        cell_counts = db.get_engine(current_app, 'methylation_data').execute(query).fetchall()
-        cell_counts = [ {d['dataset']: d['num']} for d in cell_counts]
-        cell_counts = { k.split('_',maxsplit=1)[1]: v for d in cell_counts for k, v in d.items() }
-        ensembles_cell_counts.append( {"id": ensemble['ensemble_id'], "ensemble": ensemble['ensemble_name'], "ens_counts": cell_counts} )
+        query_methylation = "SELECT dataset, COUNT(*) as `num` FROM cells INNER JOIN {} ON cells.cell_id = {}.cell_id GROUP BY dataset".format(ensemble_tbl, ensemble_tbl)
+        methylation_cell_counts = db.get_engine(current_app, 'methylation_data').execute(query_methylation).fetchall()
+        methylation_cell_counts = [ {d['dataset']: d['num']} for d in methylation_cell_counts]
+        methylation_cell_counts = { k.split('_',maxsplit=1)[1]: v for d in methylation_cell_counts for k, v in d.items() }
+
+        query_snATAC = "SELECT dataset, COUNT(*) as `num` FROM cells INNER JOIN {} ON cells.cell_id = {}.cell_id GROUP BY dataset".format(ensemble_tbl, ensemble_tbl)
+        try:
+            snATAC_cell_counts = db.get_engine(current_app, 'snATAC_data').execute(query_snATAC).fetchall()
+            snATAC_cell_counts = [ {d['dataset']: d['num']} for d in snATAC_cell_counts]
+            snATAC_cell_counts = { k.split('_',maxsplit=1)[1]: v for d in snATAC_cell_counts for k, v in d.items() }
+        except exc.ProgrammingError as e:
+            snATAC_cell_counts = None
+
+        ensembles_cell_counts.append( {"id": ensemble['ensemble_id'], 
+                                       "ensemble": ensemble['ensemble_name'], 
+                                       "ens_methylation_counts": methylation_cell_counts,
+                                       "ens_snATAC_counts": snATAC_cell_counts} )
+
     ensembles_json_list = []
     for ens in ensembles_cell_counts:
-        total_cells = 0
+        total_methylation_cells = 0
+        total_snATAC_cells = 0
         datasets_in_ensemble = []
+        snATAC_datasets_in_ensemble = []
         ens_dict = {}
-        for dataset, count in ens['ens_counts'].items():
-            total_cells = total_cells + count
+        for dataset, count in ens['ens_methylation_counts'].items():
+            total_methylation_cells += count
             datasets_in_ensemble.append(dataset+" ("+str(count)+" cells)")
-            ens_dict[dataset] = str(count) + '/' + str(total_cell_each_dataset[dataset])
+            ens_dict[dataset] = str(count) + '/' + str(total_methylation_cell_each_dataset[dataset])
+        if ens['ens_snATAC_counts'] is not None:
+            for dataset, count in ens['ens_snATAC_counts'].items():
+                snATAC_datasets_in_ensemble.append(dataset+" ("+str(count)+" cells)")
+                total_snATAC_cells += count
+
         ens_dict["ensemble_id"] = ens["id"]
         ens_dict["ensemble_name"] = ens['ensemble']
         ens_dict["datasets"] = ",  ".join(datasets_in_ensemble)
+        ens_dict["snATAC_datasets"] = ",  ".join(snATAC_datasets_in_ensemble)
         ens_dict["num_datasets"] = len(datasets_in_ensemble)
         slices_list = [d.split('_')[0][0] for d in datasets_in_ensemble]
         slices_set = set(slices_list)
         ens_dict["slices"] = ",  ".join(sorted(list(slices_set)))
-        ens_dict["total_cells"] = total_cells
+        ens_dict["total_methylation_cells"] = total_methylation_cells
+        ens_dict["total_snATAC_cells"] = total_snATAC_cells
 
         ens_regions_query = "SELECT DISTINCT(ABA_acronym), ABA_description FROM ABA_regions WHERE `code` IN (" + ",".join("'"+x.split('_')[0]+"'" for x in datasets_in_ensemble) + ")"
         ens_regions_result = db.get_engine(current_app, 'methylation_data').execute(ens_regions_query).fetchall()
@@ -1021,10 +1043,10 @@ def get_snATAC_scatter(ensemble, genes_query, grouping, ptile_start, ptile_end, 
     
     traces_tsne = OrderedDict()
 
-    legend_x = -.11
+    legend_x = -.15
     grouping_clustering = grouping
     if grouping != 'dataset':
-        legend_x = -.10
+        legend_x = -.14
         grouping_clustering = grouping+'_ATAC'
 
     unique_groups = points[grouping_clustering].unique().tolist()
@@ -1143,13 +1165,14 @@ def get_snATAC_scatter(ensemble, genes_query, grouping, ptile_start, ptile_end, 
     layout = Layout(
         autosize=True,
         height=450,
+        width=1100,
         title=title,
         titlefont={'color': 'rgba(1,2,2,1)',
                    'size': 16},
         legend={'x':legend_x,
                 'y':0.95,
                 'tracegroupgap': 0.5},
-        margin={'l': 49,
+        margin={'l': 100,
                 'r': 0,
                 'b': 30,
                 't': 100,
@@ -1504,10 +1527,10 @@ def get_methylation_scatter(ensemble, tsne_type, methylation_type, genes_query, 
     
     traces_tsne = OrderedDict()
 
-    legend_x = -.11
+    legend_x = -.15
     grouping_clustering = grouping
     if grouping != 'dataset':
-        legend_x = -.10
+        legend_x = -.14
         grouping_clustering = grouping+'_'+clustering
 
     unique_groups = points[grouping_clustering].unique().tolist()
@@ -1627,13 +1650,14 @@ def get_methylation_scatter(ensemble, tsne_type, methylation_type, genes_query, 
         layout = Layout(
             autosize=True,
             height=450,
+            width=1100,
             title=title,
             titlefont={'color': 'rgba(1,2,2,1)',
                        'size': 16},
             legend={'x':legend_x,
                     'y':0.95,
                     'tracegroupgap': 0.5},
-            margin={'l': 49,
+            margin={'l': 0,
                     'r': 0,
                     'b': 30,
                     't': 100,
@@ -1813,6 +1837,7 @@ def get_methylation_scatter(ensemble, tsne_type, methylation_type, genes_query, 
         layout = Layout(
             autosize=True,
             height=450,
+            width=1000,
             title=title,
             titlefont={'color': 'rgba(1,2,2,1)',
                        'size': 16},
@@ -2045,11 +2070,12 @@ def get_mch_heatmap(ensemble, methylation_type, grouping, clustering, level, pti
         )
 
     layout = Layout(
-        title=title,
+        autosize=True,
         height=450,
+        width=1000,
+        title=title,
         titlefont={'color': 'rgba(1,2,2,1)',
                    'size': 16},
-        autosize=True,
         xaxis={
             'side': 'bottom',
             'tickangle': -45,
@@ -2261,11 +2287,12 @@ def get_snATAC_heatmap(ensemble, grouping, ptile_start, ptile_end, normalize_row
         )
 
     layout = Layout(
-        title=title,
+        autosize=True,
         height=450,
+        width=1000,
+        title=title,
         titlefont={'color': 'rgba(1,2,2,1)',
                    'size': 16},
-        autosize=True,
         xaxis={
             'side': 'bottom',
             'tickangle': -45,
@@ -2527,11 +2554,12 @@ def get_mch_heatmap_two_ensemble(ensemble, methylation_type, level, ptile_start,
             )
 
     layout = Layout(
+            autosize=True,
+            height=450,
+            width=1000,
             title=title,
             titlefont={'color': 'rgba(1,2,2,1)',
                        'size': 16},
-            autosize=True,
-            height=450,
 
             hovermode='closest'
             )
@@ -2714,6 +2742,7 @@ def get_mch_box(ensemble, methylation_type, gene, grouping, clustering, level, o
     layout = Layout(
         autosize=True,
         height=450,
+        width=1000,
         title='Gene body ' + methylation_type + ' in each cluster: ' + gene_name,
         titlefont={'color': 'rgba(1,2,2,1)',
                    'size': 20},
@@ -2835,6 +2864,7 @@ def get_snATAC_box(ensemble, gene, grouping, outliers):
     layout = Layout(
         autosize=True,
         height=450,
+        width=1000,
         title='Gene body snATAC normalized counts in each cluster:<br>' + gene_name,
         titlefont={'color': 'rgba(1,2,2,1)',
                    'size': 20},
@@ -2942,6 +2972,7 @@ def get_mch_box_two_ensemble(methylation_type, gene_mmu, gene_hsa, level, outlie
         boxmode='group',
         autosize=True,
         height=450,
+        width=1000,
         showlegend=False,
         title='Gene body ' + methylation_type + ' in each cluster: ' + gene_name,
         titlefont={'color': 'rgba(1,2,2,1)',

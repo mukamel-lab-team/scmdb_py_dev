@@ -6,7 +6,7 @@
     {{super ()}}
     {{fixes.ie8()}}
     {% include 'partials/_head.html' %}
-    {% block title %}Ensemble Information{% endblock %}
+    {% block title %}Ensemble Summary{% endblock %}
     {# Any templates that extend this template can set custom_head_tags to add scripts to their page #}
     {% block custom_head_tags %}{% endblock custom_head_tags %}
 {%- endblock head %}
@@ -31,12 +31,13 @@
                         <th></th>
                         <th>#</th>
                         <th>Ensemble</th>
-                        <th>Total Cells</th>
+                        <th>Total Cells<br>(snmC-seq)</th>
+                        <th>Total Cells<br>(snATAC-seq)</th>
                         <th>Brain Regions</th>
                         <th>Slices</th>
                         <th># of Datasets</th>
                         <!--<th>Projection Target Region (Viral Injection)</th>-->
-                        <th></th>
+                        <th>Explore</th>
                     </tr>
                 </thead>
             </table>
