@@ -387,7 +387,11 @@
 
     $("#methylation_tsneUpdateBtn").click(function() {
         updateMCHScatterPlot();
-        updateMCHBoxPlot();
+        if ($('#geneName').select2('data').length > 1) {
+            updateMethylationHeatmap();
+        } else {
+            updateMCHBoxPlot();
+        }
     });
 
     $("#snATAC_tsneUpdateBtn").click(function() {

@@ -330,7 +330,7 @@ def median_cluster_mch(gene_info, grouping, clustering):
 
     if grouping == 'annotation':
         gene_info.fillna({'annotation_'+clustering: 'None'}, inplace=True)
-    return gene_info.groupby(grouping+'_'+clustering, sort=False)[gene_info.columns[-2]].median()
+    return gene_info.groupby(grouping+'_'+clustering, sort=False)[gene_info.columns[-1]].median()
 
 
 @cache.memoize(timeout=3600)
@@ -680,11 +680,12 @@ def get_gene_methylation(ensemble, methylation_type, gene, grouping, clustering,
     if grouping == 'annotation':
         df.fillna({'annotation_'+clustering: 'None'}, inplace=True)
         df['annotation_cat'] = pd.Categorical(df['annotation_'+clustering], cluster_annotation_order)
-        return df.sort_values(by='annotation_cat')
+        df.sort_values(by='annotation_cat', inplace=True)
+        df.drop('annotation_cat', axis=1, inplace=True)
     elif grouping == 'cluster':
-        return df.sort_values(by='cluster_'+clustering)
-    else:
-        return df
+        df.sort_values(by='cluster_'+clustering, inplace=True)
+
+    return df
 
 
 def get_mult_gene_methylation(ensemble, methylation_type, genes, grouping, clustering, level, tsne_type='mCH_ndim2_perp20'):
@@ -776,11 +777,12 @@ def get_mult_gene_methylation(ensemble, methylation_type, genes, grouping, clust
     if grouping == 'annotation':
         df_coords.fillna({'annotation_'+clustering: 'None'}, inplace=True)
         df_coords['annotation_cat'] = pd.Categorical(df_coords['annotation_'+clustering], cluster_annotation_order)
-        return df_coords.sort_values(by='annotation_cat')
+        df_coords.sort_values(by='annotation_cat', inplace=True)
+        df_coords.drop('annotation_cat', axis=1, inplace=True)
     elif grouping == 'cluster':
-        return df_coords.sort_values(by='cluster_'+clustering)
-    else:
-        return df_coords
+        df_coords.sort_values(by='cluster_'+clustering, inplace=True)
+
+    return df_coords
 
 
 @cache.memoize(timeout=3600)
@@ -1600,7 +1602,7 @@ def get_methylation_scatter(ensemble, tsne_type, methylation_type, genes_query, 
         x = points['tsne_x_' + tsne_type].tolist()
         y = points['tsne_y_' + tsne_type].tolist()
         mch = points[methylation_type + '/' + context + '_' + level]
-        text_methylation = [build_hover_text({level.title()+' '+methylation_type: round(point[-2], 6),
+        text_methylation = [build_hover_text({level.title()+' '+methylation_type: round(point[-1], 6),
                                   'Cell Name': point[1],
                                   'Annotation': point[4],
                                   'Cluster': point[5]})
@@ -1787,7 +1789,7 @@ def get_methylation_scatter(ensemble, tsne_type, methylation_type, genes_query, 
         y = points['tsne_y_' + tsne_type].tolist()
         z = points['tsne_z_' + tsne_type].tolist()
         mch = points[methylation_type + '/' + context + '_' + level]
-        text_methylation = [build_hover_text({methylation_type: round(point[-2], 6),
+        text_methylation = [build_hover_text({methylation_type: round(point[-1], 6),
                                   'Cell Name': point[1],
                                   'Annotation': point[4],
                                   'Cluster': point[5]})
