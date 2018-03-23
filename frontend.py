@@ -158,22 +158,17 @@ def ensemble_tabular_screen():
     return render_template('tabular_ensemble.html')
 
 
-## TESTER ## 
-@frontend.route('/tabular/ensemble_dt')
-@login_required
-def ensemble_tabular_screen_dt():
-    return render_template('tabular_ensemble-dt.html')
-
-
 @frontend.route('/tabular/dataset')
 @login_required
 def data_set_tabular_screen():
     return render_template('tabular_data_set.html')
 
+
 @frontend.route('/CEMBA_lims')
 @login_required
 def CEMBA_lims():
     return redirect('https://brainome.ucsd.edu/CEMBA/lims.html')
+
 
 @frontend.route('/navbar')
 def nav_bar_screen():

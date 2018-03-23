@@ -48,19 +48,6 @@ def get_metadata():
     return json.dumps({"data": result})
 
 
-@content.route('/content/ensemble_list_dt')
-def get_ensemble_list_dt():
-
-    ensemble_list = []
-    ensemble_list = db.get_engine(current_app, 'methylation_data').execute("SELECT * FROM ensembles").fetchall()
-
-    ensemble_dict = [{"ensemble_id": d.ensemble_id,
-                      "ensemble_name": d.ensemble_name,
-                      "total_cells": d.datasets} for d in ensemble_list]
-
-    return_json = json.dumps(ensemble_dict)
-    return return_json 
-
 @content.route('/content/ensemble_list')
 def get_ensemble_list():
     
@@ -74,8 +61,8 @@ def get_ensemble_list():
     ensembles_cell_counts = []
     for ensemble in ensemble_list:
         ensemble_tbl = 'Ens' + str(ensemble['ensemble_id'])
-        query = "SELECT dataset, COUNT(*) as `num` FROM cells INNER JOIN ? ON cells.cell_id = ?.cell_id GROUP BY dataset"
-        cell_counts = db.get_engine(current_app, 'methylation_data').execute(query, (ensemble,ensemble,)).fetchall()
+        query = "SELECT dataset, COUNT(*) as `num` FROM cells INNER JOIN {} ON cells.cell_id = {}.cell_id GROUP BY dataset".format(ensemble_tbl, ensemble_tbl)
+        cell_counts = db.get_engine(current_app, 'methylation_data').execute(query).fetchall()
         cell_counts = [ {d['dataset']: d['num']} for d in cell_counts]
         cell_counts = { k.split('_',maxsplit=1)[1]: v for d in cell_counts for k, v in d.items() }
         ensembles_cell_counts.append( {"id": ensemble['ensemble_id'], "ensemble": ensemble['ensemble_name'], "ens_counts": cell_counts} )
@@ -86,40 +73,26 @@ def get_ensemble_list():
         ens_dict = {}
         for dataset, count in ens['ens_counts'].items():
             total_cells = total_cells + count
-            datasets_in_ensemble.append(dataset)
+            datasets_in_ensemble.append(dataset+" ("+str(count)+" cells)")
             ens_dict[dataset] = str(count) + '/' + str(total_cell_each_dataset[dataset])
-        ens_dict["id"] = ens["id"]
-        ens_dict["ensemble"] = ens['ensemble']
-        ens_dict["datasets"] = "\n".join(datasets_in_ensemble)
+        ens_dict["ensemble_id"] = ens["id"]
+        ens_dict["ensemble_name"] = ens['ensemble']
+        ens_dict["datasets"] = ",  ".join(datasets_in_ensemble)
+        ens_dict["num_datasets"] = len(datasets_in_ensemble)
+        slices_list = [d.split('_')[0][0] for d in datasets_in_ensemble]
+        slices_set = set(slices_list)
+        ens_dict["slices"] = ",  ".join(sorted(list(slices_set)))
         ens_dict["total_cells"] = total_cells
 
-        ens_regions_query = "SELECT DISTINCT(ABA_name) FROM ABA_regions WHERE `code` IN (" + ",".join("'"+x.split('_')[0]+"'" for x in datasets_in_ensemble) + ")"
+        ens_regions_query = "SELECT DISTINCT(ABA_acronym), ABA_description FROM ABA_regions WHERE `code` IN (" + ",".join("'"+x.split('_')[0]+"'" for x in datasets_in_ensemble) + ")"
         ens_regions_result = db.get_engine(current_app, 'methylation_data').execute(ens_regions_query).fetchall()
-        ens_regions_result = [d['ABA_name'] for d in ens_regions_result]
-        ens_dict["regions"] = ", ".join(ens_regions_result)
+        ens_regions_acronyms = [d['ABA_acronym'] for d in ens_regions_result]
+        ens_regions_descriptions = [d['ABA_description'] for d in ens_regions_result]
+        ens_dict["ABA_regions_acronym"] = ", ".join(ens_regions_acronyms)
+        ens_dict["ABA_regions_description"] = ", ".join(ens_regions_descriptions)
         ensembles_json_list.append(ens_dict)
 
-    all_datasets = db.get_engine(current_app, 'methylation_data').execute("SELECT DISTINCT(dataset) FROM cells").fetchall()
-    all_datasets = [d['dataset'] for d in all_datasets]
-    all_datasets = [d.split('_', maxsplit=1)[1] for d in all_datasets]
-
-    ## Matches code in dataset name with Allen Brain Atlas regions. ex: 'CEMBA_3C_171206' -> '3C' -> 'MOp'(Primary Motor Cortex)
-    dataset_regions = [d.split('_', maxsplit=1)[0] for d in all_datasets]
-    zipped_regions = list(zip(all_datasets, dataset_regions))
-    ABA_regions = db.get_engine(current_app, 'methylation_data').execute("SELECT * FROM ABA_regions WHERE `code` IN (" + ",".join("'"+x+"'" for x in dataset_regions) + ")").fetchall()
-    ABA_regions = [tuple(d) for d in ABA_regions]
-
-    datasets_with_ABA_list = []
-    for dataset, region in zipped_regions:
-        for code, ABA_name in ABA_regions:
-            if region == code:
-                dataset_dict = {"dataset": dataset, "region": ABA_name}
-                break
-        datasets_with_ABA_list.append(dataset_dict)
-
-    data_dict = {"columns": datasets_with_ABA_list,
-                 "data":ensembles_json_list}
-    ens_json = json.dumps(data_dict)
+    ens_json = json.dumps(ensembles_json_list)
 
     return ens_json
 
@@ -584,7 +557,7 @@ def get_corr_genes(ensemble,query):
     cursor = conn.cursor()
 
     try:
-        cursor.execute('SELECT Gene2, Correlation FROM corr_genes WHERE Gene1 LIKE ? ORDER BY Correlation DESC LIMIT 50', (query + '%',))
+        cursor.execute('SELECT Gene2, Correlation FROM corr_genes WHERE Gene1 LIKE %s ORDER BY Correlation DESC LIMIT 50', (query + '%',))
     except sqlite3.Error:
         now = datetime.datetime.now()
         print("[{}] ERROR in app(get_corr_genes): Could not load top_corr_genes.sqlite3 for {}".format(str(now), ensemble))

@@ -5,6 +5,26 @@ import "fixed-data-table-2/dist/fixed-data-table.css";
 import ReactTooltip from 'react-tooltip';
 import {findDOMNode} from 'react-dom';
 
+const $ = require('jquery');
+$.DataTable = require('datatables.net');
+
+const columns = [
+    {
+        title: '#',
+        width: 50,
+        data: 'ens_id',
+    },
+    {
+        title: 'Ensemble',
+        width: 200,
+        data: 'ens_name' 
+    },
+    {
+        title: 'Total Cells',
+        width: 200,
+        data: 'total_cells'
+    },
+];
 
 class MyTextCell extends React.Component {
     render() {
