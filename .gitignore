@@ -112,7 +112,6 @@ default_config.py
 node_modules
 static
 static/bundle.js
-static/tablular_ensemble.js
 static/tabular_data_set.js
 *.sqlite
 *.swp
