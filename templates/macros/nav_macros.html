@@ -2,7 +2,7 @@
     {% for endpoint, name, icon in endpoints %}
         <a class="item {% if request.endpoint == endpoint %}active{% endif %}" href="{{ url_for(endpoint) }}">
             {% if icon %}
-                <i class="{{ icon }} icon"></i>
+                <i class="{{ icon }}">&nbsp;&nbsp;</i>
             {% endif %}
             {{ name | safe }}
         </a>
@@ -11,9 +11,9 @@
 
 {% macro header_items(current_user) %}
     {% set endpoints = [
-      ('frontend.index', 'Browser', 'browser'),
-      ('frontend.ensemble_tabular_screen', 'Ensembles Summary', 'ensembles'),
-      ('frontend.CEMBA_lims', 'LIMS', 'lims'),
+      ('frontend.index', 'Browser', 'fas fa-home fa-xs'),
+      ('frontend.ensemble_tabular_screen', 'Ensembles Summary', 'fas fa-database fa-xs'),
+      ('frontend.CEMBA_lims', 'LIMS', 'fas fa-clipboard-list fa-xs'),
     ]%}
     
     {{ render_menu_items( endpoints ) }}
@@ -25,17 +25,16 @@
 {% macro account_items(current_user) %}
     {% set user = [] %}
     {% if current_user.can(255) %}
-      {% set user = ([( 'frontend.admin',  'Administrator Dashboard', 
-                        'user')]) %}
+      {% set user = ([( 'frontend.admin',  'Administrator Dashboard', 'fas fa-cogs fa-xs')]) %}
     {% endif %}
     {% if current_user.is_authenticated %}
       {% set endpoints = [
-        ('frontend.manage', 'Account', 'settings'),
-        ('frontend.logout', 'Logout', 'sign out')
+        ('frontend.manage', 'Account', 'fas fa-user fa-xs'),
+        ('frontend.logout', 'Logout', 'fas fa-sign-out-alt fa-xs')
       ] %}
     {% else %}
       {% set endpoints = [
-        ('frontend.login', 'Login', 'sign in')
+        ('frontend.login', 'Login', 'fas fa-sign-in-alt fa-xs')
       ] %}
     {% endif %}
     {{ render_menu_items(user + endpoints) }}

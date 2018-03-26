@@ -1,28 +1,37 @@
 function initEnsembleDataTable() {
 
-    var table = $('#ensemble_table').DataTable({
+    var table = $('#ensemble-table').DataTable({
+        "order": [[3, 'desc']], //Initially sort by "Total Cells (snmC-seq)" in descending order. 
+        "pageLength": 25,
         "ajax": {
             "url": "/content/ensemble_list",
             "dataSrc": ""
         },
         "columns": [
             {
+                "data": null,
                 "className": 'details-control dt-center',
                 "orderable": false,
-                "data": null,
                 "defaultContent": '<i class="glyphicon glyphicon-plus-sign"></i>'
             },
             {"data": "ensemble_id"},
             {"data": "ensemble_name"},
-            {"data": "total_methylation_cells"},
-            {"data": "total_snATAC_cells"},
-            {"data": "ABA_regions_acronym"},
-            {"data": "slices"},
-            {"data": "num_datasets"},
+            {"data": "total_methylation_cells", "className": 'dt-center'},
+            {"data": "total_snATAC_cells", "className": 'dt-center'},
+            {"data": "ABA_regions_acronym", "className": 'dt-center'},
+            {"data": "slices", "className": 'dt-center'},
+            {"data": "num_datasets", "className": 'dt-center'},
             {
+                "data": "public_access_icon",
+                "className": 'dt-center',
+                "fnCreatedCell": function(nTd, sData, oData, iRow, iCol) {
+                    $(nTd).html('<i class="'+oData.public_access_icon+'" style="color:'+oData.public_access_color+';"></i>');
+                }
+            },
+            {
+                "data": "ensemble_name",
                 "className": 'redirect-control dt-center',
                 "orderable": false,
-                "data": "ensemble_name",
                 "fnCreatedCell": function (nTd, sData, oData, iRow, iCol) {
                     $(nTd).html('<a href="/'+oData.ensemble_name+'"><i class="glyphicon glyphicon-eye-open"></i></a>');
                 }
@@ -30,7 +39,7 @@ function initEnsembleDataTable() {
         ]
     });
 
-    $('#ensemble_table tbody').on('click', 'td.details-control', function() {
+    $('#ensemble-table tbody').on('click', 'td.details-control', function() {
         var tr = $(this).closest('tr');
         var row = table.row(tr);
 
@@ -57,19 +66,21 @@ function format ( d ) {
     return (
         '<table cellpadding="5" cellspacing="0" border="0" style="padding-left:50px;">'+
             '<tr>'+
-                '<td>Datasets in ensemble (snmC-seq):</td>'+
+                '<td><b>Datasets in ensemble (snmC-seq):</b></td>'+
                 '<td>'+d.datasets+'</td>'+
             '</tr>'+
             '<tr>'+
-                '<td>Datasets in ensemble (snATAC-seq):</td>'+
+                '<td><b>Datasets in ensemble (snATAC-seq):</b></td>'+
                 '<td>'+snATAC_datasets+'</td>'+
             '</tr>'+
             '<tr>'+
-                '<td>Brain regions:</td>'+
+                '<td><b>Brain region(s):</b></td>'+
                 '<td>'+d.ABA_regions_description+'</td>'+
+            '</tr>'+
+            '<tr>'+
+                '<td><b>View Dissection Drawings:</b></td>'+
+                '<td><a href="https://drive.google.com/file/d/1dAUzB1GtKMUgmf_AInAGgI6OlgefUHok/preview" target="_blank">Link</a> (go to page '+d.slices+')</td>'+
             '</tr>'+
         '</table>'
     )
-    
-    
 }

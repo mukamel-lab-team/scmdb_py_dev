@@ -77,7 +77,8 @@ def get_ensemble_list():
         ensembles_cell_counts.append( {"id": ensemble['ensemble_id'], 
                                        "ensemble": ensemble['ensemble_name'], 
                                        "ens_methylation_counts": methylation_cell_counts,
-                                       "ens_snATAC_counts": snATAC_cell_counts} )
+                                       "ens_snATAC_counts": snATAC_cell_counts,
+                                       "public_access": ensemble['public_access'], })
 
     ensembles_json_list = []
     for ens in ensembles_cell_counts:
@@ -112,6 +113,13 @@ def get_ensemble_list():
         ens_regions_descriptions = [d['ABA_description'] for d in ens_regions_result]
         ens_dict["ABA_regions_acronym"] = ", ".join(ens_regions_acronyms)
         ens_dict["ABA_regions_description"] = ", ".join(ens_regions_descriptions)
+        if ens['public_access'] == 0:
+            ens_dict["public_access_icon"] = "fas fa-lock"
+            ens_dict["public_access_color"] = "black"
+        else:
+            ens_dict["public_access_icon"] = "fas fa-lock-open"
+            ens_dict["public_access_color"] = "green"
+
         ensembles_json_list.append(ens_dict)
 
     ens_json = json.dumps(ensembles_json_list)
@@ -423,12 +431,12 @@ def get_methylation_tsne_options(ensemble):
     list_npc_clustering = sorted(list(set([int(x.split('_')[2].replace('npc', '')) for x in list_clustering_types if (list_mc_types_clustering[0]+'_'+list_algorithms_clustering[0]) in x])))
     list_k_clustering = sorted(list(set([int(x.split('_')[3].replace('k', '')) for x in list_clustering_types if (list_mc_types_clustering[0]+'_'+list_algorithms_clustering[0]+'_npc'+str(list_npc_clustering[0])) in x])))
 
-    return {'all_tsne_types': list_tsne_types, 
+    return {'all_tsne_settings': list_tsne_types, 
             'tsne_methylation': list_mc_types_tsne,
             'tsne_dimensions': list_dims_tsne_first,
             'tsne_perplexity': list_perp_tsne_first,
-            'all_clustering_types': list_clustering_types,
-            'all_clustering_types2': dict_clustering_types_and_numclusters,
+            'all_clustering_settings': list_clustering_types,
+            'all_clustering_settings2': dict_clustering_types_and_numclusters,
             'clustering_methylation': list_mc_types_clustering,
             'clustering_algorithms': list_algorithms_clustering,
             'clustering_npc': list_npc_clustering,
@@ -2038,7 +2046,10 @@ def get_mch_heatmap(ensemble, methylation_type, grouping, clustering, level, pti
     if normalize_row == True:
         colorbar_ticktext[0] = str(round(start, 3))
     else:
-        colorbar_ticktext[0] = '<' + str(round(start, 3))
+        if (round(start,3)) == 0:
+            colorbar_ticktext[0] = str(round(start,3))
+        else:
+            colorbar_ticktext[0] = '<' + str(round(start, 3))
     colorbar_ticktext.append('>' + str(round(end, 3)))
 
     # Due to a weird bug(?) in plotly, the number of elements in tickvals and ticktext 
@@ -2715,7 +2726,10 @@ def get_mch_box(ensemble, methylation_type, gene, grouping, clustering, level, o
         print("**** Using cluster numbers")
 
     traces = OrderedDict()
-    unique_groups = points[grouping+'_'+clustering].unique()
+    if grouping == "dataset":
+        unique_groups = points["dataset"].unique()
+    else:
+        unique_groups = points[grouping+'_'+clustering].unique()
     max_cluster = len(unique_groups)
 
     colors = generate_cluster_colors(max_cluster, grouping)
@@ -2723,8 +2737,12 @@ def get_mch_box(ensemble, methylation_type, gene, grouping, clustering, level, o
         name_prepend = ""
         if grouping == "cluster":
             name_prepend="cluster_"
-        color = colors[int(np.where(unique_groups==point[grouping+'_'+clustering])[0]) % len(colors)]
-        group = point[grouping+'_'+clustering]
+        if grouping == "dataset":
+            color = colors[int(np.where(unique_groups==point["dataset"])[0]) % len(colors)]
+            group = point["dataset"]
+        else:
+            color = colors[int(np.where(unique_groups==point[grouping+'_'+clustering])[0]) % len(colors)]
+            group = point[grouping+'_'+clustering]
         trace = traces.setdefault(group, Box(
                 y=list(),
                 name=name_prepend + str(group),

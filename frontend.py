@@ -105,6 +105,8 @@ def index():
         </script>
         """
     else: 
+        flash('Log in to access private CEMBA data. \
+              <li>Click on "Ensembles Summary" at the top of the page to select publicly accessible data.</li>', 'form-info')
         html = \
         """To be redirected manually, click <a href="./login">here</a>.
         <script>
@@ -114,27 +116,22 @@ def index():
         """
     return html
     
-    # TODO: May need to switch to code below 
-    #    depending on how to deal w/ published data
-
-    # return \
-    # """
-    # To be redirected manually, click <a href="./human_combined">here</a>.' + \
-    # <script>
-    #      window.location = "./human_combined"; 
-    #      window.location.replace("./human_combined");
-    # </script>
-    # """
 
 @frontend.route('/<ensemble_name>')
 def ensemble(ensemble_name):
     ensemble_info = get_ensemble_info(ensemble_name=ensemble_name)
     snATAC_exists = snATAC_data_exists(ensemble_info['ensemble_id'])
     ensemble = 'Ens'+str(ensemble_info['ensemble_id'])
-    return render_template('ensembleview.html', 
-                           ensemble = ensemble, 
-                           ensemble_name = ensemble_name,
-                           snATAC_data_available = snATAC_exists)
+    if ensemble_info['public_access'] == 1 or (ensemble_info['public_access'] == 0 and current_user.is_authenticated):
+        return render_template('ensembleview.html', 
+                               ensemble = ensemble, 
+                               ensemble_name = ensemble_name,
+                               snATAC_data_available = snATAC_exists)
+    else:
+        flash('Data for ensemble {} is not publicly accessible. You must log in to continue. \
+              <li>Click on "Ensembles Summary" at the top of the page to select publicly accessible data.</li>'.format(ensemble_name), 'form-error')
+        return redirect('/login?q='+ensemble_name)
+
 
 @frontend.route('/standalone/<ensemble>/<gene>')
 def standalone(ensemble, gene):  # View gene body mCH plots alone
@@ -153,15 +150,14 @@ def box_combined(mmu_gene_id, hsa_gene_id):
 
 
 @frontend.route('/tabular/ensemble')
-@login_required
 def ensemble_tabular_screen():
     return render_template('tabular_ensemble.html')
 
 
-@frontend.route('/tabular/dataset')
-@login_required
-def data_set_tabular_screen():
-    return render_template('tabular_data_set.html')
+# @frontend.route('/tabular/dataset')
+# @login_required
+# def data_set_tabular_screen():
+#     return render_template('tabular_data_set.html')
 
 
 @frontend.route('/CEMBA_lims')
@@ -250,7 +246,7 @@ def plot_mch_box(ensemble, methylation_type, gene, grouping, clustering, level, 
         outliers = False
     if clustering == 'null':
         clustering = 'mCH_lv_npc50_k5'
-    if grouping == 'NaN' or grouping == 'null' or grouping=='dataset':
+    if grouping == 'NaN' or grouping == 'null':
         grouping = 'annotation'
 
     try:
@@ -268,7 +264,7 @@ def plot_snATAC_box(ensemble, gene, grouping, outliers_toggle):
         outliers = True
     else:
         outliers = False
-    if grouping == 'NaN' or grouping == 'null' or grouping  == 'dataset':
+    if grouping == 'NaN' or grouping == 'null':
         grouping = 'cluster'
 
     try:
@@ -299,7 +295,7 @@ def plot_mch_heatmap(ensemble, methylation_type, grouping, clustering, level, pt
 
     if clustering == 'null':
         clustering = 'mCH_lv_npc50_k5'
-    if grouping == 'NaN' or grouping == 'null' or grouping=='dataset':
+    if grouping == 'NaN' or grouping == 'null':
         grouping = 'annotation'
 
     if request.args.get('normalize', 'MustSpecifyNormalization') == 'true':
@@ -318,7 +314,7 @@ def plot_snATAC_heatmap(ensemble, grouping, ptile_start, ptile_end):
 
     query = request.args.get('q', 'MustHaveAQueryString')
 
-    if grouping == 'NaN' or grouping == 'null' or grouping=='dataset':
+    if grouping == 'NaN' or grouping == 'null':
         grouping = 'cluster'
 
     if request.args.get('normalize', 'MustSpecifyNormalization') == 'true':
@@ -415,13 +411,14 @@ def delete_cluster_cache(ensemble, grouping):
 # User related routes
 @frontend.route('/login', methods=['GET', 'POST'])
 def login():
+    ensemble = request.args.get('q', '')
     form = LoginForm()
     if form.validate_on_submit():
         user = User.query.filter_by(email=form.email.data).first()
         if user is not None and user.password_hash is not None and \
                 user.verify_password(form.password.data):
             login_user(user, form.remember_me.data)
-            return redirect('/')
+            return redirect('/'+ensemble)
         else:
             flash('Invalid email or password.', 'form-error')
     return render_template('account/login.html', form=form)

@@ -23,16 +23,17 @@
 {% block content %}
     <div class="ui stackable centered grid container">
         <div class="twelve wide column">
+            <br>
             <h2 class="ui header">
                 Admin Dashboard
             </h2>
             <div class="ui two column stackable grid">
                 {{ dashboard_option('Registered Users', 'frontend.registered_users',
-                                    description='View and manage user accounts', icon='users icon') }}
+                                    description='View and manage user accounts.', icon='fas fa-users') }}
                 {{ dashboard_option('Add New User', 'frontend.new_user',
-                                    description='Create a new user account', icon='add user icon') }}
+                                    description='Create a new user account.', icon='fas fa-user-plus') }}
                 {{ dashboard_option('Invite New User', 'frontend.invite_user',
-                                    description='Invites a new user to create their own account', icon='add user icon') }}
+                                    description='Send an invitation via email.', icon='fas fa-envelope-open') }}
             </div>
         </div>
     </div>
