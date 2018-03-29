@@ -3,7 +3,7 @@
 {% import "bootstrap/fixes.html" as fixes %}
 
 {% block head%}
-    {{super ()}}
+    {{ super() }}
     {{fixes.ie8()}}
     {% include 'partials/_head.html' %}
     {# Any templates that extend this template can set custom_head_tags to add scripts to their page #}
@@ -15,14 +15,13 @@
 {% endblock %}
 
 {% block body %}
-    {% block navbar %}
-      {# add dropdown variable here to the render_nav method to render dropdowns #}
-      {{ nav.render_nav(current_user) }}
-    {% endblock navbar %}
-
-    {% include 'partials/_flashes.html' %}
     {# When extended, the content block contains all the html of the webpage #}
     {% block content %}
+        {% block navbar %}
+          {# add dropdown variable here to the render_nav method to render dropdowns #}
+          {{ nav.render_nav(current_user) }}
+        {% endblock navbar %}
+        {% include 'partials/_flashes.html' %}
     {% endblock content %}
 
     {# Implement CSRF protection for site #}
@@ -31,5 +30,16 @@
           <input type="hidden" name="csrf_token" value="{{ csrf_token()|safe }}">
         </div>
     {% endif %}
+
+    {% block scripts %}
+        {{ super() }}
+        <script> 
+            $(document).ready(function() {
+                var last_viewed_ensemble = storage.load("last_viewed_ensemble");
+                $("#browser").attr("href", "/"+last_viewed_ensemble);
+            });
+        </script>
+    {% endblock scripts %}
 {% endblock body %}
+
 

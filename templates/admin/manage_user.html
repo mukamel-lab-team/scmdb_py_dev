@@ -1,4 +1,4 @@
-{% extends 'layouts/base.html' %}
+{%- extends "layouts/base.html" %}
 {% import 'macros/form_macros.html' as f %}
 
 {% set deletion_endpoint = 'frontend.delete_user_request' %}
@@ -30,6 +30,7 @@
 {% endmacro %}
 
 {% block content %}
+    {{ super() }}
     <div class="ui stackable centered grid container">
         <div class="twelve wide column">
             <br>

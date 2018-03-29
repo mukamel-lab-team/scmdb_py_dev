@@ -221,6 +221,7 @@
 <script src="./static/customview.js" type="text/javascript"></script> 
 <script>
     var ensemble = "{{ ensemble }}";
+    var ensemble_name = "{{ ensemble_name }}";
     var snATAC_data_available = {{ snATAC_data_available }};
     var methylation_color_percentile_Slider;
     var snATAC_color_percentile_Slider;
@@ -237,8 +238,8 @@
         $('#orthologsToggle').bootstrapToggle();
         $('#orthologsToggle').bootstrapToggle('disable');
         $('#methylation_tsneOutlierToggle').bootstrapToggle();
-
         $('#methylation_tsne_header').append($('#methylation_tsne_settings').val());
+        storage.save("last_viewed_ensemble", ensemble_name, 30); // Cache last viewed ensemble
 
         // Percentile changes are handled separately, as every change would result in a plot update, but we want
         // this to happen when sliding is actually stopped.

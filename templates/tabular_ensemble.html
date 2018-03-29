@@ -1,72 +1,55 @@
-{%- extends "bootstrap/base.html" %}
-{% import 'macros/nav_macros.html' as nav %}
-{% import "bootstrap/fixes.html" as fixes %}
+{%- extends "layouts/base.html" %}
 
 {% block head%}
-    {{super ()}}
-    {{fixes.ie8()}}
-    {% include 'partials/_head.html' %}
-    {% block title %}Ensemble Summary{% endblock %}
+    {{ super() }}
+    {# {% include 'partials/_head.html' %} #}
+    {% block title %}Ensemble Summary{% endblock %} 
     {# Any templates that extend this template can set custom_head_tags to add scripts to their page #}
     {% block custom_head_tags %}{% endblock custom_head_tags %}
 {%- endblock head %}
 
 {% block styles -%}
-    {{super()}}  {# do not forget to call super or Bootstrap's own stylesheets will disappear! #}
+    {{ super() }}  {# do not forget to call super or Bootstrap's own stylesheets will disappear! #}
 {% endblock %}
 
-{% block body %}
-    {% block navbar %}
-      {# add dropdown variable here to the render_nav method to render dropdowns #}
-      {{ nav.render_nav(current_user) }}
-    {% endblock navbar %}
+{# When extended, the content block contains all the html of the webpage #}
+{% block content -%}
+    {{ super() }}
+    <div id="brain-dissection-map-div" style="display: none;">
+    </div>
+    <div id="ensemble-table-div" style="margin:auto; width:85%;">
+        <table id="ensemble-table" class="display"> 
+            <thead>
+                <tr>
+                    <th></th>
+                    <th>#</th>
+                    <th>Ensemble</th>
+                    <th>Total Cells<br>(snmC-seq)</th>
+                    <th>Total Cells<br>(snATAC-seq)</th>
+                    <th>Brain<br>Region(s)</th>
+                    <th>Slice(s)</th>
+                    <th># of<br>Datasets</th>
+                    <!--<th>Projection Target Region (Viral Injection)</th>-->
+                    <th>Public<br>Access</th>
+                    <th>Explore</th>
+                </tr>
+            </thead>
+        </table>
+    </div>
+{%- endblock content %}
 
-    {% include 'partials/_flashes.html' %}
-    {# When extended, the content block contains all the html of the webpage #}
-    {% block content -%}
-        <div id="brain-dissection-map-div" style="display: none;">
-        </div>
-        <div id="ensemble-table-div" style="margin:auto; width:85%;">
-            <table id="ensemble-table" class="display"> 
-                <thead>
-                    <tr>
-                        <th></th>
-                        <th>#</th>
-                        <th>Ensemble</th>
-                        <th>Total Cells<br>(snmC-seq)</th>
-                        <th>Total Cells<br>(snATAC-seq)</th>
-                        <th>Brain<br>Region(s)</th>
-                        <th>Slice(s)</th>
-                        <th># of<br>Datasets</th>
-                        <!--<th>Projection Target Region (Viral Injection)</th>-->
-                        <th>Public<br>Access</th>
-                        <th>Explore</th>
-                    </tr>
-                </thead>
-            </table>
-        </div>
-    {%- endblock content %}
+{% block scripts %}
+    {{super()}} 
 
-    {# Implement CSRF protection for site #}
-    {% if csrf_token()|safe %}
-        <div style="visibility: hidden; display: none">
-          <input type="hidden" name="csrf_token" value="{{ csrf_token()|safe }}">
-        </div>
-    {% endif %}
+    <script src="../static/datatables.min.js"></script>
+    <link href="../static/datatables.min.css" rel="stylesheet" />
+    <script src="../static/tabular_ensemble.js"></script>
 
-    {% block scripts %}
-        {{super()}} 
+    <script> 
+        $(document).ready( function () {
+            initEnsembleDataTable();
+        }); 
+    </script>
 
-        <script src="../static/datatables.min.js"></script>
-        <link href="../static/datatables.min.css" rel="stylesheet" />
-        <script src="../static/tabular_ensemble.js"></script>
-
-        <script> 
-            $(document).ready( function () {
-                initEnsembleDataTable();
-            }); 
-        </script>
-
-    {% endblock scripts %}
-{% endblock body %}
+{% endblock scripts %}
 

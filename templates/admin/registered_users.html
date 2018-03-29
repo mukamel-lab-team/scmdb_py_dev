@@ -1,6 +1,9 @@
 {% extends 'layouts/base.html' %}
 
+{% block title %}Registered Users{% endblock title %}
+
 {% block content %}
+    {{ super() }}
     <div class="ui stackable grid container">
         <div class="sixteen wide tablet twelve wide computer centered column">
             <br>
@@ -63,7 +66,10 @@
             </div>
         </div>
     </div>
+{% endblock %}
 
+{% block scripts %}
+    {{ super() }}
     <script type="text/javascript">
         $(document).ready(function () {
             $('#search-users').keyup(function () {

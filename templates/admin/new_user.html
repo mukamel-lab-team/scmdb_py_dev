@@ -2,10 +2,10 @@
 {% import 'macros/form_macros.html' as f %}
 {% import 'macros/check_password.html' as check %}
 
-{% block scripts %}
-{% endblock %}
+{% block title %}Add new user{% endblock title %}
 
 {% block content %}
+    {{ super() }}
     <div class="ui stackable centered grid container">
         <div class="twelve wide column">
             <br>
