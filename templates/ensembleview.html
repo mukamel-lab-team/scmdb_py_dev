@@ -14,11 +14,18 @@
                     <div class="panel panel-info" id="options-panel" style="overflow-x: auto; margin-left:auto; margin-right:auto; max-width:1400px">
                         <div class="panel-heading">
                             <div class="panel-title">
-                                <h5><a data-toggle="collapse" title="" style="margin-top: 0px;" data-original-title="Collapse Search Options" href="#search-panel-body"> Gene Search <span class="glyphicon glyphicon-chevron-down"></span></a>
-                                <a href="#" target="_blank" id="epiBrowserLink" class="btn btn-info disabled pull-right" style="margin-top: 0px; margin-right:10px" role="button">
-                                    <small style="color:white;">Epigenome browser (AnnoJ)</small>
-                                </a>
-                                </h5>
+                                <div style="display:inline-block;">
+                                    <h5>
+                                        <a class="accordion-toggle" data-parent="#options-panel" data-toggle="collapse" title="" style="margin-top: 0px;" data-original-title="Collapse Search Options" href="#search-panel-body">
+                                            <div class="accordion-chevron">Gene Search </div>
+                                        </a>
+                                    </h5>
+                                </div>
+                                <div style="display:inline-block; float:right;">
+                                    <a href="#" target="_blank" id="epiBrowserLink" class="btn btn-info disabled pull-right"role="button">
+                                        <small style="color:white;">Epigenome browser (AnnoJ)</small>
+                                    </a>
+                                </div>
                             </div>
                         </div>
                         <div class="panel-body collapse in" id="search-panel-body" style="padding-top:10px;">
@@ -34,19 +41,21 @@
 					<div class="panel panel-default panel-main" style="overflow-x: auto; margin-left:auto; margin-right:auto;">
 						<div class="panel-heading">
 							<div class="panel-title">
-                                <a data-toggle="collapse" title="" href="#methylation-plots" style="margin-top: 0px;" data-original-title="Collapse Methylation Scatter Plot Container"><b>{{ ensemble_name }} (snmC-seq)</b>{% if gene is defined %} - {{ gene }}{% endif %}&nbsp;
-                                    <span id="methylation-tsne-heading-num_dimensions">&nbsp;</span> tSNE: 
-                                    <span id="methylation-tsne-options-heading" style="font-size:0.8em;">&nbsp;</span>
-                                    &nbsp;| Clustering: 
-                                    <span id="methylation-clustering-options-heading" style="font-size:0.8em;">&nbsp;</span>
-                                    <span class="glyphicon glyphicon-chevron-down"></span>
+                                <a class="accordion-toggle" data-toggle="collapse" title="" href="#methylation-plots" style="margin-top: 0px;" data-original-title="Collapse Methylation Scatter Plot Container"><b>{{ ensemble_name }} (snmC-seq)</b>{% if gene is defined %} - {{ gene }}{% endif %}&nbsp;
+                                    <div style="display: inline-block;">
+                                        <span>tSNE: </span>
+                                        <span id="methylation-tsne-options-heading" style="font-size:0.8em;">&nbsp;</span>
+                                        &nbsp;| Clustering: 
+                                        <span id="methylation-clustering-options-heading" style="font-size:0.8em;">&nbsp;</span>
+                                    </div>
+                                    <div class="accordion-chevron" style="display: inline-block;"></div>
                                 </a>
                                 <a data-toggle="collapse" title="" data-placement="left" href=".methylation-plots-options" class="btn btn-sm btn-basic pull-right" style="margin-top: 0px;" data-original-title="Collapse Methylation tSNE Options"><i class="glyphicon glyphicon-cog"></i> Options</a>
 							</div>
 						</div>
                         <div class="panel-collapse collapse in" id="methylation-plots">
 							<div class="panel-body flex-container" style="padding:10px 0 0 0;">
-                                <div class="col-sm-12" id="methylation_tabs">
+                                <div class="container" id="methylation_tabs">
                                     <div class="col-sm-12">
                                         <ul class="nav nav-tabs" role="tablist">
                                             <li role="presentation" class="active"><a id="methylation-box-tab-btn" href="#methylation-scatter" role="tab" data-toggle="tab">Scatter</a></li>
@@ -75,19 +84,23 @@
 					<div class="panel panel-default panel-main" style="overflow-x: auto; margin-left:auto; margin-right:auto;">
 						<div class="panel-heading">
 							<div class="panel-title">
-                                <a data-toggle="collapse" title="" href="#snATAC-plots" style="margin-top: 0px;" data-original-title="Collapse snATAC Scatter Plot Container"><b>{{ ensemble_name }} (snATAC-seq)</b>{% if gene is defined %} - {{ gene }}{% endif %}&nbsp;
-                                    <!--<span id="snATAC_tsne_heading_num_dimensions">&nbsp;</span> tSNE: 
-                                    <span id="snATAC_tsne_options_heading" style="font-size:0.8em;">&nbsp;</span>
-                                    &nbsp;| Clustering: 
-                                    <span id="snATAC_clustering_options_heading" style="font-size:0.8em;">&nbsp;</span>-->
-                                    <span class="glyphicon glyphicon-chevron-down"></span>
+                                <a class="accordion-toggle" data-toggle="collapse" title="" href="#snATAC-plots" style="margin-top: 0px;" data-original-title="Collapse snATAC Scatter Plot Container">
+                                    <div style="display:inline-block;">
+                                        <b>{{ ensemble_name }} (snATAC-seq)</b>
+                                        {% if gene is defined %} - {{ gene }}{% endif %}&nbsp;
+                                        <!--<span id="snATAC_tsne_heading_num_dimensions">&nbsp;</span> tSNE: 
+                                        <span id="snATAC_tsne_options_heading" style="font-size:0.8em;">&nbsp;</span>
+                                        &nbsp;| Clustering: 
+                                        <span id="snATAC_clustering_options_heading" style="font-size:0.8em;">&nbsp;</span>-->
+                                    </div>
+                                    <div class="accordion-chevron" style="display:inline-block;"></div>
                                 </a>
                                 <a data-toggle="collapse" title="" data-placement="left" href=".snATAC-plots-options" class="btn btn-sm btn-basic pull-right" style="margin-top: 0px;" data-original-title="Collapse snATAC tSNE Options"><i class="glyphicon glyphicon-cog"></i> Options</a>
 							</div>
 						</div>
                         <div class="panel-collapse collapse in" id="snATAC-plots">
 							<div class="panel-body flex-container" style="padding:10px 0 0 0;">
-                                <div class="col-sm-12" id="snATAC_tabs">
+                                <div class="container" id="snATAC_tabs">
                                     <div class="col-sm-12">
                                         <ul class="nav nav-tabs" role="tablist">
                                             <li role="presentation" class="active"><a id="snATAC-scatter-tab-btn" href="#snATAC-scatter" role="tab" data-toggle="tab">Scatter</a></li>

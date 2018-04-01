@@ -49,10 +49,16 @@ body {
     max-width: 1200px;
 }
 
-.panel-heading {
-    font-size:1.5em;
+.accordion-toggle .accordion-chevron:after{
+    font-family: 'Glyphicons Halflings';
+    content: "\e114";
+    color: grey;
+    font-size: 0.9em;
 }
 
+.accordion-toggle.collapsed .accordion-chevron:after{
+    content: "\e080";
+}
 /*
 .option-panel {
     height:30px;
