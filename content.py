@@ -205,30 +205,6 @@ def generate_cluster_colors(num, grouping):
     return c
 
 
-# def randomize_cluster_colors(num):
-#     """Generates random set of colors for tSNE cluster plot.
-# 
-#     Arguments:
-#         None
-# 
-#     Returns:
-#         list: dict items.
-#             'colors' = new set of colors for each trace in rgb.
-#             'num_colors' = number of colors to be used
-#             'cluster_color_#' = indexes of traces to be assigned the new color
-# 
-#     """
-#     cache.delete_memoized(generate_cluster_colors)
-#     try:
-#         new_colors = {'colors': generate_cluster_colors(num)}
-#         new_colors['num_colors'] = num
-#         new_colors.update(trace_colors)
-#         return new_colors
-#     except NameError:
-#         time.sleep(2)
-#         randomize_cluster_colors(num)
-# 
-
 def set_color_by_percentile(this, start, end):
     """Set color below or above percentiles to their given values.
 
@@ -250,47 +226,6 @@ def set_color_by_percentile(this, start, end):
     elif this > end:
         return end
     return this
-
-
-def find_orthologs(mmu_gene_id=str(), hsa_gene_id=str()):
-    """Find orthologs of a gene.
-
-    Either hsa_gene_id or mmu_gene_id should be completed.
-
-    Arguments:
-        mmu_gene_id (str): Ensembl gene ID of mouse.
-        hsa_gene_id (str): Ensembl gene ID of human.
-
-    Returns:
-        dict: hsa_gene_id and mmu_gene_id as strings.
-    """
-    if not mmu_gene_id and not hsa_gene_id:  # Should have at least one.
-        return {'mmu_gene_id': None, 'hsa_gene_id': None}
-
-    conn = sqlite3.connect(
-        '{}/datasets/orthologs.sqlite3'.format(current_app.config['DATA_DIR']))
-
-    # This ensures dictionaries are returned for fetch results.
-    conn.row_factory = sqlite3.Row  
-
-    cursor = conn.cursor()
-    query_key = 'mmu_gene_id' if mmu_gene_id else 'hsa_gene_id'
-    query_value = mmu_gene_id or hsa_gene_id
-    query_value = query_value.split('.')[0] 
-
-    try:
-        cursor.execute("SELECT * FROM orthologs WHERE ? LIKE ?", (query_key, '%'+query_value+'%',))
-    except sqlite3.Error as e:
-        now = datetime.datetime.now()
-        print("[{}] ERROR in app(find_orthologs): {}".format(str(now), e))
-        sys.stdout.flush()
-        return {'mmu_gene_id': None, 'hsa_gene_id': None}
-
-    query_results = cursor.fetchone()
-    if not query_results:
-        return {'mmu_gene_id': None, 'hsa_gene_id': None}
-    else:
-        return dict(query_results)
 
 
 @cache.cached(timeout=3600)
@@ -426,21 +361,24 @@ def get_methylation_tsne_options(ensemble):
     for clustering_type, num_clusters in zip(list_clustering_types, result):
         dict_clustering_types_and_numclusters[clustering_type] = num_clusters
 
-    list_mc_types_clustering = sorted(list(set([x.split('_')[0] for x in list_clustering_types])), key=lambda mC_type: methylation_types_order.index(mC_type))
-    list_algorithms_clustering = sorted(list(set([x.split('_')[1] for x in list_clustering_types if list_mc_types_clustering[0] == x.split('_')[0]])))
-    list_npc_clustering = sorted(list(set([int(x.split('_')[2].replace('npc', '')) for x in list_clustering_types if (list_mc_types_clustering[0]+'_'+list_algorithms_clustering[0]) in x])))
-    list_k_clustering = sorted(list(set([int(x.split('_')[3].replace('k', '')) for x in list_clustering_types if (list_mc_types_clustering[0]+'_'+list_algorithms_clustering[0]+'_npc'+str(list_npc_clustering[0])) in x])))
+    list_algorithms_clustering = list(set([x.split('_')[1] for x in list_clustering_types]))
+
+    #list_mc_types_clustering = sorted(list(set([x.split('_')[0] for x in list_clustering_types])), key=lambda mC_type: methylation_types_order.index(mC_type))
+    #list_algorithms_clustering = sorted(list(set([x.split('_')[1] for x in list_clustering_types if list_mc_types_clustering[0] == x.split('_')[0]])))
+    #list_npc_clustering = sorted(list(set([int(x.split('_')[2].replace('npc', '')) for x in list_clustering_types if (list_mc_types_clustering[0]+'_'+list_algorithms_clustering[0]) in x])))
+    #list_k_clustering = sorted(list(set([int(x.split('_')[3].replace('k', '')) for x in list_clustering_types if (list_mc_types_clustering[0]+'_'+list_algorithms_clustering[0]+'_npc'+str(list_npc_clustering[0])) in x])))
+
 
     return {'all_tsne_settings': list_tsne_types, 
             'tsne_methylation': list_mc_types_tsne,
-            'tsne_dimensions': list_dims_tsne_first,
-            'tsne_perplexity': list_perp_tsne_first,
             'all_clustering_settings': list_clustering_types,
             'all_clustering_settings2': dict_clustering_types_and_numclusters,
-            'clustering_methylation': list_mc_types_clustering,
-            'clustering_algorithms': list_algorithms_clustering,
-            'clustering_npc': list_npc_clustering,
-            'clustering_k': list_k_clustering,}
+            'clustering_algorithms': list_algorithms_clustering,}
+            #'clustering_methylation': list_mc_types_clustering,}
+            #'tsne_dimensions': list_dims_tsne_first,
+            #'tsne_perplexity': list_perp_tsne_first,
+            #'clustering_npc': list_npc_clustering,
+            #'clustering_k': list_k_clustering,}
 
 
 @cache.memoize(timeout=3600)
@@ -535,32 +473,6 @@ def get_gene_by_id(ensemble, gene_query):
         return {}
     else:
         return dict(result)
-
-
-def convert_gene_id_mmu_hsa(ensemble, gene_id):
-    """Converts mmu gene_ids to hsa gene_ids and vice versa if the ID's do not correspond to
-    the ensemble being viewed. Necessary due to caching of last viewed gene IDs.
-
-    Arguments:
-        ensemble(str): Name of ensemble.
-        gene_id(str): Ensembl ID of gene.of
-
-    Returns:
-        str: correct gene_id that corresponds with the ensemble.
-    """
-    
-    if ensemble.startswith('Ens'):
-        if "ENSMUSG" not in gene_id:   #ENSUMG is the Ensembl header for mouse genes
-            mmu = find_orthologs(hsa_gene_id=gene_id)['mmu_gene_id']
-            return find_orthologs(hsa_gene_id=gene_id)['mmu_gene_id']
-        else:
-            return gene_id
-    else:
-        if "ENSMUSG" in gene_id:
-            gene2 = find_orthologs(mmu_gene_id=gene_id)['hsa_gene_id']
-            return find_orthologs(mmu_gene_id=gene_id)['hsa_gene_id']
-        else:
-            return gene_id
 
 
 def get_corr_genes(ensemble,query):
@@ -795,7 +707,6 @@ def get_mult_gene_methylation(ensemble, methylation_type, genes, grouping, clust
 
 @cache.memoize(timeout=3600)
 def get_gene_snATAC(ensemble, gene, grouping, outliers):
-#def get_gene_snATAC(ensemble, gene, grouping, clustering, outliers, tsne_type='ATAC_ndim2_perp20'):
     """Return snATAC data points for a given gene.
 
     Data from ID-to-Name mapping and tSNE points are combined for plot generation.
@@ -830,17 +741,6 @@ def get_gene_snATAC(ensemble, gene, grouping, outliers):
         INNER JOIN %(ensemble)s ON cells.cell_id = %(ensemble)s.cell_id \
         LEFT JOIN %(gene_table_name)s ON %(ensemble)s.cell_id = %(gene_table_name)s.cell_id" % {'ensemble': ensemble, 
                                                                                                 'gene_table_name': gene_table_name,}
-    # else:
-    #     query = "SELECT cells.cell_id, cells.cell_name, cells.dataset, cells.global_%(methylation_type)s, \
-    #         %(ensemble)s.annotation_ATAC, %(ensemble)s.cluster_ATAC, \
-    #         %(ensemble)s.tsne_x_%(tsne_type)s, %(ensemble)s.tsne_y_%(tsne_type)s, %(ensemble)s.tsne_z_%(tsne_type)s, \
-    #         %(gene_table_name)s.normalized_counts \
-    #         FROM cells \
-    #         INNER JOIN %(ensemble)s ON cells.cell_id = %(ensemble)s.cell_id \
-    #         LEFT JOIN %(gene_table_name)s ON %(ensemble)s.cell_id = %(gene_table_name)s.cell_id" % {'ensemble': ensemble, 
-    #                                                                                                  'gene_table_name': gene_table_name,
-    #                                                                                                  'tsne_type': tsne_type,
-    #                                                                                                  'clustering': clustering,}
     try:
         df = pd.read_sql(query, db.get_engine(current_app, 'snATAC_data'))
     except exc.ProgrammingError as e:
@@ -867,7 +767,6 @@ def get_gene_snATAC(ensemble, gene, grouping, outliers):
 
 @cache.memoize(timeout=1800)
 def get_mult_gene_snATAC(ensemble, genes, grouping):
-#def get_mult_gene_snATAC(ensemble, genes, grouping, clustering, tsne_type='ATAC_ndim2_perp20'):
     """Return averaged methylation data ponts for a set of genes.
 
     Data from ID-to-Name mapping and tSNE points are combined for plot generation.
@@ -909,17 +808,6 @@ def get_mult_gene_snATAC(ensemble, genes, grouping):
             INNER JOIN %(ensemble)s ON cells.cell_id = %(ensemble)s.cell_id \
             LEFT JOIN %(gene_table_name)s ON %(ensemble)s.cell_id = %(gene_table_name)s.cell_id" % {'ensemble': ensemble, 
                                                                                                     'gene_table_name': gene_table_name,}
-        # else:
-        #     query = "SELECT cells.cell_id, cells.cell_name, cells.dataset, \
-        #         %(ensemble)s.annotation_%(clustering)s, %(ensemble)s.cluster_%(clustering)s, \
-        #         %(ensemble)s.tsne_x_%(tsne_type)s, %(ensemble)s.tsne_y_%(tsne_type)s, %(ensemble)s.tsne_z_%(tsne_type)s, \
-        #         %(gene_table_name)s.normalized_counts \
-        #         FROM cells \
-        #         INNER JOIN %(ensemble)s ON cells.cell_id = %(ensemble)s.cell_id \
-        #         LEFT JOIN %(gene_table_name)s ON %(ensemble)s.cell_id = %(gene_table_name)s.cell_id" % {'ensemble': ensemble, 
-        #                                                                                                 'gene_table_name': gene_table_name,
-        #                                                                                                 'tsne_type': tsne_type,
-        #                                                                                                 'clustering': clustering,}
         try:
             df_all = df_all.append(pd.read_sql(query, db.get_engine(current_app, 'snATAC_data')))
         except exc.ProgrammingError as e:
@@ -951,43 +839,8 @@ def get_mult_gene_snATAC(ensemble, genes, grouping):
     return df_coords
 
 
-@cache.memoize(timeout=3600)
-def get_ortholog_cluster_order():
-    """Order cluster mm_hs_homologous_cluster.txt.
-
-    Arguments:
-        None
-
-    Returns:
-        list: tuples of (ensemble, cluster_number)
-    """
-    try:
-        df = pd.read_csv(
-            '{}/mm_hs_homologous_cluster.txt'.format(
-                current_app.config['DATA_DIR'],
-                engine='python'),
-            sep='\t')
-    except IOError:
-        now = datetime.datetime.now()
-        print("[{}] ERROR in app(get_ortholog_cluster_order): Could not load mm_hs_homologous_cluster.txt".format(str(now)))
-        sys.stdout.flush()
-        return []
-
-    clusters = list()
-    for _, row in df.iterrows():
-        mmu_cluster = ('mmu', int(row['Mouse Cluster']))
-        hsa_cluster = ('hsa', int(row['Human Cluster']))
-        if mmu_cluster not in clusters:
-            clusters.append(mmu_cluster)
-        if hsa_cluster not in clusters:
-            clusters.append(hsa_cluster)
-
-    return clusters
-
-
 @cache.memoize(timeout=1800)
 def get_snATAC_scatter(ensemble, genes_query, grouping, ptile_start, ptile_end, tsne_outlier_bool):
-#def get_snATAC_scatter(ensemble, tsne_type, genes_query, grouping, clustering, ptile_start, ptile_end, tsne_outlier_bool):
     """Generate scatter plot and gene body mCH scatter plot using tSNE coordinates from methylation(snmC-seq) data.
 
     Arguments:
@@ -1004,10 +857,7 @@ def get_snATAC_scatter(ensemble, genes_query, grouping, ptile_start, ptile_end, 
         str: HTML generated by Plot.ly.
     """
 
-    genes_query = genes_query.split()
-    genes = []
-    for gene in genes_query:
-        genes.append(convert_gene_id_mmu_hsa(ensemble,gene))
+    genes = genes_query.split()
 
     gene_name = ""
     x, y, text, mch = list(), list(), list(), list()
@@ -1098,7 +948,7 @@ def get_snATAC_scatter(ensemble, genes_query, grouping, ptile_start, ptile_end, 
 
         color_num = i
         
-        trace2d = traces_tsne.setdefault(color_num, Scatter(
+        trace2d = traces_tsne.setdefault(color_num, Scattergl(
             x=list(),
             y=list(),
             text=list(),
@@ -1109,7 +959,6 @@ def get_snATAC_scatter(ensemble, genes_query, grouping, ptile_start, ptile_end, 
             marker={
                    'color': colors[color_num],
                    'size': marker_size,
-                   #'opacity': 0.8,
                    #'symbol': symbols[datasets.index(dataset)],
             },
             hoverinfo='text'))
@@ -1146,7 +995,7 @@ def get_snATAC_scatter(ensemble, genes_query, grouping, ptile_start, ptile_end, 
     colorbar_ticktext[0] = '<' + str(round(start, 3))
     colorbar_ticktext.append('>' + str(round(end, 3)))
 
-    trace_ATAC = Scatter(
+    trace_ATAC = Scattergl(
         mode='markers',
         x=x,
         y=y,
@@ -1173,9 +1022,9 @@ def get_snATAC_scatter(ensemble, genes_query, grouping, ptile_start, ptile_end, 
         hoverinfo='text')
 
     layout = Layout(
-        autosize=True,
-        height=450,
-        width=1100,
+        # autosize=True,
+        # height=450,
+        # width=1000,
         title=title,
         titlefont={'color': 'rgba(1,2,2,1)',
                    'size': 16},
@@ -1263,205 +1112,6 @@ def get_snATAC_scatter(ensemble, genes_query, grouping, ptile_start, ptile_end, 
                                                     yref="paper",
                                                     font={'size': 12,
                                                           'color': 'gray',})])
-
-
-
-    ## 3D tSNE coordinates ##
-    # else: 
-    #     for i, group in enumerate(unique_groups):
-
-    #         points_group = points[points[grouping_clustering]==group]
-    #         if grouping_clustering.startswith('cluster'):
-    #             group_str = 'cluster_' + str(group)
-    #         elif grouping_clustering== "dataset":
-    #             group = group.strip('CEMBA_')
-    #             group_str = group
-    #         else:
-    #             group_str = group
-
-    #         color_num = i
-    #         
-    #         trace3d = traces_tsne.setdefault(color_num, Scatter3d(
-    #             x=list(),
-    #             y=list(),
-    #             z=list(),
-    #             text=list(),
-    #             mode='markers',
-    #             visible=True,
-    #             name=group_str,
-    #             legendgroup=group,
-    #             scene='scene1',
-    #             marker={
-    #                    'color': colors[color_num],
-    #                    'size': marker_size,
-    #                    'opacity': 0.8,
-    #                    #'symbol': symbols[datasets.index(dataset)],
-    #             },
-    #             hoverinfo='text'))
-    #         trace3d['x'] = points_group['tsne_x_'+tsne_type].values.tolist()
-    #         trace3d['y'] = points_group['tsne_y_'+tsne_type].values.tolist()
-    #         trace3d['z'] = points_group['tsne_z_'+tsne_type].values.tolist()
-    #         trace3d['text'] = [build_hover_text({'Cell Name': point[1],
-    #                                              'Dataset': point[2],
-    #                                              'Annotation': point[3],
-    #                                              'Cluster': point[4]})
-    #                            for point in points_group.itertuples(index=False)]
-
-    #     ### sNATAC COUNTS SCATTER ### 
-    #     x = points['tsne_x_' + tsne_type].tolist()
-    #     y = points['tsne_y_' + tsne_type].tolist()
-    #     z = points['tsne_z_' + tsne_type].tolist()
-    #     ATAC_counts = points['normalized_counts']
-    #     text_ATAC = [build_hover_text({'Normalized Counts': round(point[-1], 6),
-    #                                    'Cell Name': point[1],
-    #                                    'Annotation': point[3],
-    #                                    'Cluster': point[4]})
-    #                  for point in points.itertuples(index=False)]
-
-
-    #     ATAC_dataframe = pd.DataFrame(ATAC_counts)
-    #     start = ATAC_dataframe.dropna().quantile(ptile_start)[0].tolist()
-    #     end = ATAC_dataframe.dropna().quantile(ptile_end).values[0].tolist()
-    #     ATAC_colors = [set_color_by_percentile(x, start, end) for x in ATAC_counts]
-
-    #     colorbar_tickval = list(arange(start, end, (end - start) / 4))
-    #     colorbar_tickval[0] = start
-    #     colorbar_tickval.append(end)
-    #     colorbar_ticktext = [
-    #         str(round(x, 3)) for x in arange(start, end, (end - start) / 4)
-    #     ]
-    #     colorbar_ticktext[0] = '<' + str(round(start, 3))
-    #     colorbar_ticktext.append('>' + str(round(end, 3)))
-
-    #     trace_ATAC = Scatter3d(
-    #         mode='markers',
-    #         x=x,
-    #         y=y,
-    #         z=z,
-    #         text=text_ATAC,
-    #         scene='scene2',
-    #         marker={
-    #             'color': ATAC_colors,
-    #             'colorscale': 'Viridis',
-    #             'size': marker_size,
-    #             'colorbar': {
-    #                 'x': 1.05,
-    #                 'len': 0.5,
-    #                 'thickness': 10,
-    #                 'title': 'Normalized Counts',
-    #                 'titleside': 'right',
-    #                 'tickmode': 'array',
-    #                 'tickvals': colorbar_tickval,
-    #                 'ticktext': colorbar_ticktext,
-    #                 'tickfont': {'size': 10}
-    #             }
-    #         },
-    #         showlegend=False,
-    #         hoverinfo='text')
-
-    #     layout = Layout(
-    #         autosize=True,
-    #         height=450,
-    #         title=title,
-    #         titlefont={'color': 'rgba(1,2,2,1)',
-    #                    'size': 16},
-    #         legend={'x':-.1, 'y':1},
-    #         margin={'l': 49,
-    #                 'r': 0,
-    #                 'b': 30,
-    #                 't': 50,
-    #                 'pad': 10
-    #                 },
-
-    #         hovermode='closest',
-    #     )
-
-    #     scene={
-    #         'camera':{
-    #             'eye': dict(x=1.2, y=1.5, z=0.7),
-    #             'center': dict(x=0.25, z=-0.1)
-    #                  },
-    #         'aspectmode':'data',
-    #         'xaxis':{
-    #             'title': 'tSNE 1',
-    #             'titlefont': {
-    #                 'color': 'rgba(1,2,2,1)',
-    #                 'size': 12
-    #             },
-    #             'type': 'linear',
-    #             'ticks': '',
-    #             'showticklabels': False,
-    #             'tickwidth': 0,
-    #             'showline': True,
-    #             'showgrid': False,
-    #             'zeroline': False,
-    #             'linecolor': 'black',
-    #             'linewidth': 0.5,
-    #             'mirror': True
-    #         },
-    #         'yaxis':{
-    #             'title': 'tSNE 2',
-    #             'titlefont': {
-    #                 'color': 'rgba(1,2,2,1)',
-    #                 'size': 12
-    #             },
-    #             'type': 'linear',
-    #             'ticks': '',
-    #             'showticklabels': False,
-    #             'tickwidth': 0,
-    #             'showline': True,
-    #             'showgrid': False,
-    #             'zeroline': False,
-    #             'linecolor': 'black',
-    #             'linewidth': 0.5,
-    #             'mirror': True
-    #         },
-    #         'zaxis':{
-    #             'title': 'tSNE 3',
-    #             'titlefont': {
-    #                 'color': 'rgba(1,2,2,1)',
-    #                 'size': 12
-    #             },
-    #             'type': 'linear',
-    #             'ticks': '',
-    #             'showticklabels': False,
-    #             'tickwidth': 0,
-    #             'showline': True,
-    #             'showgrid': False,
-    #             'zeroline': False,
-    #             'linecolor': 'black',
-    #             'linewidth': 0.5,
-    #             'mirror': True
-    #         },
-    #     }
-
-    #     fig = tools.make_subplots(rows=1,
-    #                               cols=2,
-    #                               shared_xaxes=True,
-    #                               #shared_yaxes=True,
-    #                               print_grid=False,
-    #                               subplot_titles=("tSNE", "Normalized_Counts"),
-    #                               specs=[[{'is_3d':True}, {'is_3d':True}]])
-
-    #     for trace in traces_tsne.items():
-    #         fig.append_trace(trace[1], 1,1)
-    #     fig.append_trace(trace_ATAC, 1,2)
-
-    #     fig['layout'].update(layout)
-    #     fig['layout']['scene1'].update(scene)
-    #     fig['layout']['scene2'].update(scene)
-    # 
-    #     fig['layout']['annotations'].extend([Annotation(text="Cluster Labels",
-    #                                                     x=-.09,
-    #                                                     y=1.03 + annotation_additional_y,
-    #                                                     xanchor="left",
-    #                                                     yanchor="top",
-    #                                                     showarrow=False,
-    #                                                     xref="paper",
-    #                                                     yref="paper",
-    #                                                     font={'size': 12,
-    #                                                           'color': 'gray',})])
-
     return plotly.offline.plot(
         figure_or_data=fig,
         output_type='div',
@@ -1490,11 +1140,7 @@ def get_methylation_scatter(ensemble, tsne_type, methylation_type, genes_query, 
     """
 
 
-    genes_query = genes_query.split()
-    genes = []
-    context = methylation_type[1:]
-    for gene in genes_query:
-        genes.append(convert_gene_id_mmu_hsa(ensemble,gene))
+    genes = genes_query.split()
 
     gene_name = ""
     x, y, text, mch = list(), list(), list(), list()
@@ -1569,6 +1215,8 @@ def get_methylation_scatter(ensemble, tsne_type, methylation_type, genes_query, 
     else:
         marker_size = 4
 
+    context = methylation_type[1:]
+
     ## 2D tSNE coordinates ##
     if 'ndim2' in tsne_type:
         for i, group in enumerate(unique_groups):
@@ -1594,7 +1242,6 @@ def get_methylation_scatter(ensemble, tsne_type, methylation_type, genes_query, 
                 marker={
                        'color': colors[color_num],
                        'size': marker_size,
-                       #'opacity': 0.8,
                        #'symbol': symbols[datasets.index(dataset)],
                 },
                 hoverinfo='text'))
@@ -1660,7 +1307,7 @@ def get_methylation_scatter(ensemble, tsne_type, methylation_type, genes_query, 
         layout = Layout(
             autosize=True,
             height=450,
-            width=1100,
+            #width=1000,
             title=title,
             titlefont={'color': 'rgba(1,2,2,1)',
                        'size': 16},
@@ -1981,7 +1628,7 @@ def get_mch_heatmap(ensemble, methylation_type, grouping, clustering, level, pti
         normal_or_original = 'Original'
 
     title = normal_or_original + " gene body " + methylation_type + " by cluster: <br>"
-    genes = [convert_gene_id_mmu_hsa(ensemble,gene) for gene in query.split()]
+    genes= query.split()
 
     gene_info_df = pd.DataFrame()
     for gene_id in genes:
@@ -2201,7 +1848,7 @@ def get_snATAC_heatmap(ensemble, grouping, ptile_start, ptile_end, normalize_row
         normal_or_original = 'Original'
 
     title = normal_or_original + " gene body snATAC normalized counts by cluster:<br>"
-    genes = [convert_gene_id_mmu_hsa(ensemble,gene) for gene in query.split()]
+    genes = query.split()
 
     gene_info_df = pd.DataFrame()
     for gene_id in genes:
@@ -2396,307 +2043,6 @@ def get_snATAC_heatmap(ensemble, grouping, ptile_start, ptile_end, normalize_row
         include_plotlyjs=False)
 
 
-def get_mch_heatmap_two_ensemble(ensemble, methylation_type, level, ptile_start, ptile_end, normalize_row, query):
-    """Generate gene body mCH heatmap for two ensemble.
-
-    Traces are grouped by cluster and ordered by mm_hs_homologous_cluster.txt.
-
-    Arguments:
-        ensemble (str): Species being viewed.
-        methylation_type (str): Type of methylation to visualize. "mch" or "mcg"
-        level (str): "original" or "normalized" methylation values.
-        ptile_start (float): Lower end of color percentile. [0, 1].
-        ptile_end (float): Upper end of color percentile. [0, 1].
-        normalize_row (bool): Whether to normalize by each row (gene). 
-        query ([str]):  List of ensembl IDs of genes.
-
-    Returns:
-        str: HTML generated by Plot.ly.
-    """
-    
-    """ NOTES
-    
-        Must be on same colorscale, which means original heatmap must be replotted
-            Color bar should be to right of right most map. Subplots?
-                https://plot.ly/python/subplots/
-        Ideally two separated 
-        Left/Right vs. Up/Down
-        if ortholog doesn't exist, fill with NaN
-        Titles?
-        Y-axis?
-
-    """
-
-    gene_mch_hsa_df = pd.DataFrame()
-    gene_mch_mmu_df = pd.DataFrame()
-    gene_mch_combined_df = pd.DataFrame()
-
-    if ensemble == 'mouse_published' or ensemble == 'mmu':
-        gene_id_list_mmu = [ convert_gene_id_mmu_hsa(ensemble, gene_id) for gene_id in query.split() ]
-        gene_id_list_hsa = [ find_orthologs(mmu_gene_id = gene_id)['hsa_gene_id'] for gene_id in gene_id_list_mmu ]
-        for gene_id in gene_id_list_mmu:
-            gene_label_mmu = get_gene_by_id('mouse_published', gene_id)['gene_name']
-            gene_mch_mmu_df[gene_label_mmu] = median_cluster_mch(get_gene_methylation('mouse_published', methylation_type, gene_id, level, True), level, cluster_type = 'cluster_ortholog')
-        index = 0
-        for gene_id in gene_id_list_hsa:
-            if gene_id == None or gene_id == '':
-                gene_label_hsa = "*N/A " + gene_mch_mmu_df.columns.values[index].upper() # ex. Cacna2d2 (mmu) -> CACNA2D2 (hsa)
-                gene_mch_hsa_df[gene_label_hsa] = nan
-            else:
-                gene_label_hsa = get_gene_by_id('human_hv1_published', gene_id)['gene_name']
-                gene_mch_hsa_df[gene_label_hsa] = median_cluster_mch(get_gene_methylation('human_hv1_published', methylation_type, gene_id, level, True), level, cluster_type = 'cluster_ortholog')
-            index += 1
-    else:
-        gene_id_list_hsa = [ convert_gene_id_mmu_hsa(ensemble, gene_id) for gene_id in query.split() ]
-        gene_id_list_mmu = [ find_orthologs(hsa_gene_id = gene_id)['mmu_gene_id'] for gene_id in gene_id_list_hsa ]
-        for gene_id in gene_id_list_hsa:
-            gene_label_hsa = get_gene_by_id('human_hv1_published', gene_id)['gene_name'] 
-            gene_mch_hsa_df[gene_label_hsa] = median_cluster_mch(get_gene_methylation('human_hv1_published', methylation_type, gene_id, level, True), level, cluster_type = 'cluster_ortholog')
-        index = 0
-        for gene_id in gene_id_list_mmu:
-            if gene_id == None or gene_id == '':
-                gene_label_mmu = "*N/A " + gene_mch_hsa_df.columns.values[index].title() # ex. CACNA2D2 (hsa) -> Cacna2d2 (mmu)
-                gene_mch_mmu_df[gene_label_mmu] = nan
-            else:
-                gene_label_mmu = get_gene_by_id('mouse_published', gene_id)['gene_name'] 
-                gene_mch_mmu_df[gene_label_mmu] = median_cluster_mch(get_gene_methylation('mouse_published', methylation_type, gene_id, level, True), level, cluster_type = 'cluster_ortholog')
-            index += 1
-
-    if gene_mch_hsa_df.empty or gene_mch_mmu_df.empty:
-        return FailToGraphException
-    
-    gene_mch_combined_df = gene_mch_hsa_df.join(gene_mch_mmu_df, how='outer')
-    gene_mch_combined_df = gene_mch_combined_df[gene_mch_combined_df.index != '']
-
-    if normalize_row:
-        for gene in gene_mch_combined_df:
-            gene_mch_combined_df[gene] = (gene_mch_combined_df[gene]-gene_mch_combined_df[gene].min()) / \
-                    (gene_mch_combined_df[gene].max()-gene_mch_combined_df[gene].min())  
-
-    if methylation_type == 'mch':
-        methylation_type = 'mCH'
-    else:
-        methylation_type = 'mCG'
-
-    title = "Orthologous gene body " + methylation_type + " by cluster"
-
-    mch_mmu = [ gene_mch_combined_df[gene_name].tolist() for gene_name in gene_mch_mmu_df.columns.values ]
-    mch_hsa = [ gene_mch_combined_df[gene_name].tolist() for gene_name in gene_mch_hsa_df.columns.values ]
-
-    text_mmu, text_hsa, hover_mmu, hover_hsa = list(), list(), list(), list()
-    for gene_name in gene_mch_mmu_df.columns.values:
-        for cluster in gene_mch_combined_df.index:
-            text_mmu.append(build_hover_text({
-                    'Gene': gene_name,
-                    'Cluster': cluster,
-                    methylation_type: gene_mch_combined_df[gene_name][cluster],
-                    })
-                )   
-        hover_mmu.append(text_mmu)
-        text_mmu = []
-    for gene_name in gene_mch_hsa_df.columns.values:
-        for cluster in gene_mch_combined_df.index:
-            text_hsa.append(build_hover_text({
-                    'Gene': gene_name,
-                    'Cluster': cluster,
-                    methylation_type: gene_mch_combined_df[gene_name][cluster],
-                    })
-                )
-        hover_hsa.append(text_hsa)
-        text_hsa = []
-
-    mch_combined = mch_mmu + mch_hsa
-    flat_mch = list(chain.from_iterable(mch_combined))
-    mch_dataframe = pd.DataFrame(flat_mch).dropna()
-    start = mch_dataframe.quantile(0.05)[0].tolist()
-    end = mch_dataframe.quantile(0.95).values[0].tolist()
-    colorbar_tickval = list(arange(start, end, (end - start) / 4))
-    colorbar_tickval[0] = start
-    colorbar_tickval.append(end)
-    colorbar_ticktext = [
-        str(round(x, 3)) for x in arange(start, end, (end - start) / 4)
-    ]
-    if normalize_row == True:
-        colorbar_ticktext[0] = str(round(start, 3))
-    else:
-        colorbar_ticktext[0] = '<' + str(round(start, 3))
-    colorbar_ticktext.append('>' + str(round(end, 3)))
-
-    # Due to a weird bug(?) in plotly, the number of elements in tickvals and ticktext 
-    # must be greater than or equal to number of genes in query. Else, javascript throws 
-    # Uncaught Typeerrors when trying to hover over genes. (Tomo 12/11/17)
-    while len(colorbar_tickval) < len(gene_mch_hsa_df.columns):
-        colorbar_tickval.insert(0,start)
-        if normalize_row == True:
-            colorbar_ticktext.insert(0, str(round(start, 3)))
-        else:
-            colorbar_ticktext.insert(0, '<' + str(round(start, 3)))
-
-    trace_hsa = Heatmap(
-            y=list(gene_mch_hsa_df.columns.values),
-            x=gene_mch_combined_df.index,
-            xaxis='x_hsa',
-            yaxis='y_hsa',
-            z=mch_hsa,
-            text=hover_hsa,
-            colorscale='Viridis',
-            showscale=True,
-            colorbar={
-                'x': 1.0,
-                'len': 1,
-                'title': level.capitalize() + ' ' + methylation_type,
-                'titleside': 'right',
-                'tickmode': 'array',
-                'tickvals': colorbar_tickval,
-                'ticktext': colorbar_ticktext,
-                'thickness': 10,
-                'tickfont': {'size': 10}
-                },
-            hoverinfo='text'
-            )
-    trace_mmu = Heatmap(
-            y=list(gene_mch_mmu_df.columns.values),    # Use hsa gene names to have same Y-axes for both
-            x=gene_mch_combined_df.index,
-            xaxis='x_mmu',
-            yaxis='y_mmu',
-            z=mch_mmu,
-            text=hover_mmu,
-            colorscale='Viridis',
-            showscale=False,
-            hoverinfo='text'
-            )
-
-    layout = Layout(
-            autosize=True,
-            height=450,
-            width=1000,
-            title=title,
-            titlefont={'color': 'rgba(1,2,2,1)',
-                       'size': 16},
-
-            hovermode='closest'
-            )
-
-    # Available colorscales:
-    # https://community.plot.ly/t/what-colorscales-are-available-in-plotly-and-which-are-the-default/2079
-    updatemenus = list([
-        dict(
-            buttons=list([
-                dict(
-                    args=['colorscale', 'Viridis'],
-                    label='Viridis',
-                    method='restyle'
-                ),
-                dict(
-                    args=['colorscale', 'Bluered'],
-                    label='Bluered',
-                    method='restyle'
-                ),
-                dict(
-                    args=['colorscale', 'Blackbody'],
-                    label='Blackbody',
-                    method='restyle'
-                ),
-                dict(
-                    args=['colorscale', 'Electric'],
-                    label='Electric',
-                    method='restyle'
-                ),
-                dict(
-                    args=['colorscale', 'Earth'],
-                    label='Earth',
-                    method='restyle'
-                ),
-                dict(
-                    args=['colorscale', 'Jet'],
-                    label='Jet',
-                    method='restyle'
-                ),
-                dict(
-                    args=['colorscale', 'Rainbow'],
-                    label='Rainbow',
-                    method='restyle'
-                ),
-                dict(
-                    args=['colorscale', 'Picnic'],
-                    label='Picnic',
-                    method='restyle'
-                ),
-                dict(
-                    args=['colorscale', 'Portland'],
-                    label='Portland',
-                    method='restyle'
-                ),
-                dict(
-                    args=['colorscale', 'YlGnBu'],
-                    label='YlGnBu',
-                    method='restyle'
-                )
-            ]),
-            direction='down',
-            showactive=True,
-            x=0,
-            xanchor='left',
-            y=1.17,
-            yanchor='top'
-        )
-    ])
-
-    layout['updatemenus'] = updatemenus
-
-    fig = tools.make_subplots(
-            rows=1,
-            cols=2,
-            print_grid=False,
-            shared_xaxes=True,
-            shared_yaxes=False,
-            subplot_titles=("Human_published", "Mouse_published"),
-            )
-    fig.append_trace(trace_hsa, row=1, col=1)
-    fig.append_trace(trace_mmu, row=1, col=2)
-
-    fig['layout'].update(layout)
-    fig['layout']['xaxis1'].update({
-        'side': 'bottom',
-        'tickangle': -45,
-        'tickfont': {
-            'size': 12
-             },
-        'domain':[0, 0.45],
-         })
-
-    fig['layout']['xaxis2'].update({
-        'side': 'bottom',
-        'tickangle': -45,
-        'tickfont': {
-            'size': 12
-             },
-        'domain':[0.55, 1.0],
-         })
-
-    fig['layout']['yaxis1'].update({
-        'visible':True,
-        'tickangle': 15,
-        'tickfont': {
-            'size': 12
-            },
-        })
-
-    fig['layout']['yaxis2'].update({
-        'visible':True,
-        'tickangle': 15,
-        'tickfont': {
-            'size': 12
-            },
-        })
-
-    return plotly.offline.plot(
-        figure_or_data=fig,
-        output_type='div',
-        show_link=False,
-        include_plotlyjs=False)
-
-
 @cache.memoize(timeout=3600)
 def get_mch_box(ensemble, methylation_type, gene, grouping, clustering, level, outliers):
     """Generate gene body mCH box plot.
@@ -2715,7 +2061,6 @@ def get_mch_box(ensemble, methylation_type, gene, grouping, clustering, level, o
     Returns:
         str: HTML generated by Plot.ly.
     """
-    gene = convert_gene_id_mmu_hsa(ensemble, gene)
     points = get_gene_methylation(ensemble, methylation_type, gene, grouping, clustering, level, outliers)
     context = methylation_type[1:]
 
@@ -2766,11 +2111,6 @@ def get_mch_box(ensemble, methylation_type, gene, grouping, clustering, level, o
         title='Gene body ' + methylation_type + ' in each cluster: ' + gene_name,
         titlefont={'color': 'rgba(1,2,2,1)',
                    'size': 20},
-#        legend={
-#            'orientation': 'h',
-#            'y': -0.3,
-#            'traceorder': 'normal',
-#        },
         xaxis={
             'title': 'Cluster',
             'titlefont': {
@@ -2840,7 +2180,6 @@ def get_snATAC_box(ensemble, gene, grouping, outliers):
     Returns:
         str: HTML generated by Plot.ly.
     """
-    gene = convert_gene_id_mmu_hsa(ensemble, gene)
     points = get_gene_snATAC(ensemble, gene, grouping, outliers)
 
     if points is None:
@@ -2888,11 +2227,6 @@ def get_snATAC_box(ensemble, gene, grouping, outliers):
         title='Gene body snATAC normalized counts in each cluster:<br>' + gene_name,
         titlefont={'color': 'rgba(1,2,2,1)',
                    'size': 20},
-#        legend={
-#            'orientation': 'h',
-#            'y': -0.3,
-#            'traceorder': 'normal',
-#        },
         xaxis={
             'title': 'Cluster',
             'titlefont': {
@@ -2922,7 +2256,6 @@ def get_snATAC_box(ensemble, gene, grouping, outliers):
             'type': 'linear',
             'anchor': 'x',
             'ticks': 'outside',
-            # 'tickcolor': 'white',
             'ticklen': 4,
             'tickwidth': 0.5,
             'showticklabels': True,
@@ -2940,162 +2273,6 @@ def get_snATAC_box(ensemble, gene, grouping, outliers):
     return plotly.offline.plot(
         {
             'data': list(traces.values()),
-            'layout': layout
-        },
-        output_type='div',
-        show_link=False,
-        include_plotlyjs=False)
-
-
-@cache.memoize(timeout=3600)
-def get_mch_box_two_ensemble(methylation_type, gene_mmu, gene_hsa, level, outliers):
-    """Generate gene body mCH box plot for two ensemble.
-
-    Traces are grouped by cluster and ordered by mm_hs_homologous_cluster.txt.
-    Mouse clusters red, human clusters black.
-
-    Arguments:
-        methylation_type (str): Type of methylation to visualize.        "mch" or "mcg"
-        gene_mmu (str):  Ensembl ID of gene mouse.
-        gene_hsa (str):  Ensembl ID of gene human.
-        level (str): "original" or "normalized" methylation values.
-        outliers (bool): Whether if outliers should be displayed.
-
-    Returns:
-        str: HTML generated by Plot.ly.
-    """
-    gene_hsa = convert_gene_id_mmu_hsa('human_hv1_published', gene_hsa)
-    gene_mmu = convert_gene_id_mmu_hsa('mouse_published', gene_mmu)
-    points_mmu = get_gene_methylation('mouse_published', methylation_type, gene_mmu, level, outliers)
-    points_hsa = get_gene_methylation('human_hv1_published', methylation_type, gene_hsa, level, outliers)
-    cluster_order = get_ortholog_cluster_order()
-    if points_mmu is None or points_hsa is None or not cluster_order is None:
-        raise FailToGraphException
-
-    gene_name = get_gene_by_id('mouse_published', gene_mmu)['gene_name']
-
-    # EAM - This organizes the box plot into groups
-    traces_mmu = Box(
-        y=list(i.get(level) for i in points_mmu if i.get('cluster_ortholog')),
-        x=list(i.get('cluster_ortholog') for i in points_mmu if i.get('cluster_ortholog')),
-        marker={'color': 'red', 'outliercolor': 'red'},
-        boxpoints='suspectedoutliers')
-        
-    traces_hsa = Box(
-        y=list(i.get(level) for i in points_hsa if i.get('cluster_ortholog')),
-        x=list(i.get('cluster_ortholog') for i in points_hsa if i.get('cluster_ortholog')),
-        marker={'color': 'black', 'outliercolor': 'black'},
-        boxpoints='suspectedoutliers')
-    traces_combined = [traces_mmu, traces_hsa]
-
-    layout = Layout(
-        boxmode='group',
-        autosize=True,
-        height=450,
-        width=1000,
-        showlegend=False,
-        title='Gene body ' + methylation_type + ' in each cluster: ' + gene_name,
-        titlefont={'color': 'rgba(1,2,2,1)',
-                   'size': 20},
-        # legend={
-        #     'orientation': 'h',
-        #     'x': -0.1,
-        #     'y': -0.6,
-        #     'traceorder': 'normal',
-        # },
-        xaxis={
-            'title': '',
-            'titlefont': {
-                'size': 14
-            },
-            'type': 'category',
-            'anchor': 'y',
-            'ticks': 'outside',
-            'tickcolor': 'rgba(51,51,51,1)',
-            'ticklen': 4,
-            'tickwidth': 0.5,
-            'tickangle': -35,
-            'showticklabels': True,
-            'tickfont': {
-                'size': 12
-            },
-            'showline': False,
-            'zeroline': False,
-            'showgrid': True,
-        },
-        yaxis={
-            'title': gene_name+' '+level.capitalize() + ' mCH',
-            'titlefont': {
-                'size': 15
-            },
-            'type': 'linear',
-            'anchor': 'x',
-            'ticks': 'outside',
-            'tickcolor': 'rgba(51,51,51,1)',
-            'ticklen': 4,
-            'tickwidth': 0.5,
-            'showticklabels': True,
-            'tickfont': {
-                'size': 12
-            },
-            'showline': False,
-            'zeroline': False,
-            'showgrid': True,
-        },
-        shapes=[
-            {
-                'type': 'rect',
-                'fillcolor': 'transparent',
-                'line': {
-                    'color': 'rgba(115, 115, 115, 1)',
-                    'width': 1,
-                    'dash': False
-                },
-                'yref': 'paper',
-                'xref': 'paper',
-                'x0': 0,
-                'x1': 1,
-                'y0': 0,
-                'y1': 1
-            },
-        ],
-        annotations=[{
-            'text': '<b>■</b> Mouse',
-            'x': 0.4,
-            'y': 1.02,
-            'ax': 0,
-            'ay': 0,
-            'showarrow': False,
-            'font': {
-                'color': 'red',
-                'size': 12
-            },
-            'xref': 'paper',
-            'yref': 'paper',
-            'xanchor': 'left',
-            'yanchor': 'bottom',
-            'textangle': 0,
-        }, {
-            'text': '<b>■</b> Human',
-            'x': 0.5,
-            'y': 1.02,
-            'ax': 0,
-            'ay': 0,
-            'showarrow': False,
-            'font': {
-                'color': 'Black',
-                'size': 12
-            },
-            'xref': 'paper',
-            'yref': 'paper',
-            'xanchor': 'left',
-            'yanchor': 'bottom',
-            'textangle': 0,
-        }])
-
-    return plotly.offline.plot(
-        {
-            'data': traces_combined,
             'layout': layout
         },
         output_type='div',

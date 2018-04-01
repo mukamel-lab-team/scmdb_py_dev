@@ -154,12 +154,6 @@ def ensemble_tabular_screen():
     return render_template('tabular_ensemble.html')
 
 
-# @frontend.route('/tabular/dataset')
-# @login_required
-# def data_set_tabular_screen():
-#     return render_template('tabular_data_set.html')
-
-
 @frontend.route('/CEMBA_lims')
 @login_required
 def CEMBA_lims():
@@ -172,19 +166,6 @@ def nav_bar_screen():
 
 
 # API routes
-# @frontend.route('/plot/tsne/<ensemble>/<tsne_type>/<grouping>/<clustering>')
-# @cache.memoize(timeout=3600)
-# def plot_tsne(ensemble, tsne_type, grouping, clustering):
-#     if tsne_type == 'null':
-#         tsne_type = 'mCH_ndim2_perp20'
-#     if clustering == 'null':
-#         clustering = 'mCH_lv_npc50_k5'
-#     try:
-#         return jsonify(get_tsne_plot(ensemble, tsne_type, grouping, clustering))
-#     except FailToGraphException:
-#         return 'Failed to produce cluster plot. Contact maintainer.'
-
-
 @frontend.route('/plot/methylation/scatter/<ensemble>/<tsne_type>/<methylation_type>/<level>/<grouping>/<clustering>/<ptile_start>/<ptile_end>/<tsne_outlier>')
 def plot_methylation_scatter(ensemble, tsne_type, methylation_type, level, grouping, clustering, ptile_start, ptile_end, tsne_outlier):
 
@@ -274,18 +255,18 @@ def plot_snATAC_box(ensemble, gene, grouping, outliers_toggle):
         return 'Failed to produce snATAC normalized counts box plot. Contact maintainer.'
 
 
-@frontend.route('/plot/box_combined/<methylation_type>/<gene_mmu>/<gene_hsa>/<level>/<outliers_toggle>')
-def plot_mch_box_two_ensemble(methylation_type, gene_mmu, gene_hsa, level, outliers_toggle):
-
-    if outliers_toggle == 'outliers':
-        outliers = True
-    else:
-        outliers = False
-    try:
-        return get_mch_box_two_ensemble(methylation_type, gene_mmu, gene_hsa, level, outliers)
-    except (FailToGraphException, ValueError) as e:
-        print("ERROR (plot_mch_box_two_ensemble): {}".format(e))
-        return 'Failed to produce mCH levels box plot. Contact maintainer.'
+# @frontend.route('/plot/box_combined/<methylation_type>/<gene_mmu>/<gene_hsa>/<level>/<outliers_toggle>')
+# def plot_mch_box_two_ensemble(methylation_type, gene_mmu, gene_hsa, level, outliers_toggle):
+# 
+#     if outliers_toggle == 'outliers':
+#         outliers = True
+#     else:
+#         outliers = False
+#     try:
+#         return get_mch_box_two_ensemble(methylation_type, gene_mmu, gene_hsa, level, outliers)
+#     except (FailToGraphException, ValueError) as e:
+#         print("ERROR (plot_mch_box_two_ensemble): {}".format(e))
+#         return 'Failed to produce mCH levels box plot. Contact maintainer.'
 
 
 @frontend.route('/plot/methylation/heat/<ensemble>/<methylation_type>/<grouping>/<clustering>/<level>/<ptile_start>/<ptile_end>')
@@ -328,18 +309,18 @@ def plot_snATAC_heatmap(ensemble, grouping, ptile_start, ptile_end):
         return 'Failed to produce snATAC normalized counts heatmap plot. Contact maintainer.'
 
 
-@frontend.route('/plot/heat_two_ensemble/<ensemble>/<methylation_type>/<level>/<ptile_start>/<ptile_end>')
-def plot_mch_heatmap_two_ensemble(ensemble, methylation_type, level, ptile_start, ptile_end):
-    query = request.args.get('q', 'MustHaveAQueryString')
-    if request.args.get('normalize', 'MustSpecifyNormalization') == 'true':
-        normalize_row = True
-    else:
-        normalize_row = False
-    try:
-        return get_mch_heatmap_two_ensemble(ensemble, methylation_type, level, ptile_start, ptile_end, normalize_row, query)
-    except (FailToGraphException, ValueError) as e:
-        print(e)
-        return 'Failed to produce orthologous mCH levels heatmap plot. Contact maintainer.'
+# @frontend.route('/plot/heat_two_ensemble/<ensemble>/<methylation_type>/<level>/<ptile_start>/<ptile_end>')
+# def plot_mch_heatmap_two_ensemble(ensemble, methylation_type, level, ptile_start, ptile_end):
+#     query = request.args.get('q', 'MustHaveAQueryString')
+#     if request.args.get('normalize', 'MustSpecifyNormalization') == 'true':
+#         normalize_row = True
+#     else:
+#         normalize_row = False
+#     try:
+#         return get_mch_heatmap_two_ensemble(ensemble, methylation_type, level, ptile_start, ptile_end, normalize_row, query)
+#     except (FailToGraphException, ValueError) as e:
+#         print(e)
+#         return 'Failed to produce orthologous mCH levels heatmap plot. Contact maintainer.'
 
 @frontend.route('/gene/names/<ensemble>')
 def search_gene_by_name(ensemble):
@@ -356,7 +337,7 @@ def search_gene_by_id(ensemble):
     if query == 'none' or query == '':
         return jsonify({})
     else:
-        return jsonify(get_gene_by_id(ensemble, convert_gene_id_mmu_hsa(ensemble, query)))
+        return jsonify(get_gene_by_id(ensemble, query))
 
 
 @frontend.route('/methylation_tsne_options/<ensemble>')
@@ -386,14 +367,13 @@ def gene_modules(ensemble):
 
 # Legacy code from when the browser was used to also display human data
 # This function is not necessary due to CEMBA only containing mouse data
-@frontend.route('/gene/orthologs/<ensemble>/<gene_id>')
-def orthologs(ensemble, gene_id):
-    gene_id = gene_id.split('.')[0]
-    gene_id = convert_gene_id_mmu_hsa(ensemble,gene_id) 
-    if 'Ens' in ensemble:
-        return jsonify(find_orthologs(mmu_gene_id=gene_id))
-    else:
-        return jsonify(find_orthologs(hsa_gene_id=gene_id))
+# @frontend.route('/gene/orthologs/<ensemble>/<gene_id>')
+# def orthologs(ensemble, gene_id):
+#     gene_id = gene_id.split('.')[0]
+#     if 'Ens' in ensemble:
+#         return jsonify(find_orthologs(mmu_gene_id=gene_id))
+#     else:
+#         return jsonify(find_orthologs(hsa_gene_id=gene_id))
 
 
 @cache.memoize(timeout=3600)
