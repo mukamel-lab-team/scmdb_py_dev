@@ -9,19 +9,28 @@
     </div>
     <div class="col-md-3 col-sm-6">
         <div style="display:inline-block;" id="methylationLevelDiv">
-            <label for="levels" class="control-label">Methylation Levels</label><br>
+            <label for="levels" class="control-label">
+                <a href="javascript:void(0);" class="hover-tooltip" data-toggle="popover" data-trigger="hover" data-placement="top" title="Methylation Levels" data-content="Display original methylation values or normalize by the global methylation value for each cell.">Methylation Levels</a>
+            </label>
+            <br>
             <input type="radio" name="levels" id="levelsOriginal" value="original">&nbsp;Original<br>
             <input type="radio" name="levels" id="levelsNormalized" value="normalized" checked>&nbsp;Normalized
         </div>
         <div style="display:inline-block; float:right;" id="methylationTypeDiv">
-            <label for="mType" class="control-label">Methylation Type</label><br>
+            <label for="mType" class="control-label">
+                <a href="javascript:void(0);" class="hover-tooltip" data-toggle="popover" data-trigger="hover" data-placement="top" title="Methylation Type" data-content="Type of gene-body methylation values to display.">Methylation Type</a>
+            </label>
+            <br>
             <input type="radio" name="mType" id="type_mch" value="mCH" checked>&nbsp;mCH<br>
             <input type="radio" name="mType" id="type_mcg" value="mCG">&nbsp;mCG<br>
             <input type="radio" name="mType" id="type_mcg" value="mCA">&nbsp;mCA<br>
         </div>
     </div>
     <div class="col-md-3 col-sm-12" id="geneModuleDiv">
-        <label for="geneModulesSelect" class="control-label">Gene Modules</label><br>
+        <label for="geneModulesSelect" class="control-label">
+            <a href="javascript:void(0);" class="hover-tooltip pop" data-toggle="popover" data-trigger="hover" data-placement="top" title="Gene Modules" data-content="Populate gene search with pre-selected list of known and predicted marker genes for different cell types. (Gene modules were curated from supplementary figure S10. <a href='http://science.sciencemag.org/content/357/6351/600' target='_blank'>Link</a>)" data-html="true">Gene Modules</a>
+        </label>
+        <br>
         <select id="geneModulesSelect" style="width:100%">
             <option>Select..</option>
         </select>

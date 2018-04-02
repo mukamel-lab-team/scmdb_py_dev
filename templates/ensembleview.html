@@ -11,7 +11,7 @@
 			{%- endif %} {%- endwith %}
 			<div style="position:relative; left:0; z-index:2;">
                 <div class="col-md-12">
-                    <div class="panel panel-info" id="options-panel" style="overflow-x: auto; margin-left:auto; margin-right:auto; max-width:1400px">
+                    <div class="panel panel-info" id="options-panel" style="margin-left:auto; margin-right:auto; max-width:1400px">
                         <div class="panel-heading">
                             <div class="panel-title">
                                 <div style="display:inline-block;">
@@ -351,7 +351,6 @@
     $('#clear-gene-search-btn').click(function() {
         geneModuleSelector.val(null).trigger("change");
         geneNameSelector.val(null).trigger("change");
-        storage.save('lastViewedGenes', [], 5);  // store last viewed genes for 5 minutes
     });
 
     $('#geneName').change(function() {
@@ -380,6 +379,7 @@
             updatesnATACHeatmap();
         }
     });
+
     $("#methylation-box-heat-normalize-toggle").change(function() {
         if ($('#geneName').select2('data').length > 1) {
             if ($('#orthologsToggle').prop('checked'))
@@ -400,17 +400,19 @@
     });
 
     $("#methylation-tsneUpdateBtn, #methylation-box-heat-UpdateBtn").click(function() {
-        updateMCHScatterPlot();
+        updateMCHScatterPlot(onlyUpdatetSNEandClustering=true);
         if ($('#geneName').select2('data').length > 1) {
             updateMethylationHeatmap();
-        } else {
+        } 
+        else if ($('#geneName').select2('data').length === 1 ) {
             updateMCHBoxPlot();
         }
+        else {}
     });
 
 
     $("#snATAC-tsneUpdateBtn, #snATAC-box-heat-UpdateBtn").click(function() {
-        updatesnATACScatterPlot();
+        updatesnATACScatterPlot(onlyUpdatetSNEandClustering=true);
         if ($('#geneName').select2('data').length > 1) {
             updatesnATACHeatmap();
         } else {
@@ -463,6 +465,23 @@
 
     $("#snATAC-tsne-grouping, #snATAC-box-heat-grouping").change(function() {
          $("#snATAC-tsne-grouping, #snATAC-box-heat-grouping").val($(this).val());
+    });
+
+
+    $(".pop").popover({ trigger: "manual" , html: true, animation:false})
+        .on("mouseenter", function () {
+            var _this = this;
+            $(this).popover("show");
+            $(".popover").on("mouseleave", function () {
+                $(_this).popover('hide');
+            });
+        }).on("mouseleave", function () {
+            var _this = this;
+            setTimeout(function () {
+                if (!$(".popover:hover").length) {
+                    $(_this).popover("hide");
+                }
+            }, 300);
     });
 </script>
 {% endblock %}

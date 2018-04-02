@@ -8,14 +8,14 @@ var num_colors = 0;
 var storage = {
 	save : function(key, jsonData, expirationMin){
 		if (typeof (Storage) === "undefined"){return false;}
-        var expirationMS = expirationMin * 60 * 1000;
-		var record = {value: JSON.stringify(jsonData), timestamp: new Date().getTime() + expirationMS}
+        let expirationMS = expirationMin * 60 * 1000;
+		let record = {value: JSON.stringify(jsonData), timestamp: new Date().getTime() + expirationMS}
 		localStorage.setItem(key, JSON.stringify(record));
 		return jsonData;
 	},
 	load : function(key){
 		if (typeof (Storage) === "undefined"){return false;}
-		var record = JSON.parse(localStorage.getItem(key));
+		let record = JSON.parse(localStorage.getItem(key));
 		if (!record){return false;}
 		return (new Date().getTime() < record.timestamp && JSON.parse(record.value));
 	} }
@@ -57,8 +57,8 @@ function display3DPlotToggle() {
 }
 
 function getMax(arr, prop) {
-    var max = 0;
-    for (var key in arr) {
+    let max = 0;
+    for (let key in arr) {
         if(parseInt(arr[key][prop]) > max)
             max = arr[key][prop];
     }
@@ -66,7 +66,7 @@ function getMax(arr, prop) {
 }
 
 function generateBrowserURL(gene) {
-    var base = 'http://brainome.ucsd.edu/annoj_private/CEMBA/index';
+    let base = 'http://brainome.ucsd.edu/annoj_private/CEMBA/index';
     
     if (ensemble === 'Ens1') {
         base += '.html';
@@ -74,7 +74,7 @@ function generateBrowserURL(gene) {
         base += '_' + ensemble + '.html';
     }
 
-    var chrom = gene.chr.replace(/^\D+/g, "");
+    const chrom = gene.chr.replace(/^\D+/g, "");
 
     if (gene.strand === '+') {
         var position = gene.start;
@@ -114,14 +114,14 @@ function initGeneNameSearch() {
     });
 
     //Initialise selector
-    var defaultGene = storage.load('lastViewedGenes');
+    let defaultGene = storage.load('lastViewedGenes');
     if (!defaultGene || defaultGene.length === 0) {
         //no entry or browser does not support localStorage, set default to GAD2
         defaultGene = [{gene_name: 'GAD2', gene_id: 'ENSMUSG00000026787'}];
     }
     
     if(defaultGene !== []){
-        var numGenes = defaultGene.length;
+        const numGenes = defaultGene.length;
         for (i = 0; i < numGenes; i++) {
             $.ajax({
                 url: './gene/id/'+ensemble+'?q='+defaultGene[i].gene_id,
@@ -129,7 +129,7 @@ function initGeneNameSearch() {
                 async: false,
                 success: function(data) {
                     if (typeof(data.gene_name) !== 'undefined' && typeof(data.gene_id) !== 'undefined') {
-                        var option = new Option(data.gene_name, data.gene_id, true, true);
+                        let option = new Option(data.gene_name, data.gene_id, true, true);
                         geneNameSelector.append(option);
                         if (numGenes === 1) {
                             $('#epiBrowserLink').attr('href', generateBrowserURL(data));
@@ -154,7 +154,7 @@ function initGeneModules() {
         url: './gene/modules/'+ensemble,
         success: function(data){
             data.forEach(function(gene) {
-                var option = new Option(gene.module, gene.module, false, false);
+                let option = new Option(gene.module, gene.module, false, false);
                 geneModuleSelector.append(option);
             });
         }
@@ -166,7 +166,7 @@ function updateSearchWithModules(module) {
 		url: './gene/modules/'+ensemble+'?q='+module.id,
 		success: function (data) {
 			data.forEach(function(gene) {
-				var option = new Option(gene.gene_name, gene.gene_id, true, true);
+				let option = new Option(gene.gene_name, gene.gene_id, true, true);
 				geneNameSelector.append(option);
 			});
 		}
@@ -270,24 +270,24 @@ function populatesnATACTSNEDropdowns() {
 
 function dynamicMethylationTSNEOptions_methylation() {
     var matching_tsne_options = [];
-    var regex = new RegExp('^'+$(".methylation-tsne-methylation").val() + "_\\w+");
+    const regex = new RegExp('^'+$(".methylation-tsne-methylation").val() + "_\\w+");
 
-    for (var i = 0; i < global_all_methylation_tsne_settings.length; i++) {
+    for (let i = 0; i < global_all_methylation_tsne_settings.length; i++) {
         if (global_all_methylation_tsne_settings[i].match(regex) !== null) {
             matching_tsne_options.push(global_all_methylation_tsne_settings[i]);
         }
     }
 
-    var dimensions_set = new Set();
-    for (var i = 0; i < matching_tsne_options.length; i++) {
-        var dimensions = matching_tsne_options[i].split('_')[1];
+    let dimensions_set = new Set();
+    for (let i = 0; i < matching_tsne_options.length; i++) {
+        let dimensions = matching_tsne_options[i].split('_')[1];
         dimensions_set.add(dimensions.replace("ndim",""));
     }
-    var dimensions_list = [...dimensions_set];
+    let dimensions_list = [...dimensions_set];
 
     $(".methylation-tsne-dimensions").empty();
     $(".methylation-tsna-perplexity").empty();
-    for (var i = 0; i < dimensions_list.length; i++) {
+    for (let i = 0; i < dimensions_list.length; i++) {
         $(".methylation-tsne-dimensions").append(
             $("<option></option>").val(dimensions_list[i]).text(dimensions_list[i])
         );
@@ -299,23 +299,23 @@ function dynamicMethylationTSNEOptions_methylation() {
 function dynamicMethylationTSNEOptions_dimensions(matching_tsne_options = []) {
     if (matching_tsne_options.length === 0) {
         var matching_tsne_options = [];
-        var regex = new RegExp('^'+$(".methylation-tsne-methylation").val() + "_ndim" + $(".methylation-tsne-dimensions").val() + "_\\w+");
-        for (var i = 0; i < global_all_methylation_tsne_settings.length; i++) {
+        const regex = new RegExp('^'+$(".methylation-tsne-methylation").val() + "_ndim" + $(".methylation-tsne-dimensions").val() + "_\\w+");
+        for (let i = 0; i < global_all_methylation_tsne_settings.length; i++) {
             if (global_all_methylation_tsne_settings[i].match(regex) !== null) {
                 matching_tsne_options.push(global_all_methylation_tsne_settings[i]);
             }
         }
     }
 
-    var perplexity_set = new Set();
-    for (var i = 0; i < matching_tsne_options.length; i++) {
-        var perplexity = matching_tsne_options[i].split('_')[2];
+    let perplexity_set = new Set();
+    for (let i = 0; i < matching_tsne_options.length; i++) {
+        let perplexity = matching_tsne_options[i].split('_')[2];
         perplexity_set.add(perplexity.replace("perp",""));
     }
-    var perplexity_list = [...perplexity_set];
+    let perplexity_list = [...perplexity_set];
 
     $(".methylation-tsne-perplexity").empty();
-    for (var i = 0; i < perplexity_list.length; i++) {
+    for (let i = 0; i < perplexity_list.length; i++) {
         $(".methylation-tsne-perplexity").append(
             $("<option></option>").val(perplexity_list[i]).text(perplexity_list[i])
         );
@@ -324,52 +324,52 @@ function dynamicMethylationTSNEOptions_dimensions(matching_tsne_options = []) {
 
 function dynamicMethylationClusteringOptions_algorithm() {
     var matching_clustering_options = [];
-    var regex = new RegExp('_' + $(".methylation-clustering-algorithms").val() + "_\\w+");
+    const regex = new RegExp('_' + $(".methylation-clustering-algorithms").val() + "_\\w+");
 
-    for (var i = 0; i < global_all_methylation_clustering_settings.length; i++) {
+    for (let i = 0; i < global_all_methylation_clustering_settings.length; i++) {
         if (global_all_methylation_clustering_settings[i].match(regex) !== null) {
             matching_clustering_options.push(global_all_methylation_clustering_settings[i]);
         }
     }
 
-    var methylation_set = new Set();
-    for (var i = 0; i < matching_clustering_options.length; i++) {
-        var methylation_type = matching_clustering_options[i].split('_')[0];
+    let methylation_set = new Set();
+    for (let i = 0; i < matching_clustering_options.length; i++) {
+        let methylation_type = matching_clustering_options[i].split('_')[0];
         methylation_set.add(methylation_type);
     }
-    var methylation_list = [...methylation_set];
+    let methylation_list = [...methylation_set];
 
     $(".methylation-clustering-methylation").empty();
-    for (var i = 0; i < methylation_list.length; i++) {
+    for (let i = 0; i < methylation_list.length; i++) {
         $(".methylation-clustering-methylation").append(
             $("<option></option>").val(methylation_list[i]).text(methylation_list[i])
         );
     }
 
-    dynamicMethylationClusteringOptions_methylation(matching_clustering_options);
+    dynamicMethylationClusteringOptions_methylation();
 }
 
 function dynamicMethylationClusteringOptions_methylation(matching_clustering_options = []) {
     if (matching_clustering_options.length === 0) {
         var matching_clustering_options = [];
-        var regex = new RegExp('^'+$(".methylation-clustering-methylation").val()+'_'+$(".methylation-clustering-algorithms").val() + "_\\w+");
+        const regex = new RegExp('^'+$(".methylation-clustering-methylation").val()+'_'+$(".methylation-clustering-algorithms").val() + "_\\w+");
 
-        for (var i = 0; i < global_all_methylation_clustering_settings.length; i++) {
+        for (let i = 0; i < global_all_methylation_clustering_settings.length; i++) {
             if (global_all_methylation_clustering_settings[i].match(regex) !== null) {
                 matching_clustering_options.push(global_all_methylation_clustering_settings[i]);
             }
         }
     }
 
-    var npc_set = new Set();
-    for (var i = 0; i < matching_clustering_options.length; i++) {
-        var npc = matching_clustering_options[i].split('_')[2].replace("npc","");
+    let npc_set = new Set();
+    for (let i = 0; i < matching_clustering_options.length; i++) {
+        let npc = matching_clustering_options[i].split('_')[2].replace("npc","");
         npc_set.add(npc);
     }
-    var npc_list = [...npc_set];
+    let npc_list = [...npc_set];
 
     $(".methylation-clustering-npc").empty();
-    for (var i = 0; i < npc_list.length; i++) {
+    for (let i = 0; i < npc_list.length; i++) {
         $(".methylation-clustering-npc").append(
             $("<option></option>").val(npc_list[i]).text(npc_list[i])
         );
@@ -381,9 +381,9 @@ function dynamicMethylationClusteringOptions_methylation(matching_clustering_opt
 function dynamicMethylationClusteringOptions_npc(matching_clustering_options = []) {
     if (matching_clustering_options.length === 0) {
         var matching_clustering_options = [];
-        var regex = new RegExp('^'+$(".methylation-clustering-methylation").val()+'_'+$(".methylation-clustering-algorithms").val()+'_npc'+$(".methylation-clustering-npc").val() + "_\\w+");
+        const regex = new RegExp('^'+$(".methylation-clustering-methylation").val()+'_'+$(".methylation-clustering-algorithms").val()+'_npc'+$(".methylation-clustering-npc").val() + "_\\w+");
 
-        for (var i = 0; i < global_all_methylation_clustering_settings.length; i++) {
+        for (let i = 0; i < global_all_methylation_clustering_settings.length; i++) {
             if (global_all_methylation_clustering_settings[i].match(regex) !== null) {
                 matching_clustering_options.push(global_all_methylation_clustering_settings[i]);
                 //matching_clustering_options.push(i);
@@ -393,15 +393,15 @@ function dynamicMethylationClusteringOptions_npc(matching_clustering_options = [
 
     k_list = [];
     k_clusters_list = [];
-    for (var i = 0; i < matching_clustering_options.length; i++) {
-        var k = matching_clustering_options[i].split('_')[3].replace("k","");
-        var clusters = global_all_methylation_clustering_settings2[matching_clustering_options[i]];
+    for (let i = 0; i < matching_clustering_options.length; i++) {
+        let k = matching_clustering_options[i].split('_')[3].replace("k","");
+        let clusters = global_all_methylation_clustering_settings2[matching_clustering_options[i]];
         k_list.push(k);
         k_clusters_list.push(k+' ('+clusters+' clusters)');
     }
 
     $(".methylation-clustering-k").empty();
-    for (var i = 0; i < k_list.length; i++) {
+    for (let i = 0; i < k_list.length; i++) {
         $(".methylation-clustering-k").append(
             $("<option></option>").val(k_list[i]).text(k_clusters_list[i])
         );
@@ -411,23 +411,23 @@ function dynamicMethylationClusteringOptions_npc(matching_clustering_options = [
 function dynamicsnATACTSNEOptions_dimensions(matching_tsne_options = []) {
     if (matching_tsne_options.length === 0) {
         var matching_tsne_options = [];
-        var regex = new RegExp("ATAC_ndim" + $(".snATAC-tsne-dimensions").val() + "_\\w+");
-        for (var i = 0; i < global_all_snATAC_tsne_settings.length; i++) {
+        const regex = new RegExp("ATAC_ndim" + $(".snATAC-tsne-dimensions").val() + "_\\w+");
+        for (let i = 0; i < global_all_snATAC_tsne_settings.length; i++) {
             if (global_all_snATAC_tsne_settings[i].match(regex) !== null) {
                 matching_tsne_options.push(global_all_snATAC_tsne_settings[i]);
             }
         }
     }
 
-    var perplexity_set = new Set();
-    for (var i = 0; i < matching_tsne_options.length; i++) {
-        var perplexity = matching_tsne_options[i].split('_')[2];
+    let perplexity_set = new Set();
+    for (let i = 0; i < matching_tsne_options.length; i++) {
+        let perplexity = matching_tsne_options[i].split('_')[2];
         perplexity_set.add(perplexity.replace("perp",""));
     }
-    var perplexity_list = [...perplexity_set];
+    let perplexity_list = [...perplexity_set];
 
     $(".snATAC-tsne-perplexity").empty();
-    for (var i = 0; i < perplexity_list.length; i++) {
+    for (let i = 0; i < perplexity_list.length; i++) {
         $(".snATAC-tsne-perplexity").append(
             $("<option></option>").val(perplexity_list[i]).text(perplexity_list[i])
         );
@@ -438,24 +438,24 @@ function dynamicsnATACTSNEOptions_dimensions(matching_tsne_options = []) {
 function dynamicsnATACClusteringOptions_algorithm(matching_clustering_options = []) {
     if (matching_clustering_options.length === 0) {
         var matching_clustering_options = [];
-        var regex = new RegExp('ATAC_'+$(".methylation-clustering-algorithms").val() + "_\\w+");
+        const regex = new RegExp('ATAC_'+$(".methylation-clustering-algorithms").val() + "_\\w+");
 
-        for (var i = 0; i < global_all_snATAC_clustering_settings.length; i++) {
+        for (let i = 0; i < global_all_snATAC_clustering_settings.length; i++) {
             if (global_all_snATAC_clustering_settings[i].match(regex) !== null) {
                 matching_clustering_options.push(global_all_snATAC_clustering_settings[i]);
             }
         }
     }
 
-    var npc_set = new Set();
-    for (var i = 0; i < matching_clustering_options.length; i++) {
-        var npc = matching_clustering_options[i].split('_')[2].replace("npc","");
+    let npc_set = new Set();
+    for (let i = 0; i < matching_clustering_options.length; i++) {
+        let npc = matching_clustering_options[i].split('_')[2].replace("npc","");
         npc_set.add(npc);
     }
-    var npc_list = [...npc_set];
+    let npc_list = [...npc_set];
 
     $(".snATAC-clustering-npc").empty();
-    for (var i = 0; i < npc_list.length; i++) {
+    for (let i = 0; i < npc_list.length; i++) {
         $(".snATAC-clustering-npc").append(
             $("<option></option>").val(npc_list[i]).text(npc_list[i])
         );
@@ -467,24 +467,24 @@ function dynamicsnATACClusteringOptions_algorithm(matching_clustering_options = 
 function dynamicsnATACClusteringOptions_npc(matching_clustering_options = []) {
     if (matching_clustering_options.length === 0) {
         var matching_clustering_options = [];
-        var regex = new RegExp('ATAC_'+$(".snATAC-clustering-algorithms").val()+'_npc'+$(".snATAC-clustering-npc").val() + "_\\w+");
+        const regex = new RegExp('ATAC_'+$(".snATAC-clustering-algorithms").val()+'_npc'+$(".snATAC-clustering-npc").val() + "_\\w+");
 
-        for (var i = 0; i < global_all_snATAC_clustering_settings.length; i++) {
+        for (let i = 0; i < global_all_snATAC_clustering_settings.length; i++) {
             if (global_all_snATAC_clustering_settings[i].match(regex) !== null) {
                 matching_clustering_options.push(global_all_snATAC_clustering_settings[i]);
             }
         }
     }
 
-    var k_set = new Set();
-    for (var i = 0; i < matching_clustering_options.length; i++) {
-        var k = matching_clustering_options[i].split('_')[3].replace("k","");
+    let k_set = new Set();
+    for (let i = 0; i < matching_clustering_options.length; i++) {
+        let k = matching_clustering_options[i].split('_')[3].replace("k","");
         k_set.add(k);
     }
-    var k_list = [...k_set];
+    let k_list = [...k_set];
 
     $(".snATAC-clustering-k").empty();
-    for (var i = 0; i < k_list.length; i++) {
+    for (let i = 0; i < k_list.length; i++) {
         $(".snATAC-clustering-k").append(
             $("<option></option>").val(k_list[i]).text(k_list[i])
         );
@@ -493,12 +493,12 @@ function dynamicsnATACClusteringOptions_npc(matching_clustering_options = []) {
 
 function updateGeneElements(updateMCHScatter=true) {
     buttons = document.getElementsByClassName('modebar-btn');
-    var geneSelected = $('#geneName option:selected').val();
+    let geneSelected = $('#geneName option:selected').val();
     if (geneSelected != 'Select..' && $("#geneName").select2('data').length > 0) {
         $('#orthologsToggle').bootstrapToggle('off');
         $('#orthologsToggle').bootstrapToggle('enable');
 
-        var lastViewedGenes = [];
+        let lastViewedGenes = [];
         for(i=0; i<$('#geneName').select2('data').length; i++){
             lastViewedGenes.push({gene_name: $('#geneName option:selected')[i].text, gene_id: $('#geneName option:selected')[i].value});
         }
@@ -551,9 +551,9 @@ function updateGeneElements(updateMCHScatter=true) {
 
 /*
 function loadClusterPlots() {
-    var grouping = $('.methylation-tsne-grouping').val();
-    var clustering = $('.methylation-tsne-clustering').val();
-    var tsne_setting = $('.methylation-tsne-settings').val();
+    let grouping = $('.methylation-tsne-grouping').val();
+    let clustering = $('.methylation-tsne-clustering').val();
+    let tsne_setting = $('.methylation-tsne-settings').val();
 
     $.ajax({
         type: "GET",
@@ -567,16 +567,16 @@ function loadClusterPlots() {
 }
 */
 
-function updateMCHScatterPlot() {
-    var levelType = $('input[name=levels]').filter(':checked').val();
-    var methylationType = $('input[name=mType]').filter(':checked').val();
-    var methylation_color_percentile_Values = methylation_color_percentile_Slider.getValue();
-    var genes = $("#geneName").select2('data');
-    var grouping = $('#methylation-tsne-grouping').val();
-    var genes_query = "";
+function updateMCHScatterPlot(onlyUpdatetSNEandClustering=false) {
+    let levelType = $('input[name=levels]').filter(':checked').val();
+    let methylationType = $('input[name=mType]').filter(':checked').val();
+    let methylation_color_percentile_Values = methylation_color_percentile_Slider.getValue();
+    let genes = $("#geneName").select2('data');
+    let grouping = $('#methylation-tsne-grouping').val();
+    let genes_query = "";
 
-    var tsne_setting = $("#methylation-tsne-methylation").val() + "_ndim" + $("#methylation-tsne-dimensions").val() + "_perp" + $("#methylation-tsne-perplexity").val();
-    var clustering = $("#methylation-clustering-methylation").val()+"_"+$("#methylation-clustering-algorithms").val()+"_npc"+$("#methylation-clustering-npc").val()+"_k"+$("#methylation-clustering-k").val();
+    let tsne_setting = $("#methylation-tsne-methylation").val() + "_ndim" + $("#methylation-tsne-dimensions").val() + "_perp" + $("#methylation-tsne-perplexity").val();
+    let clustering = $("#methylation-clustering-methylation").val()+"_"+$("#methylation-clustering-algorithms").val()+"_npc"+$("#methylation-clustering-npc").val()+"_k"+$("#methylation-clustering-k").val();
 
     if ($('#methylation_tsneOutlierToggle').prop('checked')) {
         var tsneOutlierOption = 'false';
@@ -584,10 +584,19 @@ function updateMCHScatterPlot() {
         var tsneOutlierOption = 'true';
     }
 
-    for (i = 0; i < genes.length; i++) {
-        genes_query += (genes[i].id + "+");
+    if (!onlyUpdatetSNEandClustering) {
+        for (i = 0; i < genes.length; i++) {
+            genes_query += (genes[i].id + "+");
+        }
+    }
+    else {
+        let lastViewedGenes = storage.load('lastViewedGenes');
+        for (i = 0; i < lastViewedGenes.length; i++) {
+            genes_query += (lastViewedGenes[i].gene_id + "+");
+        }
     }
     genes_query = genes_query.slice(0,-1);
+
     if ($('#geneName option:selected').val() != 'Select..') {
         $.ajax({
         //$.getJSON({
@@ -607,14 +616,14 @@ function updateMCHScatterPlot() {
     $("#methylation-clustering-options-heading").text("Algorithm: " + $("#methylation-clustering-algorithms").val() + ", Methylation: " + $("#methylation-clustering-methylation").val() + ", # of PCs: " + $("#methylation-clustering-npc").val() + ", K-value: " + $("#methylation-clustering-k").val());
 }
 
-function updatesnATACScatterPlot() {
-    var tsne_settings = "ATAC_ndim"+$("#snATAC-tsne-dimensions").val()+"_perp"+$("#snATAC-tsne-perplexity").val();
-    var grouping = $("#snATAC-tsne-grouping").val();
-    //var grouping = "cluster";
-    var clustering_settings = "ATAC_"+$("#snATAC-clustering-algorithms").val()+"_npc"+$("#snATAC-clustering-npc").val()+"_k"+$("#snATAC-clustering-k").val();
-    var snATAC_color_percentile_Values = snATAC_color_percentile_Slider.getValue();
-    var genes = $("#geneName").select2('data');
-    var genes_query = "";
+function updatesnATACScatterPlot(onlyUpdatetSNEandClustering=false) {
+    let tsne_settings = "ATAC_ndim"+$("#snATAC-tsne-dimensions").val()+"_perp"+$("#snATAC-tsne-perplexity").val();
+    let grouping = $("#snATAC-tsne-grouping").val();
+    //let grouping = "cluster";
+    let clustering_settings = "ATAC_"+$("#snATAC-clustering-algorithms").val()+"_npc"+$("#snATAC-clustering-npc").val()+"_k"+$("#snATAC-clustering-k").val();
+    let snATAC_color_percentile_Values = snATAC_color_percentile_Slider.getValue();
+    let genes = $("#geneName").select2('data');
+    let genes_query = "";
 
     if ($('#snATAC_tsneOutlierToggle').prop('checked')) {
         var tsneOutlierOption = 'false';
@@ -622,10 +631,19 @@ function updatesnATACScatterPlot() {
         var tsneOutlierOption = 'true';
     }
 
-    for (i = 0; i < genes.length; i++) {
-        genes_query += (genes[i].id + "+");
+    if (!onlyUpdatetSNEandClustering) {
+        for (i = 0; i < genes.length; i++) {
+            genes_query += (genes[i].id + "+");
+        }
+    }
+    else {
+        let lastViewedGenes = storage.load("lastViewedGenes");
+        for (i = 0; i < lastViewedGenes.length; i++) {
+            genes_query += (lastViewedGenes[i].gene_id + "+");
+        }
     }
     genes_query = genes_query.slice(0,-1);
+
     if ($('#geneName option:selected').val() != 'Select..') {
         $.ajax({
         //$.getJSON({
@@ -647,7 +665,7 @@ function updatesnATACScatterPlot() {
 
 /*
 function updateOrthologToggle() {
-    var geneSelected = $('#geneName option:selected').val();
+    let geneSelected = $('#geneName option:selected').val();
     $.ajax({
         type: "GET",
         url: './gene/orthologs/'+ensemble+'/'+geneSelected,
@@ -670,12 +688,12 @@ function updateOrthologToggle() {
 
 function initDataTableClick() {
     $('#geneTable tbody').on('click', 'tr', function () {
-        var id = $(this).attr('id');
+        let id = $(this).attr('id');
         $.getJSON({
             url: './gene/id/'+ensemble+'?q='+id,
             success: function (data) {
-                var option = new Option(data.gene_name, data.gene_id, true, true);
-                var i;
+                let option = new Option(data.gene_name, data.gene_id, true, true);
+                let i;
                 for(i=0; i < $("#geneName").select2('data').length; i++){
                     if($("#geneName").select2('data')[i].id === option.value){
                         return;
@@ -719,11 +737,11 @@ function updateDataTable(geneSelected) {
 }
 
 function updateMCHBoxPlot() {
-    var levelType = $('input[name=levels]').filter(':checked').val();
-    var methylationType = $('input[name=mType]').filter(':checked').val();
-    var geneSelected = $('#geneName option:selected').val();
-    var grouping = $('#methylation-box-heat-grouping').val();
-    var clustering = $("#methylation-clustering-box-heat-methylation").val()+"_"+$("#methylation-clustering-box-heat-algorithms").val()+"_npc"+$("#methylation-clustering-box-heat-npc").val()+"_k"+$("#methylation-clustering-box-heat-k").val();
+    let levelType = $('input[name=levels]').filter(':checked').val();
+    let methylationType = $('input[name=mType]').filter(':checked').val();
+    let geneSelected = $('#geneName option:selected').val();
+    let grouping = $('#methylation-box-heat-grouping').val();
+    let clustering = $("#methylation-clustering-box-heat-methylation").val()+"_"+$("#methylation-clustering-box-heat-algorithms").val()+"_npc"+$("#methylation-clustering-box-heat-npc").val()+"_k"+$("#methylation-clustering-box-heat-k").val();
     if ($('#orthologsToggle').prop('checked')) {
         return updateMCHCombinedBoxPlot(mmu_gID, hsa_gID);
     }
@@ -747,8 +765,8 @@ function updateMCHBoxPlot() {
 }
 
 function updatesnATACBoxPlot() {
-    var geneSelected = $('#geneName option:selected').val();
-    var grouping = $('#snATAC-box-heat-grouping').val();
+    let geneSelected = $('#geneName option:selected').val();
+    let grouping = $('#snATAC-box-heat-grouping').val();
 
     if ($('#snATAC-box-heat-outlierToggle').prop('checked')) {
         var outlierOption = 'outliers';
@@ -768,8 +786,8 @@ function updatesnATACBoxPlot() {
 }
 
 function updateMCHCombinedBoxPlot(mmu_gid, hsa_gid) {
-    var levelType = $('input[name=levels]').filter(':checked').val();
-    var methylationType = $('input[name=mType]').filter(':checked').val();
+    let levelType = $('input[name=levels]').filter(':checked').val();
+    let methylationType = $('input[name=mType]').filter(':checked').val();
     if ($('#methylation-box-heat-outlierToggle').prop('checked')) {
         var outlierOption = 'outliers';
     } else {
@@ -790,13 +808,13 @@ function updateMCHCombinedBoxPlot(mmu_gid, hsa_gid) {
 }
 
 function updateMethylationHeatmap() {
-    var levelType = $('input[name=levels]').filter(':checked').val();
-    var methylationType = $('input[name=mType]').filter(':checked').val();
-    var methylation_color_percentile_Values = methylation_color_percentile_Slider.getValue();
-    var genes = $("#geneName").select2('data');
-    var genes_query = "";
-    var grouping = $("#methylation-box-heat-grouping").val();
-    var clustering = $("#methylation-clustering-box-heat-methylation").val()+"_"+$("#methylation-clustering-box-heat-algorithms").val()+"_npc"+$("#methylation-clustering-box-heat-npc").val()+"_k"+$("#methylation-clustering-box-heat-k").val();
+    let levelType = $('input[name=levels]').filter(':checked').val();
+    let methylationType = $('input[name=mType]').filter(':checked').val();
+    let methylation_color_percentile_Values = methylation_color_percentile_Slider.getValue();
+    let genes = $("#geneName").select2('data');
+    let genes_query = "";
+    let grouping = $("#methylation-box-heat-grouping").val();
+    let clustering = $("#methylation-clustering-box-heat-methylation").val()+"_"+$("#methylation-clustering-box-heat-algorithms").val()+"_npc"+$("#methylation-clustering-box-heat-npc").val()+"_k"+$("#methylation-clustering-box-heat-k").val();
 
     for (i = 0; i < genes.length; i++) {
         genes_query += (genes[i].id + "+");
@@ -823,11 +841,11 @@ function updateMethylationHeatmap() {
 }
 
 function updatesnATACHeatmap() {
-    var levelType = $('input[name=levels]').filter(':checked').val();
-    var snATAC_color_percentile_Values = snATAC_color_percentile_Slider.getValue();
-    var genes = $("#geneName").select2('data');
-    var genes_query = "";
-    var grouping = $("#snATAC-box-heat-grouping").val();
+    let levelType = $('input[name=levels]').filter(':checked').val();
+    let snATAC_color_percentile_Values = snATAC_color_percentile_Slider.getValue();
+    let genes = $("#geneName").select2('data');
+    let genes_query = "";
+    let grouping = $("#snATAC-box-heat-grouping").val();
 
     for (i = 0; i < genes.length; i++) {
         genes_query += (genes[i].id + "+");
@@ -852,11 +870,11 @@ function updatesnATACHeatmap() {
 }
 
 function updateMethylationHeatmapTwoSpecies() {
-    var levelType = $('input[name=levels]').filter(':checked').val();
-    var methylationType = $('input[name=mType]').filter(':checked').val();
-    var methylation_color_percentile_Values = methylation_color_percentile_Slider.getValue();
-    var genes = $("#geneName").select2('data');
-    var genes_query = "";
+    let levelType = $('input[name=levels]').filter(':checked').val();
+    let methylationType = $('input[name=mType]').filter(':checked').val();
+    let methylation_color_percentile_Values = methylation_color_percentile_Slider.getValue();
+    let genes = $("#geneName").select2('data');
+    let genes_query = "";
     
     for (i = 0; i < genes.length; i++) {
         genes_query += (genes[i].id + "+");
