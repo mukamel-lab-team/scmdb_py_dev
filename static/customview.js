@@ -325,7 +325,6 @@ function dynamicMethylationTSNEOptions_dimensions(matching_tsne_options = []) {
 function dynamicMethylationClusteringOptions_algorithm() {
     var matching_clustering_options = [];
     var regex = new RegExp('_' + $(".methylation-clustering-algorithms").val() + "_\\w+");
-    console.log(regex);
 
     for (var i = 0; i < global_all_methylation_clustering_settings.length; i++) {
         if (global_all_methylation_clustering_settings[i].match(regex) !== null) {
@@ -391,7 +390,6 @@ function dynamicMethylationClusteringOptions_npc(matching_clustering_options = [
             }
         }
     }
-    console.log(matching_clustering_options);
 
     k_list = [];
     k_clusters_list = [];

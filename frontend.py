@@ -97,24 +97,11 @@ def index():
     # We use JS redirect b/c reverse proxy will be confused about subdirectories
 
     if current_user is not None and current_user.is_authenticated:
-        html = \
-        """To be redirected manually, click <a href="./CEMBA_3C_171206">here</a>.
-        <script>
-            window.location = "./CEMBA_3C_171206"; 
-            window.location.replace("./CEMBA_3C_171206");
-        </script>
-        """
+        return redirect('/tabular/ensemble')
     else: 
         flash('Log in to access private CEMBA data. \
               <li>Click on "Ensembles Summary" at the top of the page to select publicly accessible data.</li>', 'form-info')
-        html = \
-        """To be redirected manually, click <a href="./login">here</a>.
-        <script>
-            window.location = "./login"; 
-            window.location.replace("./login");
-        </script>
-        """
-    return html
+        return redirect(url_for('frontend.login'))
     
 
 @frontend.route('/<ensemble_name>')
@@ -151,6 +138,9 @@ def box_combined(mmu_gene_id, hsa_gene_id):
 
 @frontend.route('/tabular/ensemble')
 def ensemble_tabular_screen():
+    redirect = request.args.get('redirect', 'false')
+    if redirect == 'true':
+        flash('Please select an ensemble first.', 'info')
     return render_template('tabular_ensemble.html')
 
 
