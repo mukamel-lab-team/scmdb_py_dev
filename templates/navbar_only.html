@@ -11,10 +11,7 @@
 
     <script> 
         $(document).ready(function() {
-            var last_viewed_ensemble = storage.load("last_viewed_ensemble");
-            if (last_viewed_ensemble !== false) {
-                $("#browser").attr("href", "/"+last_viewed_ensemble);
-            }
+            $("#browser").attr("href", "javascript:window.top.location.reload();");
         });
     </script>
     </body>

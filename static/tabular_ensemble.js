@@ -12,7 +12,7 @@ function initEnsembleDataTable() {
                 "data": null,
                 "className": 'details-control dt-center',
                 "orderable": false,
-                "defaultContent": '<i class="glyphicon glyphicon-plus-sign"></i>'
+                "defaultContent": '<i class="fas fa-plus-circle"></i>'
             },
             {"data": "ensemble_id"},
             {"data": "ensemble_name"},
@@ -33,7 +33,7 @@ function initEnsembleDataTable() {
                 "className": 'redirect-control dt-center',
                 "orderable": false,
                 "fnCreatedCell": function (nTd, sData, oData, iRow, iCol) {
-                    $(nTd).html('<a href="/'+oData.ensemble_name+'"><i class="glyphicon glyphicon-eye-open"></i></a>');
+                    $(nTd).html('<a href="/'+oData.ensemble_name+'"><i class="fas fa-eye"></i></a>');
                 }
             },
         ]
@@ -46,12 +46,12 @@ function initEnsembleDataTable() {
         if (row.child.isShown()) {
             row.child.hide();
             tr.removeClass('shown');
-            $(this).html('<i class="glyphicon glyphicon-plus-sign"></i>');
+            $(this).html('<i class="fas fa-plus-circle"></i>');
         }
         else {
             row.child(format(row.data())).show();
             tr.addClass('shown');
-            $(this).html('<i class="glyphicon glyphicon-minus-sign"></i>');
+            $(this).html('<i class="fas fa-minus-circle"></i>');
         }
     });
 }

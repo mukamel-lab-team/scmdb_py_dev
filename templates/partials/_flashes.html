@@ -2,7 +2,7 @@
     {% with msgs = get_flashed_messages(category_filter=[class]) %}
         {% for msg in msgs %}
             <div class="ui {{ class }} message">
-                <i class="close icon"></i>
+                <i class="close fas fa-times fa-sm" style="float:right;"></i>
                 {{ msg }}
             </div>
         {% endfor %}

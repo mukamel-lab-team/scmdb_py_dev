@@ -1,20 +1,10 @@
 {%- extends "layouts/base.html" %}
 
-{% block head%}
-    {{ super() }}
-    {# {% include 'partials/_head.html' %} #}
-    {% block title %}Ensemble Summary{% endblock %} 
-    {# Any templates that extend this template can set custom_head_tags to add scripts to their page #}
-    {% block custom_head_tags %}{% endblock custom_head_tags %}
-{%- endblock head %}
-
-{% block styles -%}
-    {{ super() }}  {# do not forget to call super or Bootstrap's own stylesheets will disappear! #}
-{% endblock %}
+{% block title %}Ensemble Summary{% endblock %} 
 
 {# When extended, the content block contains all the html of the webpage #}
 {% block content -%}
-    {{ super() }}
+    <br>
     <div id="brain-dissection-map-div" style="display: none;">
     </div>
     <div id="ensemble-table-div" style="margin:auto; width:85%;">
@@ -50,6 +40,5 @@
             initEnsembleDataTable();
         }); 
     </script>
-
 {% endblock scripts %}
 

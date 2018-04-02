@@ -1,13 +1,12 @@
 <meta name="charset" content="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
-<title>{% block page_title %}{{ config.APP_NAME }}{% endblock %}</title>
 
+{% assets 'vendor_js' %}<script type="text/javascript" src="{{ ASSET_URL }}"></script>{% endassets %}
+{% assets 'app_js' %}<script type="text/javascript" src="{{ ASSET_URL }}"></script>{% endassets %}
 {% assets 'vendor_css' %}<link rel="stylesheet" type="text/css" href="{{ ASSET_URL }}">{% endassets %}
 {% assets 'app_css' %}<link rel="stylesheet" type="text/css" href="{{ ASSET_URL }}">{% endassets %}
 <link rel="stylesheet" href="https://use.fontawesome.com/releases/v5.0.8/css/all.css" integrity="sha384-3AB7yXWz4OeoZcPbieVW64vVXEwADiYyAEhwilzWsLw+9FgqpyjjStpPnpBO8o8S" crossorigin="anonymous">
 
-{% assets 'vendor_js' %}<script type="text/javascript" src="{{ ASSET_URL }}"></script>{% endassets %}
-{% assets 'app_js' %}<script type="text/javascript" src="{{ ASSET_URL }}"></script>{% endassets %}
 <script>
     // HTML5 local storage with expiration
     // https://gist.github.com/anhang/1096149
