@@ -110,9 +110,7 @@ default_config.py
 
 #Other stuff
 node_modules
-static
 static/bundle.js
-static/tabular_data_set.js
 static/scripts/*
 static/styles/*
 *.sqlite
