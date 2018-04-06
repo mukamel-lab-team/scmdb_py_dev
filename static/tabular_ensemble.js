@@ -4,7 +4,7 @@ function initEnsembleDataTable() {
         "order": [[3, 'desc']], //Initially sort by "Total Cells (snmC-seq)" in descending order. 
         "pageLength": 25,
         "ajax": {
-            "url": "/content/ensemble_list",
+            "url": "/content/ensembles",
             "dataSrc": ""
         },
         "columns": [
@@ -66,12 +66,26 @@ function format ( d ) {
     return (
         '<table cellpadding="5" cellspacing="0" border="0" style="padding-left:50px;">'+
             '<tr>'+
+                '<td><b>Description:</b></td>'+
+                '<td>'+d.description+'</td>'+
+            '</tr>'+
+            '<tr>'+
                 '<td><b>Datasets in ensemble (snmC-seq):</b></td>'+
-                '<td>'+d.datasets+'</td>'+
+                '<td>'+
+                    '<table>'+
+                        '<tr><td><b>RS1</b></td><td>'+d.datasets_rs1+'</td></tr>'+
+                        '<tr><td><b>RS2</b></td><td>'+d.datasets_rs2+'</td></tr>'+
+                    '</table>'+
+                '</td>'+
             '</tr>'+
             '<tr>'+
                 '<td><b>Datasets in ensemble (snATAC-seq):</b></td>'+
-                '<td>'+snATAC_datasets+'</td>'+
+                '<td>'+
+                    '<table>'+
+                        '<tr><td><b>RS1</b></td><td>'+d.snATAC_datasets_rs1+'</td></tr>'+
+                        '<tr><td><b>RS2</b></td><td>'+d.snATAC_datasets_rs2+'</td></tr>'+
+                    '</table>'+
+                '</td>'+
             '</tr>'+
             '<tr>'+
                 '<td><b>Brain region(s):</b></td>'+

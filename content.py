@@ -48,8 +48,9 @@ def get_metadata():
     return json.dumps({"data": result})
 
 
-@content.route('/content/ensemble_list')
-def get_ensemble_list():
+@content.route('/content/ensembles')
+def get_ensembles_summary():
+    """ Retrieve data to be displayed in the "Ensemble Summary" tabular page. """
     
     ensemble_list=[]
     ensemble_list = db.get_engine(current_app, 'methylation_data').execute("SELECT * FROM ensembles").fetchall()
@@ -78,7 +79,8 @@ def get_ensemble_list():
                                        "ensemble": ensemble['ensemble_name'], 
                                        "ens_methylation_counts": methylation_cell_counts,
                                        "ens_snATAC_counts": snATAC_cell_counts,
-                                       "public_access": ensemble['public_access'], })
+                                       "public_access": ensemble['public_access'],
+                                       "description": ensemble['description']})
 
     ensembles_json_list = []
     for ens in ensembles_cell_counts:
@@ -96,35 +98,114 @@ def get_ensemble_list():
                 snATAC_datasets_in_ensemble.append(dataset+" ("+str(count)+" cells)")
                 total_snATAC_cells += count
 
-        ens_dict["ensemble_id"] = ens["id"]
-        ens_dict["ensemble_name"] = ens['ensemble']
-        ens_dict["datasets"] = ",  ".join(datasets_in_ensemble)
-        ens_dict["snATAC_datasets"] = ",  ".join(snATAC_datasets_in_ensemble)
-        ens_dict["num_datasets"] = len(datasets_in_ensemble)
-        slices_list = [d.split('_')[0][0] for d in datasets_in_ensemble]
-        slices_set = set(slices_list)
-        ens_dict["slices"] = ",  ".join(sorted(list(slices_set)))
-        ens_dict["total_methylation_cells"] = total_methylation_cells
-        ens_dict["total_snATAC_cells"] = total_snATAC_cells
+        if total_methylation_cells > 200: # Do not display ensembles that contain less than 200 total cells. (mainly RS2 data)
 
-        ens_regions_query = "SELECT DISTINCT(ABA_acronym), ABA_description FROM ABA_regions WHERE `code` IN (" + ",".join("'"+x.split('_')[0]+"'" for x in datasets_in_ensemble) + ")"
-        ens_regions_result = db.get_engine(current_app, 'methylation_data').execute(ens_regions_query).fetchall()
-        ens_regions_acronyms = [d['ABA_acronym'] for d in ens_regions_result]
-        ens_regions_descriptions = [d['ABA_description'] for d in ens_regions_result]
-        ens_dict["ABA_regions_acronym"] = ", ".join(ens_regions_acronyms)
-        ens_dict["ABA_regions_description"] = ", ".join(ens_regions_descriptions)
-        if ens['public_access'] == 0:
-            ens_dict["public_access_icon"] = "fas fa-lock"
-            ens_dict["public_access_color"] = "black"
-        else:
-            ens_dict["public_access_icon"] = "fas fa-lock-open"
-            ens_dict["public_access_color"] = "green"
+            ens_dict["ensemble_id"] = ens['id']
+            ens_dict["ensemble_name"] = ens['ensemble']
+            ens_dict["description"] = ens['description']
+            ens_dict["datasets_rs1"] = ",  ".join(sorted([x for x in datasets_in_ensemble if 'RS2' not in x]))
+            ens_dict["datasets_rs2"] = ",  ".join(sorted([x for x in datasets_in_ensemble if 'RS2' in x]))
+            ens_dict["snATAC_datasets_rs1"] = ",  ".join(sorted([x for x in snATAC_datasets_in_ensemble if 'RS2' not in x]))
+            ens_dict["snATAC_datasets_rs2"] = ",  ".join(sorted([x for x in snATAC_datasets_in_ensemble if 'RS2' in x]))
+            ens_dict["num_datasets"] = len(datasets_in_ensemble)
+            slices_list_rs1 = [d.split('_')[0] for d in datasets_in_ensemble if 'RS2' not in d]
+            slices_list_rs2 = [d.split('_')[1][2:4] for d in datasets_in_ensemble if 'RS2' in d]
+            slices_set = set(slices_list_rs1)
+            slices_set.update(slices_list_rs2)
+            ens_dict["slices"] = ",  ".join(sorted(list(slices_set)))
+            ens_dict["total_methylation_cells"] = total_methylation_cells
+            ens_dict["total_snATAC_cells"] = total_snATAC_cells
 
-        ensembles_json_list.append(ens_dict)
+            ens_regions_query = "SELECT DISTINCT(ABA_acronym), ABA_description FROM ABA_regions WHERE `code` IN (" + ",".join("'"+x+"'" for x in list(slices_set)) + ")"
+            ens_regions_result = db.get_engine(current_app, 'methylation_data').execute(ens_regions_query).fetchall()
+            ens_regions_acronyms = [d['ABA_acronym'] for d in ens_regions_result]
+            ens_regions_descriptions = [d['ABA_description'] for d in ens_regions_result]
+            ens_dict["ABA_regions_acronym"] = ", ".join(ens_regions_acronyms)
+            ens_dict["ABA_regions_description"] = ", ".join(ens_regions_descriptions)
+            if ens['public_access'] == 0:
+                ens_dict["public_access_icon"] = "fas fa-lock"
+                ens_dict["public_access_color"] = "black"
+            else:
+                ens_dict["public_access_icon"] = "fas fa-lock-open"
+                ens_dict["public_access_color"] = "green"
+
+
+            ensembles_json_list.append(ens_dict)
 
     ens_json = json.dumps(ensembles_json_list)
 
     return ens_json
+
+
+@content.route('/content/datasets/<rs>')
+def get_datasets_summary(rs):
+    """ Retrieve data to be displayed in the "RS1 Summary" tabular page. 
+    
+        Arguments:
+            rs = Research Segment. Either "rs1" or "rs2"
+    """
+    
+    if rs == "rs1":
+        dataset_list = db.get_engine(current_app, 'methylation_data').execute("SELECT * FROM datasets WHERE dataset NOT LIKE 'CEMBA_RS2_%%'").fetchall()
+        total_methylation_cell_each_dataset = db.get_engine(current_app, 'methylation_data').execute("SELECT dataset, COUNT(*) as `num` FROM cells WHERE dataset NOT LIKE 'CEMBA_RS2_%%' GROUP BY dataset").fetchall()
+        total_snATAC_cell_each_dataset = db.get_engine(current_app, 'snATAC_data').execute("SELECT dataset, COUNT(*) as `num` FROM cells WHERE dataset NOT LIKE 'CEMBA_RS2_%%' GROUP BY dataset").fetchall()
+    elif rs == "rs2":
+        dataset_list = db.get_engine(current_app, 'methylation_data').execute("SELECT * FROM datasets WHERE dataset LIKE 'CEMBA_RS2_%%'").fetchall()
+        total_methylation_cell_each_dataset = db.get_engine(current_app, 'methylation_data').execute("SELECT dataset, COUNT(*) as `num` FROM cells WHERE dataset LIKE 'CEMBA_RS2_%%' GROUP BY dataset").fetchall()
+        total_snATAC_cell_each_dataset = db.get_engine(current_app, 'snATAC_data').execute("SELECT dataset, COUNT(*) as `num` FROM cells WHERE dataset LIKE 'CEMBA_RS2_%%' GROUP BY dataset").fetchall()
+    else:
+        return
+
+    total_methylation_cell_each_dataset = [ {d['dataset']: d['num']} for d in total_methylation_cell_each_dataset ]
+    total_methylation_cell_each_dataset = { k: v for d in total_methylation_cell_each_dataset for k, v in d.items() }
+    total_snATAC_cell_each_dataset = [ {d['dataset']: d['num']} for d in total_snATAC_cell_each_dataset ]
+    total_snATAC_cell_each_dataset = { k: v for d in total_snATAC_cell_each_dataset for k, v in d.items() }
+
+    dataset_cell_counts = []
+    for dataset in dataset_list:
+        try:
+            num_snATAC_cells = total_snATAC_cell_each_dataset[dataset['dataset']]
+        except KeyError as e:
+            num_snATAC_cells = 0
+
+        if rs == "rs1":
+            brain_region_code = dataset['dataset'].split('_')[1]
+        else:
+            brain_region_code = dataset['dataset'].split('_')[2]
+            brain_region_code = brain_region_code[-2:]
+            
+        regions_sql = db.get_engine(current_app, 'methylation_data').execute("SELECT ABA_description FROM ABA_regions WHERE ABA_acronym=%s", (dataset['brain_region'],)).fetchone()
+        ABA_regions_descriptive = regions_sql['ABA_description'].replace('+', ', ')
+
+        if rs == "rs1":
+            dataset_cell_counts.append( {"dataset_name": dataset['dataset'], 
+                                         "sex": dataset['sex'],
+                                         "methylation_cell_count": total_methylation_cell_each_dataset[dataset['dataset']],
+                                         "snATAC_cell_count": num_snATAC_cells,
+                                         "ABA_regions_acronym": dataset['brain_region'].replace('+', ', '),
+                                         "ABA_regions_descriptive": ABA_regions_descriptive,
+                                         "slice": brain_region_code,
+                                         "date_added": str(dataset['date_online']),
+                                         "description": dataset['description'] })
+        else:
+            target_region_sql = db.get_engine(current_app, 'methylation_data').execute("SELECT ABA_description FROM ABA_regions WHERE ABA_acronym=%s", (dataset['target_region'],)).fetchone()
+            target_region_descriptive = target_region_sql['ABA_description'].replace('+', ', ')
+
+            dataset_cell_counts.append( {"dataset_name": dataset['dataset'],
+                                         "sex": dataset['sex'],
+                                         "methylation_cell_count": total_methylation_cell_each_dataset[dataset['dataset']],
+                                         "snATAC_cell_count": num_snATAC_cells,
+                                         "ABA_regions_acronym": dataset['brain_region'].replace('+', ', '),
+                                         "ABA_regions_descriptive": ABA_regions_descriptive,
+                                         "slice": brain_region_code,
+                                         "date_added": str(dataset['date_online']),
+                                         "description": dataset['description'],
+                                         "target_region_acronym": dataset['target_region'],
+                                         "target_region_descriptive": target_region_descriptive})
+
+    dataset_json = json.dumps(dataset_cell_counts)
+
+    return dataset_json
 
 
 # Utilities
@@ -294,9 +375,16 @@ def median_cluster_snATAC(gene_info, grouping):
 
 
 @cache.memoize(timeout=3600)
-def snATAC_data_exists(ensemble_id):
-    ensemble = 'Ens' + str(ensemble_id)
-    result = db.get_engine(current_app, 'snATAC_data').execute("SHOW TABLES LIKE %s", (ensemble,)).fetchone()
+def snATAC_data_exists(snmC_ensemble_id):
+    """Checks whether or not snATAC data exists for an ensemble.
+
+        Arguments:
+            snmC_ensemble_id: ID number for the snmC ensemble.
+
+        Returns:
+            0 if data does not exist, 1 if data does exist
+    """
+    result = db.get_engine(current_app, 'snATAC_data').execute("SELECT * FROM ensembles WHERE snmc_ensemble_id = %s", (snmC_ensemble_id,)).fetchone()
 
     if result is None:
         return 0
@@ -1224,7 +1312,7 @@ def get_methylation_scatter(ensemble, tsne_type, methylation_type, genes_query, 
             if grouping_clustering.startswith('cluster'):
                 group_str = 'cluster_' + str(group)
             elif grouping_clustering== "dataset":
-                group = group.strip('CEMBA_')
+                group = "_".join(group.split('_')[1:])
                 group_str = group
             else:
                 group_str = group

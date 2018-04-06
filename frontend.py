@@ -144,6 +144,16 @@ def ensemble_tabular_screen():
     return render_template('tabular_ensemble.html')
 
 
+@frontend.route('/tabular/dataset/rs1')
+def dataset_tabular_screen_rs1():
+    return render_template('tabular_dataset_rs1.html')
+
+
+@frontend.route('/tabular/dataset/rs2')
+def dataset_tabular_screen_rs2():
+    return render_template('tabular_dataset_rs2.html')
+
+
 @frontend.route('/CEMBA_lims')
 @login_required
 def CEMBA_lims():
