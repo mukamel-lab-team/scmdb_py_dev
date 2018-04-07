@@ -9,16 +9,16 @@
                     <select id="methylation-tsnesettings" class="methylation-tsneoption" name="methylation-tsnesettings">
                     </select>
                     -->
-                    <label for="methylation-tsne-methylation">
-                        <a href="javascript:void(0);" class="hover-tooltip" data-toggle="popover" data-trigger="hover" data-placement="bottom" title="Methylation Type" data-content="Type of methylation used to calculate tSNE coordinates.">Methylation Type: </a>
-                    </label>
-                    <select id="methylation-tsne-methylation" class="methylation-tsne-methylation methylation-tsneoption" name="methylation-tsne-methylation">
-                    </select>
-                    &nbsp;
                     <label for="methylation-tsne-dimensions">
                         <a href="javascript:void(0);" class="hover-tooltip" data-toggle="popover" data-trigger="hover" data-placement="bottom" title="Number of Dimensions" data-content="Choose between 2D or 3D (if available) tSNE coordinates."># Dimensions: </a>
                     </label>
                     <select id="methylation-tsne-dimensions" class="methylation-tsne-dimensions methylation-tsneoption" name="methylation-tsne-dimensions">
+                    </select>
+                    &nbsp;
+                    <label for="methylation-tsne-methylation">
+                        <a href="javascript:void(0);" class="hover-tooltip" data-toggle="popover" data-trigger="hover" data-placement="bottom" title="Methylation Type" data-content="Type of methylation used to calculate tSNE coordinates.">Methylation Type: </a>
+                    </label>
+                    <select id="methylation-tsne-methylation" class="methylation-tsne-methylation methylation-tsneoption" name="methylation-tsne-methylation">
                     </select>
                     &nbsp;
                     <label for="methylation-tsne-perplexity">
@@ -75,7 +75,10 @@
     </div>
 </div>
 <div class="panel-body" style="padding-top:0px;">
-    <div id="plot-mch-scatter">Loading...</div>
+    <div class="container">
+        <div id="mch-scatter-loader" class="loader"></div>
+        <div id="plot-mch-scatter"></div>
+    </div>
     <div id="methylation_tsneOutlierOptions" style="float:left;">
         <input id="methylation_tsneOutlierToggle" data-toggle="toggle" data-on="Outliers On" data-off="Outliers Off" type="checkbox">
     </div>

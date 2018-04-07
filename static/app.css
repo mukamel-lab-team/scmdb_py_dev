@@ -96,6 +96,9 @@ body {
     .flex-item:first-child { flex-basis: 100%; }
 }
 
+.plotly-graph-div {
+    margin: auto;
+}
 
 #plot-mch-heat .bg {
     fill: rgb(169,169,169) !important;
@@ -116,6 +119,34 @@ body {
     text-decoration: none;
 }
 
+.loader {
+    border: 16px solid #f3f3f3; /* Light Grey */
+    border-top: 16px solid #03274B; /* CNDD Blue */
+    border-radius: 50%;
+    width: 120px;
+    height: 120px;
+    -webkit-animation: spin 2s linear infinite; /* Safari */
+    animation: spin 2s linear infinite;
+    position: absolute;
+    margin-left: auto;
+    margin-right: auto;
+    left: 0;
+    right: 0;
+    z-index: 10;
+}
+
+/* Safari */
+@-webkit-keyframes spin {
+  0% { -webkit-transform: rotate(0deg); }
+  100% { -webkit-transform: rotate(360deg); }
+}
+
+@keyframes spin {
+    0% { transform: rotate(0deg); }
+    100% { transform: rotate(360deg); }
+}
+
+
 /* ---------------------Footer----------------------*/
 
 #footer{
@@ -126,7 +157,7 @@ body {
 
 #footer, #footer a{
 	color:#F8F8F2;
-	background-color:#03274B;
+	background-color:#03274B; /* CNDD Blue */
 	}
 
 #footer .container {

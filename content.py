@@ -461,9 +461,9 @@ def get_methylation_tsne_options(ensemble):
             'tsne_methylation': list_mc_types_tsne,
             'all_clustering_settings': list_clustering_types,
             'all_clustering_settings2': dict_clustering_types_and_numclusters,
-            'clustering_algorithms': list_algorithms_clustering,}
+            'clustering_algorithms': list_algorithms_clustering,
+            'tsne_dimensions': list_dims_tsne_first,}
             #'clustering_methylation': list_mc_types_clustering,}
-            #'tsne_dimensions': list_dims_tsne_first,
             #'tsne_perplexity': list_perp_tsne_first,
             #'clustering_npc': list_npc_clustering,
             #'clustering_k': list_k_clustering,}
@@ -991,9 +991,12 @@ def get_snATAC_scatter(ensemble, genes_query, grouping, ptile_start, ptile_end, 
     
     traces_tsne = OrderedDict()
 
-    legend_x = -.15
+    legend_x = -.17
+    layout_width = 1100;
+
     grouping_clustering = grouping
     if grouping != 'dataset':
+        layout_width = 1000;
         legend_x = -.14
         grouping_clustering = grouping+'_ATAC'
 
@@ -1110,9 +1113,9 @@ def get_snATAC_scatter(ensemble, genes_query, grouping, ptile_start, ptile_end, 
         hoverinfo='text')
 
     layout = Layout(
-        # autosize=True,
-        # height=450,
-        # width=1000,
+        autosize=True,
+        height=450,
+        width=layout_width,
         title=title,
         titlefont={'color': 'rgba(1,2,2,1)',
                    'size': 16},
@@ -1271,9 +1274,11 @@ def get_methylation_scatter(ensemble, tsne_type, methylation_type, genes_query, 
     
     traces_tsne = OrderedDict()
 
-    legend_x = -.15
+    legend_x = -.17
+    layout_width = 1100
     grouping_clustering = grouping
     if grouping != 'dataset':
+        layout_width = 1000
         legend_x = -.14
         grouping_clustering = grouping+'_'+clustering
 
@@ -1395,7 +1400,7 @@ def get_methylation_scatter(ensemble, tsne_type, methylation_type, genes_query, 
         layout = Layout(
             autosize=True,
             height=450,
-            #width=1000,
+            width=layout_width,
             title=title,
             titlefont={'color': 'rgba(1,2,2,1)',
                        'size': 16},

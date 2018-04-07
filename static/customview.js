@@ -185,15 +185,15 @@ function populateMethylationTSNEDropdowns() {
             window.global_all_methylation_clustering_settings = data['all_clustering_settings'];
             window.global_all_methylation_clustering_settings2 = data['all_clustering_settings2'];
 
-            $.each(data['tsne_methylation'], function(key, val) {
-                $(".methylation-tsne-methylation").append(
+            $.each(data["tsne_dimensions"], function(key, val) {
+                $(".methylation-tsne-dimensions").append(
                     $('<option></option>').val(val).text(val)
                 );
             });
-            dynamicMethylationTSNEOptions_methylation();
+            dynamicMethylationTSNEOptions_dimensions();
             /*
-            $.each(data["tsne_dimensions"], function(key, val) {
-                $(".methylation-tsne-dimensions").append(
+            $.each(data['tsne_methylation'], function(key, val) {
+                $(".methylation-tsne-methylation").append(
                     $('<option></option>').val(val).text(val)
                 );
             });
@@ -268,38 +268,39 @@ function populatesnATACTSNEDropdowns() {
     });
 }
 
-function dynamicMethylationTSNEOptions_methylation() {
-    var matching_tsne_options = [];
-    const regex = new RegExp('^'+$(".methylation-tsne-methylation").val() + "_\\w+");
-
-    for (let i = 0; i < global_all_methylation_tsne_settings.length; i++) {
-        if (global_all_methylation_tsne_settings[i].match(regex) !== null) {
-            matching_tsne_options.push(global_all_methylation_tsne_settings[i]);
+function dynamicMethylationTSNEOptions_dimensions(matching_tsne_options = []) {
+    if (matching_tsne_options.length === 0) {
+        const regex = new RegExp("_ndim" + $(".methylation-tsne-dimensions").val() + "_\\w+");
+        for (let i = 0; i < global_all_methylation_tsne_settings.length; i++) {
+            if (global_all_methylation_tsne_settings[i].match(regex) !== null) {
+                matching_tsne_options.push(global_all_methylation_tsne_settings[i]);
+            }
         }
     }
 
-    let dimensions_set = new Set();
+    let methylation_set = new Set();
     for (let i = 0; i < matching_tsne_options.length; i++) {
-        let dimensions = matching_tsne_options[i].split('_')[1];
-        dimensions_set.add(dimensions.replace("ndim",""));
+        let methylation_type = matching_tsne_options[i].split('_')[0];
+        methylation_set.add(methylation_type);
     }
-    let dimensions_list = [...dimensions_set];
 
-    $(".methylation-tsne-dimensions").empty();
+    let methylation_list = [...methylation_set];
+
+    $(".methylation-tsne-methylation").empty();
     $(".methylation-tsna-perplexity").empty();
-    for (let i = 0; i < dimensions_list.length; i++) {
-        $(".methylation-tsne-dimensions").append(
-            $("<option></option>").val(dimensions_list[i]).text(dimensions_list[i])
+    for (let i = 0; i < methylation_list.length; i++) {
+        $(".methylation-tsne-methylation").append(
+            $("<option></option>").val(methylation_list[i]).text(methylation_list[i])
         );
     }
+    dynamicMethylationTSNEOptions_methylation(matching_tsne_options);
+}
 
-    dynamicMethylationTSNEOptions_dimensions(matching_tsne_options);
-}   
+function dynamicMethylationTSNEOptions_methylation(matching_tsne_options = []) {
 
-function dynamicMethylationTSNEOptions_dimensions(matching_tsne_options = []) {
     if (matching_tsne_options.length === 0) {
-        var matching_tsne_options = [];
-        const regex = new RegExp('^'+$(".methylation-tsne-methylation").val() + "_ndim" + $(".methylation-tsne-dimensions").val() + "_\\w+");
+        const regex = new RegExp('^'+$(".methylation-tsne-methylation").val()+"_ndim"+$(".methylation-tsne-dimensions").val()+ "_\\w+");
+
         for (let i = 0; i < global_all_methylation_tsne_settings.length; i++) {
             if (global_all_methylation_tsne_settings[i].match(regex) !== null) {
                 matching_tsne_options.push(global_all_methylation_tsne_settings[i]);
@@ -309,8 +310,8 @@ function dynamicMethylationTSNEOptions_dimensions(matching_tsne_options = []) {
 
     let perplexity_set = new Set();
     for (let i = 0; i < matching_tsne_options.length; i++) {
-        let perplexity = matching_tsne_options[i].split('_')[2];
-        perplexity_set.add(perplexity.replace("perp",""));
+        let dimensions = matching_tsne_options[i].split('_')[2];
+        perplexity_set.add(dimensions.replace("perp",""));
     }
     let perplexity_list = [...perplexity_set];
 
@@ -320,7 +321,7 @@ function dynamicMethylationTSNEOptions_dimensions(matching_tsne_options = []) {
             $("<option></option>").val(perplexity_list[i]).text(perplexity_list[i])
         );
     }
-}
+}   
 
 function dynamicMethylationClusteringOptions_algorithm() {
     var matching_clustering_options = [];
@@ -602,8 +603,14 @@ function updateMCHScatterPlot(onlyUpdatetSNEandClustering=false) {
         //$.getJSON({
             type: "GET",
             url: './plot/methylation/scatter/'+ensemble+'/'+tsne_setting+'/' +methylationType+ '/'+levelType+'/'+grouping+'/'+clustering+'/'+methylation_color_percentile_Values[0]+'/'+methylation_color_percentile_Values[1]+'/'+tsneOutlierOption+'?q='+genes_query,
+            beforeSend: function() {
+                $("#mch-scatter-loader").show();
+                //$("#plot-mch-scatter").html("");
+            },
+            complete: function() {
+                $("#mch-scatter-loader").hide();
+            },
             success: function(data) {
-                $('#plot-mch-scatter').html("");
                 //Plotly.newPlot('plot-mch-scatter', data);
                 $('#plot-mch-scatter').html(data);
             }
@@ -649,8 +656,13 @@ function updatesnATACScatterPlot(onlyUpdatetSNEandClustering=false) {
         //$.getJSON({
             type: "GET",
             url: './plot/snATAC/scatter/'+ensemble+'/'+grouping+'/'+snATAC_color_percentile_Values[0]+'/'+snATAC_color_percentile_Values[1]+'/'+tsneOutlierOption+'?q='+genes_query,
+            beforeSend: function() {
+                $("#snATAC-scatter-loader").show();
+            },
+            complete: function() {
+                $("#snATAC-scatter-loader").hide();
+            },
             success: function(data) {
-                $('#plot-snATAC-scatter').html("");
                 //Plotly.newPlot('plot-mch-scatter', data);
                 $('#plot-snATAC-scatter').html(data);
             }
@@ -754,11 +766,16 @@ function updateMCHBoxPlot() {
     $.ajax({
         type: "GET",
         url: './plot/methylation/box/'+ensemble+'/'+methylationType+'/'+geneSelected+'/'+grouping+'/'+clustering+'/'+levelType+'/'+outlierOption,
+        beforeSend: function() {
+            $("#mch-box-loader").show();
+            $("#plot-mch-heat").html("");
+        },
+        complete: function() {
+            $('#mch-box-loader').hide();
+        },
         success: function(data) {
-            $('#plot-mch-heat').html("");
-            $('#mch_box_div').addClass("col-md-9");
+            $("#plot-mch-box").html(data);
             $('#gene_table_div').show();
-            $('#plot-mch-box').html(data);
         }
     });
 
@@ -777,8 +794,14 @@ function updatesnATACBoxPlot() {
     $.ajax({
         type: "GET",
         url: './plot/snATAC/box/'+ensemble+'/'+geneSelected+'/'+grouping+'/'+outlierOption,
+        beforeSend: function() {
+            $("#snATAC-box-loader").show();
+            $("#plot-snATAC-heat").html("");
+        },
+        complete: function() {
+            $("#snATAC-box-loader").hide();
+        },
         success: function(data) {
-            $('#plot-snATAC-heat').html("");
             $('#plot-snATAC-box').html(data);
         }
     });
@@ -830,8 +853,14 @@ function updateMethylationHeatmap() {
     $.ajax({
         type: "GET",
         url: './plot/methylation/heat/'+ensemble+'/'+methylationType+'/'+grouping+'/'+clustering+'/'+levelType+'/'+methylation_color_percentile_Values[0]+'/'+methylation_color_percentile_Values[1]+'?q='+genes_query+'&normalize='+normalize,
+        beforeSend: function() {
+            $("#mch-box-loader").show();
+            $("#plot-mch-box").html("");
+        },
+        complete: function() {
+            $("#mch-box-loader").hide();
+        },
         success: function(data) {
-            $('#plot-mch-box').html("");
             $('#gene_table_div').hide();
             $('#mch_box_div').removeClass("col-md-9");
             $('#plot-mch-heat').html(data);
@@ -861,8 +890,14 @@ function updatesnATACHeatmap() {
     $.ajax({
         type: "GET",
         url: './plot/snATAC/heat/'+ensemble+'/'+grouping+'/'+snATAC_color_percentile_Values[0]+'/'+snATAC_color_percentile_Values[1]+'?q='+genes_query+'&normalize='+normalize,
+        beforeSend: function() {
+            $("#snATAC-box-loader").show();
+            $("#plot-snATAC-box").html("");
+        },
+        complete: function() {
+            $("#snATAC-box-loader").hide();
+        },
         success: function(data) {
-            $('#plot-snATAC-box').html("");
             $('#plot-snATAC-heat').html(data);
             $('#snATAC-box-heat-outlierToggle').bootstrapToggle('disable');
         }
