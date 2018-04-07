@@ -354,7 +354,10 @@ def median_cluster_mch(gene_info, grouping, clustering):
 
     if grouping == 'annotation':
         gene_info.fillna({'annotation_'+clustering: 'None'}, inplace=True)
-    return gene_info.groupby(grouping+'_'+clustering, sort=False)[gene_info.columns[-1]].median()
+    if grouping != 'dataset':
+        return gene_info.groupby(grouping+'_'+clustering, sort=False)[gene_info.columns[-1]].median()
+    else:
+        return gene_info.groupby(grouping, sort=False)[gene_info.columns[-1]].median()
 
 
 @cache.memoize(timeout=3600)
@@ -371,7 +374,10 @@ def median_cluster_snATAC(gene_info, grouping):
 
     if grouping == 'annotation':
         gene_info.fillna({'annotation_ATAC': 'None'}, inplace=True)
-    return gene_info.groupby(grouping+'_ATAC', sort=False)['normalized_counts'].median()
+    if grouping != 'dataset':
+        return gene_info.groupby(grouping+'_ATAC', sort=False)['normalized_counts'].median()
+    else:
+        return gene_info.groupby(grouping, sort=False)['normalized_counts'].median()
 
 
 @cache.memoize(timeout=3600)
@@ -1736,9 +1742,17 @@ def get_mch_heatmap(ensemble, methylation_type, grouping, clustering, level, pti
         gene_info_df['annotation_cat'] = pd.Categorical(gene_info_df['annotation_'+clustering], cluster_annotation_order)
         gene_info_df.sort_values(by='annotation_cat', inplace=True)
         gene_info_df.drop('annotation_cat', axis=1, inplace=True)
+        gene_info_df.set_index(grouping+'_'+clustering, inplace=True)
     elif grouping == 'cluster':
         gene_info_df.sort_values(by='cluster_'+clustering, inplace=True)
-    gene_info_df.set_index(grouping+'_'+clustering, inplace=True)
+        gene_info_df.set_index(grouping+'_'+clustering, inplace=True)
+    elif grouping == 'dataset':
+        gene_info_df.sort_values(by='dataset', inplace=True)
+        gene_info_df.set_index("dataset", inplace=True)
+
+    # For some reason, Plotly doesn't allow 'None' as a group on the x-axis for heatmaps.
+    if gene_info_df.index.tolist() == ['None']: 
+        gene_info_df.index = ['N/A']
 
     normal_or_original = 'Original'
     if normalize_row:
@@ -1956,9 +1970,18 @@ def get_snATAC_heatmap(ensemble, grouping, ptile_start, ptile_end, normalize_row
         gene_info_df['annotation_cat'] = pd.Categorical(gene_info_df['annotation_ATAC'], cluster_annotation_order)
         gene_info_df.sort_values(by='annotation_cat', inplace=True)
         gene_info_df.drop('annotation_cat', axis=1, inplace=True)
+        gene_info_df.set_index(grouping+'_ATAC', inplace=True)
     elif grouping == 'cluster':
         gene_info_df.sort_values(by='cluster_ATAC', inplace=True)
-    gene_info_df.set_index(grouping+'_ATAC', inplace=True)
+        gene_info_df.set_index(grouping+'_ATAC', inplace=True)
+    elif grouping == 'dataset':
+        gene_info_df.sort_values(by='dataset', inplace=True)
+        gene_info_df.set_index('dataset', inplace=True)
+
+
+    # For some reason, Plotly doesn't allow 'None' as a group on the x-axis for heatmaps.
+    if gene_info_df.index.tolist() == ['None']: 
+        gene_info_df.index = ['N/A']
 
     normal_or_original = 'Original'
     if normalize_row:
@@ -1968,6 +1991,7 @@ def get_snATAC_heatmap(ensemble, grouping, ptile_start, ptile_end, normalize_row
             # min-max
             gene_info_df[gene] = (gene_info_df[gene] - gene_info_df[gene].min()) / (gene_info_df[gene].max() - gene_info_df[gene].min())
         normal_or_original = 'Normalized'
+
 
     gene_info_dict = gene_info_df.to_dict(into=OrderedDict)    
 
@@ -2278,25 +2302,29 @@ def get_snATAC_box(ensemble, gene, grouping, outliers):
     if points is None:
         raise FailToGraphException
 
-    if grouping+'_ATAC' not in points.columns: # If no cluster annotations available, group by cluster number instead
-        grouping = "cluster"
-        if len(genes) == 1:
-            points = get_gene_snATAC(ensemble, genes[0], grouping, outliers)
-        else:
-            points = get_mult_gene_snATAC(ensemble, genes, grouping)
-        print("**** Grouping by cluster")
+    if grouping == "dataset":
+        unique_groups = points["dataset"].unique()
+    else:
+        if grouping+'_ATAC' not in points.columns: # If no cluster annotations available, group by cluster number instead
+            grouping = "cluster"
+            points = get_gene_snATAC(ensemble, gene, grouping, outliers)
+            print("**** Grouping by cluster")
+        unique_groups = points[grouping+'_ATAC'].unique()
 
     traces = OrderedDict()
-    unique_groups = points[grouping+'_ATAC'].unique()
     max_cluster = len(unique_groups)
 
     colors = generate_cluster_colors(max_cluster, grouping)
-    for point in points.to_dict('records'):
-        name_prepend = ""
+
+    name_prepend = ""
+    if grouping != "dataset":
         if grouping == "cluster":
             name_prepend="cluster_"
-        color = colors[int(np.where(unique_groups==point[grouping+'_ATAC'])[0]) % len(colors)]
-        group = point[grouping+'_ATAC']
+        grouping += "_ATAC"
+
+    for point in points.to_dict('records'):
+        color = colors[int(np.where(unique_groups==point[grouping])[0]) % len(colors)]
+        group = point[grouping]
         trace = traces.setdefault(group, Box(
                 y=list(),
                 name=name_prepend + str(group),
