@@ -86,12 +86,14 @@ def get_ensembles_summary():
     for ens in ensembles_cell_counts:
         total_methylation_cells = 0
         total_snATAC_cells = 0
+        datasets_in_ensemble_cell_count = []
         datasets_in_ensemble = []
         snATAC_datasets_in_ensemble = []
         ens_dict = {}
         for dataset, count in ens['ens_methylation_counts'].items():
             total_methylation_cells += count
-            datasets_in_ensemble.append(dataset+" ("+str(count)+" cells)")
+            datasets_in_ensemble.append('CEMBA_'+dataset)
+            datasets_in_ensemble_cell_count.append(dataset+" ("+str(count)+" cells)")
             ens_dict[dataset] = str(count) + '/' + str(total_methylation_cell_each_dataset[dataset])
         if ens['ens_snATAC_counts'] is not None:
             for dataset, count in ens['ens_snATAC_counts'].items():
@@ -103,13 +105,26 @@ def get_ensembles_summary():
             ens_dict["ensemble_id"] = ens['id']
             ens_dict["ensemble_name"] = ens['ensemble']
             ens_dict["description"] = ens['description']
-            ens_dict["datasets_rs1"] = ",  ".join(sorted([x for x in datasets_in_ensemble if 'RS2' not in x]))
-            ens_dict["datasets_rs2"] = ",  ".join(sorted([x for x in datasets_in_ensemble if 'RS2' in x]))
+            ens_dict["datasets_rs1"] = ",  ".join(sorted([x for x in datasets_in_ensemble_cell_count if 'RS2' not in x]))
+            ens_dict["datasets_rs2"] = ",  ".join(sorted([x for x in datasets_in_ensemble_cell_count if 'RS2' in x]))
+            rs2_datasets_in_ensemble = sorted([x for x in datasets_in_ensemble if 'RS2' in x])
+            ens_dict["target_regions_rs2_acronym"] = ""
+            ens_dict["target_regions_rs2_descriptive"] = ""
+
+            if len(rs2_datasets_in_ensemble) != 0:
+                target_regions_query = "SELECT DISTINCT datasets.target_region, ABA_regions.ABA_description \
+                    FROM datasets \
+                    INNER JOIN ABA_regions ON ABA_regions.ABA_acronym=datasets.target_region \
+                    AND datasets.dataset in (" + ",".join(("%s",) * len(rs2_datasets_in_ensemble)) + ")"
+                target_regions_result = db.get_engine(current_app, 'methylation_data').execute(target_regions_query, tuple(rs2_datasets_in_ensemble,)).fetchall()
+                ens_dict["target_regions_rs2_acronym"] = ", ".join([ x.target_region for x in target_regions_result ])
+                ens_dict["target_regions_rs2_descriptive"] = ", ".join([ x.ABA_description for x in target_regions_result ])
+
             ens_dict["snATAC_datasets_rs1"] = ",  ".join(sorted([x for x in snATAC_datasets_in_ensemble if 'RS2' not in x]))
             ens_dict["snATAC_datasets_rs2"] = ",  ".join(sorted([x for x in snATAC_datasets_in_ensemble if 'RS2' in x]))
-            ens_dict["num_datasets"] = len(datasets_in_ensemble)
-            slices_list_rs1 = [d.split('_')[0] for d in datasets_in_ensemble if 'RS2' not in d]
-            slices_list_rs2 = [d.split('_')[1][2:4] for d in datasets_in_ensemble if 'RS2' in d]
+            ens_dict["num_datasets"] = len(datasets_in_ensemble_cell_count)
+            slices_list_rs1 = [d.split('_')[0] for d in datasets_in_ensemble_cell_count if 'RS2' not in d]
+            slices_list_rs2 = [d.split('_')[1][2:4] for d in datasets_in_ensemble_cell_count if 'RS2' in d]
             slices_set = set(slices_list_rs1)
             slices_set.update(slices_list_rs2)
             ens_dict["slices"] = ",  ".join(sorted(list(slices_set)))

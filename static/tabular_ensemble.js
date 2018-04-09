@@ -21,6 +21,7 @@ function initEnsembleDataTable() {
             {"data": "ABA_regions_acronym", "className": 'dt-center'},
             {"data": "slices", "className": 'dt-center'},
             {"data": "num_datasets", "className": 'dt-center'},
+            {"data": "target_regions_rs2_acronym", "className": 'dt-center'},
             {
                 "data": "public_access_icon",
                 "className": 'dt-center',
@@ -88,8 +89,12 @@ function format ( d ) {
                 '</td>'+
             '</tr>'+
             '<tr>'+
-                '<td><b>Brain region(s):</b></td>'+
+                '<td><b>Dissection region(s):</b></td>'+
                 '<td>'+d.ABA_regions_description+'</td>'+
+            '</tr>'+
+            '<tr>'+
+                '<td><b>Target region(s):</b></td>'+
+                '<td>'+d.target_regions_rs2_descriptive+'</td>'+
             '</tr>'+
             '<tr>'+
                 '<td><b>View Dissection Drawings:</b></td>'+

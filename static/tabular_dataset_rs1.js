@@ -55,7 +55,7 @@ function format ( d ) {
                 '<td>'+d.description+'</td>'+
             '</tr>'+
             '<tr>'+
-                '<td><b>Brain region(s):</b></td>'+
+                '<td><b>Dissection region(s):</b></td>'+
                 '<td>'+d.ABA_regions_descriptive+'</td>'+
             '</tr>'+
             '<tr>'+
