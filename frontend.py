@@ -5,7 +5,7 @@ For actual content generation see the content.py module.
 import json
 from os import walk
 import os.path
-import time
+import datetime
 
 import dominate
 from dominate.tags import img
@@ -100,7 +100,7 @@ def index():
         return redirect('/tabular/ensemble')
     else: 
         flash('Log in to access private CEMBA data. \
-              <li>Click on "Ensembles Summary" at the top of the page to select publicly accessible data.</li>', 'form-info')
+              <li>Click on "Ensembles" at the top of the page to select publicly accessible data.</li>', 'form-info')
         return redirect(url_for('frontend.login'))
     
 
@@ -116,7 +116,7 @@ def ensemble(ensemble_name):
                                snATAC_data_available = snATAC_exists)
     else:
         flash('Data for ensemble {} is not publicly accessible. You must log in to continue. \
-              <li>Click on "Ensembles Summary" at the top of the page to select publicly accessible data.</li>'.format(ensemble_name), 'form-error')
+              <li>Click on "Ensembles" at the top of the page to select publicly accessible data.</li>'.format(ensemble_name), 'form-error')
         return redirect('/login?q='+ensemble_name)
 
 
@@ -158,6 +158,12 @@ def dataset_tabular_screen_rs2():
 @login_required
 def CEMBA_lims():
     return redirect('https://brainome.ucsd.edu/CEMBA/lims.html')
+
+
+@frontend.route('/request_new_ensemble')
+@login_required
+def request_new_ensemble():
+    return render_template('request_new_ensemble.html')
 
 
 @frontend.route('/navbar')
@@ -388,6 +394,21 @@ def delete_cluster_cache(ensemble, grouping):
     return (ensemble + " cluster cache cleared") 
 
 
+@frontend.route('/submit_new_ensemble/<new_ensemble_name>/<new_datasets>')
+def submit_new_ensemble_request(new_ensemble_name, new_datasets):
+    description = request.args.get('description', "")
+    user = current_user
+    try:
+        send_email(recipient=current_app.config['REQUEST_EMAIL'], subject='A user has requested a new ensemble', template='email/request_new_ensemble', sender=current_app.config['MAIL_USERNAME'], user=user, ensemble_name=new_ensemble_name, datasets=new_datasets, description=description)
+    except:
+        now = datetime.datetime.now()
+        print("[{}] ERROR in frontend app(submit_new_ensemble): Could not send new ensemble request email".format(str(now)))
+        sys.stdout.flush()
+        return json.dumps({"result": False})
+    
+    return json.dumps({"result": True})
+        
+
 # User related routes
 @frontend.route('/login', methods=['GET', 'POST'])
 def login():
@@ -604,7 +625,7 @@ def manage():
 def reset_password_request():
     """Respond to existing user's request to reset their password."""
     if not current_user.is_anonymous:
-        return redirect(url_for('main.index'))
+        return redirect(url_for('frontend.index'))
     form = RequestResetPasswordForm()
     if form.validate_on_submit():
         user = User.query.filter_by(email=form.email.data).first()
@@ -616,7 +637,7 @@ def reset_password_request():
                 send_email,
                 recipient=user.email,
                 subject='Reset Your Password',
-                template='account/email/reset_password',
+                template='email/reset_password',
                 sender=current_app.config['MAIL_USERNAME'],
                 user=user,
                 reset_link=reset_link,

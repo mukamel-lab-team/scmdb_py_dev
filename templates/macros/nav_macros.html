@@ -12,10 +12,11 @@
 {% macro header_items(current_user) %}
     {% set endpoints = [
       ('frontend.index', 'Browser', 'fas fa-home fa-sm', 'browser'),
-      ('frontend.ensemble_tabular_screen', 'Ensembles Summary', 'fas fa-table fa-sm', 'ensemble-tabular-rs1'),
+      ('frontend.ensemble_tabular_screen', 'Ensembles', 'fas fa-table fa-sm', 'ensemble-tabular-rs1'),
       ('frontend.dataset_tabular_screen_rs1', 'RS1 Summary', 'fas fa-table fa-sm', 'dataset-tabular-rs1'),
       ('frontend.dataset_tabular_screen_rs2', 'RS2 Summary', 'fas fa-table fa-sm', 'dataset-tabular-rs1'),
       ('frontend.CEMBA_lims', 'LIMS', 'fas fa-clipboard-list fa-sm', 'lims'),
+      ('frontend.request_new_ensemble', 'Request a new ensemble', 'fas fa-plus-square fa-sm', 'request_new_ensemble'),
     ]%}
     
     {{ render_menu_items( endpoints ) }}

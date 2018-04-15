@@ -8,13 +8,13 @@ import os
 import sys
 import time
 
-from collections import OrderedDict
+from collections import OrderedDict, Counter
 from itertools import groupby, chain
 from random import sample
 
 import colorsys
 import colorlover as cl
-from flask import Blueprint, current_app
+from flask import Blueprint, current_app, request
 from sqlalchemy import exc, text
 import numpy as np
 from numpy import nan, linspace, arange, random
@@ -168,6 +168,12 @@ def get_datasets_summary(rs):
         dataset_list = db.get_engine(current_app, 'methylation_data').execute("SELECT * FROM datasets WHERE dataset LIKE 'CEMBA_RS2_%%'").fetchall()
         total_methylation_cell_each_dataset = db.get_engine(current_app, 'methylation_data').execute("SELECT dataset, COUNT(*) as `num` FROM cells WHERE dataset LIKE 'CEMBA_RS2_%%' GROUP BY dataset").fetchall()
         total_snATAC_cell_each_dataset = db.get_engine(current_app, 'snATAC_data').execute("SELECT dataset, COUNT(*) as `num` FROM cells WHERE dataset LIKE 'CEMBA_RS2_%%' GROUP BY dataset").fetchall()
+    
+    elif rs == "all":
+        dataset_list = db.get_engine(current_app, 'methylation_data').execute("SELECT * FROM datasets").fetchall()
+        total_methylation_cell_each_dataset = db.get_engine(current_app, 'methylation_data').execute("SELECT dataset, COUNT(*) as `num` FROM cells GROUP BY dataset").fetchall()
+        total_snATAC_cell_each_dataset = db.get_engine(current_app, 'snATAC_data').execute("SELECT dataset, COUNT(*) as `num` FROM cells GROUP BY dataset").fetchall()
+
     else:
         return
 
@@ -183,11 +189,13 @@ def get_datasets_summary(rs):
         except KeyError as e:
             num_snATAC_cells = 0
 
-        if rs == "rs1":
+        if "RS2" not in dataset['dataset']:
             brain_region_code = dataset['dataset'].split('_')[1]
+            research_segment = "RS1"
         else:
             brain_region_code = dataset['dataset'].split('_')[2]
             brain_region_code = brain_region_code[-2:]
+            research_segment = "RS2"
             
         regions_sql = db.get_engine(current_app, 'methylation_data').execute("SELECT ABA_description FROM ABA_regions WHERE ABA_acronym=%s", (dataset['brain_region'],)).fetchone()
         ABA_regions_descriptive = regions_sql['ABA_description'].replace('+', ', ')
@@ -204,9 +212,13 @@ def get_datasets_summary(rs):
                                          "description": dataset['description'] })
         else:
             target_region_sql = db.get_engine(current_app, 'methylation_data').execute("SELECT ABA_description FROM ABA_regions WHERE ABA_acronym=%s", (dataset['target_region'],)).fetchone()
-            target_region_descriptive = target_region_sql['ABA_description'].replace('+', ', ')
+            if target_region_sql is not None:
+                target_region_descriptive = target_region_sql['ABA_description'].replace('+', ', ')
+            else:
+                target_region_descriptive = ""
 
             dataset_cell_counts.append( {"dataset_name": dataset['dataset'],
+                                         "research_segment": research_segment,
                                          "sex": dataset['sex'],
                                          "methylation_cell_count": total_methylation_cell_each_dataset[dataset['dataset']],
                                          "snATAC_cell_count": num_snATAC_cells,
@@ -218,9 +230,60 @@ def get_datasets_summary(rs):
                                          "target_region_acronym": dataset['target_region'],
                                          "target_region_descriptive": target_region_descriptive})
 
-    dataset_json = json.dumps(dataset_cell_counts)
+    return json.dumps(dataset_cell_counts)
 
-    return dataset_json
+
+@content.route("/content/check_ensembles/<new_ensemble_name>/<new_ensemble_datasets>")
+def check_ensemble_similarities(new_ensemble_name, new_ensemble_datasets):
+    """
+    Used by the "request_new_ensemble" page. Checks if the new ensemble has any similarities with pre-existing ensembles to prevent duplication of ensembles.
+    """
+
+    existing_ensembles = db.get_engine(current_app, 'methylation_data').execute("SELECT * FROM ensembles").fetchall()
+    existing_ensembles_list = [ dict(d) for d in existing_ensembles ]
+    existing_ensembles_names_list = [ d['ensemble_name'] for d in existing_ensembles ]
+
+    # New ensemble_name must be unique.
+    if new_ensemble_name in existing_ensembles_names_list:
+        return json.dumps({"result": "failure", "reason": "The name {} is already in use, please choose a different name".format(new_ensemble_name)})
+
+    new_ensemble_datasets = new_ensemble_datasets.split('+')
+    
+    query = "SELECT cell_id FROM cells WHERE dataset IN (" + ",".join(('%s',)*len(new_ensemble_datasets)) + ")"
+    cells_in_new_ensemble = db.get_engine(current_app, 'methylation_data').execute(query, tuple(new_ensemble_datasets)).fetchall()
+    cells_in_new_ensemble_set = set([ cell['cell_id'] for cell in cells_in_new_ensemble ])
+
+    if len(cells_in_new_ensemble_set) <= 200:
+        return json.dumps({"result": "failure", "reason": "Ensembles must contain more than 200 cells."})
+    
+    same_datasets_in_both = []
+    new_ensemble_datasets_set = set(new_ensemble_datasets)
+    for existing_ensemble in existing_ensembles_list:
+        existing_ensemble_datasets = set(existing_ensemble['datasets'].split(','))
+        datasets_difference = new_ensemble_datasets_set ^ existing_ensemble_datasets # datasets in new or existing but not both (difference).
+        if len(datasets_difference) == 0:
+            same_datasets_in_both.append(existing_ensemble)
+
+    for similar_ensemble in same_datasets_in_both:
+        query = "SELECT cell_id FROM Ens{}".format(similar_ensemble['ensemble_id'])
+        cells_in_similar_ensemble = db.get_engine(current_app, 'methylation_data').execute(query).fetchall()
+        cells_in_similar_ensemble_set = set([ cell['cell_id'] for cell in cells_in_similar_ensemble ])
+        different_cells = cells_in_new_ensemble_set ^ cells_in_similar_ensemble_set
+
+        # If a pre-existing ensemble with the same datasets also has the same exact cells as the new ensemble, tell user a duplicate ensemble exists
+        if len(different_cells) == 0:
+            return json.dumps({"result": "failure", "reason": "Another ensemble with the same cells already exists: {}.".format(similar_ensemble['ensemble_name'])})
+
+    # If none of the pre-existing ensembles with the same datasets has the same exact cells as the new ensemble, warn user that similar ensembles exist.
+    if len(same_datasets_in_both) > 0:
+        return json.dumps({"result": "warning", "reason": "The following pre-existing ensembles are similar: "+", ".join(("%s",)*len(same_datasets_in_both)) %(tuple([ ensemble['ensemble_name'] for ensemble in same_datasets_in_both]))+". Are you sure you want to request the new ensemble?"})
+
+    # Success
+    return json.dumps({"result": "success", 
+                       "reason": "Click submit to finalize request.",
+                       "new_ensemble_name": new_ensemble_name, 
+                       "new_ensemble_datasets": new_ensemble_datasets, 
+                       "new_ensemble_cells": list(cells_in_new_ensemble_set)})
 
 
 # Utilities

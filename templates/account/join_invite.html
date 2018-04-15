@@ -11,8 +11,10 @@
     {{ super() }}
     <div class="ui grid container">
         <div class="eight wide computer sixteen wide mobile centered column">
-            <h2 class="ui dividing header">Create your password</h2>
-            {{ f.render_form(form) }}
+            <div class="ui raised very padded segment">
+                <h2 class="ui dividing header">Create your password</h2>
+                {{ f.render_form(form) }}
+            </div>
         </div>
     </div>
     {{ check.password_check('password', 0) }}
