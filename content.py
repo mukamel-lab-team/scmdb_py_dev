@@ -50,7 +50,7 @@ def get_metadata():
 
 @content.route('/content/ensembles')
 def get_ensembles_summary():
-    """ Retrieve data to be displayed in the "Ensemble Summary" tabular page. """
+    """ Retrieve data to be displayed in the "Ensembles" summary tabular page. """
     
     ensemble_list=[]
     ensemble_list = db.get_engine(current_app, 'methylation_data').execute("SELECT * FROM ensembles").fetchall()
@@ -135,8 +135,9 @@ def get_ensembles_summary():
             ens_regions_result = db.get_engine(current_app, 'methylation_data').execute(ens_regions_query).fetchall()
             ens_regions_acronyms = [d['ABA_acronym'] for d in ens_regions_result]
             ens_regions_descriptions = [d['ABA_description'] for d in ens_regions_result]
-            ens_dict["ABA_regions_acronym"] = ", ".join(ens_regions_acronyms)
-            ens_dict["ABA_regions_description"] = ", ".join(ens_regions_descriptions)
+            ens_dict["ABA_regions_acronym"] = ", ".join(ens_regions_acronyms).replace('+',', ')
+            ens_dict["ABA_regions_description"] = ", ".join(ens_regions_descriptions).replace('+',', ')
+
             if ens['public_access'] == 0:
                 ens_dict["public_access_icon"] = "fas fa-lock"
                 ens_dict["public_access_color"] = "black"
@@ -168,12 +169,10 @@ def get_datasets_summary(rs):
         dataset_list = db.get_engine(current_app, 'methylation_data').execute("SELECT * FROM datasets WHERE dataset LIKE 'CEMBA_RS2_%%'").fetchall()
         total_methylation_cell_each_dataset = db.get_engine(current_app, 'methylation_data').execute("SELECT dataset, COUNT(*) as `num` FROM cells WHERE dataset LIKE 'CEMBA_RS2_%%' GROUP BY dataset").fetchall()
         total_snATAC_cell_each_dataset = db.get_engine(current_app, 'snATAC_data').execute("SELECT dataset, COUNT(*) as `num` FROM cells WHERE dataset LIKE 'CEMBA_RS2_%%' GROUP BY dataset").fetchall()
-    
     elif rs == "all":
         dataset_list = db.get_engine(current_app, 'methylation_data').execute("SELECT * FROM datasets").fetchall()
         total_methylation_cell_each_dataset = db.get_engine(current_app, 'methylation_data').execute("SELECT dataset, COUNT(*) as `num` FROM cells GROUP BY dataset").fetchall()
         total_snATAC_cell_each_dataset = db.get_engine(current_app, 'snATAC_data').execute("SELECT dataset, COUNT(*) as `num` FROM cells GROUP BY dataset").fetchall()
-
     else:
         return
 
@@ -206,7 +205,7 @@ def get_datasets_summary(rs):
                                          "methylation_cell_count": total_methylation_cell_each_dataset[dataset['dataset']],
                                          "snATAC_cell_count": num_snATAC_cells,
                                          "ABA_regions_acronym": dataset['brain_region'].replace('+', ', '),
-                                         "ABA_regions_descriptive": ABA_regions_descriptive,
+                                         "ABA_regions_descriptive": ABA_regions_descriptive.replace('+', ', '),
                                          "slice": brain_region_code,
                                          "date_added": str(dataset['date_online']),
                                          "description": dataset['description'] })
