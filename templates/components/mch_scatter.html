@@ -34,6 +34,9 @@
                         <option value="cluster">by cluster</option>
                         <option value="annotation" selected>by cluster annotation</option>
                         <option value="dataset">by dataset</option>
+                        {% if RS2 == true %}
+                            <option value="target_region">by RS2 target region</option>
+                        {% endif %}
                         <!-- <option value="layer">by dissection layer</option> -->
                         <!-- <option value="cluster_biosample">by cluster+biosample</option> -->
                     </select>

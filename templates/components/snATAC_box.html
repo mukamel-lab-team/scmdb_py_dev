@@ -8,6 +8,9 @@
                         <option value="cluster" selected>by cluster</option>
                         <option value="annotation">by cluster annotation</option>
                         <option value="dataset">by dataset</option>
+                        {% if RS2 == true %}
+                            <option value="target_region">by RS2 target region</option>
+                        {% endif %}
                     </select>
                 </div>
             </div>

@@ -107,13 +107,17 @@ def index():
 @frontend.route('/<ensemble_name>')
 def ensemble(ensemble_name):
     ensemble_info = get_ensemble_info(ensemble_name=ensemble_name)
-    snATAC_exists = snATAC_data_exists(ensemble_info['ensemble_id'])
+    snATAC_included = snATAC_data_exists(ensemble_info['ensemble_id'])
     ensemble = 'Ens'+str(ensemble_info['ensemble_id'])
+    RS2_included = 0
+    if 'RS2' in ensemble_info['datasets']:
+        RS2_included = 1
     if ensemble_info['public_access'] == 1 or (ensemble_info['public_access'] == 0 and current_user.is_authenticated):
         return render_template('ensembleview.html', 
                                ensemble = ensemble, 
                                ensemble_name = ensemble_name,
-                               snATAC_data_available = snATAC_exists)
+                               snATAC_data_available = snATAC_included,
+                               RS2 = RS2_included,)
     else:
         flash('Data for ensemble {} is not publicly accessible. You must log in to continue. \
               <li>Click on "Ensembles" at the top of the page to select publicly accessible data.</li>'.format(ensemble_name), 'form-error')
