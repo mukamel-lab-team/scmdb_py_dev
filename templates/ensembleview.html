@@ -343,10 +343,14 @@
     */
 
     $('#geneModulesSelect').on('select2:select', function(e) {
-        geneNameSelector.val(null).trigger("change");
+        geneNameSelector.val(null).trigger("change.select2");
         var data = e.params.data;
         updateSearchWithModules(data);
         $('#gene-search-btn').removeClass("disabled");
+    });
+
+    $("#geneName").on("change", function() {
+        $('#geneModulesSelect').val('0').trigger('change.select2');
     });
 
     $('#clear-gene-search-btn').click(function() {

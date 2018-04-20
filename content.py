@@ -1,10 +1,7 @@
 """Functions used to generate content. """
 import datetime
-import csv
-import glob
 import json
 import math
-import os
 import sys
 import time
 
@@ -1003,11 +1000,13 @@ def get_mult_gene_snATAC(ensemble, genes, grouping):
         query = "SELECT cells.cell_id, cells.cell_name, cells.dataset, \
             %(ensemble)s.annotation_ATAC, %(ensemble)s.cluster_ATAC, \
             %(ensemble)s.tsne_x_ATAC, %(ensemble)s.tsne_y_ATAC, \
-            %(gene_table_name)s.normalized_counts \
+            %(gene_table_name)s.normalized_counts, \
+            datasets.target_region \
             FROM cells \
             INNER JOIN %(ensemble)s ON cells.cell_id = %(ensemble)s.cell_id \
-            LEFT JOIN %(gene_table_name)s ON %(ensemble)s.cell_id = %(gene_table_name)s.cell_id" % {'ensemble': ensemble, 
-                                                                                                    'gene_table_name': gene_table_name,}
+            LEFT JOIN %(gene_table_name)s ON %(ensemble)s.cell_id = %(gene_table_name)s.cell_id \
+            LEFT JOIN datasets ON cells.dataset = datasets.dataset" % {'ensemble': ensemble, 
+                                                                       'gene_table_name': gene_table_name,}
         try:
             df_all = df_all.append(pd.read_sql(query, db.get_engine(current_app, 'snATAC_data')))
         except exc.ProgrammingError as e:
@@ -1073,6 +1072,8 @@ def get_snATAC_scatter(ensemble, genes_query, grouping, ptile_start, ptile_end, 
         gene_name = gene_name[:-1]
         title = 'Avg. Gene body counts: <br>' + gene_name
     
+    
+
     if points is None:
         raise FailToGraphException
 
@@ -1172,20 +1173,21 @@ def get_snATAC_scatter(ensemble, genes_query, grouping, ptile_start, ptile_end, 
         trace2d['text'] = [build_hover_text(OrderedDict([('Cell Name', point[1]),
                                                          ('Annotation', point[3]),
                                                          ('Cluster', point[4]),
-                                                         ('RS2 Target Region', point[-2]),
+                                                         ('RS2 Target Region', point[-1]),
                                                          ('Dataset', point[2]),]))
                            for point in points_group.itertuples(index=False)]
 
     ### snATAC normalized counts scatter plot ### 
     x = points['tsne_x_ATAC'].tolist()
     y = points['tsne_y_ATAC'].tolist()
-    ATAC_counts = points['normalized_counts']
+    ATAC_counts = points['normalized_counts'].copy()
+    points['normalized_counts'].fillna(0, inplace=True)
     text_ATAC = [build_hover_text(OrderedDict([('Cell Name', point[1]),
                                                ('Annotation', point[3]),
                                                ('Cluster', point[4]),
-                                               ('RS2 Target Region', point[-2]),
+                                               ('RS2 Target Region', point[-1]),
                                                ('Dataset', point[2]),
-                                               ('<b>Normalized Counts</b>', round(point[-1], 6)),]))
+                                               ('<b>Normalized Counts</b>', round(point[-2], 5)),]))
                  for point in points.itertuples(index=False)]
 
 
