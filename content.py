@@ -452,8 +452,6 @@ def median_cluster_snATAC(gene_info, grouping):
             dict: Cluster_label (key) : median mCH level (value).
     """
 
-    gene_info['normalized_counts'].fillna(0, inplace=True)
-
     if grouping == 'annotation':
         gene_info.fillna({'annotation_ATAC': 'None'}, inplace=True)
     if grouping != 'dataset':
@@ -962,6 +960,8 @@ def get_gene_snATAC(ensemble, gene, grouping, outliers):
     elif grouping == 'cluster':
         df.sort_values(by='cluster_ATAC', inplace=True)
 
+    df['normalized_counts'].fillna(0, inplace=True)
+    
     return df
 
 @cache.memoize(timeout=1800)
@@ -1026,6 +1026,8 @@ def get_mult_gene_snATAC(ensemble, genes, grouping):
         print("[{}] ERROR in app(get_gene_snATAC): No snATAC data for {}".format(str(now), ensemble))
         sys.stdout.flush()
         return None
+
+    df_all['normalized_counts'].fillna(0, inplace=True)
 
     df_avg_methylation = df_all.groupby(by='cell_id', as_index=False)['normalized_counts'].mean()
     df_coords.update(df_avg_methylation)
@@ -1183,7 +1185,6 @@ def get_snATAC_scatter(ensemble, genes_query, grouping, ptile_start, ptile_end, 
     x = points['tsne_x_ATAC'].tolist()
     y = points['tsne_y_ATAC'].tolist()
     ATAC_counts = points['normalized_counts'].copy()
-    points['normalized_counts'].fillna(0, inplace=True)
     text_ATAC = [build_hover_text(OrderedDict([('Cell Name', point[1]),
                                                ('Annotation', point[3]),
                                                ('Cluster', point[4]),
@@ -2428,8 +2429,6 @@ def get_snATAC_box(ensemble, gene, grouping, outliers):
 
     if points is None:
         raise FailToGraphException
-
-    points['normalized_counts'].fillna(0, inplace=True)
 
     if grouping == "dataset":
         unique_groups = points["dataset"].unique()
