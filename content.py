@@ -452,6 +452,8 @@ def median_cluster_snATAC(gene_info, grouping):
             dict: Cluster_label (key) : median mCH level (value).
     """
 
+    gene_info['normalized_counts'].fillna(0, inplace=True)
+
     if grouping == 'annotation':
         gene_info.fillna({'annotation_ATAC': 'None'}, inplace=True)
     if grouping != 'dataset':
@@ -520,7 +522,7 @@ def get_methylation_tsne_options(ensemble):
         df = pd.read_sql(query, db.get_engine(current_app, 'methylation_data'))
     except exc.ProgrammingError as e:
         now = datetime.datetime.now()
-        print("[{}] Error in app(get_methylation_tsne_options): {}".format(str(now), e))
+        print("[{}] ERROR in app(get_methylation_tsne_options): {}".format(str(now), e))
         sys.stdout.flush()
         return None
 
@@ -2426,6 +2428,8 @@ def get_snATAC_box(ensemble, gene, grouping, outliers):
 
     if points is None:
         raise FailToGraphException
+
+    points['normalized_counts'].fillna(0, inplace=True)
 
     if grouping == "dataset":
         unique_groups = points["dataset"].unique()
