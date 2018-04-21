@@ -504,7 +504,7 @@ function updateGeneElements(updateMCHScatter=true) {
             lastViewedGenes.push({gene_name: $('#geneName option:selected')[i].text, gene_id: $('#geneName option:selected')[i].value});
         }
         if (typeof(Storage) !== 'undefined') {
-            storage.save('lastViewedGenes', lastViewedGenes, 5);  // store last viewed genes for 5 minutes
+            storage.save('lastViewedGenes', lastViewedGenes, 30);  // store last viewed genes for 30 minutes
         }
         if (updateMCHScatter){
             updateMCHScatterPlot();

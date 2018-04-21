@@ -59,7 +59,7 @@
 
 {% macro desktop_nav(current_user, dropdown=None) %}
     <div class="computer tablet only row">
-        <div class="ui fixed inverted black main menu">
+        <div class="ui fixed inverted black main menu" id="navbar">
             <div class="ui container">
                 {{ header_items(current_user) }}
                 {{ create_dropdown(dropdown) }}

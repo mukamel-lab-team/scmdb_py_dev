@@ -177,6 +177,7 @@ def nav_bar_screen():
 
 # API routes
 @frontend.route('/plot/methylation/scatter/<ensemble>/<tsne_type>/<methylation_type>/<level>/<grouping>/<clustering>/<ptile_start>/<ptile_end>/<tsne_outlier>')
+@cache.memoize(timeout=3600)
 def plot_methylation_scatter(ensemble, tsne_type, methylation_type, level, grouping, clustering, ptile_start, ptile_end, tsne_outlier):
 
     genes = request.args.get('q', 'MustHaveAQueryString')
@@ -207,6 +208,7 @@ def plot_methylation_scatter(ensemble, tsne_type, methylation_type, level, group
 
 
 @frontend.route('/plot/snATAC/scatter/<ensemble>/<grouping>/<ptile_start>/<ptile_end>/<tsne_outlier>')
+@cache.memoize(timeout=3600)
 def plot_snATAC_scatter(ensemble, grouping, ptile_start, ptile_end, tsne_outlier):
 
     genes_query = request.args.get('q', 'MustHaveAQueryString')
@@ -280,6 +282,7 @@ def plot_snATAC_box(ensemble, gene, grouping, outliers_toggle):
 
 
 @frontend.route('/plot/methylation/heat/<ensemble>/<methylation_type>/<grouping>/<clustering>/<level>/<ptile_start>/<ptile_end>')
+@cache.memoize(timeout=3600)
 def plot_mch_heatmap(ensemble, methylation_type, grouping, clustering, level, ptile_start, ptile_end):
 
     query = request.args.get('q', 'MustHaveAQueryString')
@@ -301,6 +304,7 @@ def plot_mch_heatmap(ensemble, methylation_type, grouping, clustering, level, pt
 
 
 @frontend.route('/plot/snATAC/heat/<ensemble>/<grouping>/<ptile_start>/<ptile_end>')
+@cache.memoize(timeout=3600)
 def plot_snATAC_heatmap(ensemble, grouping, ptile_start, ptile_end):
 
     query = request.args.get('q', 'MustHaveAQueryString')
@@ -333,6 +337,7 @@ def plot_snATAC_heatmap(ensemble, grouping, ptile_start, ptile_end):
 #         return 'Failed to produce orthologous mCH levels heatmap plot. Contact maintainer.'
 
 @frontend.route('/gene/names/<ensemble>')
+@cache.memoize(timeout=3600)
 def search_gene_by_name(ensemble):
     query = request.args.get('q', 'MustHaveAQueryString')
     if query == 'none' or query == '':
@@ -342,6 +347,7 @@ def search_gene_by_name(ensemble):
 
 
 @frontend.route('/gene/id/<ensemble>')
+@cache.memoize(timeout=3600)
 def search_gene_by_id(ensemble):
     query = request.args.get('q', 'MustHaveAQueryString')
     if query == 'none' or query == '':
@@ -351,6 +357,7 @@ def search_gene_by_id(ensemble):
 
 
 @frontend.route('/methylation_tsne_options/<ensemble>')
+@cache.memoize(timeout=3600)
 def methylation_tsne_options(ensemble):
     if ensemble == None or ensemble == "":
         return jsonify({})
@@ -359,6 +366,7 @@ def methylation_tsne_options(ensemble):
 
 
 @frontend.route('/snATAC_tsne_options/<ensemble>')
+@cache.memoize(timeout=3600)
 def snATAC_tsne_options(ensemble):
     if ensemble == None or ensemble == '':
         return jsonify({})
@@ -367,6 +375,7 @@ def snATAC_tsne_options(ensemble):
 
 
 @frontend.route('/gene/modules/<ensemble>')
+@cache.memoize(timeout=3600)
 def gene_modules(ensemble):
     query = request.args.get('q')
     if query == None or query == '':
@@ -386,8 +395,8 @@ def gene_modules(ensemble):
 #         return jsonify(find_orthologs(hsa_gene_id=gene_id))
 
 
-@cache.memoize(timeout=3600)
 @frontend.route('/gene/corr/<ensemble>/<gene_id>')
+@cache.memoize(timeout=3600)
 def correlated_genes(ensemble, gene_id):
     return jsonify(get_corr_genes(ensemble, gene_id))
 

@@ -21,3 +21,7 @@ nav .mobile.only.row .ui.vertical.menu {
 table.selectable tr:hover {
   cursor: pointer !important;
 }
+
+#navbar {
+    height: 40px;
+}
