@@ -17,7 +17,7 @@
                                 <div style="display:inline-block;">
                                     <h5>
                                         <a class="accordion-toggle" data-parent="#options-panel" data-toggle="collapse" title="" style="margin-top: 0px;" data-original-title="Collapse Search Options" href="#search-panel-body">
-                                            <div class="accordion-chevron">Gene Search </div>
+                                            <div class="accordion-chevron">Gene Methylation Search </div>
                                         </a>
                                     </h5>
                                 </div>
@@ -292,7 +292,7 @@
         populateMethylationTSNEDropdowns();
         initGeneNameSearch();
         initGeneModules();
-        //initDataTableClick();
+        initDataTableClick();
     });
 
     $("#methylationLevelDiv :input, #methylationTypeDiv :input").change(function() {
@@ -404,7 +404,7 @@
         display3DPlotToggle();
     });
 
-    $("#methylation-tsneUpdateBtn, #methylation-box-heat-UpdateBtn").click(function() {
+    $("#methylation-tsneUpdateBtn:enabled, #methylation-box-heat-UpdateBtn:enabled").click(function() {
         updateMCHScatterPlot(onlyUpdatetSNEandClustering=true);
         if ($('#geneName').select2('data').length > 1) {
             updateMethylationHeatmap();
@@ -416,7 +416,7 @@
     });
 
 
-    $("#snATAC-tsneUpdateBtn, #snATAC-box-heat-UpdateBtn").click(function() {
+    $("#snATAC-tsneUpdateBtn:enabled, #snATAC-box-heat-UpdateBtn:enabled").click(function() {
         updatesnATACScatterPlot(onlyUpdatetSNEandClustering=true);
         if ($('#geneName').select2('data').length > 1) {
             updatesnATACHeatmap();

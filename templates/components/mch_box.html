@@ -60,9 +60,14 @@
 </div>
 <div class="panel-body" style="padding-top:0px;">
     <div class="container">
-        <div id="mch-box-loader" class="loader"></div>
-        <div class="plot-panel" id="plot-mch-box"></div>
-        <div class="plot-panel" id="plot-mch-heat"></div>
+        <div class="col-md-8 col-sm-12" id="methylation-box-and-heat">
+            <div id="mch-box-loader" class="loader"></div>
+            <div class="plot-panel" id="plot-mch-box"></div>
+            <div class="plot-panel" id="plot-mch-heat"></div>
+        </div>
+        <div class="col-md-4 col-sm-12" id="methylation-correlated-genes">
+            {% include "/components/mch_correlated_genes.html" %}
+        </div>
     </div>
     <div class="outlierOptions">
           <input id="methylation-box-heat-outlierToggle" data-toggle="toggle" data-on="Outliers On" data-off="Outliers Off" type="checkbox">

@@ -399,13 +399,12 @@ def all_gene_modules():
 
 
 @cache.memoize(timeout=1800)
-def get_genes_of_module(ensemble, module):
+def get_genes_of_module(module):
     """Generates list of genes in selected module.
     Arguments:
         module (str): Name of module to query for.
     Returns:
         Dataframe of gene_name and gene_id of each gene in the module for the corresponding
-        ensemble.
     """
 
     modules_result = db.get_engine(current_app, 'methylation_data').execute("SELECT module, mmu_gene_id, mmu_gene_name FROM gene_modules WHERE module=%s", (module,)).fetchall()
@@ -623,11 +622,10 @@ def get_snATAC_tsne_options(ensemble):
 
 
 @cache.memoize(timeout=3600)
-def get_gene_by_name(ensemble, gene_query):
-    """Match gene names of a ensemble.
+def get_gene_by_name(gene_query):
+    """Retrieve gene information by name.
 
     Arguments:
-        ensemble (str): Name of ensemble.
         gene_query (str): Query string of gene name.
 
     Returns:
@@ -642,8 +640,8 @@ def get_gene_by_name(ensemble, gene_query):
     
 
 @cache.memoize(timeout=3600)
-def get_gene_by_id(ensemble, gene_query):
-    """Match gene ID of a ensemble.
+def get_gene_by_id(gene_query):
+    """Retrieve gene information by gene id.
 
     Arguments:
         ensemble (str): Name of ensemble.
@@ -661,46 +659,30 @@ def get_gene_by_id(ensemble, gene_query):
         return dict(result)
 
 
-def get_corr_genes(ensemble,query):
+@cache.memoize(timeout=3600)
+def get_corr_genes(ensemble, query):
     """Get correlated genes of a certain gene of a ensemble. 
     
         Arguments:
-            ensemble(str): Name of ensemble.
-            query(str): Query string of gene ID.
+            ensemble(str): Ensemble identifier. (Eg. Ens0, Ens1, Ens2...).
+            query(str): Gene ID.
         
         Returns:
             dict: information of genes that are correlated with target gene.
     """
-    db_location = '{}/ensembles/{}/top_corr_genes.sqlite3'.format(
-        current_app.config['DATA_DIR'], ensemble)
+    if ";" in query:
+        return []
+
     try:
-        conn = sqlite3.connect(db_location)
-    except sqlite3.Error as e:
+        corr_genes = db.get_engine(current_app, 'methylation_data').execute("SELECT * FROM {}_correlated_genes WHERE gene1 LIKE %s".format(ensemble), (query+'%%',)).fetchall()
+    except exc.ProgrammingError as e:
         now = datetime.datetime.now()
         print("[{}] ERROR in app(get_corr_genes): {}".format(str(now), e))
         sys.stdout.flush()
-        return(1)
+        return []
 
-    conn.row_factory = sqlite3.Row
-    cursor = conn.cursor()
-
-    try:
-        cursor.execute('SELECT Gene2, Correlation FROM corr_genes WHERE Gene1 LIKE %s ORDER BY Correlation DESC LIMIT 50', (query + '%',))
-    except sqlite3.Error:
-        now = datetime.datetime.now()
-        print("[{}] ERROR in app(get_corr_genes): Could not load top_corr_genes.sqlite3 for {}".format(str(now), ensemble))
-        sys.stdout.flush()
-        return(1)
-
-    query_results = list(cursor.fetchall())
-    table_data=[]
-    for rank, item in enumerate(query_results, 1):
-        gene = dict(item)
-        geneInfo = get_gene_by_id(ensemble, gene['Gene2'])
-        geneInfo['Rank'] = rank
-        geneInfo['Corr'] = gene['Correlation']
-        table_data.append(geneInfo)
-    return table_data
+    corr_genes = [ {"rank": i+1, "gene_name": get_gene_by_id(row.gene2)['gene_name'], "correlation": row.correlation, "gene_id": row.gene2} for i, row in enumerate(corr_genes)]
+    return corr_genes
 
 
 @cache.memoize(timeout=3600)
@@ -1067,12 +1049,12 @@ def get_snATAC_scatter(ensemble, genes_query, grouping, ptile_start, ptile_end, 
 
     if len(genes) == 1:
         points = get_gene_snATAC(ensemble, genes[0], grouping, True)
-        gene_name = get_gene_by_id(ensemble, genes[0])['gene_name']
+        gene_name = get_gene_by_id(genes[0])['gene_name']
         title = 'Gene body snATAC counts: ' + gene_name
     else:
         points = get_mult_gene_snATAC(ensemble, genes, grouping)
         for gene in genes:
-            gene_name += get_gene_by_id(ensemble, gene)['gene_name'] + '+'
+            gene_name += get_gene_by_id(gene)['gene_name'] + '+'
         gene_name = gene_name[:-1]
         title = 'Avg. Gene body counts: <br>' + gene_name
     
@@ -1360,12 +1342,12 @@ def get_methylation_scatter(ensemble, tsne_type, methylation_type, genes_query, 
 
     if len(genes) == 1:
         points = get_gene_methylation(ensemble, methylation_type, genes[0], grouping, clustering, level, True, tsne_type)
-        gene_name = get_gene_by_id(ensemble, genes[0])['gene_name']
+        gene_name = get_gene_by_id(genes[0])['gene_name']
         title = 'Gene body ' + methylation_type + ': ' + gene_name
     else:
         points = get_mult_gene_methylation(ensemble, methylation_type, genes, grouping, clustering, level, tsne_type)
         for gene in genes:
-            gene_name += get_gene_by_id(ensemble, gene)['gene_name'] + '+'
+            gene_name += get_gene_by_id(gene)['gene_name'] + '+'
         gene_name = gene_name[:-1]
         title = 'Avg. Gene body ' + methylation_type + ': <br>' + gene_name
 
@@ -1852,7 +1834,7 @@ def get_mch_heatmap(ensemble, methylation_type, grouping, clustering, level, pti
 
     gene_info_df = pd.DataFrame()
     for gene_id in genes:
-        gene_name = get_gene_by_id(ensemble, gene_id)['gene_name']
+        gene_name = get_gene_by_id(gene_id)['gene_name']
         title += gene_name + "+"
         gene_info_df[gene_name] = median_cluster_mch(get_gene_methylation(ensemble, methylation_type, gene_id, grouping, clustering, level, True), grouping, clustering)
         if gene_info_df[gene_name].empty:
@@ -1963,7 +1945,7 @@ def get_mch_heatmap(ensemble, methylation_type, grouping, clustering, level, pti
     layout = Layout(
         autosize=True,
         height=450,
-        width=1000,
+        width=700,
         title=title,
         titlefont={'color': 'rgba(1,2,2,1)',
                    'size': 16},
@@ -2083,7 +2065,7 @@ def get_snATAC_heatmap(ensemble, grouping, ptile_start, ptile_end, normalize_row
 
     gene_info_df = pd.DataFrame()
     for gene_id in genes:
-        gene_name = get_gene_by_id(ensemble, gene_id)['gene_name']
+        gene_name = get_gene_by_id(gene_id)['gene_name']
         title += gene_name + "+"
         gene_info_df[gene_name] = median_cluster_snATAC(get_gene_snATAC(ensemble, gene_id, grouping, True), grouping)
 
@@ -2347,12 +2329,12 @@ def get_mch_box(ensemble, methylation_type, gene, grouping, clustering, level, o
                 ))
         trace['y'].append(point[methylation_type + '/' + context + '_' + level])
 
-    gene_name = get_gene_by_id(ensemble, gene)['gene_name']
+    gene_name = get_gene_by_id(gene)['gene_name']
 
     layout = Layout(
         autosize=True,
         height=450,
-        width=1000,
+        width=700,
         title='Gene body ' + methylation_type + ' in each cluster: ' + gene_name,
         titlefont={'color': 'rgba(1,2,2,1)',
                    'size': 20},
@@ -2472,7 +2454,7 @@ def get_snATAC_box(ensemble, gene, grouping, outliers):
                 ))
         trace['y'].append(point['normalized_counts'])
 
-    gene_name = get_gene_by_id(ensemble, gene)['gene_name']
+    gene_name = get_gene_by_id(gene)['gene_name']
 
     layout = Layout(
         autosize=True,
