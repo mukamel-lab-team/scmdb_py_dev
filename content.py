@@ -197,15 +197,26 @@ def get_datasets_summary(rs):
         ABA_regions_descriptive = regions_sql['ABA_description'].replace('+', ', ')
 
         if rs == "rs1":
-            dataset_cell_counts.append( {"dataset_name": dataset['dataset'], 
-                                         "sex": dataset['sex'],
-                                         "methylation_cell_count": total_methylation_cell_each_dataset[dataset['dataset']],
-                                         "snATAC_cell_count": num_snATAC_cells,
-                                         "ABA_regions_acronym": dataset['brain_region'].replace('+', ', '),
-                                         "ABA_regions_descriptive": ABA_regions_descriptive.replace('+', ', '),
-                                         "slice": brain_region_code,
-                                         "date_added": str(dataset['date_online']),
-                                         "description": dataset['description'] })
+            try:
+                dataset_cell_counts.append( {"dataset_name": dataset['dataset'], 
+                                             "sex": dataset['sex'],
+                                             "methylation_cell_count": total_methylation_cell_each_dataset[dataset['dataset']],
+                                             "snATAC_cell_count": num_snATAC_cells,
+                                             "ABA_regions_acronym": dataset['brain_region'].replace('+', ', '),
+                                             "ABA_regions_descriptive": ABA_regions_descriptive.replace('+', ', '),
+                                             "slice": brain_region_code,
+                                             "date_added": str(dataset['date_online']),
+                                             "description": dataset['description'] })
+            except:
+                dataset_cell_counts.append( {"dataset_name": dataset['dataset'], 
+                                             "sex": dataset['sex'],
+                                             "methylation_cell_count": 0,
+                                             "snATAC_cell_count": num_snATAC_cells,
+                                             "ABA_regions_acronym": dataset['brain_region'].replace('+', ', '),
+                                             "ABA_regions_descriptive": ABA_regions_descriptive.replace('+', ', '),
+                                             "slice": brain_region_code,
+                                             "date_added": str(dataset['date_online']),
+                                             "description": dataset['description'] })
         else:
             target_region_sql = db.get_engine(current_app, 'methylation_data').execute("SELECT ABA_description FROM ABA_regions WHERE ABA_acronym=%s", (dataset['target_region'],)).fetchone()
             if target_region_sql is not None:
@@ -213,18 +224,32 @@ def get_datasets_summary(rs):
             else:
                 target_region_descriptive = ""
 
-            dataset_cell_counts.append( {"dataset_name": dataset['dataset'],
-                                         "research_segment": research_segment,
-                                         "sex": dataset['sex'],
-                                         "methylation_cell_count": total_methylation_cell_each_dataset[dataset['dataset']],
-                                         "snATAC_cell_count": num_snATAC_cells,
-                                         "ABA_regions_acronym": dataset['brain_region'].replace('+', ', '),
-                                         "ABA_regions_descriptive": ABA_regions_descriptive,
-                                         "slice": brain_region_code,
-                                         "date_added": str(dataset['date_online']),
-                                         "description": dataset['description'],
-                                         "target_region_acronym": dataset['target_region'],
-                                         "target_region_descriptive": target_region_descriptive})
+            try:
+                dataset_cell_counts.append( {"dataset_name": dataset['dataset'],
+                                             "research_segment": research_segment,
+                                             "sex": dataset['sex'],
+                                             "methylation_cell_count": total_methylation_cell_each_dataset[dataset['dataset']],
+                                             "snATAC_cell_count": num_snATAC_cells,
+                                             "ABA_regions_acronym": dataset['brain_region'].replace('+', ', '),
+                                             "ABA_regions_descriptive": ABA_regions_descriptive,
+                                             "slice": brain_region_code,
+                                             "date_added": str(dataset['date_online']),
+                                             "description": dataset['description'],
+                                             "target_region_acronym": dataset['target_region'],
+                                             "target_region_descriptive": target_region_descriptive})
+            except:
+                dataset_cell_counts.append( {"dataset_name": dataset['dataset'],
+                                             "research_segment": research_segment,
+                                             "sex": dataset['sex'],
+                                             "methylation_cell_count": 0,
+                                             "snATAC_cell_count": num_snATAC_cells,
+                                             "ABA_regions_acronym": dataset['brain_region'].replace('+', ', '),
+                                             "ABA_regions_descriptive": ABA_regions_descriptive,
+                                             "slice": brain_region_code,
+                                             "date_added": str(dataset['date_online']),
+                                             "description": dataset['description'],
+                                             "target_region_acronym": dataset['target_region'],
+                                             "target_region_descriptive": target_region_descriptive})
 
     return json.dumps(dataset_cell_counts)
 
@@ -435,6 +460,11 @@ def median_cluster_mch(gene_info, grouping, clustering):
     elif grouping == 'target_region':
         gene_info['target_region'].fillna('N/A', inplace=True)
         return gene_info.groupby('target_region', sort=False)[gene_info.columns[-1]].median()
+    elif grouping == 'slice':
+        datasets_all_cells = gene_info['dataset'].tolist()
+        slices_list = [d.split('_')[1] if 'RS2' not in d else d.split('_')[2][2:4] for d in datasets_all_cells]
+        gene_info['slice'] = slices_list
+        return gene_info.groupby('slice', sort=False)[gene_info.columns[-2]].median()
     else:
         return None
 
@@ -1077,15 +1107,15 @@ def get_snATAC_scatter(ensemble, genes_query, grouping, ptile_start, ptile_end, 
     annotation_additional_y = 0.00 
     if grouping == 'dataset':
         unique_groups = datasets
-        max_cluster = len(unique_groups)
+        num_clusters = len(unique_groups)
     elif grouping == 'target_region':
         points['target_region'].fillna('N/A', inplace=True)
         unique_groups = points['target_region'].unique().tolist()
-        max_clusters = len(unique_groups)
+        num_clusters = len(unique_groups)
     else:
         if grouping == 'cluster':
             annotation_additional_y = 0.025 # Necessary because legend items overlap with legend title (annotation) when there are many legend items
-        max_cluster = points['cluster_ATAC'].max()
+        num_clusters = points['cluster_ATAC'].max()
         unique_groups = points[grouping+'_ATAC'].unique().tolist()
     num_colors = len(unique_groups)
     
@@ -1355,7 +1385,7 @@ def get_methylation_scatter(ensemble, tsne_type, methylation_type, genes_query, 
         raise FailToGraphException
 
     ### TSNE ### 
-    if grouping != 'dataset' and grouping != 'target_region':
+    if grouping == 'annotation':
         if grouping+'_'+clustering not in points.columns or points[grouping+'_'+clustering].nunique() <= 1:
             grouping = "cluster"
             clustering = "mCH_lv_npc50_k30"
@@ -1365,15 +1395,22 @@ def get_methylation_scatter(ensemble, tsne_type, methylation_type, genes_query, 
     annotation_additional_y = 0.00 
     if grouping == 'dataset':
         unique_groups = datasets
-        max_cluster = len(unique_groups)
+        num_clusters = len(unique_groups)
     elif grouping == 'target_region':
         points['target_region'].fillna('N/A', inplace=True)
         unique_groups = points['target_region'].unique().tolist()
-        max_clusters = len(unique_groups)
+        num_clusters = len(unique_groups)
+    elif grouping == 'slice':
+        datasets_all_cells = points['dataset'].tolist()
+        slices_list = [d.split('_')[1] if 'RS2' not in d else d.split('_')[2][2:4] for d in datasets_all_cells]
+        points['slice'] = slices_list
+        slices_set = set(slices_list)
+        unique_groups = list(slices_set)
+        num_clusters = len(unique_groups)
     else:
         if grouping == 'cluster':
             annotation_additional_y = 0.025 # Necessary because legend items overlap with legend title (annotation) when there are many legend items
-        max_cluster = points['cluster_'+clustering].max()
+        num_clusters = points['cluster_'+clustering].max()
         unique_groups = points[grouping+'_'+clustering].unique().tolist()
     num_colors = len(unique_groups)
     
@@ -1385,7 +1422,7 @@ def get_methylation_scatter(ensemble, tsne_type, methylation_type, genes_query, 
     legend_x = -.17
     layout_width = 1100
     grouping_clustering = grouping
-    if grouping != 'dataset' and grouping != 'target_region':
+    if grouping == 'cluster' or grouping == 'annotation':
         layout_width = 1000
         legend_x = -.14
         grouping_clustering = grouping+'_'+clustering
@@ -1395,7 +1432,6 @@ def get_methylation_scatter(ensemble, tsne_type, methylation_type, genes_query, 
         bottom_x = points['tsne_x_'+tsne_type].quantile(0.001) 
         top_y = points['tsne_y_'+tsne_type].quantile(0.999)
         bottom_y = points['tsne_y_'+tsne_type].quantile(0.001) 
-        
     else:
         top_x = points['tsne_x_'+tsne_type].max()
         bottom_x = points['tsne_x_'+tsne_type].min()
@@ -1449,7 +1485,7 @@ def get_methylation_scatter(ensemble, tsne_type, methylation_type, genes_query, 
             trace2d['text'] = [build_hover_text(OrderedDict([('Cell Name', point[1]),
                                                              ('Annotation', point[4]),
                                                              ('Cluster', point[5]),
-                                                             ('RS2 Target Region', point[-2]),
+                                                             ('RS2 Target Region', point[10]),
                                                              ('Dataset', point[2]),]))
                                for point in points_group.itertuples(index=False)]
 
@@ -1460,9 +1496,9 @@ def get_methylation_scatter(ensemble, tsne_type, methylation_type, genes_query, 
         text_methylation = [build_hover_text(OrderedDict([('Cell Name', point[1]),
                                                           ('Annotation', point[4]),
                                                           ('Cluster', point[5]),
-                                                          ('RS2 Target Region', point[-2]),
+                                                          ('RS2 Target Region', point[10]),
                                                           ('Dataset', point[2]),
-                                                          ('<b>'+level.title()+' '+methylation_type+'</b>', round(point[-1], 6)),]))
+                                                          ('<b>'+level.title()+' '+methylation_type+'</b>', round(point[11], 6)),]))
                             for point in points.itertuples(index=False)]
 
 
@@ -1851,7 +1887,7 @@ def get_mch_heatmap(ensemble, methylation_type, grouping, clustering, level, pti
     elif grouping == 'cluster':
         gene_info_df.sort_values(by='cluster_'+clustering, inplace=True)
         gene_info_df.set_index(grouping+'_'+clustering, inplace=True)
-    elif grouping == 'dataset' or grouping == 'target_region':
+    elif grouping == 'dataset' or grouping == 'target_region' or grouping == 'slice':
         gene_info_df.sort_values(by=grouping, inplace=True)
         gene_info_df.set_index(grouping, inplace=True)
     else:
@@ -2298,21 +2334,27 @@ def get_mch_box(ensemble, methylation_type, gene, grouping, clustering, level, o
     elif grouping == 'target_region':
         points['target_region'].fillna('N/A', inplace=True)
         unique_groups = points['target_region'].unique()
+    elif grouping == 'slice':
+        datasets_all_cells = points['dataset'].tolist()
+        slices_list = [d.split('_')[1] if 'RS2' not in d else d.split('_')[2][2:4] for d in datasets_all_cells]
+        points['slice'] = slices_list
+        slices_set = set(slices_list)
+        unique_groups = np.array(list(slices_set))
     elif grouping == 'cluster' or grouping == 'annotation':
         unique_groups = points[grouping+'_'+clustering].unique()
     else:
         return FailToGraphException
-    max_cluster = len(unique_groups)
+    num_clusters = len(unique_groups)
 
-    colors = generate_cluster_colors(max_cluster, grouping)
+    colors = generate_cluster_colors(num_clusters, grouping)
     for point in points.to_dict('records'):
         name_prepend = ""
-        if grouping == "cluster":
-            name_prepend="cluster_"
-        if grouping == "dataset" or grouping == 'target_region':
+        if grouping == "dataset" or grouping == 'target_region' or grouping == 'slice':
             color = colors[int(np.where(unique_groups==point[grouping])[0]) % len(colors)]
             group = point[grouping]
         else:
+            if grouping == "cluster":
+                name_prepend="cluster_"
             color = colors[int(np.where(unique_groups==point[grouping+'_'+clustering])[0]) % len(colors)]
             group = point[grouping+'_'+clustering]
         trace = traces.setdefault(group, Box(
@@ -2426,8 +2468,8 @@ def get_snATAC_box(ensemble, gene, grouping, outliers):
     else: 
         return FailToGraphException
 
-    max_cluster = len(unique_groups)
-    colors = generate_cluster_colors(max_cluster, grouping)
+    num_clusters = len(unique_groups)
+    colors = generate_cluster_colors(num_clusters, grouping)
 
     name_prepend = ""
     x_label = grouping
