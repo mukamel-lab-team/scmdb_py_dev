@@ -194,7 +194,10 @@ def get_datasets_summary(rs):
             research_segment = "RS2"
             
         regions_sql = db.get_engine(current_app, 'methylation_data').execute("SELECT ABA_description FROM ABA_regions WHERE ABA_acronym=%s", (dataset['brain_region'],)).fetchone()
-        ABA_regions_descriptive = regions_sql['ABA_description'].replace('+', ', ')
+        if regions_sql is not None:
+            ABA_regions_descriptive = regions_sql['ABA_description'].replace('+', ', ')
+        else: 
+            ABA_regions_descriptive = ""
 
         if rs == "rs1":
             try:
@@ -203,7 +206,7 @@ def get_datasets_summary(rs):
                                              "methylation_cell_count": total_methylation_cell_each_dataset[dataset['dataset']],
                                              "snATAC_cell_count": num_snATAC_cells,
                                              "ABA_regions_acronym": dataset['brain_region'].replace('+', ', '),
-                                             "ABA_regions_descriptive": ABA_regions_descriptive.replace('+', ', '),
+                                             "ABA_regions_descriptive": ABA_regions_descriptive,
                                              "slice": brain_region_code,
                                              "date_added": str(dataset['date_online']),
                                              "description": dataset['description'] })
@@ -213,7 +216,7 @@ def get_datasets_summary(rs):
                                              "methylation_cell_count": 0,
                                              "snATAC_cell_count": num_snATAC_cells,
                                              "ABA_regions_acronym": dataset['brain_region'].replace('+', ', '),
-                                             "ABA_regions_descriptive": ABA_regions_descriptive.replace('+', ', '),
+                                             "ABA_regions_descriptive": ABA_regions_descriptive,
                                              "slice": brain_region_code,
                                              "date_added": str(dataset['date_online']),
                                              "description": dataset['description'] })
@@ -465,6 +468,8 @@ def median_cluster_mch(gene_info, grouping, clustering):
         slices_list = [d.split('_')[1] if 'RS2' not in d else d.split('_')[2][2:4] for d in datasets_all_cells]
         gene_info['slice'] = slices_list
         return gene_info.groupby('slice', sort=False)[gene_info.columns[-2]].median()
+    elif grouping == 'sex':
+        return gene_info.groupby('sex', sort=False)[gene_info.columns[-1]].median()
     else:
         return None
 
@@ -752,7 +757,7 @@ def get_gene_methylation(ensemble, methylation_type, gene, grouping, clustering,
             %(ensemble)s.annotation_%(clustering)s, %(ensemble)s.cluster_%(clustering)s, \
             %(ensemble)s.tsne_x_%(tsne_type)s, %(ensemble)s.tsne_y_%(tsne_type)s, \
             %(gene_table_name)s.%(methylation_type)s, %(gene_table_name)s.%(context)s, \
-            datasets.target_region \
+            datasets.target_region, datasets.sex \
             FROM cells \
             INNER JOIN %(ensemble)s ON cells.cell_id = %(ensemble)s.cell_id \
             LEFT JOIN %(gene_table_name)s ON %(ensemble)s.cell_id = %(gene_table_name)s.cell_id \
@@ -767,7 +772,7 @@ def get_gene_methylation(ensemble, methylation_type, gene, grouping, clustering,
             %(ensemble)s.annotation_%(clustering)s, %(ensemble)s.cluster_%(clustering)s, \
             %(ensemble)s.tsne_x_%(tsne_type)s, %(ensemble)s.tsne_y_%(tsne_type)s, %(ensemble)s.tsne_z_%(tsne_type)s, \
             %(gene_table_name)s.%(methylation_type)s, %(gene_table_name)s.%(context)s, \
-            datasets.target_region \
+            datasets.target_region, datasets.sex \
             FROM cells \
             INNER JOIN %(ensemble)s ON cells.cell_id = %(ensemble)s.cell_id \
             LEFT JOIN %(gene_table_name)s ON %(ensemble)s.cell_id = %(gene_table_name)s.cell_id \
@@ -852,7 +857,7 @@ def get_mult_gene_methylation(ensemble, methylation_type, genes, grouping, clust
                 %(ensemble)s.annotation_%(clustering)s, %(ensemble)s.cluster_%(clustering)s, \
                 %(ensemble)s.tsne_x_%(tsne_type)s, %(ensemble)s.tsne_y_%(tsne_type)s, \
                 %(gene_table_name)s.%(methylation_type)s, %(gene_table_name)s.%(context)s, \
-                datasets.target_region \
+                datasets.target_region, datasets.sex \
                 FROM cells \
                 INNER JOIN %(ensemble)s ON cells.cell_id = %(ensemble)s.cell_id \
                 LEFT JOIN %(gene_table_name)s ON %(ensemble)s.cell_id = %(gene_table_name)s.cell_id \
@@ -867,7 +872,7 @@ def get_mult_gene_methylation(ensemble, methylation_type, genes, grouping, clust
                 %(ensemble)s.annotation_%(clustering)s, %(ensemble)s.cluster_%(clustering)s, \
                 %(ensemble)s.tsne_x_%(tsne_type)s, %(ensemble)s.tsne_y_%(tsne_type)s, %(ensemble)s.tsne_z_%(tsne_type)s, \
                 %(gene_table_name)s.%(methylation_type)s, %(gene_table_name)s.%(context)s, \
-                datasets.target_region \
+                datasets.target_region, datasets.sex \
                 FROM cells \
                 INNER JOIN %(ensemble)s ON cells.cell_id = %(ensemble)s.cell_id \
                 LEFT JOIN %(gene_table_name)s ON %(ensemble)s.cell_id = %(gene_table_name)s.cell_id \
@@ -1117,9 +1122,8 @@ def get_snATAC_scatter(ensemble, genes_query, grouping, ptile_start, ptile_end, 
             annotation_additional_y = 0.025 # Necessary because legend items overlap with legend title (annotation) when there are many legend items
         num_clusters = points['cluster_ATAC'].max()
         unique_groups = points[grouping+'_ATAC'].unique().tolist()
-    num_colors = len(unique_groups)
     
-    colors = generate_cluster_colors(num_colors, grouping)
+    colors = generate_cluster_colors(len(unique_groups), grouping)
     symbols = ['circle', 'square', 'cross', 'triangle-up', 'triangle-down', 'octagon', 'star', 'diamond']
     
     traces_tsne = OrderedDict()
@@ -1407,14 +1411,18 @@ def get_methylation_scatter(ensemble, tsne_type, methylation_type, genes_query, 
         slices_set = set(slices_list)
         unique_groups = list(slices_set)
         num_clusters = len(unique_groups)
-    else:
+    elif grouping == 'sex':
+        unique_groups = points['sex'].unique().tolist()
+        num_clusters = len(unique_groups)
+    elif grouping == 'cluster' or grouping == 'annotation':
         if grouping == 'cluster':
             annotation_additional_y = 0.025 # Necessary because legend items overlap with legend title (annotation) when there are many legend items
         num_clusters = points['cluster_'+clustering].max()
         unique_groups = points[grouping+'_'+clustering].unique().tolist()
-    num_colors = len(unique_groups)
+    else:
+        raise FailToGraphException
     
-    colors = generate_cluster_colors(num_colors, grouping)
+    colors = generate_cluster_colors(len(unique_groups), grouping)
     symbols = ['circle', 'square', 'cross', 'triangle-up', 'triangle-down', 'octagon', 'star', 'diamond']
     
     traces_tsne = OrderedDict()
@@ -1498,7 +1506,7 @@ def get_methylation_scatter(ensemble, tsne_type, methylation_type, genes_query, 
                                                           ('Cluster', point[5]),
                                                           ('RS2 Target Region', point[10]),
                                                           ('Dataset', point[2]),
-                                                          ('<b>'+level.title()+' '+methylation_type+'</b>', round(point[11], 6)),]))
+                                                          ('<b>'+level.title()+' '+methylation_type+'</b>', round(point[12], 6)),]))
                             for point in points.itertuples(index=False)]
 
 
@@ -1874,7 +1882,7 @@ def get_mch_heatmap(ensemble, methylation_type, grouping, clustering, level, pti
         title += gene_name + "+"
         gene_info_df[gene_name] = median_cluster_mch(get_gene_methylation(ensemble, methylation_type, gene_id, grouping, clustering, level, True), grouping, clustering)
         if gene_info_df[gene_name].empty:
-            return FailToGraphException
+            raise FailToGraphException
 
     title = title[:-1] # Gets rid of last '+'
 
@@ -1887,11 +1895,11 @@ def get_mch_heatmap(ensemble, methylation_type, grouping, clustering, level, pti
     elif grouping == 'cluster':
         gene_info_df.sort_values(by='cluster_'+clustering, inplace=True)
         gene_info_df.set_index(grouping+'_'+clustering, inplace=True)
-    elif grouping == 'dataset' or grouping == 'target_region' or grouping == 'slice':
+    elif grouping == 'dataset' or grouping == 'target_region' or grouping == 'slice' or grouping == 'sex':
         gene_info_df.sort_values(by=grouping, inplace=True)
         gene_info_df.set_index(grouping, inplace=True)
     else:
-        return FailToGraphException
+        raise FailToGraphException
 
     # For some reason, Plotly doesn't allow 'None' as a group on the x-axis for heatmaps.
     if gene_info_df.index.tolist() == ['None']: 
@@ -2120,7 +2128,7 @@ def get_snATAC_heatmap(ensemble, grouping, ptile_start, ptile_end, normalize_row
         gene_info_df.sort_values(by=grouping, inplace=True)
         gene_info_df.set_index(grouping, inplace=True)
     else:
-        return FailToGraphException
+        raise FailToGraphException
 
     # For some reason, Plotly doesn't allow 'None' as a group on the x-axis for heatmaps.
     if gene_info_df.index.tolist() == ['None']: 
@@ -2340,16 +2348,18 @@ def get_mch_box(ensemble, methylation_type, gene, grouping, clustering, level, o
         points['slice'] = slices_list
         slices_set = set(slices_list)
         unique_groups = np.array(list(slices_set))
+    elif grouping == 'sex':
+        unique_groups = points['sex'].unique()
     elif grouping == 'cluster' or grouping == 'annotation':
         unique_groups = points[grouping+'_'+clustering].unique()
     else:
-        return FailToGraphException
+        raise FailToGraphException
     num_clusters = len(unique_groups)
 
     colors = generate_cluster_colors(num_clusters, grouping)
     for point in points.to_dict('records'):
         name_prepend = ""
-        if grouping == "dataset" or grouping == 'target_region' or grouping == 'slice':
+        if grouping == "dataset" or grouping == 'target_region' or grouping == 'slice' or grouping == 'sex':
             color = colors[int(np.where(unique_groups==point[grouping])[0]) % len(colors)]
             group = point[grouping]
         else:
@@ -2466,7 +2476,7 @@ def get_snATAC_box(ensemble, gene, grouping, outliers):
             print("**** Grouping by cluster")
         unique_groups = points[grouping+'_ATAC'].unique()
     else: 
-        return FailToGraphException
+        raise FailToGraphException
 
     num_clusters = len(unique_groups)
     colors = generate_cluster_colors(num_clusters, grouping)

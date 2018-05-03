@@ -203,7 +203,7 @@ def plot_methylation_scatter(ensemble, tsne_type, methylation_type, level, group
                                        float(ptile_end),
                                        tsne_outlier_bool)
     except FailToGraphException:
-        return "Failed to load methylation data for {}, please contact maintainer".format(ensemble)
+        return "Failed to generate methylation tsne scatter plots for {}, please contact maintainer".format(ensemble)
 
 
 @frontend.route('/plot/snATAC/scatter/<ensemble>/<grouping>/<ptile_start>/<ptile_end>/<tsne_outlier>')
