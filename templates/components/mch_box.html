@@ -2,7 +2,7 @@
     <div class="panel-body option-panel" style="padding-top: 0px; padding-bottom: 0px;">
         <div class="container">
             <div class="row">
-                <div class="col-sm-12 col-md-2 col-md-offset-2" id="methylation_tsneGrouping">
+                <div class="col-md-offset-2" id="methylation_tsneGrouping">
                     <h6>Grouping: </h6>
                     <select id="methylation-box-heat-grouping" class="methylation-tsne-grouping methylation-tsne-box-heat-option" name="methylation-box-heat-grouping">
                         <option value="cluster">by cluster</option>
@@ -17,13 +17,8 @@
                 </div>
             </div>
             <div class="row">
-                <div class="col-sm-12 col-md-7 col-md-offset-2" id="methylation_tsneClustering">
+                <div class="col-md-offset-2" id="methylation_tsneClustering">
                     <h6>Clustering: </h6>
-                    <!--
-                    <label for="methylation-tsne-box-heat-clustering">Clustering: </label>
-                    <select id ="methylation-tsne-box-heat-clustering" class="methylation-tsne-box-heat-option" name="methylation-tsne-box-heat-clustering">
-                    </select>
-                    -->
                     <label for="methylation-clustering-box-heat-algorithms">
                         <a class="hover-tooltip" href="javascript:void(0);" data-toggle="popover" data-trigger="hover" data-placement="bottom" title="Algorithm" data-content="lv = Louvain Modularity.">Algorithm: </a>
                     </label>
@@ -47,7 +42,7 @@
             </div>
             <br>
             <div class="row" style="display:flex;">
-                <div class="col-sm-12 col-md-2 col-md-offset-2">
+                <div class="col-md-offset-2">
                     <input id="methylation-box-heat-normalize-toggle" name="methylation-box-heat-normalize-checkbox" value="normalize" type="checkbox">
                     <label for="methylation-box-heat-normalize-toggle">
                         <a class="hover-tooltip" href="javascript:void(0);" data-toggle="popover" data-trigger="hover" data-placement="bottom" title="Normalize by Gene" data-content="Min-Max normalization across each row. (Only for heatmap).">Normalize by gene</a>

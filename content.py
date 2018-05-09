@@ -1085,15 +1085,15 @@ def get_snATAC_scatter(ensemble, genes_query, grouping, ptile_start, ptile_end, 
     if len(genes) == 1:
         points = get_gene_snATAC(ensemble, genes[0], grouping, True)
         gene_name = get_gene_by_id(genes[0])['gene_name']
-        title = 'Gene body snATAC counts: ' + gene_name
+        title = 'Gene body snATAC normalized counts: ' + gene_name
     else:
         points = get_mult_gene_snATAC(ensemble, genes, grouping)
-        for gene in genes:
+        for i, gene in enumerate(genes):
+            if i > 0 and i % 10 == 0:
+                gene_name += "<br>"
             gene_name += get_gene_by_id(gene)['gene_name'] + '+'
         gene_name = gene_name[:-1]
-        title = 'Avg. Gene body counts: <br>' + gene_name
-    
-    
+        title = 'Avg. Gene body snATAC normalized counts: <br>' + gene_name
 
     if points is None:
         raise FailToGraphException
@@ -1252,19 +1252,18 @@ def get_snATAC_scatter(ensemble, genes_query, grouping, ptile_start, ptile_end, 
 
     layout = Layout(
         autosize=True,
-        height=450,
+        height=550,
         width=layout_width,
-        title=title,
-        titlefont={'color': 'rgba(1,2,2,1)',
-                   'size': 16},
+        # title=title,
+        # titlefont={'color': 'rgba(1,2,2,1)',
+        #            'size': 16},
         legend={'x':legend_x,
                 'y':0.95,
                 'tracegroupgap': 0.5},
-        margin={'l': 100,
+        margin={'l': 0,
                 'r': 0,
                 'b': 30,
-                't': 100,
-                'pad': 0},
+                't': 130,},
         xaxis={
             'domain': [0, 0.49],
             'type': 'linear',
@@ -1341,6 +1340,17 @@ def get_snATAC_scatter(ensemble, genes_query, grouping, ptile_start, ptile_end, 
                                                     yref="paper",
                                                     font={'size': 12,
                                                           'color': 'gray',})])
+    fig['layout']['annotations'].extend([Annotation(text=title,
+                                                    x=0.5,
+                                                    y=1.3,
+                                                    xanchor="center",
+                                                    yanchor="top",
+                                                    showarrow=False,
+                                                    xref="paper",
+                                                    yref="paper",
+                                                    font={'size': 16,
+                                                          'color': 'black',})])
+
     return plotly.offline.plot(
         figure_or_data=fig,
         output_type='div',
@@ -1380,7 +1390,9 @@ def get_methylation_scatter(ensemble, tsne_type, methylation_type, genes_query, 
         title = 'Gene body ' + methylation_type + ': ' + gene_name
     else:
         points = get_mult_gene_methylation(ensemble, methylation_type, genes, grouping, clustering, level, tsne_type)
-        for gene in genes:
+        for i, gene in enumerate(genes):
+            if i > 0 and i % 10 == 0:
+                gene_name += '<br>'
             gene_name += get_gene_by_id(gene)['gene_name'] + '+'
         gene_name = gene_name[:-1]
         title = 'Avg. Gene body ' + methylation_type + ': <br>' + gene_name
@@ -1552,19 +1564,18 @@ def get_methylation_scatter(ensemble, tsne_type, methylation_type, genes_query, 
 
         layout = Layout(
             autosize=True,
-            height=450,
+            height=550,
             width=layout_width,
-            title=title,
-            titlefont={'color': 'rgba(1,2,2,1)',
-                       'size': 16},
+            #title=title,
+            #titlefont={'color': 'rgba(1,2,2,1)',
+            #           'size': 16},
             legend={'x':legend_x,
                     'y':0.95,
                     'tracegroupgap': 0.5},
             margin={'l': 0,
                     'r': 0,
                     'b': 30,
-                    't': 100,
-                    'pad': 0},
+                    't': 130,},
             xaxis={
                 'domain': [0, 0.49],
                 'type': 'linear',
@@ -1598,7 +1609,7 @@ def get_methylation_scatter(ensemble, tsne_type, methylation_type, genes_query, 
                 'range':[bottom_x,top_x]
             },
             yaxis={
-                'domain': [0,1],
+                'domain': [0, 1],
                 'type': 'linear',
                 'ticks': '',
                 'dtick': 10,
@@ -1642,6 +1653,16 @@ def get_methylation_scatter(ensemble, tsne_type, methylation_type, genes_query, 
                                                         font={'size': 12,
                                                               'color': 'gray',})])
 
+        fig['layout']['annotations'].extend([Annotation(text=title,
+                                                        x=0.5,
+                                                        y=1.3,
+                                                        xanchor="center",
+                                                        yanchor="top",
+                                                        showarrow=False,
+                                                        xref="paper",
+                                                        yref="paper",
+                                                        font={'size': 16,
+                                                              'color': 'black',})])
 
 
     ## 3D tSNE coordinates ##
@@ -1869,16 +1890,18 @@ def get_mch_heatmap(ensemble, methylation_type, grouping, clustering, level, pti
     tsne_type = 'mCH_ndim2_perp20'
 
     if normalize_row:
-        normal_or_original = 'Normalized'
+        normal_or_original = '(normalized by row)'
     else:
-        normal_or_original = 'Original'
+        normal_or_original = ''
 
-    title = normal_or_original + " gene body " + methylation_type + " by cluster: <br>"
+    title = level.title() + " gene body " + methylation_type + " by cluster " + normal_or_original + ": <br>"
     genes= query.split()
 
     gene_info_df = pd.DataFrame()
-    for gene_id in genes:
+    for i, gene_id in enumerate(genes):
         gene_name = get_gene_by_id(gene_id)['gene_name']
+        if i > 0 and i % 10 == 0:
+            title += "<br>"
         title += gene_name + "+"
         gene_info_df[gene_name] = median_cluster_mch(get_gene_methylation(ensemble, methylation_type, gene_id, grouping, clustering, level, True), grouping, clustering)
         if gene_info_df[gene_name].empty:
@@ -1988,11 +2011,15 @@ def get_mch_heatmap(ensemble, methylation_type, grouping, clustering, level, pti
 
     layout = Layout(
         autosize=True,
-        height=450,
-        width=700,
-        title=title,
-        titlefont={'color': 'rgba(1,2,2,1)',
-                   'size': 16},
+        height=550,
+        width=1000,
+        # title=title,
+        # titlefont={'color': 'rgba(1,2,2,1)',
+        #            'size': 16},
+        # margin={'l': 0,
+        #         'r': 0,
+        #         'b': 100,
+        #         't': 140,},
         xaxis={
             'side': 'bottom',
             'tickangle': -45,
@@ -2066,12 +2093,23 @@ def get_mch_heatmap(ensemble, methylation_type, grouping, clustering, level, pti
             showactive=True,
             x=-0.1,
             xanchor='left',
-            y=1.4,
+            y=1.43,
             yanchor='top'
         )
     ])
 
     layout['updatemenus'] = updatemenus
+
+    layout['annotations'].extend([Annotation(text=title,
+                                             x=0.5,
+                                             y=1.4,
+                                             xanchor="center",
+                                             yanchor="top",
+                                             showarrow=False,
+                                             xref="paper",
+                                             yref="paper",
+                                             font={'size': 16,
+                                                   'color': 'black',})])
 
     return plotly.offline.plot(
         {
@@ -2100,16 +2138,18 @@ def get_snATAC_heatmap(ensemble, grouping, ptile_start, ptile_end, normalize_row
     """
 
     if normalize_row:
-        normal_or_original = 'Normalized'
+        normal_or_original = '(normalized by gene)'
     else:
-        normal_or_original = 'Original'
+        normal_or_original = ''
 
-    title = normal_or_original + " gene body snATAC normalized counts by cluster:<br>"
+    title = "Gene body snATAC normalized counts by cluster " + normal_or_original + ":<br>"
     genes = query.split()
 
     gene_info_df = pd.DataFrame()
-    for gene_id in genes:
+    for i, gene_id in enumerate(genes):
         gene_name = get_gene_by_id(gene_id)['gene_name']
+        if i > 0 and i % 10 == 0:
+            title += "<br>"
         title += gene_name + "+"
         gene_info_df[gene_name] = median_cluster_snATAC(get_gene_snATAC(ensemble, gene_id, grouping, True), grouping)
 
@@ -2214,11 +2254,11 @@ def get_snATAC_heatmap(ensemble, grouping, ptile_start, ptile_end, normalize_row
 
     layout = Layout(
         autosize=True,
-        height=450,
+        height=550,
         width=1000,
-        title=title,
-        titlefont={'color': 'rgba(1,2,2,1)',
-                   'size': 16},
+        # title=title,
+        # titlefont={'color': 'rgba(1,2,2,1)',
+        #            'size': 16},
         xaxis={
             'side': 'bottom',
             'tickangle': -45,
@@ -2292,12 +2332,24 @@ def get_snATAC_heatmap(ensemble, grouping, ptile_start, ptile_end, normalize_row
             showactive=True,
             x=-0.1,
             xanchor='left',
-            y=1.4,
+            y=1.43,
             yanchor='top'
         )
     ])
 
     layout['updatemenus'] = updatemenus
+
+    layout['annotations'].extend([Annotation(text=title,
+                                             x=0.5,
+                                             y=1.4,
+                                             xanchor="center",
+                                             yanchor="top",
+                                             showarrow=False,
+                                             xref="paper",
+                                             yref="paper",
+                                             font={'size': 16,
+                                                   'color': 'black',})])
+
 
     return plotly.offline.plot(
         {
