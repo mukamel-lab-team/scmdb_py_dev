@@ -18,8 +18,8 @@ from flask_wtf import CsrfProtect
 
 
 # Necessary because brainome doesn't have mysql installed
-import pymysql
-pymysql.install_as_MySQLdb()
+#import pymysql
+#pymysql.install_as_MySQLdb()
 
 cache = Cache(config={'CACHE_TYPE': 'simple', 'CACHE_THRESHOLD': 1000})
 nav = Nav()
@@ -35,13 +35,14 @@ login_manager = LoginManager()
 login_manager.session_protection = 'strong'
 login_manager.login_view = 'frontend.login'
 
+app = Flask(__name__)
+
 class MiniJSONEncoder(JSONEncoder):
     """Minify JSON output."""
     item_separator = ','
     key_separator = ':'
 
 def create_app(configfile=None):
-    app = Flask(__name__)
     AppConfig(app)
     Bootstrap(app)
     app.config['SQLALCHEMY_DATABASE_URI'] = 'sqlite:///' + os.path.join(basedir, 'user-login.sqlite')
@@ -91,5 +92,6 @@ def create_app(configfile=None):
 
 if __name__ == '__main__':
   # app.run(debug=True)
-  create_app().start(debug=True)
+  app = create_app()
+  app.run()
 

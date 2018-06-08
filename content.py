@@ -47,7 +47,9 @@ def get_metadata():
 
 @content.route('/content/ensembles')
 def get_ensembles_summary():
-    """ Retrieve data to be displayed in the "Ensembles" summary tabular page. """
+    """ Retrieve data to be displayed in the "Ensembles" summary tabular page. 
+        "/tabular/ensemble"
+    """
     
     ensemble_list=[]
     ensemble_list = db.get_engine(current_app, 'methylation_data').execute("SELECT * FROM ensembles").fetchall()
@@ -152,7 +154,9 @@ def get_ensembles_summary():
 
 @content.route('/content/datasets/<rs>')
 def get_datasets_summary(rs):
-    """ Retrieve data to be displayed in the "RS1 Summary" tabular page. 
+    """ Retrieve data to be displayed in the RS1 and RS2 summmary tabular page. 
+        "/tabular/dataset/rs1"
+        "/tabular/dataset/rs2"
     
         Arguments:
             rs = Research Segment. Either "rs1" or "rs2"

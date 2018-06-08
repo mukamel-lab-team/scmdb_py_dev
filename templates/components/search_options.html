@@ -8,7 +8,7 @@
         </select>
     </div>
     <div class="col-md-3 col-sm-6">
-        <div style="display:inline-block;" id="methylationLevelDiv">
+        <div style="display:inline-block; float:left;" id="methylationLevelDiv">
             <label for="levels" class="control-label">
                 <a href="javascript:void(0);" class="hover-tooltip" data-toggle="popover" data-trigger="hover" data-placement="top" title="Methylation Levels" data-content="Display original methylation values or normalize by the global methylation value for each cell.">Methylation Levels</a>
             </label>
@@ -16,7 +16,10 @@
             <input type="radio" name="levels" id="levelsOriginal" value="original">&nbsp;Original<br>
             <input type="radio" name="levels" id="levelsNormalized" value="normalized" checked>&nbsp;Normalized
         </div>
-        <div style="display:inline-block; float:right;" id="methylationTypeDiv">
+        <div style="display:inline-block; float:left;">
+            &nbsp;
+        </div>
+        <div style="display:inline-block; float:left;" id="methylationTypeDiv">
             <label for="mType" class="control-label">
                 <a href="javascript:void(0);" class="hover-tooltip" data-toggle="popover" data-trigger="hover" data-placement="top" title="Methylation Type" data-content="Type of gene-body methylation values to display.">Methylation Type</a>
             </label>

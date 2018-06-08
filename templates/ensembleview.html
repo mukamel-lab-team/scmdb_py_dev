@@ -237,6 +237,9 @@
     var ensemble_name = "{{ ensemble_name }}";
     var RS2 = {{ RS2 }};
     var snATAC_data_available = {{ snATAC_data_available }};
+    var num_algorithm_options = {{ num_algorithm_options }};
+    var num_dims_options = {{ num_dims_options }};
+    var methylation_tsne_options = {{ methylation_tsne_options|safe }};
     var methylation_color_percentile_Slider;
     var snATAC_color_percentile_Slider;
     var geneSearchCache;
@@ -289,7 +292,7 @@
         });
         buttons = $('.modebar-btn');
 
-        populateMethylationTSNEDropdowns();
+        populateMethylationTSNEDropdowns(methylation_tsne_options)
         initGeneNameSearch();
         initGeneModules();
         initDataTableClick();
@@ -444,9 +447,12 @@
     $(".methylation-clustering-algorithms").change(function() {
         dynamicMethylationClusteringOptions_algorithm();
     });
+   
+    /*
     $(".methylation-clustering-npc").change(function() {
         dynamicMethylationClusteringOptions_npc();
     });
+    */
 
     $("#methylation-tsne-grouping, #methylation-box-heat-grouping").change(function() {
          $("#methylation-tsne-grouping, #methylation-box-heat-grouping").val($(this).val());
@@ -457,9 +463,11 @@
     $("#methylation-clustering-methylation, #methylation-clustering-box-heat-methylation").change(function() {
          $("#methylation-clustering-methylation, #methylation-clustering-box-heat-methylation").val($(this).val());
     });
+    /*
     $("#methylation-clustering-npc, #methylation-clustering-box-heat-npc").change(function() {
          $("#methylation-clustering-npc, #methylation-clustering-box-heat-npc").val($(this).val());
     });
+    */
     $("#methylation-clustering-k, #methylation-clustering-box-heat-k").change(function() {
          $("#methylation-clustering-k, #methylation-clustering-box-heat-k").val($(this).val());
     });

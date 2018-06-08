@@ -112,12 +112,19 @@ def ensemble(ensemble_name):
     RS2_included = 0
     if 'RS2' in ensemble_info['datasets']:
         RS2_included = 1
+    methylation_tsne_options = get_methylation_tsne_options(ensemble)
+    num_algorithm_options = len(methylation_tsne_options['clustering_algorithms'])
+    num_dims_options = len(methylation_tsne_options['tsne_dimensions'])
+
     if ensemble_info['public_access'] == 1 or (ensemble_info['public_access'] == 0 and current_user.is_authenticated):
         return render_template('ensembleview.html', 
                                ensemble = ensemble, 
                                ensemble_name = ensemble_name,
                                snATAC_data_available = snATAC_included,
-                               RS2 = RS2_included,)
+                               RS2 = RS2_included,
+                               methylation_tsne_options = json.dumps(methylation_tsne_options),
+                               num_algorithm_options = num_algorithm_options,
+                               num_dims_options = num_dims_options)
     else:
         flash('Data for ensemble {} is not publicly accessible. You must log in to continue. \
               <li>Click on "Ensembles" at the top of the page to select publicly accessible data.</li>'.format(ensemble_name), 'form-error')
