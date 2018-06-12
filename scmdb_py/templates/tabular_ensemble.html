@@ -1,0 +1,52 @@
+{%- extends "layouts/base.html" %}
+
+{% block title %}Ensemble Summary{% endblock %} 
+
+{# When extended, the content block contains all the html of the webpage #}
+{% block content -%}
+    <br>
+    <div id="brain-dissection-map-div" style="display: none;">
+    </div>
+    <div id="ensemble-table-div" style="margin:auto; width:90%;">
+        <table id="ensemble-table" class="display"> 
+            <thead>
+                <tr>
+                    <th></th>
+                    <th>#</th>
+                    <th>Ensemble</th>
+                    <th>Total Cells<br>(snmC-seq)</th>
+                    <th>Total Cells<br>(snATAC-seq)</th>
+                    <th>Dissection<br>Region(s)</th>
+                    <th>Slice(s)</th>
+                    <th># of<br>Datasets</th>
+                    <th>Target<br>Region(s)</th>
+                    <th>Public<br>Access</th>
+                    <th>Explore</th>
+                </tr>
+            </thead>
+        </table>
+    </div>
+    <br>
+{%- endblock content %}
+
+{% block scripts %}
+    {{super()}} 
+    <!--
+    <script src="/static/datatables.min.js"></script>
+    <link href="/static/datatables.min.css" rel="stylesheet" />
+    <script src="/static/tabular_ensemble.js"></script>
+    --> 
+    {% assets "tabular_ensemble_js" %} 
+        <script type="text/javascript" src="{{ ASSET_URL }}"></script>
+    {% endassets %}
+    {% assets "tabular_css" %} 
+        <link href="{{ ASSET_URL }}" rel="stylesheet"/>
+    {% endassets %}
+
+    <script> 
+        $(document).ready( function () {
+            initEnsembleDataTable();
+        }); 
+    </script>
+{% endblock scripts %}
+
