@@ -434,7 +434,6 @@ def login():
             return redirect(url_for('frontend.ensemble', ensemble_name=ensemble))
         else:
             flash('Invalid email or password.', 'form-error')
-    flash(current_user, 'info')
     return render_template('account/login.html', form=form)
 
 @frontend.route('/logout')
