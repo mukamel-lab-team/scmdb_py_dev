@@ -12,7 +12,6 @@ from flask.json import JSONEncoder
 from flask_login import LoginManager
 from flask_sqlalchemy import SQLAlchemy
 from flask_rq import RQ
-from flask_jsglue import JSGlue
 from .assets import app_css, app_js, vendor_css, vendor_js, browser_js, browser_css, tabular_rs1_js, tabular_rs2_js, tabular_ensemble_js, tabular_css, request_new_ensemble_js
 import urllib.parse
 from flask_wtf import CsrfProtect
@@ -34,7 +33,6 @@ db = SQLAlchemy()
 csrf = CsrfProtect()
 compress = Compress()
 htmlmin = HTMLMIN()
-jsglue = JSGlue()
 basedir = os.path.abspath(os.path.dirname(__file__))
 
 # Set up Flask-Login
@@ -99,7 +97,6 @@ db.init_app(app)
 login_manager.init_app(app)
 compress.init_app(app)
 htmlmin.init_app(app)
-jsglue.init_app(app)
 RQ(app)
 
 
