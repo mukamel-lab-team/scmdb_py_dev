@@ -106,7 +106,7 @@ data/
 scripts/*.csv
 
 #Config Files
-default_config.py
+scmdb_py/default_config.py
 
 #Other stuff
 node_modules
