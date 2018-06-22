@@ -149,7 +149,7 @@ def get_ensembles_summary():
             if region is None or region == 'None':
                 ensembles_json_list.append(ens_dict)
             else:
-                if region in ens_dict["ABA_regions_acronym"]:
+                if region.lower() in ens_dict["ABA_regions_acronym"].lower():
                     ensembles_json_list.append(ens_dict)
 
     ens_json = json.dumps(ensembles_json_list)
