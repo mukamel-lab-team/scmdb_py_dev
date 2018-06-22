@@ -1194,8 +1194,7 @@ def get_snATAC_scatter(ensemble, genes_query, grouping, ptile_start, ptile_end, 
             hoverinfo='text'))
         trace2d['x'] = points_group['tsne_x_ATAC'].values.tolist()
         trace2d['y'] = points_group['tsne_y_ATAC'].values.tolist()
-        trace2d['text'] = [build_hover_text(OrderedDict([('Cell Name', point[1]),
-                                                         ('Annotation', point[3]),
+        trace2d['text'] = [build_hover_text(OrderedDict([('Annotation', point[3]),
                                                          ('Cluster', point[4]),
                                                          ('RS2 Target Region', point[-1]),
                                                          ('Dataset', point[2]),]))
@@ -1205,8 +1204,7 @@ def get_snATAC_scatter(ensemble, genes_query, grouping, ptile_start, ptile_end, 
     x = points['tsne_x_ATAC'].tolist()
     y = points['tsne_y_ATAC'].tolist()
     ATAC_counts = points['normalized_counts'].copy()
-    text_ATAC = [build_hover_text(OrderedDict([('Cell Name', point[1]),
-                                               ('Annotation', point[3]),
+    text_ATAC = [build_hover_text(OrderedDict([('Annotation', point[3]),
                                                ('Cluster', point[4]),
                                                ('RS2 Target Region', point[-1]),
                                                ('Dataset', point[2]),
@@ -1506,8 +1504,7 @@ def get_methylation_scatter(ensemble, tsne_type, methylation_type, genes_query, 
                 hoverinfo='text'))
             trace2d['x'] = points_group['tsne_x_'+tsne_type].values.tolist()
             trace2d['y'] = points_group['tsne_y_'+tsne_type].values.tolist()
-            trace2d['text'] = [build_hover_text(OrderedDict([('Cell Name', point[1]),
-                                                             ('Annotation', point[4]),
+            trace2d['text'] = [build_hover_text(OrderedDict([('Annotation', point[4]),
                                                              ('Cluster', point[5]),
                                                              ('RS2 Target Region', point[10]),
                                                              ('Dataset', point[2]),]))
@@ -1517,8 +1514,7 @@ def get_methylation_scatter(ensemble, tsne_type, methylation_type, genes_query, 
         x = points['tsne_x_' + tsne_type].tolist()
         y = points['tsne_y_' + tsne_type].tolist()
         mch = points[methylation_type + '/' + context + '_' + level]
-        text_methylation = [build_hover_text(OrderedDict([('Cell Name', point[1]),
-                                                          ('Annotation', point[4]),
+        text_methylation = [build_hover_text(OrderedDict([('Annotation', point[4]),
                                                           ('Cluster', point[5]),
                                                           ('RS2 Target Region', point[10]),
                                                           ('Dataset', point[2]),
@@ -1704,8 +1700,7 @@ def get_methylation_scatter(ensemble, tsne_type, methylation_type, genes_query, 
             trace3d['x'] = points_group['tsne_x_'+tsne_type].values.tolist()
             trace3d['y'] = points_group['tsne_y_'+tsne_type].values.tolist()
             trace3d['z'] = points_group['tsne_z_'+tsne_type].values.tolist()
-            trace3d['text'] = [build_hover_text(OrderedDict([('Cell Name', point[1]),
-                                                             ('Dataset', point[2]),
+            trace3d['text'] = [build_hover_text(OrderedDict([('Dataset', point[2]),
                                                              ('Annotation', point[4]),
                                                              ('Cluster', point[5]),]))
                                for point in points_group.itertuples(index=False)]
@@ -1715,8 +1710,7 @@ def get_methylation_scatter(ensemble, tsne_type, methylation_type, genes_query, 
         y = points['tsne_y_' + tsne_type].tolist()
         z = points['tsne_z_' + tsne_type].tolist()
         mch = points[methylation_type + '/' + context + '_' + level]
-        text_methylation = [build_hover_text(OrderedDict([('Cell Name', point[1]),
-                                                          ('Annotation', point[4]),
+        text_methylation = [build_hover_text(OrderedDict([('Annotation', point[4]),
                                                           ('Cluster', point[5]),
                                                           ('<b>'+methylation_type+'</b>', round(point[-1], 6)),]))
                             for point in points.itertuples(index=False)]
