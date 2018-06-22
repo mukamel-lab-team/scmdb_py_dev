@@ -10,7 +10,7 @@
    * `virtualenv venv -p python3`
    * `source venv/bin/activate`
    * `pip install --upgrade pip`
-   * `pip install -r scmdb_py/requirements.txt`
+   * `pip install -r requirements.txt`
    * `deactivate`
 
 3. Set up default_config.py.

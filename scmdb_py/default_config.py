@@ -29,12 +29,9 @@ MYSQL_USER = ''
 MYSQL_PW = ''
 MYSQL_DB_methylation = ''
 MYSQL_DB_snATAC = ''
-SQLALCHEMY_BINDS = {'methylation_data': 'mysql://' + MYSQL_USER + ':' + MYSQL_PW + '@banjo/' + MYSQL_DB_methylation,
-                    'snATAC_data': 'mysql://' + MYSQL_USER + ':' + MYSQL_PW + '@banjo/' + MYSQL_DB_snATAC}
-
-DATA_DIR = ''
-PUBLISHED_DATA_DIR = ''
-ALL_DATA_DIR = ''
+MYSQL_SERVER_NAME = ''
+SQLALCHEMY_BINDS = {'methylation_data': 'mysql://' + MYSQL_USER + ':' + MYSQL_PW + '@' + MYSQL_SERVER_NAME + '/' + MYSQL_DB_methylation,
+                    'snATAC_data': 'mysql://' + MYSQL_USER + ':' + MYSQL_PW + '@' + MYSQL_SERVER_NAME + '/' + MYSQL_DB_snATAC}
 
 # Enable protection agains *Cross-site Request Forgery (CSRF)*
 CSRF_ENABLED = True
