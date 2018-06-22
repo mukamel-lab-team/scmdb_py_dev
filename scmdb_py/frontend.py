@@ -149,9 +149,10 @@ def box_combined(mmu_gene_id, hsa_gene_id):
 @frontend.route('/tabular/ensemble')
 def ensemble_tabular_screen():
     redirect = request.args.get('redirect', 'false')
+    region = request.args.get('region', None)
     if redirect == 'true':
         flash('Please select an ensemble first.', 'info')
-    return render_template('tabular_ensemble.html')
+    return render_template('tabular_ensemble.html', region=region)
 
 
 @frontend.route('/tabular/dataset/rs1')

@@ -50,6 +50,7 @@ def get_ensembles_summary():
     """ Retrieve data to be displayed in the "Ensembles" summary tabular page. 
         "/tabular/ensemble"
     """
+    region = request.args.get('region', None)
     
     ensemble_list=[]
     ensemble_list = db.get_engine(current_app, 'methylation_data').execute("SELECT * FROM ensembles").fetchall()
@@ -145,7 +146,11 @@ def get_ensembles_summary():
                 ens_dict["public_access_color"] = "green"
 
 
-            ensembles_json_list.append(ens_dict)
+            if region is None or region == 'None':
+                ensembles_json_list.append(ens_dict)
+            else:
+                if region in ens_dict["ABA_regions_acronym"]:
+                    ensembles_json_list.append(ens_dict)
 
     ens_json = json.dumps(ensembles_json_list)
 

@@ -342,7 +342,7 @@ function initEnsembleDataTable() {
         "pageLength": 25,
         "ajax": {
             //"url": "/portal/content/ensembles",
-            "url": $SCRIPT_ROOT+'/content/ensembles',
+            "url": $SCRIPT_ROOT+'/content/ensembles?region=' + region,
             "dataSrc": ""
         },
         "columns": [

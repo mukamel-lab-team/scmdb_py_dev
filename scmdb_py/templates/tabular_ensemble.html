@@ -44,8 +44,11 @@
     {% endassets %}
 
     <script> 
+        var region = "{{ region }}";
+        console.log(region);
+
         $(document).ready( function () {
-            initEnsembleDataTable();
+            initEnsembleDataTable(region);
         }); 
     </script>
 {% endblock scripts %}
