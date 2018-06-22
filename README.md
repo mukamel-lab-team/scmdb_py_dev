@@ -44,13 +44,13 @@ scmdb_py_dev/
 |   |   |   |-- tabular_dataset_rs1.js      *Frontend functions for summary (metadata) pages
 |   |   |   |-- tabular_dataset_rs2.js
 |   |   |   |-- tabular_ensemble.js
-|   |   |   |   |-- vendor/                 *All downloaded javascript libraries
-|   |   |   |   |   |-- ...
+|   |   |   |-- vendor/                 *All downloaded javascript libraries
+|   |   |   |   |-- ...
 |   |   |-- styles/                         *Individual css files
 |   |   |   |-- app_base.css                *Style for navigation bar.
 |   |   |   |-- browser.css                 *Style for data browser
-|   |   |   |   |-- vendor/                 *All downloaded css files
-|   |   |   |   |   |-- ...
+|   |   |   |-- vendor/                 *All downloaded css files
+|   |   |   |   |-- ...
 |   |-- templates/                          *HTML files 
 |   |   |-- base.html                       *Base template file for ensembleview.html
 |   |   |-- ensembleview.html               *Main HTML file for data browser page of portal
