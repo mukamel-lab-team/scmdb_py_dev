@@ -135,6 +135,13 @@ body {
     z-index: 10;
 }
 
+/*
+#clusterMarkerGeneTableDiv {
+    padding: 15px;
+}
+*/
+
+
 /* Safari */
 @-webkit-keyframes spin {
   0% { -webkit-transform: rotate(0deg); }
@@ -508,9 +515,10 @@ li {
 
 /* Tables
 –––––––––––––––––––––––––––––––––––––––––––––––––– */
+/*
 th,
 td {
-  padding: 12px 15px;
+  padding: 5px 10px;
   text-align: left;
   border-bottom: 1px solid #E1E1E1; }
 th:first-child,
@@ -519,6 +527,11 @@ td:first-child {
 th:last-child,
 td:last-child {
   padding-right: 0; }
+
+th { font-size: 12px; }
+td { font-size: 10px; }
+*/
+
 
 
 /* Spacing

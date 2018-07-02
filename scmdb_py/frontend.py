@@ -345,7 +345,18 @@ def search_gene_by_name():
     if query == 'none' or query == '':
         return jsonify([])
     else:
+        query = query.split(' ')
         return jsonify(get_gene_by_name(query))
+
+
+@frontend.route('/gene/names/exact')
+def search_gene_by_name_exact():
+    query = request.args.get('q', 'MustHaveAQueryString')
+    if query == 'none' or query == '':
+        return jsonify([])
+    else:
+        query = query.split(' ')
+        return jsonify(get_gene_by_name_exact(query))
 
 
 @frontend.route('/gene/id')
@@ -354,6 +365,7 @@ def search_gene_by_id():
     if query == 'none' or query == '':
         return jsonify({})
     else:
+        query = query.split(' ')
         return jsonify(get_gene_by_id(query))
 
 
@@ -382,6 +394,11 @@ def gene_modules():
         return jsonify(all_gene_modules())
     else:
         return jsonify(get_genes_of_module(query))
+
+
+@frontend.route('/cluster/marker_genes/<ensemble>/<clustering>')
+def cluster_specific_marker_genes(ensemble, clustering):
+    return jsonify(get_cluster_marker_genes(ensemble, clustering))
 
 
 # Legacy code from when the browser was used to also display human data

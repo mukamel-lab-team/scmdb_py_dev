@@ -19,8 +19,8 @@ from flask_wtf import CsrfProtect
 
 # Necessary because brainome doesn't have mysql installed.
 # If running the browser on the server where the MySQL server lives, make sure to comment out the two lines below (currently MySQL is on Banjo).
-import pymysql
-pymysql.install_as_MySQLdb()
+#import pymysql
+#pymysql.install_as_MySQLdb()
 
 class MiniJSONEncoder(JSONEncoder):
     """Minify JSON output."""

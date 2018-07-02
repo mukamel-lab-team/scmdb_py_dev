@@ -260,6 +260,7 @@
     var grouping;
     var buttons;
     var table;
+    var clusterMarkerGeneTable;
 
     $(document).ready(function() {
         $('[data-toggle="popover"]').popover();
@@ -292,7 +293,7 @@
             //populatesnATACTSNEDropdowns();
         }
         
-        table = $('#geneTable').DataTable( {
+        table = $('#corrGeneTable').DataTable( {
             "destroy": true,
             "ordering": false,
             "lengthChange": false,
@@ -307,6 +308,7 @@
         populateMethylationTSNEDropdowns(methylation_tsne_options)
         initGeneNameSearch();
         initGeneModules();
+        initClusterSpecificMarkerGeneTable();
         initDataTableClick();
     });
 
@@ -417,6 +419,7 @@
 
     $("#methylation-tsneUpdateBtn:enabled, #methylation-box-heat-UpdateBtn:enabled").click(function() {
         updateMCHScatterPlot(onlyUpdatetSNEandClustering=true);
+        initClusterSpecificMarkerGeneTable();
         if ($('#geneName').select2('data').length > 1) {
             updateMethylationHeatmap();
         } 

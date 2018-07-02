@@ -18,7 +18,12 @@ var storage = {
 		let record = JSON.parse(localStorage.getItem(key));
 		if (!record){return false;}
 		return (new Date().getTime() < record.timestamp && JSON.parse(record.value));
-	} }
+	}
+}
+
+function delayLoad(f) {
+    setTimeout(f, 50);
+}
 
 function save3DData(trace, layout){
     trace_3d = trace;
@@ -121,26 +126,41 @@ function initGeneNameSearch() {
     }
     
     if(defaultGene !== []){
-        const numGenes = defaultGene.length;
+        let numGenes = defaultGene.length;
+        genes_query = "";
         for (i = 0; i < numGenes; i++) {
-            $.ajax({
-                url: './gene/id?q='+defaultGene[i].gene_id,
-                dataType: 'json',
-                async: false,
-                success: function(data) {
-                    if (typeof(data.gene_name) !== 'undefined' && typeof(data.gene_id) !== 'undefined') {
-                        let option = new Option(data.gene_name, data.gene_id, true, true);
+            genes_query += defaultGene[i].gene_id + '+';
+        }
+        genes_query = genes_query.slice(0, -1);
+        $.ajax({
+            url: './gene/id?q='+genes_query,
+            dataType: 'json',
+            async: false,
+            success: function(data) {
+                if (data.length !== 0) {
+                    $.each(data, function(i, gene) {
+                        let option = new Option(gene.gene_name, gene.gene_id, true, true);
                         geneNameSelector.append(option);
-                        if (numGenes === 1) {
-                            $('#epiBrowserLink').attr('href', generateBrowserURL(data));
-                            $('#epiBrowserLink').removeClass('disabled');
-                        }
+                    });
+                    if (numGenes === 1) {
+                        $('#epiBrowserLink').attr('href', generateBrowserURL(data[0]));
+                        $('#epiBrowserLink').removeClass('disabled');
                     }
                 }
-            });
-        }
+            }
+        });
         updateGeneElements();
     }
+
+    //Hacky way of making sure select2 does not automatically sort tags
+    geneNameSelector.on('select2:select', function(evt) {
+        var element = evt.params.data.element;
+        var $element = $(element);
+
+        $element.detach();
+        $(this).append($element);
+        $(this).trigger("change");
+    });
 }
 
 function initGeneModules() {
@@ -532,7 +552,7 @@ function updateGeneElements(updateMCHScatter=true) {
             $('#normalize-heatmap').show();
             $('#methylation-box-heat-normalize-toggle').prop('disabled', false);
             updateMethylationHeatmap();
-            updateDataTable("");
+            updateCorrelatingGeneDataTable("");
             $('#epiBrowserLink').addClass('disabled');
             $("#methylation-box-and-heat").removeClass('col-md-8').addClass('col-md-12');
             $("#methylation-correlated-genes").hide();
@@ -548,7 +568,7 @@ function updateGeneElements(updateMCHScatter=true) {
             $('#methylation-box-heat-normalize-toggle').prop('disabled', true);
             //updateOrthologToggle();
             updateMCHBoxPlot();
-            updateDataTable($('#geneName option:selected').val());
+            updateCorrelatingGeneDataTable($('#geneName option:selected').val());
             $("#methylation-box-and-heat").removeClass('col-md-12').addClass('col-md-8');
             $("#methylation-correlated-genes").show();
             if (snATAC_data_available === 1) {
@@ -723,21 +743,20 @@ function updateOrthologToggle() {
 */
 
 function initDataTableClick() {
-    $('#geneTable tbody').on('click', 'tr', function () {
+    $('#corrGeneTable tbody').on('click', 'tr', function () {
         let id = $(this).attr('id');
         $.getJSON({
             url: './gene/id?q='+id,
             success: function (data) {
-                let option = new Option(data.gene_name, data.gene_id, true, true);
-                let i;
-                for(i=0; i < $("#geneName").select2('data').length; i++) {
+                let option = new Option(data[0].gene_name, data[0].gene_id, true, true);
+                for(let i=0; i < $("#geneName").select2('data').length; i++) {
                     if($("#geneName").select2('data')[i].id === option.value) {
                         return;
                     }
                 }
-                geneNameSelector.val(null).trigger("change.select2");
+                geneNameSelector.val(null).trigger("change.select2"); // Clear gene search bar
                 geneNameSelector.append(option);
-                $('#epiBrowserLink').attr('href', generateBrowserURL(data));
+                $('#epiBrowserLink').attr('href', generateBrowserURL(data[0]));
                 $('#epiBrowserLink').removeClass('disabled');
                 updateGeneElements();
             }
@@ -745,9 +764,9 @@ function initDataTableClick() {
     });
 }
 
-function updateDataTable(geneSelected) {
+function updateCorrelatingGeneDataTable(geneSelected) {
     if (geneSelected !== 'Select..' && geneSelected !== "") {
-        table = $('#geneTable').DataTable( {
+        table = $('#corrGeneTable').DataTable( {
             "destroy": true,
             "ordering": false,
             "lengthChange": false,
@@ -771,6 +790,62 @@ function updateDataTable(geneSelected) {
     else {
         table.clear();
     }
+}
+
+
+function initClusterSpecificMarkerGeneTable() {
+
+    let clustering = $("#methylation-clustering-box-heat-methylation").val()+"_"+$("#methylation-clustering-box-heat-algorithms").val()+"_npc50"+"_k"+$("#methylation-clustering-box-heat-k").val();
+
+    let htmlTable = '<table id="clusterMarkerGeneTable" class="display nowrap compact" width="100%"><tbody></tbody></table>';
+
+    // Destroy existing table and create new table.
+    if ($('#clusterMarkerGeneTable').length > 0) {
+        //$('#clusterMarkerGeneTable').DataTable().destroy(true);
+        $('#clusterMarkerGeneTableDiv').html(htmlTable);
+    } 
+    $.ajax({
+        type: "GET",
+        url: './cluster/marker_genes/'+ensemble+'/'+clustering,
+        success: function(data) {
+            let columns = [ { mData: "rank", sTitle: "rank" } ];
+            $.each(data.columns, function(i, cluster) {
+                columns.push({ mData: cluster, sTitle: cluster });
+            });
+            clusterMarkerGeneTable = $('#clusterMarkerGeneTable').DataTable( {
+                "destroy": true,
+                "ordering": false,
+                "scrollX": true,
+                "select": true,
+                "lengthChange": true,
+                "columns": columns,
+                "data": data.rows,
+            });
+            clusterMarkerGeneTable.select.items('column');
+            delayLoad(clusterMarkerGeneTable.draw());
+
+            // Fills gene search bar with genes in column when user clicks. 
+            clusterMarkerGeneTable.on('select', function(e, dt, type, indexes) {
+                var data = clusterMarkerGeneTable.columns( indexes ).data();
+                genes_query = data[0].join('+');
+
+                $.ajax({
+                    type: "GET",
+                    url: './gene/names/exact?q='+genes_query,
+                    success: function(data) {
+                        if (data.length !== 0) {
+                            geneNameSelector.val(null).trigger("change.select2"); //Clear gene search bar
+                            $.each(data, function(i, gene) {
+                                console.log(gene.gene_name);
+                                let option = new Option(gene.gene_name, gene.gene_id, true, true);
+                                geneNameSelector.append(option);
+                            });
+                        }
+                    }
+                });
+            });
+        }
+    });
 }
 
 function updateMCHBoxPlot() {

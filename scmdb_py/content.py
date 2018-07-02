@@ -451,6 +451,51 @@ def get_genes_of_module(module):
 
 
 @cache.memoize(timeout=3600)
+def get_cluster_marker_genes(ensemble, clustering):
+    """Retrieves list of top marker genes for each cluster in a clustering of an ensemble.
+    Arguments:
+        ensemble (str): Ensemble id. ie. Ens0, Ens1...
+        clustering (str): Different clustering algorithms and parameters. 'lv' = Louvain clustering. ie. mCH_lv_npc50_k5
+    Returns:
+    list of dicts. ie [{'clustering': 'mCH_lv_npc50_k5', 'cluster': 1, 'rank': 1, 'gene_id': 'ENSMUSG_########', 'gene_name': 'Gad2'}]
+    """
+
+    if ';' in ensemble:
+        return []
+
+    query = "SELECT clustering, cluster, rank, genes.gene_id, genes.gene_name \
+        FROM {0}_cluster_marker_genes \
+        INNER JOIN genes ON {0}_cluster_marker_genes.gene_id = genes.gene_id \
+        WHERE clustering = %s".format(ensemble)
+
+    try:
+        result = db.get_engine(current_app, 'methylation_data').execute(query, (clustering,)).fetchall()
+    except exc.ProgrammingError as e:
+        now = datetime.datetime.now()
+        print("[{}] ERROR in app(get_cluster_marker_genes): {}".format(str(now), e))
+        sys.stdout.flush()
+        return []
+
+    result = [ dict(x) for x in result ]
+    num_genes = result[-1]['rank']
+    num_clusters = result[-1]['cluster']
+    columns = [ 'cluster_'+str(i+1) for i in range(num_clusters) ] 
+
+    rows = []
+    for i in range(num_genes):
+        row = {}
+        row = dict(zip(columns, [ gene['gene_name'] for gene in result[i*num_clusters: (i+1)*num_clusters] ] ))
+        row['rank'] = i+1
+        rows.append(row)
+
+
+    to_json = {'columns': columns}
+    to_json['rows'] = rows
+
+    return to_json
+
+
+@cache.memoize(timeout=3600)
 def median_cluster_mch(gene_info, grouping, clustering):
     """Returns median mch level of a gene for each cluster.
 
@@ -462,23 +507,26 @@ def median_cluster_mch(gene_info, grouping, clustering):
             dict: Cluster_label (key) : median mCH level (value).
     """
 
-    if grouping == 'annotation':
-        gene_info.fillna({'annotation_'+clustering: 'None'}, inplace=True)
-        return gene_info.groupby('annotation_'+clustering, sort=False)[gene_info.columns[-1]].median()
-    elif grouping == 'cluster':
-        return gene_info.groupby('cluster_'+clustering, sort=False)[gene_info.columns[-1]].median()
-    elif grouping == 'dataset':
-        return gene_info.groupby('dataset', sort=False)[gene_info.columns[-1]].median()
-    elif grouping == 'target_region':
-        gene_info['target_region'].fillna('N/A', inplace=True)
-        return gene_info.groupby('target_region', sort=False)[gene_info.columns[-1]].median()
-    elif grouping == 'slice':
-        datasets_all_cells = gene_info['dataset'].tolist()
-        slices_list = [d.split('_')[1] if 'RS2' not in d else d.split('_')[2][2:4] for d in datasets_all_cells]
-        gene_info['slice'] = slices_list
-        return gene_info.groupby('slice', sort=False)[gene_info.columns[-2]].median()
-    elif grouping == 'sex':
-        return gene_info.groupby('sex', sort=False)[gene_info.columns[-1]].median()
+    if gene_info is not None:
+        if grouping == 'annotation':
+            gene_info.fillna({'annotation_'+clustering: 'None'}, inplace=True)
+            return gene_info.groupby('annotation_'+clustering, sort=False)[gene_info.columns[-1]].median()
+        elif grouping == 'cluster':
+            return gene_info.groupby('cluster_'+clustering, sort=False)[gene_info.columns[-1]].median()
+        elif grouping == 'dataset':
+            return gene_info.groupby('dataset', sort=False)[gene_info.columns[-1]].median()
+        elif grouping == 'target_region':
+            gene_info['target_region'].fillna('N/A', inplace=True)
+            return gene_info.groupby('target_region', sort=False)[gene_info.columns[-1]].median()
+        elif grouping == 'slice':
+            datasets_all_cells = gene_info['dataset'].tolist()
+            slices_list = [d.split('_')[1] if 'RS2' not in d else d.split('_')[2][2:4] for d in datasets_all_cells]
+            gene_info['slice'] = slices_list
+            return gene_info.groupby('slice', sort=False)[gene_info.columns[-2]].median()
+        elif grouping == 'sex':
+            return gene_info.groupby('sex', sort=False)[gene_info.columns[-1]].median()
+        else:
+            return None
     else:
         return None
 
@@ -667,18 +715,48 @@ def get_snATAC_tsne_options(ensemble):
 
 @cache.memoize(timeout=3600)
 def get_gene_by_name(gene_query):
-    """Retrieve gene information by name.
+    """Retrieve gene information by name. Mainly used to fill gene search bar.
+    Does not search for exact matches.
 
     Arguments:
-        gene_query (str): Query string of gene name.
+        gene_query (list): List of gene name strings
 
     Returns:
-        DataFrame: Info for queried gene. Columns are gene_id, gene_name, chr, start, end, strand, gene_type.
+        DataFrame: Info for queried gene(s). Columns are gene_id, gene_name, chr, start, end, strand, gene_type.
     """
 
-    gene_query = gene_query.lower()
+    gene_query = [ gene.lower()+"%" for gene in gene_query ]
 
-    df = pd.read_sql("SELECT * FROM genes WHERE lower(gene_name) LIKE %s", params=(gene_query+"%",), con=db.get_engine(current_app, 'methylation_data'))
+    sql_query = "SELECT * FROM genes WHERE " + "lower(gene_name) LIKE %s OR " * len(gene_query)
+    sql_query = sql_query[:-3]
+
+    df = pd.read_sql(sql_query, params=(gene_query,), con=db.get_engine(current_app, 'methylation_data'))
+
+    return df.to_dict('records')
+
+
+@cache.memoize(timeout=3600)
+def get_gene_by_name_exact(gene_query):
+    """Same as get_gene_by_name but for exact matches only.
+
+    Arguments:
+        gene_query (list): List of gene name strings
+
+    Returns:
+        DataFrame: Info for queried gene(s). Columns are gene_id, gene_name, chr, start, end, strand, gene_type.
+    """
+
+    gene_query = [ gene.lower() for gene in gene_query ]
+    placeholders_str = "%s, " * len(gene_query)
+    placeholders_str = placeholders_str[:-2]
+    sql_query = "SELECT * FROM genes WHERE " + "lower(gene_name) IN (" + placeholders_str+ ")"
+    sql_query += " ORDER BY CASE lower(gene_name) "
+
+    for i, gene in enumerate(gene_query):
+        sql_query += "WHEN '{}' THEN {} ".format(gene, i+1)
+    sql_query += "END"
+
+    df = pd.read_sql(sql_query, params=(gene_query,), con=db.get_engine(current_app, 'methylation_data'))
 
     return df.to_dict('records')
     
@@ -688,19 +766,29 @@ def get_gene_by_id(gene_query):
     """Retrieve gene information by gene id.
 
     Arguments:
-        ensemble (str): Name of ensemble.
-        gene_query (str): Query string of gene ID.
+        gene_query (list): list of gene_id strings.
 
     Returns:
         DataFrame: Info for queried gene. Columns are gene_id, gene_name, chr, start, end, strand, gene_type.
     """
 
-    result = db.get_engine(current_app, 'methylation_data').execute("SELECT * FROM genes WHERE gene_id LIKE %s", (gene_query+"%",)).fetchone()
+    gene_query_wildcard = [ gene+'%' for gene in gene_query ] 
+    sql_query = "SELECT * FROM genes WHERE " + "gene_id LIKE %s OR " * len(gene_query_wildcard)
+    sql_query = sql_query[:-3]
 
-    if result is None:
-        return {}
-    else:
-        return dict(result)
+    df = pd.read_sql(sql_query, params=(gene_query_wildcard,), con=db.get_engine(current_app, 'methylation_data'))
+
+    #reorder genes to original order since SQL doesn't keep order.
+    new_index = []
+    for index, row in df.iterrows():
+        for i, gene_id in enumerate(gene_query):
+            if gene_id in row['gene_id']:
+                new_index.append(i)
+                break
+    df.index = new_index
+    df.sort_index(inplace=True)
+
+    return df.to_dict('records')
 
 
 @cache.memoize(timeout=3600)
@@ -725,7 +813,7 @@ def get_corr_genes(ensemble, query):
         sys.stdout.flush()
         return []
 
-    corr_genes = [ {"rank": i+1, "gene_name": get_gene_by_id(row.gene2)['gene_name'], "correlation": row.correlation, "gene_id": row.gene2} for i, row in enumerate(corr_genes)]
+    corr_genes = [ {"rank": i+1, "gene_name": get_gene_by_id(row.gene2)[0]['gene_name'], "correlation": row.correlation, "gene_id": row.gene2} for i, row in enumerate(corr_genes)]
     return corr_genes
 
 
@@ -831,7 +919,7 @@ def get_mult_gene_methylation(ensemble, methylation_type, genes, grouping, clust
 
     Arguments:
         ensemble (str): Name of ensemble.
-        methylation_type (str): Type of methylation to visualize. "mch" or "mcg"
+        methylation_type (str): Type of methylation to visualize. "mch", "mcg", etc
         genes ([str]): List of gene IDs to query.
         grouping (str): Variable for grouping cells. "cluster", "annotation", or "dataset".
         clustering (str): Different clustering algorithms and parameters. 'lv' = Louvain clustering.
@@ -849,7 +937,7 @@ def get_mult_gene_methylation(ensemble, methylation_type, genes, grouping, clust
     context = methylation_type[1:]
     genes = [gene+"%" for gene in genes]
 
-    # This query is just to fix gene id's missing the ensemble version number. 
+    # This query is just to fix gene id's missing the Ensembl version number. 
     # Necessary because the table name must match exactly with whats on the MySQL database.
     # Ex. ENSMUSG00000026787 is fixed to ENSMUSG00000026787.3
     first_query = "SELECT gene_id FROM genes WHERE gene_id LIKE %s" + " OR gene_id LIKE %s" * (len(genes)-1)
@@ -902,6 +990,9 @@ def get_mult_gene_methylation(ensemble, methylation_type, genes, grouping, clust
         if first:
             df_coords = df_all
         first = False
+
+
+    df_all[[methylation_type, context]] = df_all[[methylation_type, context]].apply(pd.to_numeric)
 
     df_avg_methylation = df_all.groupby(by='cell_id', as_index=False)[[methylation_type, context]].mean()
     df_coords.update(df_avg_methylation)
@@ -1088,21 +1179,22 @@ def get_snATAC_scatter(ensemble, genes_query, grouping, ptile_start, ptile_end, 
 
     genes = genes_query.split()
 
-    gene_name = ""
+    gene_name_str = ""
     x, y, text, mch = list(), list(), list(), list()
 
     if len(genes) == 1:
         points = get_gene_snATAC(ensemble, genes[0], grouping, True)
-        gene_name = get_gene_by_id(genes[0])['gene_name']
+        gene_name = get_gene_by_id(genes[0])[0]['gene_name']
         title = 'Gene body snATAC normalized counts: ' + gene_name
     else:
         points = get_mult_gene_snATAC(ensemble, genes, grouping)
-        for i, gene in enumerate(genes):
+        gene_infos = get_gene_by_id(genes)
+        for i, gene in enumerate(gene_infos):
             if i > 0 and i % 10 == 0:
-                gene_name += "<br>"
-            gene_name += get_gene_by_id(gene)['gene_name'] + '+'
-        gene_name = gene_name[:-1]
-        title = 'Avg. Gene body snATAC normalized counts: <br>' + gene_name
+                gene_name_str += "<br>"
+            gene_name_str += gene['gene_name'] + '+'
+        gene_name_str = gene_name_str[:-1]
+        title = 'Avg. Gene body snATAC normalized counts: <br>' + gene_name_str
 
     if points is None:
         raise FailToGraphException
@@ -1319,8 +1411,7 @@ def get_snATAC_scatter(ensemble, genes_query, grouping, ptile_start, ptile_end, 
             'mirror': False,
             'range':[bottom_y,top_y]
         },
-        hovermode='closest',
-        hoverdistance='10',)
+        hovermode='closest',)
 
     
     fig = tools.make_subplots(
@@ -1388,21 +1479,22 @@ def get_methylation_scatter(ensemble, tsne_type, methylation_type, genes_query, 
 
     genes = genes_query.split()
 
-    gene_name = ""
+    gene_name_str = ""
     x, y, text, mch = list(), list(), list(), list()
 
     if len(genes) == 1:
         points = get_gene_methylation(ensemble, methylation_type, genes[0], grouping, clustering, level, True, tsne_type)
-        gene_name = get_gene_by_id(genes[0])['gene_name']
-        title = 'Gene body ' + methylation_type + ': ' + gene_name
+        gene_name_str = get_gene_by_id(genes[0])[0]['gene_name']
+        title = 'Gene body ' + methylation_type + ': ' + gene_name_str
     else:
         points = get_mult_gene_methylation(ensemble, methylation_type, genes, grouping, clustering, level, tsne_type)
-        for i, gene in enumerate(genes):
+        gene_infos = get_gene_by_id(genes)
+        for i, gene in enumerate(gene_infos):
             if i > 0 and i % 10 == 0:
-                gene_name += '<br>'
-            gene_name += get_gene_by_id(gene)['gene_name'] + '+'
-        gene_name = gene_name[:-1]
-        title = 'Avg. Gene body ' + methylation_type + ': <br>' + gene_name
+                gene_name_str += '<br>'
+            gene_name_str += gene['gene_name'] + '+'
+        gene_name_str = gene_name_str[:-1]
+        title = 'Avg. Gene body ' + methylation_type + ': <br>' + gene_name_str
 
     if points is None:
         raise FailToGraphException
@@ -1900,13 +1992,15 @@ def get_mch_heatmap(ensemble, methylation_type, grouping, clustering, level, pti
     title = level.title() + " gene body " + methylation_type + " by cluster " + normal_or_original + ": <br>"
     genes= query.split()
 
+    print(genes)
     gene_info_df = pd.DataFrame()
-    for i, gene_id in enumerate(genes):
-        gene_name = get_gene_by_id(gene_id)['gene_name']
+    gene_infos = get_gene_by_id(genes)
+    for i, gene in enumerate(gene_infos):
+        gene_name = gene['gene_name']
         if i > 0 and i % 10 == 0:
             title += "<br>"
         title += gene_name + "+"
-        gene_info_df[gene_name] = median_cluster_mch(get_gene_methylation(ensemble, methylation_type, gene_id, grouping, clustering, level, True), grouping, clustering)
+        gene_info_df[gene_name] = median_cluster_mch(get_gene_methylation(ensemble, methylation_type, gene['gene_id'], grouping, clustering, level, True), grouping, clustering)
         if gene_info_df[gene_name].empty:
             raise FailToGraphException
 
@@ -2149,12 +2243,13 @@ def get_snATAC_heatmap(ensemble, grouping, ptile_start, ptile_end, normalize_row
     genes = query.split()
 
     gene_info_df = pd.DataFrame()
-    for i, gene_id in enumerate(genes):
-        gene_name = get_gene_by_id(gene_id)['gene_name']
+    gene_infos = get_gene_by_id(genes)
+    for i, gene in enumerate(gene_infos):
+        gene_name = gene['gene_name']
         if i > 0 and i % 10 == 0:
             title += "<br>"
         title += gene_name + "+"
-        gene_info_df[gene_name] = median_cluster_snATAC(get_gene_snATAC(ensemble, gene_id, grouping, True), grouping)
+        gene_info_df[gene_name] = median_cluster_snATAC(get_gene_snATAC(ensemble, gene['gene_id'], grouping, True), grouping)
 
     title = title[:-1] # Gets rid of last '+'
 
@@ -2436,7 +2531,7 @@ def get_mch_box(ensemble, methylation_type, gene, grouping, clustering, level, o
                 ))
         trace['y'].append(point[methylation_type + '/' + context + '_' + level])
 
-    gene_name = get_gene_by_id(gene)['gene_name']
+    gene_name = get_gene_by_id(gene)[0]['gene_name']
 
     layout = Layout(
         autosize=True,
@@ -2561,7 +2656,7 @@ def get_snATAC_box(ensemble, gene, grouping, outliers):
                 ))
         trace['y'].append(point['normalized_counts'])
 
-    gene_name = get_gene_by_id(gene)['gene_name']
+    gene_name = get_gene_by_id(gene)[0]['gene_name']
 
     layout = Layout(
         autosize=True,
