@@ -60,7 +60,7 @@
                                     <div class="col-sm-12">
                                         <ul class="nav nav-tabs" role="tablist">
                                             <li role="presentation" class="active"><a id="methylation-box-tab-btn" href="#methylation-scatter" role="tab" data-toggle="tab">Scatter</a></li>
-                                            <li role="presentation"><a id="methylation-box-tab-btn" href="#methylation-box" role="tab" data-toggle="tab">Box plot / Heatmap</a></li>
+                                            <li role="presentation"><a id="methylation-box-tab-btn" href="#methylation-box" role="tab" data-toggle="tab" onclick="setTimeout($('#clusterMarkerGeneTable').DataTable().draw,200)">Box plot / Heatmap</a></li>
                                         </ul>
                                     </div>
                                     <div class="col-md-12 col-sm-12 flex-item tab-content" id="methyl_scatter_div" style="padding: 0px">

@@ -815,7 +815,7 @@ function initClusterSpecificMarkerGeneTable() {
             clusterMarkerGeneTable = $('#clusterMarkerGeneTable').DataTable( {
                 "destroy": true,
                 "ordering": false,
-                "scrollX": true,
+                "scrollX": "100%",
                 "select": true,
                 "lengthChange": true,
                 "columns": columns,
