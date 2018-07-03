@@ -484,7 +484,7 @@ def get_cluster_marker_genes(ensemble, clustering):
     rows = []
     for i in range(num_genes):
         row = {}
-        row = dict(zip(columns, [ gene['gene_name'] for gene in result[i*num_clusters: (i+1)*num_clusters] ] ))
+        row = dict(zip(columns, [ gene['gene_name'] for gene in result[i:: num_genes] ] ))
         row['rank'] = i+1
         rows.append(row)
 
@@ -1184,7 +1184,7 @@ def get_snATAC_scatter(ensemble, genes_query, grouping, ptile_start, ptile_end, 
 
     if len(genes) == 1:
         points = get_gene_snATAC(ensemble, genes[0], grouping, True)
-        gene_name = get_gene_by_id(genes[0])[0]['gene_name']
+        gene_name = get_gene_by_id([ genes[0] ])[0]['gene_name']
         title = 'Gene body snATAC normalized counts: ' + gene_name
     else:
         points = get_mult_gene_snATAC(ensemble, genes, grouping)
@@ -1484,7 +1484,7 @@ def get_methylation_scatter(ensemble, tsne_type, methylation_type, genes_query, 
 
     if len(genes) == 1:
         points = get_gene_methylation(ensemble, methylation_type, genes[0], grouping, clustering, level, True, tsne_type)
-        gene_name_str = get_gene_by_id(genes[0])[0]['gene_name']
+        gene_name_str = get_gene_by_id([ genes[0] ])[0]['gene_name']
         title = 'Gene body ' + methylation_type + ': ' + gene_name_str
     else:
         points = get_mult_gene_methylation(ensemble, methylation_type, genes, grouping, clustering, level, tsne_type)
@@ -2531,7 +2531,7 @@ def get_mch_box(ensemble, methylation_type, gene, grouping, clustering, level, o
                 ))
         trace['y'].append(point[methylation_type + '/' + context + '_' + level])
 
-    gene_name = get_gene_by_id(gene)[0]['gene_name']
+    gene_name = get_gene_by_id([ gene ])[0]['gene_name']
 
     layout = Layout(
         autosize=True,
@@ -2656,7 +2656,7 @@ def get_snATAC_box(ensemble, gene, grouping, outliers):
                 ))
         trace['y'].append(point['normalized_counts'])
 
-    gene_name = get_gene_by_id(gene)[0]['gene_name']
+    gene_name = get_gene_by_id([ gene ])[0]['gene_name']
 
     layout = Layout(
         autosize=True,
