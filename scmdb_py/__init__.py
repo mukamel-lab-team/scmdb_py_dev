@@ -19,8 +19,8 @@ from flask_wtf import CsrfProtect
 
 # Necessary because brainome doesn't have mysql installed.
 # If running the browser on the server where the MySQL server lives, make sure to comment out the two lines below (currently MySQL is on Banjo).
-#import pymysql
-#pymysql.install_as_MySQLdb()
+import pymysql
+pymysql.install_as_MySQLdb()
 
 class MiniJSONEncoder(JSONEncoder):
     """Minify JSON output."""
@@ -45,7 +45,8 @@ def create_app(configfile=None):
     app = Flask(__name__)
     AppConfig(app)
     Bootstrap(app)
-    app.config['SQLALCHEMY_DATABASE_URI'] = 'sqlite:///' + os.path.join(basedir, 'user-login.sqlite')
+    sql_dir = os.path.join(basedir, 'tmp/')
+    app.config['SQLALCHEMY_DATABASE_URI'] = 'sqlite:///' + os.path.join(sql_dir, 'user-login.sqlite')
     app.config['SQLALCHEMY_TRACK_MODIFICATIONS'] = False
     REDIS_URL = 'http://localhost:6379'
     urllib.parse.uses_netloc.append('redis')
