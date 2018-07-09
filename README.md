@@ -20,7 +20,7 @@
 4. Set up default_config.py.
    * *Make sure to not push default_config.py to github unless you have removed  
 all sensitive information!*
-5. If the machine you are running this on does NOT have mysql installed, uncomment the lines `import pymsysql` and `pymysql.install_as_MySQLdb()` in __init__.py.
+5. If the machine you are running this on does NOT have mysql installed, uncomment the lines `import pymsysql` and `pymysql.install_as_MySQLdb()` in '__init__.py'.
 6. Run.
    * `bash run_dev.sh` *May need to change ports*
 7. On your web browser, go to `localhost:<port>`
