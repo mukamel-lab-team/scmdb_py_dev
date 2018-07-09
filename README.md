@@ -20,15 +20,16 @@
 4. Set up default_config.py.
    * *Make sure to not push default_config.py to github unless you have removed  
 all sensitive information!*
-5. Run.
+5. If the machine you are running this on does NOT have mysql installed, uncomment the lines `import pymsysql` and `pymysql.install_as_MySQLdb()` in __init__.py.
+6. Run.
    * `bash run_dev.sh` *May need to change ports*
-6. On your web browser, go to `localhost:<port>`
-7. If running from a remote host (ie Banjo, Brainome), you must create an ssh tunnel  
+7. On your web browser, go to `localhost:<port>`
+8. If running from a remote host (ie Banjo, Brainome), you must create an ssh tunnel  
 from your local machine.
    * `ssh -NfL localhost:<port>:localhost:<port> <user_name>@<server_name>`
 
 ## Deployment (requires sudo access)
-1. Follow steps 1-4 of development setup.
+1. Follow steps 1-5 of development setup.
 2. Move whole directory to `/var/www/`
    * `cd ..`
    * `sudo mv scmdb_py_dev /var/www/scmdb_py`
@@ -43,6 +44,15 @@ from your local machine.
 then install `sudo apt install libapache2-mod-wsgi-py3`
 7. Restart apache2
    * `sudo service apache2 restart`
+
+
+## Troubleshooting deployment setup
+1. Read the error log
+   * `sudo less /var/log/apache2/brainome-error_log`
+2. Double check permissions for the /static and /tmp directory.
+3. Make sure you did steps 3-6 of deployment setup.
+   * mod_wsgi only works if it has been compiled with the same version of python as the virtualenv.
+4. Check if default_config.py is properly setup.
 
 
 
@@ -105,3 +115,4 @@ sends an AJAX request via HTML GET or POST method.
 HTML for plots, and returns data as a list or dict to frontend.py.
 5. frontend.py sends the data back to the client in JSON format.
 6. Javascript updates what the user sees on screen. 
+
