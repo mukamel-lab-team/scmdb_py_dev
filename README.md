@@ -18,6 +18,7 @@
    * `chmod 777 scmdb_py/tmp`
    * Find and move user-login.sqlite file to scmdb_py/tmp and change permissions to read+write+execute on all.
 4. Set up default_config.py.
+   * Leave `APPLICATION_ROOT` blank
    * *Make sure to not push default_config.py to github unless you have removed  
 all sensitive information!*
 5. If the machine you are running this on does NOT have mysql installed, uncomment the lines `import pymsysql` and `pymysql.install_as_MySQLdb()` in \__init__.py.
@@ -33,16 +34,19 @@ from your local machine.
 2. Move whole directory to `/var/www/`
    * `cd ..`
    * `sudo mv scmdb_py_dev /var/www/scmdb_py`
-3. Edit .wsgi file to point to proper file paths.
-4. Edit .conf file in `/etc/apache2/sites-enabled` to point to proper file paths
-   * 000-default.conf and default-ssl.conf
-5. Make sure you have no syntax errors in the apache2 conf.
+3. Set `APPLICATION_ROOT` in default_config.py.
+   * This sets the url root for the portal.
+   * ex. To host the portal on website.com/portal, set `APPLICATION_ROOT='/portal'`.
+4. Edit .wsgi file to point to proper file paths.
+5. Edit .conf file in `/etc/apache2/sites-enabled` to point to proper file paths
+   * 000-default.conf (http configuration) and default-ssl.conf (https configuration)
+6. Make sure you have no syntax errors in the apache2 conf.
    * `apachectl configtest`
-6. Make sure the proper version of mod_wsgi is installed (must be python3)
+7. Make sure the proper version of mod_wsgi is installed (must be python3)
    * `ldd /usr/lib/apache2/modules/mod_wsgi.so`
    * If not installed or compiled with the wrong version of python, first remove the old package using apt,   
 then install `sudo apt install libapache2-mod-wsgi-py3`
-7. Restart apache2
+8. Restart apache2
    * `sudo service apache2 restart`
 
 
