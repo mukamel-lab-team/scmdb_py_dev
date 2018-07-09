@@ -15,7 +15,7 @@
 
 3. Create directory with proper permissions for user-login.sqlite.
    * `mkdir scmdb_py/tmp`
-   * `chown 777 scmdb_py/tmp`
+   * `chmod 777 scmdb_py/tmp`
    * Find and move user-login.sqlite file to scmdb_py/tmp and change permissions to read+write+execute on all.
 4. Set up default_config.py.
    * *Make sure to not push default_config.py to github unless you have removed  
@@ -26,6 +26,24 @@ all sensitive information!*
 7. If running from a remote host (ie Banjo, Brainome), you must create an ssh tunnel  
 from your local machine.
    * `ssh -NfL localhost:<port>:localhost:<port> <user_name>@<server_name>`
+
+## Deployment (requires sudo access)
+1. Follow steps 1-4 of development setup.
+2. Move whole directory to `/var/www/`
+   * `cd ..`
+   * `sudo mv scmdb_py_dev /var/www/scmdb_py`
+3. Edit .wsgi file to point to proper file paths.
+4. Edit .conf file in `/etc/apache2/sites-enabled` to point to proper file paths
+   * 000-default.conf and default-ssl.conf
+5. Make sure you have no syntax errors in the apache2 conf.
+   * `apachectl configtest`
+6. Make sure the proper version of mod_wsgi is installed (must be python3)
+   * `ldd /usr/lib/apache2/modules/mod_wsgi.so`
+   * If not installed or compiled with the wrong version of python, first remove the old package using apt,   
+then install `sudo apt install libapache2-mod-wsgi-py3`
+7. Restart apache2
+   * `sudo service apache2 restart`
+
 
 
 ## Directory structure
