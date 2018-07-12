@@ -2110,8 +2110,8 @@ def get_mch_heatmap(ensemble, methylation_type, grouping, clustering, level, pti
         )
 
     layout = Layout(
-        autosize=True,
-        height=550,
+        # autosize=True,
+        height=550*len(genes)/20, # EAM Adjust the height of the heatmap according to the number of genes displayed
         width=1000,
         # title=title,
         # titlefont={'color': 'rgba(1,2,2,1)',
@@ -2202,7 +2202,7 @@ def get_mch_heatmap(ensemble, methylation_type, grouping, clustering, level, pti
 
     layout['annotations'].extend([Annotation(text=title,
                                              x=0.5,
-                                             y=1.4,
+                                             y=1.3,
                                              xanchor="center",
                                              yanchor="top",
                                              showarrow=False,
