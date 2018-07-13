@@ -169,9 +169,24 @@
             #}
 		</div>
 
-        <div class="row">
-            <div class="col-sm-12" id="cluster-specific-marker-genes">
-                {% include "components/cluster_specific_marker_genes.html" %}
+        <!-- Cluster specific marker genes table -->
+        <div style="position:relative; left:0;">
+            <div class="col-md-12 col-sm-12">
+                <div class="panel panel-default panel-main" style="overflow-x: auto; margin-left:auto; margin-right:auto;">
+                    <div class="panel-heading">
+                        <div class="panel-title">
+                            <a class="accordion-toggle" data-toggle="collapse" title="" href="#cluster-specific-marker-genes" style="margin-top: 0px;" data-original-title="Collapse Cluster Specific Marker Genes Table Container"><b>Cluster specific marker genes</b>&nbsp;
+                            <div class="accordion-chevron" style="display: inline-block;"></div>
+                            </a>
+
+                            <div class="panel-body collapse in" id="cluster-specific-marker-genes" style="padding-top:10px;">
+                                <div class="col-sm-12" id="cluster-specific-marker-genes">
+                                    {% include "components/cluster_specific_marker_genes.html" %}
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
             </div>
         </div>
 	</div>
