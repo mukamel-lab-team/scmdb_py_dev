@@ -9,27 +9,27 @@ BOOTSTRAP_SERVE_LOCAL = False
 JSONIFY_PRETTYPRINT_REGULAR = False
 
 # Minify HTML to conserve network transfer
-MINIFY_PAGE = True  
+MINIFY_PAGE = True
 
 # Statement for enabling the development environment
 #DEBUG = True
 
 THREADS_PER_PAGE = 2
 
-MAIL_SERVER = ''
+MAIL_SERVER = 'smtp.ucsd.edu'
 MAIL_PORT = 465
 MAIL_USE_TLS = False
 MAIL_USE_SSL = True
 MAIL_DEBUG =  True
-MAIL_USERNAME = ''
+MAIL_USERNAME = 'lab@brainome.ucsd.edu'
 
-REQUEST_EMAIL = ''
+REQUEST_EMAIL = 'f7xie@ad.ucsd.edu'
 
-MYSQL_USER = ''
-MYSQL_PW = ''
-MYSQL_DB_methylation = ''
-MYSQL_DB_snATAC = ''
-MYSQL_SERVER_NAME = ''
+MYSQL_USER = 'cndd_annoj'
+MYSQL_PW = 'jonna_ddnc'
+MYSQL_DB_methylation = 'CEMBA'
+MYSQL_DB_snATAC = 'CEMBA_snATAC'
+MYSQL_SERVER_NAME = 'localhost'
 SQLALCHEMY_BINDS = {'methylation_data': 'mysql://' + MYSQL_USER + ':' + MYSQL_PW + '@' + MYSQL_SERVER_NAME + '/' + MYSQL_DB_methylation,
                     'snATAC_data': 'mysql://' + MYSQL_USER + ':' + MYSQL_PW + '@' + MYSQL_SERVER_NAME + '/' + MYSQL_DB_snATAC}
 
@@ -37,9 +37,9 @@ SQLALCHEMY_BINDS = {'methylation_data': 'mysql://' + MYSQL_USER + ':' + MYSQL_PW
 CSRF_ENABLED = True
 
 # Use a secure, unique and absolutely secret key for
-# signing the data. 
-CSRF_SESSION_KEY = ''
+# signing the data.
+CSRF_SESSION_KEY = 's3cr3t'
 
-SECRET_KEY = ''
+SECRET_KEY = 's3cr3t'
 
-APPLICATION_ROOT = ''
+APPLICATION_ROOT = '/portal_dev'

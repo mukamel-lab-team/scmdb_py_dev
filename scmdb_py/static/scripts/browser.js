@@ -1181,6 +1181,9 @@ function initClusterSpecificMarkerGeneTable() {
                 "lengthChange": true,
                 "columns": columns,
                 "data": data.rows,
+                "scrollY":        '70vh',
+        		"scrollCollapse": true,
+        		"paging":         false
             });
             clusterMarkerGeneTable.select.items('column');
             delayLoad(clusterMarkerGeneTable.draw());
