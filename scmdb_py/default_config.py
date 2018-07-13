@@ -42,4 +42,4 @@ CSRF_SESSION_KEY = 's3cr3t'
 
 SECRET_KEY = 's3cr3t'
 
-APPLICATION_ROOT = '/portal_dev'
+APPLICATION_ROOT = '/portal'
