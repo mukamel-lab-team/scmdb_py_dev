@@ -16,17 +16,16 @@ MINIFY_PAGE = True
 
 THREADS_PER_PAGE = 2
 
-MAIL_SERVER = 'smtp.ucsd.edu'
-MAIL_PORT = 465
+MAIL_SERVER = ''
+MAIL_PORT = 
 MAIL_USE_TLS = False
 MAIL_USE_SSL = True
 MAIL_DEBUG =  True
-MAIL_USERNAME = 'lab@brainome.ucsd.edu'
+MAIL_USERNAME = ''
+REQUEST_EMAIL = ''
 
-REQUEST_EMAIL = 'f7xie@ad.ucsd.edu'
-
-MYSQL_USER = 'cndd_annoj'
-MYSQL_PW = 'jonna_ddnc'
+MYSQL_USER = ''
+MYSQL_PW = ''
 MYSQL_DB_methylation = 'CEMBA'
 MYSQL_DB_snATAC = 'CEMBA_snATAC'
 MYSQL_SERVER_NAME = 'localhost'
@@ -38,8 +37,8 @@ CSRF_ENABLED = True
 
 # Use a secure, unique and absolutely secret key for
 # signing the data.
-CSRF_SESSION_KEY = 's3cr3t'
+CSRF_SESSION_KEY = ''
 
-SECRET_KEY = 's3cr3t'
+SECRET_KEY = ''
 
 APPLICATION_ROOT = '/portal'
