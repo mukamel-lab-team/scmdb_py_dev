@@ -2110,15 +2110,15 @@ def get_mch_heatmap(ensemble, methylation_type, grouping, clustering, level, pti
         )
 
     layout = Layout(
-        height=max(550*len(genes)/20,300), # EAM Adjust the height of the heatmap according to the number of genes displayed
+        height=max(550*len(genes)/20,450), # EAM Adjust the height of the heatmap according to the number of genes displayed
         width=1000,
         # title=title,
         # titlefont={'color': 'rgba(1,2,2,1)',
         #            'size': 16},
-        # margin={'l': 0,
-        #         'r': 0,
-        #         'b': 100,
-        #         't': 0,},
+        margin={'l': 0,
+                'r': 0,
+                'b': 100,
+                't': 150,},
         xaxis={
             'side': 'bottom',
             'tickangle': -45,
