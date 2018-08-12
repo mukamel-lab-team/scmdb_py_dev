@@ -31,6 +31,8 @@ cluster_annotation_order = ['mL2/3', 'mL4', 'mL5-1', 'mL5-2', 'mDL-1', 'mDL-2', 
                             'mNdnf-2', 'mPv', 'mSst-1', 'mSst-2', 'None']
 methylation_types_order = ['mCH', 'mCG', 'mCA', 'mCHmCG', 'mCHmCA', 'mCAmCG']
 
+num_sigfigs_ticklabels = 2;
+
 class FailToGraphException(Exception):
     """Fail to generate data or graph due to an internal error."""
     pass
@@ -1321,10 +1323,10 @@ def get_snATAC_scatter(ensemble, genes_query, grouping, ptile_start, ptile_end, 
     colorbar_tickval[0] = start
     colorbar_tickval.append(end)
     colorbar_ticktext = [
-        str(round(x, 3)) for x in arange(start, end, (end - start) / 4)
+        str(round(x, num_sigfigs_ticklabels)) for x in arange(start, end, (end - start) / 4)
     ]
-    colorbar_ticktext[0] = '<' + str(round(start, 3))
-    colorbar_ticktext.append('>' + str(round(end, 3)))
+    colorbar_ticktext[0] = '<' + str(round(start, num_sigfigs_ticklabels))
+    colorbar_ticktext.append('>' + str(round(end, num_sigfigs_ticklabels)))
 
     trace_ATAC = Scattergl(
         mode='markers',
@@ -1631,10 +1633,10 @@ def get_methylation_scatter(ensemble, tsne_type, methylation_type, genes_query, 
         colorbar_tickval[0] = start
         colorbar_tickval.append(end)
         colorbar_ticktext = [
-            str(round(x, 3)) for x in arange(start, end, (end - start) / 4)
+            str(round(x, num_sigfigs_ticklabels)) for x in arange(start, end, (end - start) / 4)
         ]
-        colorbar_ticktext[0] = '<' + str(round(start, 3))
-        colorbar_ticktext.append('>' + str(round(end, 3)))
+        colorbar_ticktext[0] = '<' + str(round(start, num_sigfigs_ticklabels))
+        colorbar_ticktext.append('>' + str(round(end, num_sigfigs_ticklabels)))
 
         trace_methylation = Scatter(
             mode='markers',
@@ -1825,10 +1827,10 @@ def get_methylation_scatter(ensemble, tsne_type, methylation_type, genes_query, 
         colorbar_tickval[0] = start
         colorbar_tickval.append(end)
         colorbar_ticktext = [
-            str(round(x, 3)) for x in arange(start, end, (end - start) / 4)
+            str(round(x, num_sigfigs_ticklabels)) for x in arange(start, end, (end - start) / 4)
         ]
-        colorbar_ticktext[0] = '<' + str(round(start, 3))
-        colorbar_ticktext.append('>' + str(round(end, 3)))
+        colorbar_ticktext[0] = '<' + str(round(start, num_sigfigs_ticklabels))
+        colorbar_ticktext.append('>' + str(round(end, num_sigfigs_ticklabels)))
 
         trace_methylation = Scatter3d(
             mode='markers',
@@ -2068,16 +2070,16 @@ def get_mch_heatmap(ensemble, methylation_type, grouping, clustering, level, pti
     colorbar_tickval[0] = start
     colorbar_tickval.append(end)
     colorbar_ticktext = [
-        str(round(x, 2)) for x in arange(start, end, (end - start) / 4)
+        str(round(x, num_sigfigs_ticklabels)) for x in arange(start, end, (end - start) / 4)
     ]
     if normalize_row == True:
-        colorbar_ticktext[0] = str(round(start, 3))
+        colorbar_ticktext[0] = str(round(start, num_sigfigs_ticklabels))
     else:
-        if (round(start,2)) == 0:
-            colorbar_ticktext[0] = str(round(start,3))
+        if (round(start,num_sigfigs_ticklabels)) == 0:
+            colorbar_ticktext[0] = str(round(start,num_sigfigs_ticklabels))
         else:
-            colorbar_ticktext[0] = '<' + str(round(start, 3))
-    colorbar_ticktext.append('>' + str(round(end, 3)))
+            colorbar_ticktext[0] = '<' + str(round(start, num_sigfigs_ticklabels))
+    colorbar_ticktext.append('>' + str(round(end, num_sigfigs_ticklabels)))
 
     # Due to a weird bug(?) in plotly, the number of elements in tickvals and ticktext 
     # must be greater than or equal to number of genes in query. Else, javascript throws 
@@ -2085,9 +2087,9 @@ def get_mch_heatmap(ensemble, methylation_type, grouping, clustering, level, pti
     while len(colorbar_tickval) < len(genes):
         colorbar_tickval.insert(0,start)
         if normalize_row == True:
-            colorbar_ticktext.insert(0, str(round(start, 3)))
+            colorbar_ticktext.insert(0, str(round(start, num_sigfigs_ticklabels)))
         else:
-            colorbar_ticktext.insert(0, '<' + str(round(start, 3)))
+            colorbar_ticktext.insert(0, '<' + str(round(start, num_sigfigs_ticklabels)))
 
     trace = Heatmap(
         x=x,
@@ -2314,13 +2316,13 @@ def get_snATAC_heatmap(ensemble, grouping, ptile_start, ptile_end, normalize_row
     colorbar_tickval[0] = start
     colorbar_tickval.append(end)
     colorbar_ticktext = [
-        str(round(x, 3)) for x in arange(start, end, (end - start) / 4)
+        str(round(x, num_sigfigs_ticklabels)) for x in arange(start, end, (end - start) / 4)
     ]
     if normalize_row == True:
-        colorbar_ticktext[0] = str(round(start, 3))
+        colorbar_ticktext[0] = str(round(start, num_sigfigs_ticklabels))
     else:
-        colorbar_ticktext[0] = '<' + str(round(start, 3))
-    colorbar_ticktext.append('>' + str(round(end, 3)))
+        colorbar_ticktext[0] = '<' + str(round(start, num_sigfigs_ticklabels))
+    colorbar_ticktext.append('>' + str(round(end, num_sigfigs_ticklabels)))
 
     # Due to a weird bug(?) in plotly, the number of elements in tickvals and ticktext 
     # must be greater than or equal to number of genes in query. Else, javascript throws 
@@ -2328,9 +2330,9 @@ def get_snATAC_heatmap(ensemble, grouping, ptile_start, ptile_end, normalize_row
     while len(colorbar_tickval) < len(genes):
         colorbar_tickval.insert(0,start)
         if normalize_row == True:
-            colorbar_ticktext.insert(0, str(round(start, 3)))
+            colorbar_ticktext.insert(0, str(round(start, num_sigfigs_ticklabels)))
         else:
-            colorbar_ticktext.insert(0, '<' + str(round(start, 3)))
+            colorbar_ticktext.insert(0, '<' + str(round(start, num_sigfigs_ticklabels)))
 
     trace = Heatmap(
         x=x,
