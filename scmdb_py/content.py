@@ -2068,12 +2068,12 @@ def get_mch_heatmap(ensemble, methylation_type, grouping, clustering, level, pti
     colorbar_tickval[0] = start
     colorbar_tickval.append(end)
     colorbar_ticktext = [
-        str(round(x, 3)) for x in arange(start, end, (end - start) / 4)
+        str(round(x, 2)) for x in arange(start, end, (end - start) / 4)
     ]
     if normalize_row == True:
         colorbar_ticktext[0] = str(round(start, 3))
     else:
-        if (round(start,3)) == 0:
+        if (round(start,2)) == 0:
             colorbar_ticktext[0] = str(round(start,3))
         else:
             colorbar_ticktext[0] = '<' + str(round(start, 3))
@@ -2538,7 +2538,7 @@ def get_mch_box(ensemble, methylation_type, gene, grouping, clustering, level, o
     layout = Layout(
         autosize=True,
         height=450,
-        width=700,
+        width=1000,
         title='Gene body ' + methylation_type + ' in each cluster: ' + gene_name,
         titlefont={'color': 'rgba(1,2,2,1)',
                    'size': 20},
