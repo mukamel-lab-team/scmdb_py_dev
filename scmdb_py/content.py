@@ -1628,6 +1628,7 @@ def get_methylation_scatter(ensemble, tsne_type, methylation_type, genes_query, 
         mch_dataframe = pd.DataFrame(mch)
         start = mch_dataframe.dropna().quantile(ptile_start)[0].tolist()
         end = mch_dataframe.dropna().quantile(ptile_end).values[0].tolist()
+        end = max(end,start+0.01)
         mch_colors = [set_color_by_percentile(x, start, end) for x in mch]
 
         colorbar_tickval = list(arange(start, end, (end - start) / 4))
