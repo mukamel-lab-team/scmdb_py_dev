@@ -2110,7 +2110,8 @@ def get_mch_heatmap(ensemble, methylation_type, grouping, clustering, level, pti
             'thickness': 10,
             'tickfont': {'size': 10}
             },
-        hoverinfo='text'
+        hoverinfo='text',
+        zmin=start,zmax=end,zauto=False, # Clip the extreme edges of the colorscale
         )
 
     layout = Layout(
@@ -2226,7 +2227,7 @@ def get_mch_heatmap(ensemble, methylation_type, grouping, clustering, level, pti
 
 @cache.memoize(timeout=3600)
 def get_snATAC_heatmap(ensemble, grouping, ptile_start, ptile_end, normalize_row, query):
-    """Generate mCH heatmap comparing multiple genes.
+    """Generate ATAC heatmap comparing multiple genes.
 
     Arguments:
         ensemble (str): Name of ensemble.
@@ -2353,7 +2354,8 @@ def get_snATAC_heatmap(ensemble, grouping, ptile_start, ptile_end, normalize_row
             'thickness': 10,
             'tickfont': {'size': 10}
             },
-        hoverinfo='text'
+        hoverinfo='text',
+        zmin=start,zmax=end,zauto=False, # Clip the extreme edges of the colorscale
         )
 
     layout = Layout(
