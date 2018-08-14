@@ -1317,6 +1317,7 @@ def get_snATAC_scatter(ensemble, genes_query, grouping, ptile_start, ptile_end, 
     ATAC_dataframe = pd.DataFrame(ATAC_counts)
     start = ATAC_dataframe.dropna().quantile(ptile_start)[0].tolist()
     end = ATAC_dataframe.dropna().quantile(ptile_end).values[0].tolist()
+    end = max(end,start+0.01)
     ATAC_colors = [set_color_by_percentile(x, start, end) for x in ATAC_counts]
 
     colorbar_tickval = list(arange(start, end, (end - start) / 4))
