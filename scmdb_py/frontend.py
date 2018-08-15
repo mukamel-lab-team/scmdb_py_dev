@@ -301,7 +301,7 @@ def plot_mch_heatmap(ensemble, methylation_type, grouping, clustering, level, pt
     else:
         normalize_row = False
     try:
-        return get_mch_heatmap(ensemble, methylation_type, grouping, clustering, level, ptile_start, ptile_end, normalize_row, query)
+        return get_mch_heatmap(ensemble, methylation_type, grouping, clustering, level, float(ptile_start), float(ptile_end), normalize_row, query)
     except (FailToGraphException, ValueError) as e:
         print("ERROR (plot_mch_heatmap): {}".format(e))
         return 'Failed to produce mCH levels heatmap plot. Contact maintainer.'
@@ -320,7 +320,7 @@ def plot_snATAC_heatmap(ensemble, grouping, ptile_start, ptile_end):
     else:
         normalize_row = False
     try:
-        return get_snATAC_heatmap(ensemble, grouping, ptile_start, ptile_end, normalize_row, query)
+        return get_snATAC_heatmap(ensemble, grouping, float(ptile_start), float(ptile_end), normalize_row, query)
     except (FailToGraphException, ValueError) as e:
         print("ERROR (plot_snATAC_heatmap): {}".format(e))
         return 'Failed to produce snATAC normalized counts heatmap plot. Contact maintainer.'
