@@ -303,7 +303,23 @@
             max: 1,
             step: 0.05,
             value: [0.05, 0.95],
-        }).on('slideStop', updateMCHScatterPlot).data('slider');
+        }).on('slideStop', function()
+         {
+            updateMCHScatterPlot(); 
+        }
+        ).data('slider');
+
+        methylation_box_color_percentile_Slider = $("#methylation_box_color_percentile").slider({
+            min: 0,
+            max: 1,
+            step: 0.05,
+            value: [0.05, 0.95],
+        }).on('slideStop', function()
+         {
+            updateMethylationHeatmap();
+            updatesnATACHeatmap();
+        }
+        ).data('slider');
 
         if (snATAC_data_available === 1) {
             snATAC_color_percentile_Slider = $("#snATAC_color_percentile").slider({

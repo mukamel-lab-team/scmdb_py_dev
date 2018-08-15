@@ -1181,9 +1181,6 @@ function initClusterSpecificMarkerGeneTable() {
                 "lengthChange": true,
                 "columns": columns,
                 "data": data.rows,
-                "scrollY":        '70vh',
-        		"scrollCollapse": true,
-        		"paging":         false
             });
             clusterMarkerGeneTable.select.items('column');
             delayLoad(clusterMarkerGeneTable.draw());
@@ -1301,7 +1298,7 @@ function updateMCHCombinedBoxPlot(mmu_gid, hsa_gid) {
 function updateMethylationHeatmap() {
     let levelType = $('input[name=levels]').filter(':checked').val();
     let methylationType = $('input[name=mType]').filter(':checked').val();
-    let methylation_color_percentile_Values = methylation_color_percentile_Slider.getValue();
+    let methylation_box_color_percentile_Values = methylation_box_color_percentile_Slider.getValue();
     let genes = $("#geneName").select2('data');
     let genes_query = "";
     let grouping = $("#methylation-box-heat-grouping").val();
@@ -1320,7 +1317,7 @@ function updateMethylationHeatmap() {
 
     $.ajax({
         type: "GET",
-        url: './plot/methylation/heat/'+ensemble+'/'+methylationType+'/'+grouping+'/'+clustering+'/'+levelType+'/'+methylation_color_percentile_Values[0]+'/'+methylation_color_percentile_Values[1]+'?q='+genes_query+'&normalize='+normalize,
+        url: './plot/methylation/heat/'+ensemble+'/'+methylationType+'/'+grouping+'/'+clustering+'/'+levelType+'/'+methylation_box_color_percentile_Values[0]+'/'+methylation_box_color_percentile_Values[1]+'?q='+genes_query+'&normalize='+normalize,
         beforeSend: function() {
             $("#mch-box-loader").show();
             $("#plot-mch-box").html("");
@@ -1341,7 +1338,7 @@ function updateMethylationHeatmap() {
 
 function updatesnATACHeatmap() {
     let levelType = $('input[name=levels]').filter(':checked').val();
-    let snATAC_color_percentile_Values = snATAC_color_percentile_Slider.getValue();
+    let snATAC_color_percentile_Values = methylation_box_color_percentile_Slider.getValue();
     let genes = $("#geneName").select2('data');
     let genes_query = "";
     let grouping = $("#snATAC-box-heat-grouping").val();
