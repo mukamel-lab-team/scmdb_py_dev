@@ -1,8 +1,12 @@
 function initEnsembleDataTable() {
-
+    
+    const numberWithCommas = (x) => {
+      return x.toString().replace(/\B(?=(\d{3})+(?!\d))/g, ",");
+    }
+    
     var table = $('#ensemble-table').DataTable({
         "order": [[3, 'desc']], //Initially sort by "Total Cells (snmC-seq)" in descending order. 
-        "pageLength": 25,
+        "pageLength": 100,
         "ajax": {
             //"url": "/portal/content/ensembles",
             "url": $SCRIPT_ROOT+'/content/ensembles?region=' + region,
@@ -71,7 +75,9 @@ function initEnsembleDataTable() {
  
             // Update footer
             $( api.column( 10 ).footer() ).html(
-                grand_total_methylation_cells +' mC cells, '+ grand_total_snATAC_cells +' ATAC cells across '+grand_total_ensembles+' ensembles'
+                numberWithCommas(grand_total_methylation_cells) +' mC cells, '+ 
+                numberWithCommas(grand_total_snATAC_cells) +
+                ' ATAC cells across '+grand_total_ensembles+' ensembles'
             );
         }
     } );
