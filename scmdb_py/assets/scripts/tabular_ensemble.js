@@ -2,7 +2,7 @@ function initEnsembleDataTable() {
 
     var table = $('#ensemble-table').DataTable({
         "order": [[3, 'desc']], //Initially sort by "Total Cells (snmC-seq)" in descending order. 
-        "pageLength": 100,
+        "pageLength": 25,
         "ajax": {
             //"url": "/portal/content/ensembles",
             "url": $SCRIPT_ROOT+'/content/ensembles?region=' + region,
@@ -38,8 +38,44 @@ function initEnsembleDataTable() {
                     $(nTd).html('<a href="'+$SCRIPT_ROOT+'/'+oData.ensemble_name+'"><i class="fas fa-eye"></i></a>');
                 }
             },
-        ]
-    });
+        ],
+        "fixedHeader": {
+            "header": false,
+            "footer": false,
+        },
+        "footerCallback": function ( row, data, start, end, display ) {
+            var api = this.api(), data;
+
+            // Total mC cells
+            grand_total_methylation_cells = api
+                .column( 4 )
+                .data()
+                .reduce( function (a, b) {
+                    return a+b;
+                }, 0 );
+ 
+            // Total snATAC cells
+            grand_total_snATAC_cells = api
+                .column( 3 )
+                .data()
+                .reduce( function (a, b) {
+                    return a+b;
+                }, 0 );
+ 
+            grand_total_ensembles = api
+                .column( 1 )
+                .data().map(function(e){ return (e>0); })
+                .reduce( function (a, b) {
+                    return a+b;
+                }, 0 );
+ 
+            // Update footer
+            $( api.column( 10 ).footer() ).html(
+                grand_total_methylation_cells +' mC cells, '+ grand_total_snATAC_cells +' ATAC cells across '+grand_total_ensembles+' ensembles'
+            );
+        }
+    } );
+    
 
     $('#ensemble-table tbody').on('click', 'td.details-control', function() {
         var tr = $(this).closest('tr');
@@ -56,6 +92,7 @@ function initEnsembleDataTable() {
             $(this).html('<i class="fas fa-minus-circle"></i>');
         }
     });
+
 }
 
 function format ( d ) {
