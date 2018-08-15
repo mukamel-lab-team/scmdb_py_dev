@@ -2,7 +2,7 @@ function initEnsembleDataTable() {
 
     var table = $('#ensemble-table').DataTable({
         "order": [[3, 'desc']], //Initially sort by "Total Cells (snmC-seq)" in descending order. 
-        "pageLength": 25,
+        "pageLength": 100,
         "ajax": {
             //"url": "/portal/content/ensembles",
             "url": $SCRIPT_ROOT+'/content/ensembles?region=' + region,
