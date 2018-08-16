@@ -2528,6 +2528,11 @@ def get_mch_box(ensemble, methylation_type, gene, grouping, clustering, level, o
                 name_prepend="cluster_"
             color = colors[int(np.where(unique_groups==point[grouping+'_'+clustering])[0]) % len(colors)]
             group = point[grouping+'_'+clustering]
+        if outliers:
+            boxpoints='suspectedoutliers';
+        else:
+            boxpoints=False
+
         trace = traces.setdefault(group, Box(
                 y=list(),
                 name=name_prepend + str(group),
@@ -2536,7 +2541,7 @@ def get_mch_box(ensemble, methylation_type, gene, grouping, clustering, level, o
                     'outliercolor': color,
                     'size': 6
                 },
-                boxpoints='suspectedoutliers',
+                boxpoints=boxpoints,
                 visible=True,
                 showlegend=False,
                 ))
@@ -2648,6 +2653,10 @@ def get_snATAC_box(ensemble, gene, grouping, outliers):
         if grouping == "cluster":
             name_prepend="cluster_"
         grouping += "_ATAC"
+    if outliers:
+        boxpoints='suspectedoutliers';
+    else:
+        boxpoints=False
 
     traces = OrderedDict()
     for point in points.to_dict('records'):
@@ -2661,7 +2670,7 @@ def get_snATAC_box(ensemble, gene, grouping, outliers):
                     'outliercolor': color,
                     'size': 6
                 },
-                boxpoints='suspectedoutliers',
+                boxpoints=boxpoints,
                 visible=True,
                 showlegend=False,
                 ))
