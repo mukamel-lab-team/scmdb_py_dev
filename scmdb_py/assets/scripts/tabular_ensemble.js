@@ -52,7 +52,7 @@ function initEnsembleDataTable() {
 
             // Total mC cells
             grand_total_methylation_cells = api
-                .column( 4 )
+                .column( 3 )
                 .data()
                 .reduce( function (a, b) {
                     return a+b;
@@ -60,7 +60,7 @@ function initEnsembleDataTable() {
  
             // Total snATAC cells
             grand_total_snATAC_cells = api
-                .column( 3 )
+                .column( 4 )
                 .data()
                 .reduce( function (a, b) {
                     return a+b;

@@ -1,5 +1,9 @@
 function initDatasetDataTable() {
     
+    const numberWithCommas = (x) => {
+      return x.toString().replace(/\B(?=(\d{3})+(?!\d))/g, ",");
+    }
+
     var table = $('#dataset-table').DataTable( {
         "order": [[8, 'desc']], //Initially sort by date added.
         "pageLength": 25,
@@ -22,7 +26,33 @@ function initDatasetDataTable() {
             {"data": "slice", "className": 'dt-center'},
             {"data": "target_region_acronym", "className": 'dt-center'},
             {"data": "date_added", "className": 'dt-center'},
-        ]
+        ],
+        "footerCallback": function ( row, data, start, end, display ) {
+            var api = this.api(), data;
+
+            // Total mC cells
+            grand_total_methylation_cells = api
+                .column( 3 )
+                .data()
+                .reduce( function (a, b) {
+                    return a+b;
+                }, 0 );
+ 
+            // Total snATAC cells
+            grand_total_snATAC_cells = api
+                .column( 4 )
+                .data()
+                .reduce( function (a, b) {
+                    return a+b;
+                }, 0 );
+ 
+            // Update footer
+            $( api.column( 8 ).footer() ).html(
+                numberWithCommas(grand_total_methylation_cells) +' mC cells, '+ 
+                numberWithCommas(grand_total_snATAC_cells) +
+                ' ATAC cells'
+            );
+        }
     });
 
     $('#dataset-table tbody').on('click', 'td.details-control', function() {
