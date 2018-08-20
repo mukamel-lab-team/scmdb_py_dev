@@ -21,6 +21,9 @@ from plotly import tools
 from plotly.graph_objs import Layout, Annotation, Box, Scatter, Scattergl, Scatter3d, Heatmap
 import sqlite3
 from sqlite3 import Error
+import plotly.figure_factory as ff
+from scipy.spatial.distance import pdist, squareform
+from scipy.cluster import hierarchy
 
 from . import cache, db
 
@@ -1997,13 +2000,18 @@ def get_mch_heatmap(ensemble, methylation_type, grouping, clustering, level, pti
         normal_or_original = ''
 
     title = level.title() + " gene body " + methylation_type + " by cluster " + normal_or_original + ": <br>"
-    genes= query.split()
+    genes = query.split()
 
-    print(genes)
+    s=''
+    for i in genes:
+        s=s+','+i
+
+    gene_labels = list()
     gene_info_df = pd.DataFrame()
     gene_infos = get_gene_by_id(genes)
     for i, gene in enumerate(gene_infos):
         gene_name = gene['gene_name']
+        gene_labels.append(gene_name)
         if i > 0 and i % 10 == 0:
             title += "<br>"
         title += gene_name + "+"
@@ -2066,6 +2074,41 @@ def get_mch_heatmap(ensemble, methylation_type, grouping, clustering, level, pti
     flat_mch = list(chain.from_iterable(mch))
     mch_dataframe = pd.DataFrame(flat_mch).dropna()
 
+    # Hierarchical clustering and dendrogram
+    mch = np.array(mch)
+    figure = ff.create_dendrogram(mch, orientation="right", labels=tuple([i for i in range(len(genes))]))
+    # figure = ff.create_dendrogram(mch, orientation="right", labels=tuple(genes))
+    for i in range(len(figure['data'])):
+        figure['data'][i]['xaxis'] = 'x2'
+    dendro_leaves = figure['layout']['yaxis']['ticktext']
+    dendro_leaves = list(map(int, dendro_leaves))
+    mch = mch[dendro_leaves,:] # Reorder the genes according to the clustering
+    genes_labels = [gene_labels[i] for i in dendro_leaves]
+    
+    dendro_top = ff.create_dendrogram(mch.transpose(), orientation="bottom", labels=tuple([i for i in range(mch.shape[1])]))
+    # clusters = ['Cluster'+str(j) for j in range(mch.shape[1])]
+    # dendro_top = ff.create_dendrogram(mch.transpose(), orientation="bottom", labels=tuple(clusters))
+    for i in range(len(dendro_top['data'])):
+        dendro_top['data'][i]['yaxis'] = 'y2'
+    dendro_top_leaves = dendro_top['layout']['xaxis']['ticktext']
+    dendro_top_leaves = list(map(int, dendro_top_leaves))
+    mch = mch[:,dendro_top_leaves] # Reorder the genes according to the clustering
+    mch = list(mch)
+    clusters_labels = ['C'+str(i) for i in dendro_top_leaves]
+
+    figure['data'].extend(dendro_top['data'])
+
+    # # Initialize figure by creating upper dendrogram
+    # figure = ff.create_dendrogram(data_array, orientation='bottom', labels=labels)
+    # for i in range(len(figure['data'])):
+    #     figure['data'][i]['yaxis'] = 'y2'
+
+    # # Create Side Dendrogram
+    # dendro_side = ff.create_dendrogram(data_array, orientation='right')
+    # for i in range(len(dendro_side['data'])):
+    #     dendro_side['data'][i]['xaxis'] = 'x2'
+
+    # Set color scale limits
     start = mch_dataframe.quantile(ptile_start).values[0].tolist()
     end = mch_dataframe.quantile(ptile_end).values[0].tolist()
     end = max(end,start+0.01)
@@ -2096,9 +2139,10 @@ def get_mch_heatmap(ensemble, methylation_type, grouping, clustering, level, pti
             colorbar_ticktext.insert(0, '<' + str(round(start, num_sigfigs_ticklabels)))
 
     trace = Heatmap(
-        x=x,
-        y=y,
+        x=dendro_top_leaves,
+        y=dendro_leaves,
         z=mch,
+        xtype="array", ytype="array",
         text=hover,
         colorscale='Viridis',
         colorbar={
@@ -2115,11 +2159,18 @@ def get_mch_heatmap(ensemble, methylation_type, grouping, clustering, level, pti
         hoverinfo='text',
         zmin=start,zmax=end,zauto=False, # Clip the extreme edges of the colorscale
         )
+    trace['y'] = figure['layout']['yaxis']['tickvals']
+    trace['x'] = dendro_top['layout']['xaxis']['tickvals']
+    figure['data'].extend([trace])
 
     layout = Layout(
-        height=max(550*len(genes)/20,450), # EAM Adjust the height of the heatmap according to the number of genes displayed
+        height=max(600*len(genes)/20,550), # EAM Adjust the height of the heatmap according to the number of genes displayed
         width=1000,
-        # title=title,
+        paper_bgcolor='rgba(0,0,0,0)',
+        plot_bgcolor='rgba(0,0,0,0)',
+        showlegend=False,
+        hovermode='closest',
+        title=title,
         # titlefont={'color': 'rgba(1,2,2,1)',
         #            'size': 16},
         margin={'l': 0,
@@ -2129,15 +2180,39 @@ def get_mch_heatmap(ensemble, methylation_type, grouping, clustering, level, pti
         xaxis={
             'side': 'bottom',
             'tickangle': -45,
-            'tickfont': {'size': 12}
-               },
-        yaxis={
-            'title': 'Genes',
-            'tickangle': 15,
-            'tickfont': {'size': 12}
+            'title': 'Clusters',
+            'tickfont': {'size': 12},
+            'showticklabels': True,
+            'tickmode': 'array',
+            'tickvals':trace['x'],
+            'ticktext':clusters_labels,
             },
-        hovermode='closest'
+        yaxis={
+            # 'tickangle': 15,
+            'tickfont': {'size': 12},
+            'showticklabels': True,
+            'ticks':"outside",
+            'tickmode': 'array',
+            'tickvals':trace['y'],
+            'ticktext':genes_labels,
+            },
         )
+    layout['yaxis'].update({'domain': [0, .85]})
+    layout['xaxis'].update({'domain': [0.2, 1]})
+    layout.update({'hovermode': 'closest'})
+    layout.update({'xaxis2': {
+            'showticklabels': False
+            }})
+    layout.update({'yaxis2': {
+            'showticklabels': False
+            }})
+    layout['xaxis2'].update({'domain': [0, 0.1]})
+    layout['yaxis2'].update({'domain': [0.86, 1]})
+    for xx in ['xaxis','yaxis','xaxis2','yaxis2']:
+        layout[xx].update({'mirror': False,
+                           'showgrid': False,
+                           'showline': False,
+                           'zeroline': False})
 
     # Available colorscales:
     # https://community.plot.ly/t/what-colorscales-are-available-in-plotly-and-which-are-the-default/2079
@@ -2206,22 +2281,20 @@ def get_mch_heatmap(ensemble, methylation_type, grouping, clustering, level, pti
 
     layout['updatemenus'] = updatemenus
 
-    layout['annotations'].extend([Annotation(text=title,
-                                             x=0.5,
-                                             y=1.3,
-                                             xanchor="center",
-                                             yanchor="top",
-                                             showarrow=False,
-                                             xref="paper",
-                                             yref="paper",
-                                             font={'size': 16,
-                                                   'color': 'black',})])
+    # layout['annotations'].extend([Annotation(text=title,
+    #                                          x=0.5,
+    #                                          y=1.3,
+    #                                          xanchor="center",
+    #                                          yanchor="top",
+    #                                          showarrow=False,
+    #                                          xref="paper",
+    #                                          yref="paper",
+    #                                          font={'size': 16,
+    #                                                'color': 'black',})])
 
-    return plotly.offline.plot(
-        {
-            'data': [trace],
-            'layout': layout
-        },
+    figure['layout'] = layout
+
+    return plotly.offline.plot(figure,
         output_type='div',
         show_link=False,
         include_plotlyjs=False)
