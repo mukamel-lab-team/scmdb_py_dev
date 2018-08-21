@@ -2041,6 +2041,8 @@ def get_mch_heatmap(ensemble, methylation_type, grouping, clustering, level, pti
         gene_info_df.index = ['N/A']
 
     clusters_labels = gene_info_df.index.tolist()
+    if grouping == 'cluster':
+        clusters_labels = ['Cluster '+str(i) for i in clusters_labels]
 
     normal_or_original = 'Original'
     if normalize_row:
@@ -2079,8 +2081,8 @@ def get_mch_heatmap(ensemble, methylation_type, grouping, clustering, level, pti
 
     # Hierarchical clustering and dendrogram
     mch = np.array(mch)
-    figure = ff.create_dendrogram(mch, orientation="right", labels=tuple([i for i in range(len(genes))]))
-    # figure = ff.create_dendrogram(mch, orientation="right", labels=tuple(genes))
+    figure = ff.create_dendrogram(mch, orientation="right", labels=tuple([i for i in range(len(genes))]), 
+        colorscale=['bbbbbbb']) # TODO: Figure out how to set the colorscale
     for i in range(len(figure['data'])):
         figure['data'][i]['xaxis'] = 'x2'
     dendro_leaves = figure['layout']['yaxis']['ticktext']
@@ -2088,12 +2090,14 @@ def get_mch_heatmap(ensemble, methylation_type, grouping, clustering, level, pti
     mch = mch[dendro_leaves,:] # Reorder the genes according to the clustering
     genes_labels = [gene_labels[i] for i in dendro_leaves]
     
-    dendro_top = ff.create_dendrogram(mch.transpose(), orientation="bottom", labels=tuple([i for i in range(mch.shape[1])]))
+    dendro_top = ff.create_dendrogram(mch.transpose(), orientation="bottom", labels=tuple([i for i in range(mch.shape[1])]), 
+        colorscale=['bbbbbbb'])
     for i in range(len(dendro_top['data'])):
         dendro_top['data'][i]['yaxis'] = 'y2'
     dendro_top_leaves = dendro_top['layout']['xaxis']['ticktext']
     dendro_top_leaves = list(map(int, dendro_top_leaves))
     mch = mch[:,dendro_top_leaves] # Reorder the genes according to the clustering
+    clusters_labels = [clusters_labels[i] for i in dendro_top_leaves]
     mch = list(mch)
     figure['data'].extend(dendro_top['data'])
 
