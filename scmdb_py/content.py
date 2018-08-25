@@ -917,6 +917,11 @@ def get_gene_methylation(ensemble, methylation_type, gene, grouping, clustering,
     elif grouping == 'cluster':
         df.sort_values(by='cluster_'+clustering, inplace=True)
 
+    # # Add number of cells in each cluster to the cluster name
+    # ncells = df.groupby(by=grouping, sort=False).count()
+    # for label, i in df[grouping]:
+    #     ncells[0]
+
     return df
 
 
@@ -2050,7 +2055,10 @@ def get_mch_heatmap(ensemble, methylation_type, grouping, clustering, level, pti
             # z-score
             # gene_info_df[gene] = (gene_info_df[gene] - gene_info_df[gene].mean()) / gene_info_df[gene].std()
             # min-max
-            gene_info_df[gene] = (gene_info_df[gene] - gene_info_df[gene].min()) / (gene_info_df[gene].max() - gene_info_df[gene].min())
+            gene_range = gene_info_df[gene].max() - gene_info_df[gene].min()
+            if (gene_range==0):
+                gene_range = 1
+            gene_info_df[gene] = (gene_info_df[gene] - gene_info_df[gene].min()) / gene_range
         normal_or_original = 'Normalized'
 
     gene_info_dict = gene_info_df.to_dict(into=OrderedDict)    
@@ -2074,7 +2082,6 @@ def get_mch_heatmap(ensemble, methylation_type, grouping, clustering, level, pti
         hover.append(text)
         text = []
         i += 1
-
 
     flat_mch = list(chain.from_iterable(mch))
     mch_dataframe = pd.DataFrame(flat_mch).dropna()
@@ -2353,7 +2360,10 @@ def get_snATAC_heatmap(ensemble, grouping, ptile_start, ptile_end, normalize_row
             # z-score
             # gene_info_df[gene] = (gene_info_df[gene] - gene_info_df[gene].mean()) / gene_info_df[gene].std()
             # min-max
-            gene_info_df[gene] = (gene_info_df[gene] - gene_info_df[gene].min()) / (gene_info_df[gene].max() - gene_info_df[gene].min())
+            gene_range = gene_info_df[gene].max() - gene_info_df[gene].min()
+            if (gene_range==0):
+                gene_range = 1
+            gene_info_df[gene] = (gene_info_df[gene] - gene_info_df[gene].min()) / gene_range
         normal_or_original = 'Normalized'
 
     gene_info_dict = gene_info_df.to_dict(into=OrderedDict)    

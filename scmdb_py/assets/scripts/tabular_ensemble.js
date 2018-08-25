@@ -101,6 +101,7 @@ function initEnsembleDataTable() {
 
 }
 
+
 function format ( d ) {
 
     var snATAC_datasets = d.snATAC_datasets;
@@ -108,8 +109,7 @@ function format ( d ) {
         snATAC_datasets = "None";
     }
 
-    return (
-        '<table cellpadding="5" cellspacing="0" border="0" style="padding-left:50px;">'+
+    var out = '<table cellpadding="5" cellspacing="0" border="0" style="padding-left:50px;">'+
             '<tr>'+
                 '<td><b>Description:</b></td>'+
                 '<td>'+d.description+'</td>'+
@@ -117,33 +117,42 @@ function format ( d ) {
             '<tr>'+
                 '<td><b>Datasets in ensemble (snmC-seq):</b></td>'+
                 '<td>'+
-                    '<table>'+
-                        '<tr><td><b>RS1</b></td><td>'+d.datasets_rs1+'</td></tr>'+
-                        '<tr><td><b>RS2</b></td><td>'+d.datasets_rs2+'</td></tr>'+
+                    '<table>';
+    if (d.datasets_rs1 != "") { out = out+'<tr><td><b>RS1</b></td><td>'+d.datasets_rs1+'</td></tr>' }
+    if (d.datasets_rs2 != "") { out = out+'<tr><td><b>RS2</b></td><td>'+d.datasets_rs2+'</td></tr>' }
+    out = out + 
                     '</table>'+
                 '</td>'+
-            '</tr>'+
+            '</tr>'
+    if (d.snATAC_datasets_rs1+d.snATAC_datasets_rs2 != "") { out = out+
             '<tr>'+
                 '<td><b>Datasets in ensemble (snATAC-seq):</b></td>'+
                 '<td>'+
-                    '<table>'+
-                        '<tr><td><b>RS1</b></td><td>'+d.snATAC_datasets_rs1+'</td></tr>'+
-                        '<tr><td><b>RS2</b></td><td>'+d.snATAC_datasets_rs2+'</td></tr>'+
-                    '</table>'+
+                    '<table>'}
+    if (d.snATAC_datasets_rs1 != "") { out = out+'<tr><td><b>RS1</b></td><td>'+d.snATAC_datasets_rs1+'</td></tr>' }
+    if (d.snATAC_datasets_rs2 != "") { out = out+'<tr><td><b>RS2</b></td><td>'+d.snATAC_datasets_rs2+'</td></tr>' }
+    if (d.snATAC_datasets_rs1+d.snATAC_datasets_rs2 != "") {
+            out = out + 
+                        '</table>'+
                 '</td>'+
-            '</tr>'+
+            '</tr>'}
+            out = out + 
             '<tr>'+
                 '<td><b>Dissection region(s):</b></td>'+
                 '<td>'+d.ABA_regions_description+'</td>'+
-            '</tr>'+
+            '</tr>'
+    if (d.target_regions_rs2_descriptive != "") {
+        out = out+
             '<tr>'+
                 '<td><b>Target region(s):</b></td>'+
                 '<td>'+d.target_regions_rs2_descriptive+'</td>'+
-            '</tr>'+
+            '</tr>'
+        }
+        out = out + 
             '<tr>'+
                 '<td><b>View Dissection Drawings:</b></td>'+
                 '<td><a href="https://drive.google.com/file/d/1dAUzB1GtKMUgmf_AInAGgI6OlgefUHok/preview" target="_blank">Link</a> (go to page '+d.slices+')</td>'+
             '</tr>'+
         '</table>'
-    )
+    return out
 }

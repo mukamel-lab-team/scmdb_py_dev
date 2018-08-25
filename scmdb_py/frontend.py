@@ -304,7 +304,7 @@ def plot_mch_heatmap(ensemble, methylation_type, grouping, clustering, level, pt
         return get_mch_heatmap(ensemble, methylation_type, grouping, clustering, level, float(ptile_start), float(ptile_end), normalize_row, query)
     except (FailToGraphException, ValueError) as e:
         print("ERROR (plot_mch_heatmap): {}".format(e))
-        return 'Failed to produce mCH levels heatmap plot. Contact maintainer.'
+        return 'Failed to produce mCH levels heatmap plot. Contact maintainer. '.format(e)
 
 
 @frontend.route('/plot/snATAC/heat/<ensemble>/<grouping>/<ptile_start>/<ptile_end>')
