@@ -520,8 +520,10 @@ def median_cluster_mch(gene_info, grouping, clustering):
             gene_info.fillna({'annotation_'+clustering: 'None'}, inplace=True)
             return gene_info.groupby('annotation_'+clustering, sort=False)[gene_info.columns[-1]].median()
         elif grouping == 'cluster':
+            gene_info.fillna({'cluster_'+clustering: 'None'}, inplace=True)
             return gene_info.groupby('cluster_'+clustering, sort=False)[gene_info.columns[-1]].median()
         elif grouping == 'dataset':
+            gene_info.fillna({'dataset': 'None'}, inplace=True)
             return gene_info.groupby('dataset', sort=False)[gene_info.columns[-1]].median()
         elif grouping == 'target_region':
             gene_info['target_region'].fillna('N/A', inplace=True)
