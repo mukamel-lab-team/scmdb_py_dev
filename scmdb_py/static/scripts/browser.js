@@ -1174,6 +1174,7 @@ function initClusterSpecificMarkerGeneTable() {
                 columns.push({ mData: cluster, sTitle: cluster });
             });
             clusterMarkerGeneTable = $('#clusterMarkerGeneTable').DataTable( {
+                "pageLength": 50,
                 "destroy": true,
                 "ordering": false,
                 "scrollX": "100%",
@@ -1182,7 +1183,7 @@ function initClusterSpecificMarkerGeneTable() {
                 "columns": columns,
                 "data": data.rows,
             });
-            clusterMarkerGeneTable.select.items('column');
+            clusterMarkerGeneTable.select.items('cell');
             delayLoad(clusterMarkerGeneTable.draw());
 
             // Fills gene search bar with genes in column when user clicks. 
