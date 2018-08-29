@@ -6,7 +6,7 @@ function initDatasetDataTable() {
 
     var table = $('#dataset-table').DataTable( {
         "order": [[7, 'desc']], //Initially sort by date added.
-        "pageLength": 25,
+        "pageLength": 50,
         "ajax": {
             "url": $SCRIPT_ROOT+"/content/datasets/rs1",
             "dataSrc": ""

@@ -813,6 +813,7 @@ function initClusterSpecificMarkerGeneTable() {
                 columns.push({ mData: cluster, sTitle: cluster });
             });
             clusterMarkerGeneTable = $('#clusterMarkerGeneTable').DataTable( {
+                "pageLength": 50,
                 "destroy": true,
                 "ordering": false,
                 "scrollX": "100%",
