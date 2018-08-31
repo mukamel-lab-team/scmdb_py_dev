@@ -574,6 +574,38 @@ def median_cluster_snATAC(gene_info, grouping):
         return None
 
 @cache.memoize(timeout=3600)
+def mean_cluster_snATAC(gene_info, grouping):
+    """Returns median mch level of a gene for each cluster.
+
+        Arguments:
+            gene_info (dict): mCH data for each sample. Keys are samp(cell), tsne_x, tsne_y, cluster_label, cluster_ordered, original, normalized.
+            level (str): "original" or "normalized" methylation values.
+
+        Returns:
+            dict: Cluster_label (key) : mean mCH level (value).
+    """
+
+    if grouping == 'annotation':
+        gene_info.fillna({'annotation_ATAC': 'None'}, inplace=True)
+    if grouping != 'dataset':
+        return gene_info.groupby(grouping+'_ATAC', sort=False)['normalized_counts'].mean()
+    else:
+        return gene_info.groupby(grouping, sort=False)['normalized_counts'].mean()
+
+    if grouping == 'annotation':
+        gene_info.fillna({'annotation_ATAC': 'None'}, inplace=True)
+        return gene_info.groupby('annotation_ATAC', sort=False)['normalized_counts'].mean()
+    elif grouping == 'cluster':
+        return gene_info.groupby('cluster_ATAC', sort=False)['normalized_counts'].mean()
+    elif grouping == 'dataset':
+        return gene_info.groupby('dataset', sort=False)['normalized_counts'].mean()
+    elif grouping == 'target_region':
+        gene_info['target_region'].fillna('N/A', inplace=True)
+        return gene_info.groupby('target_region', sort=False)['normalized_counts'].mean()
+    else:
+        return None
+
+@cache.memoize(timeout=3600)
 def snATAC_data_exists(snmC_ensemble_id):
     """Checks whether or not snATAC data exists for an ensemble.
 
@@ -2335,7 +2367,7 @@ def get_snATAC_heatmap(ensemble, grouping, ptile_start, ptile_end, normalize_row
         if i > 0 and i % 10 == 0:
             title += "<br>"
         title += gene_name + "+"
-        gene_info_df[gene_name] = median_cluster_snATAC(get_gene_snATAC(ensemble, gene['gene_id'], grouping, True), grouping)
+        gene_info_df[gene_name] = mean_cluster_snATAC(get_gene_snATAC(ensemble, gene['gene_id'], grouping, True), grouping)
 
     title = title[:-1] # Gets rid of last '+'
 
