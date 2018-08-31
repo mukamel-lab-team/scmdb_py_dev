@@ -1183,7 +1183,7 @@ function initClusterSpecificMarkerGeneTable() {
                 "columns": columns,
                 "data": data.rows,
             });
-            clusterMarkerGeneTable.select.items('cell');
+            clusterMarkerGeneTable.select.items('column');
             delayLoad(clusterMarkerGeneTable.draw());
 
             // Fills gene search bar with genes in column when user clicks. 
