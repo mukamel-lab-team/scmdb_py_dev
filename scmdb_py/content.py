@@ -2475,7 +2475,7 @@ def get_snATAC_heatmap(ensemble, grouping, ptile_start, ptile_end, normalize_row
 
     layout = Layout(
         autosize=True,
-        height=550,
+        height=max(600*len(genes)/20,550), # EAM Adjust the height of the heatmap according to the number of genes displayed
         width=1000,
         # title=title,
         # titlefont={'color': 'rgba(1,2,2,1)',
