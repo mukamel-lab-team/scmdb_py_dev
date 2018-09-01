@@ -2486,7 +2486,7 @@ def get_snATAC_heatmap(ensemble, grouping, ptile_start, ptile_end, normalize_row
             'tickfont': {'size': 12}
                },
         yaxis={
-            'title': 'Genes, ptile_start='+str(ptile_start)+' ptile_end='+str(ptile_end),
+            'title': 'Genes',
             'tickangle': 15,
             'tickfont': {'size': 12}
             },
