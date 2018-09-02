@@ -3,8 +3,8 @@
 For actual content generation see the content.py module.
 """
 import json
-from os import walk
-import os.path
+# from os import walk
+# import os.path
 import datetime
 
 import dominate
@@ -248,7 +248,8 @@ def plot_mch_box(ensemble, methylation_type, gene, grouping, clustering, level, 
         grouping = 'annotation'
 
     try:
-        return get_mch_box(ensemble, methylation_type, gene, grouping, clustering, level, outliers)
+        # return get_mch_box(ensemble, methylation_type, gene, grouping, clustering, level, outliers) 
+        return get_cluster_box(ensemble, grouping, clustering, outliers) # EAM - testing
     except (FailToGraphException, ValueError) as e:
         print("ERROR (plot_mch_box): {}".format(e))
         return 'Failed to produce mCH levels box plot. Contact maintainer.'
