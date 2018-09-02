@@ -2915,10 +2915,10 @@ def get_snATAC_box(ensemble, gene, grouping, outliers):
 ##################. UNDER DEVELOPMENT - EAM
 
 @cache.memoize(timeout=3600)
-def get_cluster_box(ensemble, grouping, clustering, outliers):
-	"""Generate gene body mCH box plot.
+def get_clusters_bar(ensemble, grouping, clustering, outliers):
+	"""Generate clusters bar plot.
 
-	Traces are grouped by cluster.
+	Traces are grouped by modality (mch, ATAC).
 
 	Arguments:
 		ensemble (str): Name of ensemble.
