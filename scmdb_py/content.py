@@ -2952,7 +2952,8 @@ def get_clusters_bar(ensemble, grouping, clustering, outliers):
 			y=clustersu['ncells'],
 			x=clustersu['groups'],
 			text=clustersu['ncells'],
-			name=mi
+			name=mi,
+			hoverinfo='name' + 'text',
 			)
 		data.append(trace)
 	
