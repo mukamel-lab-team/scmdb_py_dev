@@ -1179,6 +1179,7 @@ function initClusterSpecificMarkerGeneTable() {
                 "scrollX": "100%",
                 "select": true,
                 "lengthChange": true,
+                "pageLength" : 50,
                 "columns": columns,
                 "data": data.rows,
             });
