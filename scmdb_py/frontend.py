@@ -3,8 +3,8 @@
 For actual content generation see the content.py module.
 """
 import json
-from os import walk
-import os.path
+# from os import walk
+# import os.path
 import datetime
 
 import dominate
@@ -248,7 +248,26 @@ def plot_mch_box(ensemble, methylation_type, gene, grouping, clustering, level, 
         grouping = 'annotation'
 
     try:
-        return get_mch_box(ensemble, methylation_type, gene, grouping, clustering, level, outliers)
+        return get_mch_box(ensemble, methylation_type, gene, grouping, clustering, level, outliers) 
+    except (FailToGraphException, ValueError) as e:
+        print("ERROR (plot_mch_box): {}".format(e))
+        return 'Failed to produce mCH levels box plot. Contact maintainer.'
+
+@frontend.route('/plot/clusters/bar/<ensemble>/<grouping>/<clustering>/<outliers_toggle>')
+@cache.memoize(timeout=3600)
+def plot_clusters_bar(ensemble, grouping, clustering, outliers_toggle):
+
+    if outliers_toggle == 'outliers':
+        outliers = True
+    else:
+        outliers = False
+    if clustering == 'null':
+        clustering = 'mCH_lv_npc50_k5'
+    if grouping == 'NaN' or grouping == 'null':
+        grouping = 'annotation'
+
+    try:
+        return get_clusters_bar(ensemble, grouping, clustering, outliers) # EAM - testing
     except (FailToGraphException, ValueError) as e:
         print("ERROR (plot_mch_box): {}".format(e))
         return 'Failed to produce mCH levels box plot. Contact maintainer.'
@@ -304,7 +323,7 @@ def plot_mch_heatmap(ensemble, methylation_type, grouping, clustering, level, pt
         return get_mch_heatmap(ensemble, methylation_type, grouping, clustering, level, float(ptile_start), float(ptile_end), normalize_row, query)
     except (FailToGraphException, ValueError) as e:
         print("ERROR (plot_mch_heatmap): {}".format(e))
-        return 'Failed to produce mCH levels heatmap plot. Contact maintainer.'
+        return 'Failed to produce mCH levels heatmap plot. Contact maintainer. '.format(e)
 
 
 @frontend.route('/plot/snATAC/heat/<ensemble>/<grouping>/<ptile_start>/<ptile_end>')

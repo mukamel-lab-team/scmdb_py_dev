@@ -909,6 +909,7 @@ function updateGeneElements(updateMCHScatter=true) {
                 updatesnATACScatterPlot();
             }
         }
+        updateClustersBarPlot();
         if($("#geneName").select2('data').length > 1) {
             $('#normalize-heatmap').show();
             $('#methylation-box-heat-normalize-toggle').prop('disabled', false);
@@ -1174,6 +1175,7 @@ function initClusterSpecificMarkerGeneTable() {
                 columns.push({ mData: cluster, sTitle: cluster });
             });
             clusterMarkerGeneTable = $('#clusterMarkerGeneTable').DataTable( {
+                "pageLength": 50,
                 "destroy": true,
                 "ordering": false,
                 "scrollX": "100%",
@@ -1238,13 +1240,38 @@ function updateMCHBoxPlot() {
         },
         success: function(data) {
             $("#plot-mch-box").html(data);
-            $('#gene_table_div').show();
             $("#methylation-box-heat-UpdateBtn").attr("disabled", false);
         }
     });
 
 }
 
+function updateClustersBarPlot() {
+    let grouping = $('#methylation-box-heat-grouping').val();
+    let clustering = $("#methylation-clustering-box-heat-methylation").val()+"_"+$("#methylation-clustering-box-heat-algorithms").val()+"_npc50"+"_k"+$("#methylation-clustering-box-heat-k").val();
+    if ($('#methylation-box-heat-outlierToggle').prop('checked')) {
+        var outlierOption = 'outliers';
+    } else {
+        var outlierOption = 'false';
+    }
+
+    $.ajax({
+        type: "GET",
+        url: './plot/clusters/bar/'+ensemble+'/'+grouping+'/'+clustering+'/'+outlierOption,
+        beforeSend: function() {
+            $("#clusters-bar-loader").show();
+            $("#plot-clusters-bar").html("");
+            $("#methylation-box-heat-UpdateBtn").attr("disabled", true);
+        },
+        complete: function() {
+    $('#clusters-bar-loader').hide();
+        },
+        success: function(data) {
+            $("#plot-clusters-bar").html(data);
+            $("#methylation-box-heat-UpdateBtn").attr("disabled", false);
+        }
+    });
+}
 function updatesnATACBoxPlot() {
     let geneSelected = $('#geneName option:selected').val();
     let grouping = $('#snATAC-box-heat-grouping').val();

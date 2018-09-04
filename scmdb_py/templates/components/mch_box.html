@@ -45,23 +45,22 @@
                         <select id="methylation-clustering-box-heat-npc" class="methylation-clustering-npc methylation-tsne-box-heat-option" name="methylation-clustering-box-heat-npc"></select>
                         &nbsp;
                     -->
-                    <div style="display: inline-block">
                         <label for="methylation-clustering-box-heat-k">
                             <a class="hover-tooltip" href="javascript:void(0);" data-toggle="popover" data-trigger="hover" data-placement="bottom" title="K-value" data-content="Number of nearest neighbors (neighboring cells).">K-value: </a>
                         </label>
                         <select id="methylation-clustering-box-heat-k" class="methylation-clustering-k methylation-tsne-box-heat-option" name="methylation-clustering-box-heat-k"></select>
-                    </div>
                 </div>
             </div>
-            <br>
-            <div>
-                <div class="col-md-offset-2">
-                    <input id="methylation-box-heat-normalize-toggle" name="methylation-box-heat-normalize-checkbox" value="normalize" type="checkbox">
-                    <label for="methylation-box-heat-normalize-toggle">
-                        <a class="hover-tooltip" href="javascript:void(0);" data-toggle="popover" data-trigger="hover" data-placement="bottom" title="Normalize by Gene" data-content="Min-Max normalization across each row. (Only for heatmap).">Normalize by gene</a>
-                    </label>
-                </div>
-                <div class="col-md-offset-2">
+        </div>
+        <br>
+        <div>
+            <div class="col-md-offset-2">
+                <input id="methylation-box-heat-normalize-toggle" name="methylation-box-heat-normalize-checkbox" value="normalize" type="checkbox">
+                <label for="methylation-box-heat-normalize-toggle">
+                    <a class="hover-tooltip" href="javascript:void(0);" data-toggle="popover" data-trigger="hover" data-placement="bottom" title="Normalize by Gene" data-content="Min-Max normalization across each row. (Only for heatmap).">Normalize by gene</a>
+                </label>
+            </div>
+            <div class="col-md-offset-2">
                 <!-- <div class="col-sm-12 col-md-1 col-md-offset-4" style="position:relative">-->
                     <button class="btn-sm btn-primary" id="methylation-box-heat-UpdateBtn">Update</button>
                 </div>

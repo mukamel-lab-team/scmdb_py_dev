@@ -60,7 +60,8 @@
                                     <div class="col-sm-12">
                                         <ul class="nav nav-tabs" role="tablist">
                                             <li role="presentation" class="active"><a id="methylation-box-tab-btn" href="#methylation-scatter" role="tab" data-toggle="tab">Scatter</a></li>
-                                            <li role="presentation"><a id="methylation-box-tab-btn" href="#methylation-box" role="tab" data-toggle="tab" onclick="setTimeout($('#clusterMarkerGeneTable').DataTable().draw,200)">Box plot / Heatmap</a></li>
+                                            <li role="presentation"><a id="methylation-box-tab-btn" href="#methylation-box" role="tab" data-toggle="tab">Box plot / Heatmap</a></li>
+                                            <li role="presentation"><a id="clusters-bar-btn" href="#clusters-bar" role="tab" data-toggle="tab">Cluster statistics</a></li>
                                         </ul>
                                     </div>
                                     <div class="col-md-12 col-sm-12 flex-item tab-content" id="methyl_scatter_div" style="padding: 0px">
@@ -69,6 +70,9 @@
                                         </div>
                                         <div class="tab-pane" id="methylation-box">
                                             {% include "components/mch_box.html" %}
+                                        </div>
+                                        <div class="tab-pane" id="clusters-bar">
+                                            {% include "components/clusters_bar.html" %}
                                         </div>
                                     </div>
                                 </div>
@@ -123,50 +127,6 @@
                 </div>
             </div>
             {% endif %}
-
-            {#
-            <!-- Methylation Box plot/Heatmap -->
-			<div class="col-sm-12" style="position:relative; z-index:2;">
-				<div class="panel panel-default panel-main" style="overflow-x: auto; margin-left:auto; margin-right:auto; display:none;" id="methyl_graphs_div">
-					<div class="panel-heading">
-						<div class="panel-title">
-                            <a data-toggle="collapse" title="" href="#mch_box" style="margin-top: 0px;"><b>Gene body methylation level &nbsp;</b><span class="glyphicon glyphicon-chevron-down"></span></a>
-							<a data-toggle="collapse" title="" data-placement="left" href="#methylation-box-heatmap-options" class="btn btn-sm btn-basic pull-right" style="margin-top: 0px;"><span class="glyphicon glyphicon-cog"></span></a>
-					   </div>
-				   </div>
-				   <div class="panel-collapse collapse in" id="mch_box">
-						<div class="panel-body">
-							<div class="col-md-12 col-sm-12" id="mch_box_div">
-                                {% include "components/mch_box.html" %}
-							</div>
-							<!-- <div class="col-md-3 col-sm-12" id="gene_table_div"> -->
-								<!-- {% include "components/mch_table.html" %} -->
-							<!-- </div> -->
-						</div>
-					</div>
-				</div>
-			</div>
-            <!-- snATAC Box plot/Heatmap -->
-            {% if snATAC_data_available == 1 %}
-			<div class="col-sm-12" style="position:relative; z-index:2;">
-				<div class="panel panel-default panel-main" style="overflow-x: auto; margin-left:auto; margin-right:auto; display:none;" id="methyl_graphs_div">
-					<div class="panel-heading">
-						<div class="panel-title">
-                            <a data-toggle="collapse" title="" href="#snATAC_box" style="margin-top: 0px;"><b>Gene body snATAC normalized counts &nbsp;</b><span class="glyphicon glyphicon-chevron-down"></span></a>
-							<a data-toggle="collapse" title="" data-placement="left" href="#snATAC-box-heatmap-options" class="btn btn-sm btn-basic pull-right" style="margin-top: 0px;"><span class="glyphicon glyphicon-cog"></span></a>
-					   </div>
-				   </div>
-				   <div class="panel-collapse collapse in" id="snATAC_box">
-						<div class="panel-body">
-							<div class="col-sm-12" id="snATAC_box_div">
-								{% include "components/snATAC_box.html" %}
-							</div>
-						</div>
-					</div>
-				</div>
-			</div>
-            {% endif %}
-            #}
 		</div>
 
         <!-- Cluster specific marker genes table -->
@@ -421,8 +381,9 @@
     });
 
     $("#methylation-box-heat-outlierToggle, #orthologsToggle").change(function() {
-        if ($('#geneName').select2('data').length === 1)
+        if ($('#geneName').select2('data').length === 1) {
             updateMCHBoxPlot();
+            updateClustersBarPlot(); }              
         else {
             if ($('#orthologsToggle').prop('checked'))
                 updateMethylationHeatmapTwoSpecies();
@@ -466,6 +427,7 @@
         } 
         else if ($('#geneName').select2('data').length === 1 ) {
             updateMCHBoxPlot();
+            updateClustersBarPlot();
         }
         else {}
     });
