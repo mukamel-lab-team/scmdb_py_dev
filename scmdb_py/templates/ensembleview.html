@@ -415,6 +415,10 @@
         }
     });
 
+    $("#clusters-bar-normalize-toggle").change(function() {
+        updateClustersBarPlot();
+    });
+
     $("#toggle-3d").change(function() {
         display3DPlotToggle();
     });

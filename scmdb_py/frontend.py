@@ -253,9 +253,28 @@ def plot_mch_box(ensemble, methylation_type, gene, grouping, clustering, level, 
         print("ERROR (plot_mch_box): {}".format(e))
         return 'Failed to produce mCH levels box plot. Contact maintainer.'
 
-@frontend.route('/plot/clusters/bar/<ensemble>/<grouping>/<clustering>/<outliers_toggle>')
+# @frontend.route('/plot/clusters/bar/<ensemble>/<grouping>/<clustering>/<outliers_toggle>')
+# @cache.memoize(timeout=3600)
+# def plot_clusters_bar(ensemble, grouping, clustering, outliers_toggle):
+
+#     if outliers_toggle == 'outliers':
+#         outliers = True
+#     else:
+#         outliers = False
+#     if clustering == 'null':
+#         clustering = 'mCH_lv_npc50_k5'
+#     if grouping == 'NaN' or grouping == 'null':
+#         grouping = 'annotation'
+
+#     try:
+#         return get_clusters_bar(ensemble, grouping, clustering, outliers) # EAM - testing
+#     except (FailToGraphException, ValueError) as e:
+#         print("ERROR (plot_mch_box): {}".format(e))
+#         return 'Failed to produce mCH levels box plot. Contact maintainer.'
+
+@frontend.route('/plot/clusters/bar/<ensemble>/<grouping>/<clustering>/<normalize>/<outliers_toggle>')
 @cache.memoize(timeout=3600)
-def plot_clusters_bar(ensemble, grouping, clustering, outliers_toggle):
+def plot_clusters_bar(ensemble, grouping, clustering, normalize, outliers_toggle):
 
     if outliers_toggle == 'outliers':
         outliers = True
@@ -267,10 +286,10 @@ def plot_clusters_bar(ensemble, grouping, clustering, outliers_toggle):
         grouping = 'annotation'
 
     try:
-        return get_clusters_bar(ensemble, grouping, clustering, outliers) # EAM - testing
+        return get_clusters_bar(ensemble, grouping, clustering, normalize, outliers) # EAM - testing
     except (FailToGraphException, ValueError) as e:
-        print("ERROR (plot_mch_box): {}".format(e))
-        return 'Failed to produce mCH levels box plot. Contact maintainer.'
+        print("ERROR (plot_clusters_bar): {}".format(e))
+        return 'Failed to produce clusters bar plot. Contact maintainer.'
 
 
 @frontend.route('/plot/snATAC/box/<ensemble>/<gene>/<grouping>/<outliers_toggle>')
