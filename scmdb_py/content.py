@@ -976,17 +976,6 @@ def get_clusters(ensemble, grouping, clustering):
 	if ";" in ensemble or ";" in grouping or ";" in clustering:
 		return None
 
-
-	# query = "SELECT count(cells.cell_id) ncells, cells.dataset ds, \
-	# 	%(ensemble)s.%(grouping)s_%(clustering)s groups, \
-	# 	datasets.target_region target_region, datasets.sex sex \
-	# 	FROM cells \
-	# 	INNER JOIN %(ensemble)s ON cells.cell_id = %(ensemble)s.cell_id \
-	# 	LEFT JOIN datasets ON cells.dataset = datasets.dataset \
-	# 	GROUP BY groups, target_region, sex, ds ORDER BY groups, ds " % {'ensemble': ensemble,
-	# 				'grouping': grouping,
-	# 				'clustering': clustering}
-
 	# Get methylation info
 	query = "SELECT count(cells.cell_id) ncells, CONCAT(cells.dataset, '_mc') AS ds, 'snmC' AS modality, %(ensemble)s.%(grouping)s_%(clustering)s groups \
 		FROM cells \
@@ -2911,9 +2900,6 @@ def get_snATAC_box(ensemble, gene, grouping, outliers):
 		show_link=False,
 		include_plotlyjs=False)
 
-
-##################. UNDER DEVELOPMENT - EAM
-
 @cache.memoize(timeout=3600)
 def get_clusters_bar(ensemble, grouping, clustering, normalize, outliers):
 	"""Generate clusters bar plot.
@@ -2931,7 +2917,7 @@ def get_clusters_bar(ensemble, grouping, clustering, normalize, outliers):
 	"""
 	clusters = get_clusters(ensemble, grouping, clustering)
 
-	if normalize:
+	if (normalize=='true'):
 		clusters['ncells_norm'] = clusters.groupby('groups')['ncells'].transform(lambda x: 100*x / x.sum())
 		clusters['y'] = clusters['ncells_norm']
 		ytitle = 'Percent of cells per cluster'

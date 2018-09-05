@@ -1248,6 +1248,7 @@ function updateMCHBoxPlot() {
 
 function updateClustersBarPlot() {
     let grouping = $('#methylation-box-heat-grouping').val();
+    let normalize = $('#clusters-bar-normalize-toggle').prop('checked');
     let clustering = $("#methylation-clustering-box-heat-methylation").val()+"_"+$("#methylation-clustering-box-heat-algorithms").val()+"_npc50"+"_k"+$("#methylation-clustering-box-heat-k").val();
     if ($('#methylation-box-heat-outlierToggle').prop('checked')) {
         var outlierOption = 'outliers';
@@ -1257,14 +1258,14 @@ function updateClustersBarPlot() {
 
     $.ajax({
         type: "GET",
-        url: './plot/clusters/bar/'+ensemble+'/'+grouping+'/'+clustering+'/'+outlierOption,
+        url: './plot/clusters/bar/'+ensemble+'/'+grouping+'/'+clustering+'/'+normalize+'/'+outlierOption,
         beforeSend: function() {
             $("#clusters-bar-loader").show();
             $("#plot-clusters-bar").html("");
             $("#methylation-box-heat-UpdateBtn").attr("disabled", true);
         },
         complete: function() {
-    $('#clusters-bar-loader').hide();
+            $('#clusters-bar-loader').hide();
         },
         success: function(data) {
             $("#plot-clusters-bar").html(data);
