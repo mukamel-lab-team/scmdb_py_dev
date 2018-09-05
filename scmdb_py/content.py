@@ -382,7 +382,7 @@ def build_hover_text(labels):
 	"""
 	text = str()
 	for k, v in labels.items():
-		text += '{k}: {v}<br>'.format(k=k, v=str(v)) if v is not None:
+		text += '{k}: {v}<br>'.format(k=k, v=str(v)) if v is not None
 
 	return text.strip('<br>')
 
