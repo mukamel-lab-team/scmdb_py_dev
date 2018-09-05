@@ -1,0 +1,35 @@
+<div class="panel-collapse collapse in cluster_options_group RNA-plots-options" id="RNA_tsne_plots_options">
+    <div class="panel-body option-panel" style="padding-top:0px; padding-bottom: 0px;">
+        <div class="container">
+            <div class="col-sm-12" style="display:flex;">
+                <div class="col-sm-12 col-md-2 col-md-offset-4" id="RNA_tsneGrouping" style="display:block;">
+                    <h6>Grouping: </h6>
+                    <select id="RNA-tsne-grouping" class="RNA-tsne-grouping RNA_tsne_option" name="RNA_tsne_grouping">
+                        <option value="cluster" selected>by cluster</option>
+                        <option value="annotation">by cluster annotation</option>
+                        <option value="dataset">by dataset</option>
+                        {% if RS2 == true %}
+                            <option value="target_region">by RS2 target region</option>
+                        {% endif %}
+                    </select>
+                </div>
+                <div class="col-sm-12 col-md-1 col-md-offset-1" style="position:relative;">
+                    <button class="btn-sm btn-primary" id="RNA-tsneUpdateBtn" style="position:absolute; bottom:0;">Update</button>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+<div class="panel-body" style="padding-top:0px;">
+    <div class="container">
+        <div id="RNA-scatter-loader" class="loader"></div>
+        <div id="plot-RNA-scatter"></div>
+    </div>
+    <div id="RNA_tsneOutlierOptions" style="float:left;">
+        <input id="RNA_tsneOutlierToggle" data-toggle="toggle" data-on="Outliers On" data-off="Outliers Off" type="checkbox">
+    </div>
+    <div class="col-xs-12 col-sm-3" id="RNA_color_percentileCol" style="float:right;">
+        <label for="RNA_color_percentile" class="control-label" style="text-align: right">Color scale percentile:&nbsp;</label>
+        <input id="RNA_color_percentile" type="text" value="" />
+    </div>
+</div>

@@ -127,6 +127,52 @@
                 </div>
             </div>
             {% endif %}
+
+            <!-- RNA Plots -->
+            {% if RNA_data_available == 1 %}
+            <div style="position:relative; left:0; z-index:2;">
+                <div class="col-md-12 col-sm-12">
+                    <div class="panel panel-default panel-main" style="overflow-x: auto; margin-left:auto; margin-right:auto;">
+                        <div class="panel-heading">
+                            <div class="panel-title">
+                                <a class="accordion-toggle" data-toggle="collapse" title="" href="#RNA-plots" style="margin-top: 0px;" data-original-title="Collapse RNA Scatter Plot Container">
+                                    <div style="display:inline-block;">
+                                        <b>{{ ensemble_name }} (RNA-seq)</b>
+                                        {% if gene is defined %} - {{ gene }}{% endif %}&nbsp;
+                                        <!--<span id="RNA_tsne_heading_num_dimensions">&nbsp;</span> tSNE: 
+                                        <span id="RNA_tsne_options_heading" style="font-size:0.8em;">&nbsp;</span>
+                                        &nbsp;| Clustering: 
+                                        <span id="RNA_clustering_options_heading" style="font-size:0.8em;">&nbsp;</span>-->
+                                    </div>
+                                    <div class="accordion-chevron" style="display:inline-block;"></div>
+                                </a>
+                                <a data-toggle="collapse" title="" data-placement="left" href=".RNA-plots-options" class="btn btn-sm btn-basic pull-right" style="margin-top: 0px;" data-original-title="Collapse RNA tSNE Options"><i class="glyphicon glyphicon-cog"></i> Options</a>
+                            </div>
+                        </div>
+                        <div class="panel-collapse collapse in" id="RNA-plots">
+                            <div class="panel-body flex-container" style="padding:10px 0 0 0;">
+                                <div class="container" id="RNA_tabs">
+                                    <div class="col-sm-12">
+                                        <ul class="nav nav-tabs" role="tablist">
+                                            <li role="presentation" class="active"><a id="RNA-scatter-tab-btn" href="#RNA-scatter" role="tab" data-toggle="tab">Scatter</a></li>
+                                            <li role="presentation"><a id="RNA-box-tab-btn" href="#RNA-box" role="tab" data-toggle="tab">Box plot / Heatmap</a></li>
+                                        </ul>
+                                    </div>
+                                    <div class="col-md-12 col-sm-12 flex-item tab-content" id="RNA_scatter_div" style="padding: 0px">
+                                        <div class="tab-pane active in" id="RNA-scatter">
+                                            {% include "components/RNA_scatter.html" %}
+                                        </div>
+                                        <div class="tab-pane" id="RNA-box">
+                                            {% include "components/RNA_box.html" %}
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            {% endif %}
 		</div>
 
         <!-- Cluster specific marker genes table -->
@@ -234,11 +280,13 @@
     var ensemble_name = "{{ ensemble_name }}";
     var RS2 = {{ RS2 }};
     var snATAC_data_available = {{ snATAC_data_available }};
+    var RNA_data_available = {{ RNA_data_available }};
     var num_algorithm_options = {{ num_algorithm_options }};
     var num_dims_options = {{ num_dims_options }};
     var methylation_tsne_options = {{ methylation_tsne_options|safe }};
     var methylation_color_percentile_Slider;
     var snATAC_color_percentile_Slider;
+    var RNA_color_percentile_Slider;
     var geneSearchCache;
     var mmu_gID;
     var hsa_gID;
@@ -278,6 +326,7 @@
          {
             updateMethylationHeatmap();
             updatesnATACHeatmap();
+            updateRNAHeatmap();
         }
         ).data('slider');
 
@@ -290,8 +339,17 @@
             }).on('slideStop', updatesnATACScatterPlot).data('slider');
 
             $('#snATAC_tsneOutlierToggle').bootstrapToggle();
+        }
 
-            //populatesnATACTSNEDropdowns();
+        if (RNA_data_available === 1) {
+            RNA_color_percentile_Slider = $("#RNA_color_percentile").slider({
+                min: 0,
+                max: 1,
+                step: 0.05,
+                value: [0.05, 0.95],
+            }).on('slideStop', updateRNAScatterPlot).data('slider');
+
+            $('#RNA_tsneOutlierToggle').bootstrapToggle();
         }
         
         table = $('#corrGeneTable').DataTable( {
@@ -316,45 +374,6 @@
     $("#gene-search-btn").click(function() {
         updateGeneElements();
     });
-
-    /*
-    //wait for resizing to end, then reset axes.
-    var resizeTimer;
-    $(window).on('resize', function(e) {
-        clearTimeout(resizeTimer);
-        resizeTimer = setTimeout(function() {
-            if ($('#methylation-plots').hasClass("in")) {
-                if($('#methylation-scatter').hasClass("active")){
-                    try{
-                        buttons[8].click(); //button for autoscaling methylation_tsne_scatter when snATAC data is also displayed.
-                    }
-                    catch(err) {}
-                } else if ($('#methylation-box').hasClass("active")) {
-                    try {
-                        buttons[20].click(); //button for autoscaling methylation boxplots/heatmap when snATAC data is also displayed.
-                    }
-                    catch(err) {}
-                }
-            }
-                    
-            if (snATAC_data_available === 1) {
-                if ($('#snATAC-plots').hasClass("in")) {
-                    if ($("#snATAC-scatter").hasClass("active")){
-                        try{
-                            buttons[34].click(); // button for autoscaling snATAC_tsne_scatter when snATAC data is also displayed.
-                        }
-                        catch(err) {}
-                    } else if ($('#snATAC-box').hasClass("active")){
-                        try{
-                            buttons[46].click();  //button for autoscaling snATAC box/heatmap when snATAC data is displayed.
-                        }
-                        catch(err) {}
-                    }
-                }
-            }
-        }, 250);
-    });
-    */
 
     $('#geneModulesSelect').on('select2:select', function(e) {
         geneNameSelector.val(null).trigger("change.select2");
@@ -400,6 +419,14 @@
         }
     });
 
+    $("#RNA-box-heat-outlierToggle").change(function() {
+        if ($('#geneName').select2('data').length === 1)
+            updateRNABoxPlot();
+        else {
+            updateRNAHeatmap();
+        }
+    });
+
     $("#methylation-box-heat-normalize-toggle").change(function() {
         if ($('#geneName').select2('data').length > 1) {
             if ($('#orthologsToggle').prop('checked'))
@@ -412,6 +439,12 @@
     $("#snATAC-box-heat-normalize-toggle").change(function() {
         if ($('#geneName').select2('data').length > 1) {
             updatesnATACHeatmap();
+        }
+    });
+
+    $("#RNA-box-heat-normalize-toggle").change(function() {
+        if ($('#geneName').select2('data').length > 1) {
+            updateRNAHeatmap();
         }
     });
 
@@ -446,12 +479,25 @@
         }
     });
 
+    $("#RNA-tsneUpdateBtn:enabled, #RNA-box-heat-UpdateBtn:enabled").click(function() {
+        updateRNAScatterPlot(onlyUpdatetSNEandClustering=true);
+        if ($('#geneName').select2('data').length > 1) {
+            updateRNAHeatmap();
+        } else {
+            updateRNABoxPlot();
+        }
+    });
+
     $("#methylation_tsneOutlierToggle").change(function() {
         updateMCHScatterPlot();
     });
 
     $("#snATAC_tsneOutlierToggle").change(function() {
         updatesnATACScatterPlot();
+    });
+
+    $("#RNA_tsneOutlierToggle").change(function() {
+        updateRNAScatterPlot();
     });
 
     /* DYNAMIC TSNE (methylation) DROPDOWN OPTIONS */
@@ -496,6 +542,10 @@
 
     $("#snATAC-tsne-grouping, #snATAC-box-heat-grouping").change(function() {
          $("#snATAC-tsne-grouping, #snATAC-box-heat-grouping").val($(this).val());
+    });
+
+    $("#RNA-tsne-grouping, #RNA-box-heat-grouping").change(function() {
+         $("#RNA-tsne-grouping, #RNA-box-heat-grouping").val($(this).val());
     });
 
 

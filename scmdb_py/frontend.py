@@ -106,7 +106,8 @@ def index():
 @frontend.route('/<ensemble_name>')
 def ensemble(ensemble_name):
     ensemble_info = get_ensemble_info(ensemble_name=ensemble_name)
-    snATAC_included = snATAC_data_exists(ensemble_info['ensemble_id'])
+    snATAC_included = ensemble_exists(ensemble_info['ensemble_id'],'snATAC')
+    RNA_included = ensemble_exists(ensemble_info['ensemble_id'],'RNA')
     ensemble = 'Ens'+str(ensemble_info['ensemble_id'])
     RS2_included = 0
     if 'RS2' in ensemble_info['datasets']:
@@ -120,6 +121,7 @@ def ensemble(ensemble_name):
                                ensemble = ensemble, 
                                ensemble_name = ensemble_name,
                                snATAC_data_available = snATAC_included,
+                               RNA_data_available = RNA_included,
                                RS2 = RS2_included,
                                methylation_tsne_options = json.dumps(methylation_tsne_options),
                                num_algorithm_options = num_algorithm_options,
@@ -234,6 +236,28 @@ def plot_snATAC_scatter(ensemble, grouping, ptile_start, ptile_end, tsne_outlier
     except FailToGraphException:
         return "Failed to load snATAC-seq data for {}, please contact maintainer".format(ensemble)
 
+
+@frontend.route('/plot/RNA/scatter/<ensemble>/<grouping>/<ptile_start>/<ptile_end>/<tsne_outlier>')
+def plot_RNA_scatter(ensemble, grouping, ptile_start, ptile_end, tsne_outlier):
+
+    genes_query = request.args.get('q', 'MustHaveAQueryString')
+    if grouping == 'NaN' or grouping == 'null':
+        grouping = 'cluster'
+
+    tsne_outlier_bool = False
+    if tsne_outlier == 'true':
+        tsne_outlier_bool = True
+
+    try:
+        return get_RNA_scatter(ensemble,
+                                  genes_query, 
+                                  grouping,
+                                  float(ptile_start),
+                                  float(ptile_end),
+                                  tsne_outlier_bool)
+    except FailToGraphException:
+        return "Failed to load RNA-seq data for {}, please contact maintainer".format(ensemble)
+
 @frontend.route('/plot/methylation/box/<ensemble>/<methylation_type>/<gene>/<grouping>/<clustering>/<level>/<outliers_toggle>')
 @cache.memoize(timeout=3600)
 def plot_mch_box(ensemble, methylation_type, gene, grouping, clustering, level, outliers_toggle):
@@ -309,6 +333,23 @@ def plot_snATAC_box(ensemble, gene, grouping, outliers_toggle):
         print("ERROR (plot_snATAC_box): {}".format(e))
         return 'Failed to produce snATAC normalized counts box plot. Contact maintainer.'
 
+@frontend.route('/plot/RNA/box/<ensemble>/<gene>/<grouping>/<outliers_toggle>')
+@cache.memoize(timeout=3600)
+def plot_RNA_box(ensemble, gene, grouping, outliers_toggle):
+
+    if outliers_toggle == 'outliers':
+        outliers = True
+    else:
+        outliers = False
+    if grouping == 'NaN' or grouping == 'null':
+        grouping = 'cluster'
+
+    try:
+        return get_RNA_box(ensemble, gene, grouping, outliers)
+    except (FailToGraphException, ValueError) as e:
+        print("ERROR (plot_RNA_box): {}".format(e))
+        return 'Failed to produce RNA normalized counts box plot. Contact maintainer.'
+
 
 # @frontend.route('/plot/box_combined/<methylation_type>/<gene_mmu>/<gene_hsa>/<level>/<outliers_toggle>')
 # def plot_mch_box_two_ensemble(methylation_type, gene_mmu, gene_hsa, level, outliers_toggle):
@@ -362,6 +403,25 @@ def plot_snATAC_heatmap(ensemble, grouping, ptile_start, ptile_end):
     except (FailToGraphException, ValueError) as e:
         print("ERROR (plot_snATAC_heatmap): {}".format(e))
         return 'Failed to produce snATAC normalized counts heatmap plot. Contact maintainer.'
+
+
+@frontend.route('/plot/RNA/heat/<ensemble>/<grouping>/<ptile_start>/<ptile_end>')
+def plot_RNA_heatmap(ensemble, grouping, ptile_start, ptile_end):
+
+    query = request.args.get('q', 'MustHaveAQueryString')
+
+    if grouping == 'NaN' or grouping == 'null':
+        grouping = 'cluster'
+
+    if request.args.get('normalize', 'MustSpecifyNormalization') == 'true':
+        normalize_row = True
+    else:
+        normalize_row = False
+    try:
+        return get_RNA_heatmap(ensemble, grouping, float(ptile_start), float(ptile_end), normalize_row, query)
+    except (FailToGraphException, ValueError) as e:
+        print("ERROR (plot_RNA_heatmap): {}".format(e))
+        return 'Failed to produce RNA normalized counts heatmap plot. Contact maintainer.'
 
 
 # @frontend.route('/plot/heat_two_ensemble/<ensemble>/<methylation_type>/<level>/<ptile_start>/<ptile_end>')

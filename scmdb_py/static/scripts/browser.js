@@ -642,6 +642,43 @@ function populatesnATACTSNEDropdowns() {
     });
 }
 
+// Options for tSNE (RNA) plot //
+function populateRNATSNEDropdowns() {
+    $.ajax({
+        url: '/RNA_tsne_options/'+ensemble,
+        dataType: 'json',
+        async: false,
+        success: function(data) {
+            window.global_all_RNA_tsne_settings = data['all_tsne_settings'];
+            window.global_all_RNA_clustering_settings = data['all_clustering_settings'];
+            $.each(data["tsne_dimensions"], function(key, val) {
+                $(".RNA-tsne-dimensions").append(
+                    $('<option></option>').val(val).text(val)
+                );
+            });
+            $.each(data["tsne_perplexity"], function(key, val) {
+                $(".RNA-tsne-perplexity").append(
+                    $('<option></option>').val(val).text(val)
+                );
+            });
+            $.each(data["clustering_algorithms"], function(key, val) {
+                $(".RNA-clustering-algorithms").append(
+                    $('<option></option>').val(val).text(val)
+                );
+            });
+            $.each(data["clustering_npc"], function(key, val) {
+                $(".RNA-clustering-npc").append(
+                    $('<option></option>').val(val).text(val)
+                );
+            });
+            $.each(data["clustering_k"], function(key, val) {
+                $(".RNA-clustering-k").append(
+                    $('<option></option>').val(val).text(val)
+                );
+            });
+        }
+    });
+}
 function dynamicMethylationTSNEOptions_dimensions(matching_tsne_options = []) {
     if (matching_tsne_options.length === 0) {
         const regex = new RegExp("_ndim" + $(".methylation-tsne-dimensions").val() + "_\\w+");
@@ -908,6 +945,9 @@ function updateGeneElements(updateMCHScatter=true) {
             if (snATAC_data_available === 1) {
                 updatesnATACScatterPlot();
             }
+            if (RNA_data_available === 1) {
+                updateRNAScatterPlot();
+            }
         }
         updateClustersBarPlot();
         if($("#geneName").select2('data').length > 1) {
@@ -923,6 +963,10 @@ function updateGeneElements(updateMCHScatter=true) {
                 updatesnATACHeatmap();
                 $('#snATAC-box-heat-normalize-toggle').prop('disabled', false);
             }
+            if (RNA_data_available === 1) {
+                updateRNAHeatmap();
+                $('#RNA-box-heat-normalize-toggle').prop('disabled', false);
+            }
         }
         else{
             $('#epiBrowserLink').removeClass('disabled');
@@ -936,6 +980,10 @@ function updateGeneElements(updateMCHScatter=true) {
             if (snATAC_data_available === 1) {
                 updatesnATACBoxPlot();
                 $('#snATAC-box-heat-normalize-toggle').prop('disabled', true);
+            }
+            if (RNA_data_available === 1) {
+                updateRNABoxPlot();
+                $('#RNA-box-heat-normalize-toggle').prop('disabled', true);
             }
 
             $.ajax({
@@ -1030,7 +1078,6 @@ function updateMCHScatterPlot(onlyUpdatetSNEandClustering=false) {
 function updatesnATACScatterPlot(onlyUpdatetSNEandClustering=false) {
     let tsne_settings = "ATAC_ndim"+$("#snATAC-tsne-dimensions").val()+"_perp"+$("#snATAC-tsne-perplexity").val();
     let grouping = $("#snATAC-tsne-grouping").val();
-    //let grouping = "cluster";
     let clustering_settings = "ATAC_"+$("#snATAC-clustering-algorithms").val()+"_npc"+$("#snATAC-clustering-npc").val()+"_k"+$("#snATAC-clustering-k").val();
     let snATAC_color_percentile_Values = snATAC_color_percentile_Slider.getValue();
     let genes = $("#geneName").select2('data');
@@ -1077,8 +1124,60 @@ function updatesnATACScatterPlot(onlyUpdatetSNEandClustering=false) {
 
     $("#snATAC-tsne-heading-num-dimensions").text($("#snATAC-tsne-dimensions").val() + "D ");
     $("#snATAC-tsne-options-heading").text("Perplexity: " + $("#snATAC-tsne-perplexity").val());
-
     $("#snATAC-clustering-options-heading").text("Algorithm: " + $("#snATAC-clustering-algorithms").val() + ", # of PCs: " + $("#snATAC-clustering-npc").val() + ", K-value: " + $("#snATAC-clustering-k").val());
+}
+
+
+function updateRNAScatterPlot(onlyUpdatetSNEandClustering=false) {
+    let tsne_settings = "ATAC_ndim"+$("#RNA-tsne-dimensions").val()+"_perp"+$("#RNA-tsne-perplexity").val();
+    let grouping = $("#RNA-tsne-grouping").val();
+    let clustering_settings = "ATAC_"+$("#RNA-clustering-algorithms").val()+"_npc"+$("#RNA-clustering-npc").val()+"_k"+$("#RNA-clustering-k").val();
+    let RNA_color_percentile_Values = RNA_color_percentile_Slider.getValue();
+    let genes = $("#geneName").select2('data');
+    let genes_query = "";
+
+    if ($('#RNA_tsneOutlierToggle').prop('checked')) {
+        var tsneOutlierOption = 'false';
+    } else {
+        var tsneOutlierOption = 'true';
+    }
+
+    if (!onlyUpdatetSNEandClustering) {
+        for (i = 0; i < genes.length; i++) {
+            genes_query += (genes[i].id + "+");
+        }
+    }
+    else {
+        let lastViewedGenes = storage.load("lastViewedGenes");
+        for (i = 0; i < lastViewedGenes.length; i++) {
+            genes_query += (lastViewedGenes[i].gene_id + "+");
+        }
+    }
+    genes_query = genes_query.slice(0,-1);
+
+    if ($('#geneName option:selected').val() != 'Select..') {
+        $.ajax({
+        //$.getJSON({
+            type: "GET",
+            url: './plot/RNA/scatter/'+ensemble+'/'+grouping+'/'+RNA_color_percentile_Values[0]+'/'+RNA_color_percentile_Values[1]+'/'+tsneOutlierOption+'?q='+genes_query,
+            beforeSend: function() {
+                $("#RNA-scatter-loader").show();
+                $("#methylation-tsneUpdateBtn").attr("disabled", true);
+            },
+            complete: function() {
+                $("#RNA-scatter-loader").hide();
+            },
+            success: function(data) {
+                //Plotly.newPlot('plot-mch-scatter', data);
+                $('#plot-RNA-scatter').html(data);
+                $("#methylation-tsneUpdateBtn").attr("disabled", false);
+            }
+        });
+    }
+
+    $("#RNA-tsne-heading-num-dimensions").text($("#RNA-tsne-dimensions").val() + "D ");
+    $("#RNA-tsne-options-heading").text("Perplexity: " + $("#RNA-tsne-perplexity").val());
+    $("#RNA-clustering-options-heading").text("Algorithm: " + $("#RNA-clustering-algorithms").val() + ", # of PCs: " + $("#RNA-clustering-npc").val() + ", K-value: " + $("#RNA-clustering-k").val());
 }
 
 /*
@@ -1273,6 +1372,7 @@ function updateClustersBarPlot() {
         }
     });
 }
+
 function updatesnATACBoxPlot() {
     let geneSelected = $('#geneName option:selected').val();
     let grouping = $('#snATAC-box-heat-grouping').val();
@@ -1297,6 +1397,35 @@ function updatesnATACBoxPlot() {
         success: function(data) {
             $('#plot-snATAC-box').html(data);
             $("#snATAC-box-heat-UpdateBtn").attr("disabled", false);
+        }
+    });
+
+}
+
+function updateRNABoxPlot() {
+    let geneSelected = $('#geneName option:selected').val();
+    let grouping = $('#RNA-box-heat-grouping').val();
+
+    if ($('#RNA-box-heat-outlierToggle').prop('checked')) {
+        var outlierOption = 'outliers';
+    } else {
+        var outlierOption = 'false';
+    }
+
+    $.ajax({
+        type: "GET",
+        url: './plot/RNA/box/'+ensemble+'/'+geneSelected+'/'+grouping+'/'+outlierOption,
+        beforeSend: function() {
+            $("#RNA-box-heat-UpdateBtn").attr("disabled", true);
+            $("#RNA-box-loader").show();
+            $("#plot-RNA-heat").html("");
+        },
+        complete: function() {
+            $("#RNA-box-loader").hide();
+        },
+        success: function(data) {
+            $('#plot-RNA-box').html(data);
+            $("#RNA-box-heat-UpdateBtn").attr("disabled", false);
         }
     });
 
@@ -1398,6 +1527,43 @@ function updatesnATACHeatmap() {
             $('#plot-snATAC-heat').html(data);
             $('#snATAC-box-heat-outlierToggle').bootstrapToggle('disable');
             $("#snATAC-box-heat-UpdateBtn").attr("disabled", false);
+        }
+    });
+}
+
+function updateRNAHeatmap() {
+    let levelType = $('input[name=levels]').filter(':checked').val();
+    let RNA_color_percentile_Values = methylation_box_color_percentile_Slider.getValue();
+    let genes = $("#geneName").select2('data');
+    let genes_query = "";
+    let grouping = $("#RNA-box-heat-grouping").val();
+
+    for (i = 0; i < genes.length; i++) {
+        genes_query += (genes[i].id + "+");
+    }
+    if ($('#RNA-box-heat-normalize-toggle').prop('checked')) {
+        var normalize = 'true';
+    }
+    else {
+        var normalize = 'false';
+    }
+    genes_query = genes_query.slice(0,-1);
+
+    $.ajax({
+        type: "GET",
+        url: './plot/RNA/heat/'+ensemble+'/'+grouping+'/'+RNA_color_percentile_Values[0]+'/'+RNA_color_percentile_Values[1]+'?q='+genes_query+'&normalize='+normalize,
+        beforeSend: function() {
+            $("#RNA-box-loader").show();
+            $("#plot-RNA-box").html("");
+            $("#RNA-box-heat-UpdateBtn").attr("disabled", true);
+        },
+        complete: function() {
+            $("#RNA-box-loader").hide();
+        },
+        success: function(data) {
+            $('#plot-RNA-heat').html(data);
+            $('#RNA-box-heat-outlierToggle').bootstrapToggle('disable');
+            $("#RNA-box-heat-UpdateBtn").attr("disabled", false);
         }
     });
 }
