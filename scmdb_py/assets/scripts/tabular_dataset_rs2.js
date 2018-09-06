@@ -1,11 +1,11 @@
-function initDatasetDataTable() {
+function initDatasetDataTableRS2() {
     
     const numberWithCommas = (x) => {
       return x.toString().replace(/\B(?=(\d{3})+(?!\d))/g, ",");
     }
 
-    var table = $('#dataset-table').DataTable( {
-        "order": [[8, 'desc']], //Initially sort by date added.
+    var table = $('#dataset-table-rs2').DataTable( {
+        "order": [[7, 'desc']], //Initially sort by date added.
         "pageLength": 50,
         "ajax": {
             "url": $SCRIPT_ROOT+"/content/datasets/rs2",
@@ -21,7 +21,6 @@ function initDatasetDataTable() {
             {"data": "dataset_name"},
             {"data": "sex", "className": 'dt-center'},
             {"data": "methylation_cell_count", "className": 'dt-center'},
-            {"data": "snATAC_cell_count", "className": 'dt-center'},
             {"data": "ABA_regions_acronym", "className": 'dt-center'},
             {"data": "slice", "className": 'dt-center'},
             {"data": "target_region_acronym", "className": 'dt-center'},
@@ -38,24 +37,14 @@ function initDatasetDataTable() {
                     return a+b;
                 }, 0 );
  
-            // Total snATAC cells
-            grand_total_snATAC_cells = api
-                .column( 4 )
-                .data()
-                .reduce( function (a, b) {
-                    return a+b;
-                }, 0 );
- 
             // Update footer
-            $( api.column( 8 ).footer() ).html(
-                numberWithCommas(grand_total_methylation_cells) +' mC cells, '+ 
-                numberWithCommas(grand_total_snATAC_cells) +
-                ' ATAC cells'
+            $( api.column( 7 ).footer() ).html(
+                numberWithCommas(grand_total_methylation_cells) +' mC cells with defined target region'
             );
         }
     });
 
-    $('#dataset-table tbody').on('click', 'td.details-control', function() {
+    $('#dataset-table-rs2 tbody').on('click', 'td.details-control', function() {
         var tr = $(this).closest('tr');
         var row = table.row(tr);
 
@@ -74,10 +63,10 @@ function initDatasetDataTable() {
 
 function format ( d ) {
 
-    var snATAC_datasets = d.snATAC_datasets;
-    if (d.snATAC_datasets === "") {
-        snATAC_datasets = "None";
-    }
+    // var snATAC_datasets = d.snATAC_datasets;
+    // if (d.snATAC_datasets === "") {
+    //     snATAC_datasets = "None";
+    // }
 
     return (
         '<table cellpadding="5" cellspacing="0" border="0" style="padding-left:50px;">'+

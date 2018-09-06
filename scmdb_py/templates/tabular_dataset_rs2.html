@@ -4,28 +4,27 @@
 
 {% block content -%}
     <br>
-    <div id="dataset-table-div" style="margin:auto;" width="90%">
-        <table id="dataset-table" class="display compact" style="" width="90%"> 
+    <div id="dataset-table-div-rs2" style="margin:auto; width:90%;">
+        <table id="dataset-table-rs2" class="display compact" width="90%"> 
             <thead>
                 <tr>
                     <th></th>
                     <th>Dataset</th>
                     <th>Sex</th>
                     <th>Total Cells<br>(snmC-seq)</th>
-                    <th>Total Cells<br>(snATAC-seq)</th>
                     <th>Dissection<br>Region(s)</th>
                     <th>Slice</th>
                     <th>Target<br>Region(s)</th>
                     <th>Date Added</th>
                     <!--<th>Projection Target Region (Viral Injection)</th>-->
                 </tr>
+            </thead>
             <tfoot>
                 <tr>
-                    <th colspan="8" style="text-align:right">Total:</th>
+                    <th colspan="7" style="text-align:right">Total:</th>
                     <th></th>
                 </tr>
             </tfoot>
-            </thead>
         </table>
     </div>
 {%- endblock %}
@@ -47,7 +46,7 @@
 
     <script> 
         $(document).ready( function () {
-            initDatasetDataTable();
+            initDatasetDataTableRS2();
         }); 
     </script>
 {% endblock scripts %}

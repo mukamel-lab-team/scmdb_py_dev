@@ -1,10 +1,10 @@
-function initDatasetDataTable() {
+function initDatasetDataTableRS1() {
     
     const numberWithCommas = (x) => {
       return x.toString().replace(/\B(?=(\d{3})+(?!\d))/g, ",");
     }
 
-    var table = $('#dataset-table').DataTable( {
+    var table = $('#dataset-table-rs1').DataTable( {
         "order": [[7, 'desc']], //Initially sort by date added.
         "pageLength": 50,
         "ajax": {
@@ -54,7 +54,7 @@ function initDatasetDataTable() {
         }
     });
 
-    $('#dataset-table tbody').on('click', 'td.details-control', function() {
+    $('#dataset-table-rs1 tbody').on('click', 'td.details-control', function() {
         var tr = $(this).closest('tr');
         var row = table.row(tr);
 
