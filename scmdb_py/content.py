@@ -1992,10 +1992,10 @@ def get_clusters(ensemble, grouping, clustering):
 		return None
 
 	# Get methylation info
-	query = "SELECT count(cells.cell_id) ncells, CONCAT(cells.dataset, '_mc') AS ds, 'snmC' AS modality, %(ensemble)s.%(grouping)s_%(clustering)s groups \
+	query = "SELECT count(cells.cell_id) ncells, 'snmC' AS modality, %(ensemble)s.%(grouping)s_%(clustering)s groups \
 		FROM cells \
 		INNER JOIN %(ensemble)s ON cells.cell_id = %(ensemble)s.cell_id \
-		GROUP BY groups, ds " % {'ensemble': ensemble,
+		GROUP BY groups " % {'ensemble': ensemble,
 					'grouping': grouping,
 					'clustering': clustering}
 	try:
@@ -2007,10 +2007,10 @@ def get_clusters(ensemble, grouping, clustering):
 		return None
 
 	# Get snATAC info
-	query = "SELECT count(cells.cell_id) ncells, CONCAT(cells.dataset, '_atac') AS ds, 'snATAC' AS modality, %(ensemble)s.cluster_ATAC groups \
+	query = "SELECT count(cells.cell_id) ncells, 'snATAC' AS modality, %(ensemble)s.cluster_ATAC groups \
 		FROM cells \
 		INNER JOIN %(ensemble)s ON cells.cell_id = %(ensemble)s.cell_id \
-		GROUP BY groups, ds " % {'ensemble': ensemble,
+		GROUP BY groups " % {'ensemble': ensemble,
 					'grouping': grouping,
 					'clustering': clustering}
 
@@ -2024,10 +2024,10 @@ def get_clusters(ensemble, grouping, clustering):
 
 
 	# Get snRNA info
-	query = "SELECT count(cells.cell_id) ncells, CONCAT(cells.dataset, '_rna') AS ds, 'RNA' AS modality, %(ensemble)s.cluster_RNA groups \
+	query = "SELECT count(cells.cell_id) ncells, 'RNA' AS modality, %(ensemble)s.cluster_RNA groups \
 		FROM cells \
 		INNER JOIN %(ensemble)s ON cells.cell_id = %(ensemble)s.cell_id \
-		GROUP BY groups, ds " % {'ensemble': ensemble,
+		GROUP BY groups " % {'ensemble': ensemble,
 					'grouping': grouping,
 					'clustering': clustering}
 
@@ -2074,10 +2074,13 @@ def get_clusters_bar(ensemble, grouping, clustering, normalize, outliers):
 		trace = Bar(
 			y=clustersu['y'],
 			x=clustersu['groups'],
-			text=list([str(i) for i in clustersu['y']]),
 			name=mi+' cells',
 			hoverinfo='text',
 			)
+		if (normalize=='true'):
+			trace['text'] = [str(round(i,1))+'% '+mi+' cells' for i in clustersu['y']]
+		else:
+			trace['text'] = [str(i)+' '+mi+' cells' for i in clustersu['y']]
 		data.append(trace)
 	
 	layout = Layout(
