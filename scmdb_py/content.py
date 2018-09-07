@@ -917,57 +917,6 @@ def get_gene_methylation(ensemble, methylation_type, gene, grouping, clustering,
 	return df
 
 
-@cache.memoize(timeout=3600)
-def get_clusters(ensemble, grouping, clustering):
-	"""Return information about all the clusters
-
-	Arguments:
-		ensemble (str): Name of ensemble.
-		grouping (str): Variable for grouping cells. "cluster", "annotation", or "dataset".
-		clustering (str): Different clustering algorithms and parameters. 'lv' = Louvain clustering.
-
-	Returns:
-		DataFrame
-	"""
-
-	# Prevent SQL injected since column names cannot be parameterized.
-	if ";" in ensemble or ";" in grouping or ";" in clustering:
-		return None
-
-	# Get methylation info
-	query = "SELECT count(cells.cell_id) ncells, CONCAT(cells.dataset, '_mc') AS ds, 'snmC' AS modality, %(ensemble)s.%(grouping)s_%(clustering)s groups \
-		FROM cells \
-		INNER JOIN %(ensemble)s ON cells.cell_id = %(ensemble)s.cell_id \
-		GROUP BY groups, ds " % {'ensemble': ensemble,
-					'grouping': grouping,
-					'clustering': clustering}
-	try:
-		df = pd.read_sql(query, db.get_engine(current_app, 'methylation_data'))
-	except exc.ProgrammingError as e:
-		now = datetime.datetime.now()
-		print("[{}] ERROR in app(get_gene_methylation): {}".format(str(now), e))
-		sys.stdout.flush()
-		return None
-
-	# Get snATAC info
-	query = "SELECT count(cells.cell_id) ncells, CONCAT(cells.dataset, '_atac') AS ds, 'snATAC' AS modality, %(ensemble)s.cluster_ATAC groups \
-		FROM cells \
-		INNER JOIN %(ensemble)s ON cells.cell_id = %(ensemble)s.cell_id \
-		GROUP BY groups, ds " % {'ensemble': ensemble,
-					'grouping': grouping,
-					'clustering': clustering}
-
-	try:
-		df_atac = pd.read_sql(query, db.get_engine(current_app, 'snATAC_data'))
-		df=df.append(df_atac)
-	except exc.ProgrammingError as e:
-		now = datetime.datetime.now()
-		print("[{}] ERROR in app(get_gene_methylation): {}".format(str(now), e))
-		sys.stdout.flush()
-
-	return df
-
-
 def get_mult_gene_methylation(ensemble, methylation_type, genes, grouping, clustering, level, tsne_type='mCH_ndim2_perp20'):
 	"""Return averaged methylation data ponts for a set of genes.
 
@@ -2041,6 +1990,73 @@ def get_mch_heatmap(ensemble, methylation_type, grouping, clustering, level, pti
 		include_plotlyjs=False)
 
 @cache.memoize(timeout=3600)
+def get_clusters(ensemble, grouping, clustering):
+	"""Return information about all the clusters
+
+	Arguments:
+		ensemble (str): Name of ensemble.
+		grouping (str): Variable for grouping cells. "cluster", "annotation", or "dataset".
+		clustering (str): Different clustering algorithms and parameters. 'lv' = Louvain clustering.
+
+	Returns:
+		DataFrame
+	"""
+
+	# Prevent SQL injected since column names cannot be parameterized.
+	if ";" in ensemble or ";" in grouping or ";" in clustering:
+		return None
+
+	# Get methylation info
+	query = "SELECT count(cells.cell_id) ncells, CONCAT(cells.dataset, '_mc') AS ds, 'snmC' AS modality, %(ensemble)s.%(grouping)s_%(clustering)s groups \
+		FROM cells \
+		INNER JOIN %(ensemble)s ON cells.cell_id = %(ensemble)s.cell_id \
+		GROUP BY groups, ds " % {'ensemble': ensemble,
+					'grouping': grouping,
+					'clustering': clustering}
+	try:
+		df = pd.read_sql(query, db.get_engine(current_app, 'methylation_data'))
+	except exc.ProgrammingError as e:
+		now = datetime.datetime.now()
+		print("[{}] ERROR in app(get_gene_methylation): {}".format(str(now), e))
+		sys.stdout.flush()
+		return None
+
+	# Get snATAC info
+	query = "SELECT count(cells.cell_id) ncells, CONCAT(cells.dataset, '_atac') AS ds, 'snATAC' AS modality, %(ensemble)s.cluster_ATAC groups \
+		FROM cells \
+		INNER JOIN %(ensemble)s ON cells.cell_id = %(ensemble)s.cell_id \
+		GROUP BY groups, ds " % {'ensemble': ensemble,
+					'grouping': grouping,
+					'clustering': clustering}
+
+	try:
+		df_atac = pd.read_sql(query, db.get_engine(current_app, 'snATAC_data'))
+		df=df.append(df_atac)
+	except exc.ProgrammingError as e:
+		now = datetime.datetime.now()
+		print("[{}] ERROR in app(get_gene_methylation): {}".format(str(now), e))
+		sys.stdout.flush()
+
+
+	# Get snRNA info
+	query = "SELECT count(cells.cell_id) ncells, CONCAT(cells.dataset, '_rna') AS ds, 'RNA' AS modality, %(ensemble)s.cluster_RNA groups \
+		FROM cells \
+		INNER JOIN %(ensemble)s ON cells.cell_id = %(ensemble)s.cell_id \
+		GROUP BY groups, ds " % {'ensemble': ensemble,
+					'grouping': grouping,
+					'clustering': clustering}
+
+	try:
+		df_rna = pd.read_sql(query, db.get_engine(current_app, 'RNA_data'))
+		df=df.append(df_rna)
+	except exc.ProgrammingError as e:
+		now = datetime.datetime.now()
+		print("[{}] ERROR in app(get_gene_methylation): {}".format(str(now), e))
+		sys.stdout.flush()
+
+	return df
+
+@cache.memoize(timeout=3600)
 def get_clusters_bar(ensemble, grouping, clustering, normalize, outliers):
 	"""Generate clusters bar plot.
 
@@ -2065,18 +2081,6 @@ def get_clusters_bar(ensemble, grouping, clustering, normalize, outliers):
 		clusters['y'] = clusters['ncells']
 		ytitle = 'Number of cells per cluster'
 
-	# # Stacked bar chart by dataset
-	# dsu = clusters['ds'].unique().tolist()
-	# data = list();
-	# for dsi in dsu:
-	# 	clustersu = clusters[clusters['ds']==dsi]
-	# 	trace = Bar(
-	# 		y=clustersu['ncells'],
-	# 		x=clustersu['groups'],
-	# 		name=dsi
-	# 		)
-	# 	data.append(trace)
-
 	# Stacked bar chart by modality. Appropriate for integrated clustering only
 	mu = clusters['modality'].unique().tolist()
 	data = list();
@@ -2085,9 +2089,9 @@ def get_clusters_bar(ensemble, grouping, clustering, normalize, outliers):
 		trace = Bar(
 			y=clustersu['y'],
 			x=clustersu['groups'],
-			text=clustersu['ncells'],
-			name=mi,
-			hoverinfo='name' + 'text',
+			text=list([str(i) for i in clustersu['y']]),
+			name=mi+' cells',
+			hoverinfo='text',
 			)
 		data.append(trace)
 	
