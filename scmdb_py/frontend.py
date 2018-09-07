@@ -30,65 +30,6 @@ frontend = Blueprint('frontend', __name__, template_folder="templates", static_f
 def favicon():
     return ('', 204)
 
-
-# @frontend.before_request
-# def process_navbar():
-# 
-#     # get images here
-#     lockimage = img(src='static/img/lock.png', height='20', width='20')
-#     unlockimage = img(src='static/img/unlock.png', height='20', width='20')
-#     separator = img(src='static/img/separate.png', height='25', width='10')
-# 
-#     ens_list = db.get_engine(current_app, 'methylation_data').execute("SELECT * FROM ensembles").fetchall()
-# 
-#     ens_items = []
-#     
-#     for ens in ens_list:
-#         ensemble = str(ens['ensemble_name'])
-#         if current_user.is_authenticated:
-#             ens_items.append(Link(ensemble, '/'+ensemble))
-#         else:
-#             if bool(ens['public_access']) == True:
-#                 ens_items.append(Link(ensemble, '/'+ensemble))
-#             else:
-#                 continue
-#     # for i in range(100):
-#     #     ens_items.append(Link(ensemble, '/'+ensemble))
-# 
-#     ensembles = Subgroup('Ensembles', *ens_items)
-# 
-#     data_navbar = [ensembles]
-# 
-#     # # Find all the samples in the data directory
-#     # dir_list = []
-#     # if current_user.is_authenticated:
-#     #     current_app.config['DATA_DIR'] = current_app.config['ALL_DATA_DIR']
-#     # else:
-#     #     current_app.config['DATA_DIR'] = current_app.config['PUBLISHED_DATA_DIR']
-#     # dir_list = next(walk(current_app.config['DATA_DIR'] + "/ensembles"))[1]
-#     # published_dir_list = next(walk(current_app.config['PUBLISHED_DATA_DIR'] + 
-#     #         "/ensembles"))[1]
-# 
-#     # dir_list_links = []
-# 
-#     # first = True
-# 
-#     # for x in dir_list:
-#     #     if not first:
-#     #         dir_list_links.append(Text(separator))
-#     #     dir_list_links.append(Link(x, "/" + x))
-#     #     if current_user.is_authenticated:
-#     #         # x is public: add unlockimage
-#     #         if x in published_dir_list:
-#     #             dir_list_links.append(Text(unlockimage))
-#     #         # x is private: add lockimage
-#     #         else:
-#     #             dir_list_links.append(Text(lockimage))
-#     #     first = False
-# 
-#     # nav.register_element('frontend_top', Navbar('',*dir_list_links))
-#     nav.register_element('frontend_top', Navbar('', *data_navbar))
-
 #Visitor routes
 @frontend.route('/')
 def index():
