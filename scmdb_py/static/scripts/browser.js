@@ -503,10 +503,7 @@ function initGeneNameSearch() {
                         let option = new Option(gene.gene_name, gene.gene_id, true, true);
                         geneNameSelector.append(option);
                     });
-                    if (numGenes === 1) {
-                        $('#epiBrowserLink').attr('href', generateBrowserURL(data[0]));
-                        $('#epiBrowserLink').removeClass('disabled');
-                    }
+                    $('#epiBrowserLink').attr('href', generateBrowserURL(data[0]));  // Show the first gene in the list
                 }
             }
         });
@@ -950,12 +947,13 @@ function updateGeneElements(updateMCHScatter=true) {
             }
         }
         updateClustersBarPlot();
+        $('#epiBrowserLink').removeClass('disabled');
         if($("#geneName").select2('data').length > 1) {
             $('#normalize-heatmap').show();
             $('#methylation-box-heat-normalize-toggle').prop('disabled', false);
             updateMethylationHeatmap();
             updateCorrelatingGeneDataTable("");
-            $('#epiBrowserLink').addClass('disabled');
+            // $('#epiBrowserLink').addClass('disabled');
             $("#methylation-box-and-heat").removeClass('col-md-8').addClass('col-md-12');
             $("#methylation-correlated-genes").hide();
 
@@ -969,7 +967,6 @@ function updateGeneElements(updateMCHScatter=true) {
             }
         }
         else{
-            $('#epiBrowserLink').removeClass('disabled');
             $('#normalize-heatmap').hide();
             $('#methylation-box-heat-normalize-toggle').prop('disabled', true);
             //updateOrthologToggle();
@@ -985,18 +982,17 @@ function updateGeneElements(updateMCHScatter=true) {
                 updateRNABoxPlot();
                 $('#RNA-box-heat-normalize-toggle').prop('disabled', true);
             }
-
-            $.ajax({
-                url: './gene/id?q='+geneSelected,
-                dataType: 'json',
-                success: function(data) {
-                    if (typeof(data.gene_name) !== 'undefined' && typeof(data.gene_id) !== 'undefined') {
-                        $('#epiBrowserLink').attr('href', generateBrowserURL(data));
-                        $('#epiBrowserLink').removeClass('disabled');
-                    }
-                }
-            });
         }
+        $.ajax({
+            url: './gene/id?q='+geneSelected,
+            dataType: 'json',
+            success: function(data) {
+                if (typeof(data.gene_name) !== 'undefined' && typeof(data.gene_id) !== 'undefined') {
+                    $('#epiBrowserLink').attr('href', generateBrowserURL(data));
+                    $('#epiBrowserLink').removeClass('disabled');
+                }
+            }
+        });
     }
 }
 
