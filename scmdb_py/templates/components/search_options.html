@@ -49,3 +49,115 @@
         </div>
     </div>
 </div>
+<!-- <a data-toggle="collapse" title="" data-placement="left" href=".methylation-plots-options" class="btn btn-sm btn-basic pull-right" style="margin-top: 0px;" data-original-title="Collapse Methylation tSNE Options"><i class="glyphicon glyphicon-cog"></i> Options</a> -->
+<!-- <div class="panel-collapse collapse in cluster_options_group methylation-plots-options" id="methylation-tsneplots_options">
+    <div class="panel-body option-panel" style="padding-top:0px; padding-bottom: 0px;">
+        <div class="container">
+            <div class="form-group" style="margin-bottom:0px;">
+                <div class="col-sm-12 col-md-3">
+ -->
+ <div class="col-sm-12">
+    <div class="form-group col-md-4 col-sm-12" style="margin-bottom:0px;">
+        <div id="methylation_tsneType" class="col-md-12">
+            <h6>tSNE options:</h6>
+            {% if num_dims_options > 1 %}
+                <div style="display:inline-block">
+            {% else %}
+                <div style="display:none">
+            {% endif %}
+                <label for="methylation-tsne-dimensions">
+                    <a href="javascript:void(0);" class="hover-tooltip" data-toggle="popover" data-trigger="hover" data-placement="bottom" title="Number of Dimensions" data-content="Choose between 2D or 3D (if available) tSNE coordinates."># Dimensions: </a>
+                </label>
+                <select id="methylation-tsne-dimensions" class="methylation-tsne-dimensions methylation-tsneoption" name="methylation-tsne-dimensions">
+                </select>
+                &nbsp;
+            </div>
+            <div style="display:inline-block">
+                <label for="methylation-tsne-methylation">
+                    <a href="javascript:void(0);" class="hover-tooltip" data-toggle="popover" data-trigger="hover" data-placement="bottom" title="Methylation Type" data-content="Type of methylation used to calculate tSNE coordinates.">Methylation Type: </a>
+                </label>
+                <select id="methylation-tsne-methylation" class="methylation-tsne-methylation methylation-tsneoption" name="methylation-tsne-methylation">
+                </select>
+                &nbsp;
+            </div>
+            <div style="display:inline-block">                            
+                {% if num_perplexity_options > 1 %}
+                <label for="methylation-tsne-perplexity">
+                    <a href="javascript:void(0);" class="hover-tooltip" data-toggle="popover" data-trigger="hover" data-placement="bottom" title="Perplexity" data-content="Parameter for tuning tSNE.">Perplexity: </a>
+                </label>
+                <select id="methylation-tsne-perplexity" class="methylation-tsne-perplexity methylation-tsneoption" name="methylation-tsne-perplexity">
+                </select>
+                {% endif %}
+            </div>
+        </div> 
+    </div>
+    <div class="col-sm-12 col-md-3">
+        <div class="col-md-12" id="methylation_tsneGrouping">
+            <h6>Grouping options: </h6>
+            <select id="methylation-tsne-grouping" class="methylation-tsne-grouping methylation-tsneoption" name="methylation-tsnegrouping">
+                <option value="cluster" selected>by cluster</option>
+                <option value="annotation">by cluster annotation</option>
+                <option value="dataset">by dataset</option>
+                <option value="slice">by slice</option>
+                <option value="sex">by sex</option>
+                {% if RS2 == true %}
+                    <option value="target_region">by RS2 target region</option>
+                {% endif %}
+                <!-- <option value="layer">by dissection layer</option> -->
+                <!-- <option value="cluster_biosample">by cluster+biosample</option> -->
+            </select>
+        </div>
+    </div>
+    <div class="col-sm-12 col-md-3" style="display:flex;">
+        <div class="col-md-12" id="methylation_tsneClustering">
+            <h6>Clustering options: </h6>
+            <!--
+            <label for="methylation-tsneclustering">Clustering: </label>
+            <select id ="methylation-tsneclustering" class="methylation-tsneoption" name="methylation-tsneclustering">
+            </select>
+            -->
+            {% if num_algorithm_options > 1 %}
+                <div style="display: inline-block">
+            {% else %}
+                <div style="display: none">
+            {% endif %}
+                <label for="methylation-clustering-algorithms">
+                    <a class="hover-tooltip" href="javascript:void(0);" data-toggle="popover" data-trigger="hover" data-placement="bottom" title="Algorithm" data-content="lv = Louvain Modularity.">Algorithm: </a>
+                </label>
+                <select id="methylation-clustering-algorithms" class="methylation-clustering-algorithms methylation-tsneoption" name="methylation-clustering-algorithms"></select>
+                &nbsp;
+            </div>
+            <div style="display: inline-block">
+                <label for="methylation-clustering-methylation">
+                    <a class="hover-tooltip" href="javascript:void(0);" data-toggle="popover" data-trigger="hover" data-placement="bottom" title="Methylation Type" data-content="Types of methylation used for clustering.">Methylation Type: </a>
+                </label>
+                <select id="methylation-clustering-methylation" class="methylation-clustering-methylation methylation-tsneoption" name="methylation-clustering-methylation"></select>
+                &nbsp;
+            </div>
+            <!--
+            <label for="methylation-clustering-npc">
+                <a class="hover-tooltip" href="javascript:void(0);" data-toggle="popover" data-trigger="hover" data-placement="bottom" title="Principal Components" data-content="Number of principal components kept for clustering."># of PC's: </a>
+            </label>
+            <select id="methylation-clustering-npc" class="methylation-clustering-npc methylation-tsneoption" name="methylation-clustering-npc"></select>
+            &nbsp;
+        -->
+            <div style="display: inline-block">
+                <label for="methylation-clustering-k">
+                    <a class="hover-tooltip" href="javascript:void(0);" data-toggle="popover" data-trigger="hover" data-placement="bottom" title="K-value" data-content="Number of nearest neighbors (neighboring cells).">K-value: </a>
+                </label>
+                <select id="methylation-clustering-k" class="methylation-clustering-k methylation-tsneoption" name="methylation-clustering-k"></select>
+            </div>
+        </div>
+    </div>
+    <div class="form-group col-md-2 col-sm-3" style="margin-bottom:0px; margin-top:15px;">
+    <!-- <div class="col-sm-12 col-md-3" style="position:relative"> -->
+        <button class="btn-sm btn-primary methylation-tsneUpdateBtn" id="methylation-tsneUpdateBtn" style="bottom:0; float:right;">Update 
+        </button>
+    </div>
+</div>
+<!--                 </div>
+            </div>
+        </div>
+    </div>
+</div>
+ -->

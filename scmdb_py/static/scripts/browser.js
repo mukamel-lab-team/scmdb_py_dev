@@ -483,7 +483,7 @@ function initGeneNameSearch() {
     let defaultGene = storage.load('lastViewedGenes');
     if (!defaultGene || defaultGene.length === 0) {
         //no entry or browser does not support localStorage, set default to GAD2
-        defaultGene = [{gene_name: 'GAD2', gene_id: 'ENSMUSG00000026787'}];
+        defaultGene = [{gene_name: 'GAD2', gene_id: 'ENSMUSG00000026787', gene_id: 'ENSG00000136750'}];
     }
     
     if(defaultGene !== []){
@@ -564,18 +564,18 @@ function populateMethylationTSNEDropdowns(data) {
         );
     });
     dynamicMethylationTSNEOptions_dimensions();
-    /*
-    $.each(data['tsne_methylation'], function(key, val) {
-        $(".methylation-tsne-methylation").append(
-            $('<option></option>').val(val).text(val)
-        );
-    });
-    $.each(data["tsne_perplexity"], function(key, val) {
-        $(".methylation-tsne-perplexity").append(
-            $('<option></option>').val(val).text(val)
-        );
-    });
-    */
+    
+    // $.each(data['tsne_methylation'], function(key, val) {
+    //     $(".methylation-tsne-methylation").append(
+    //         $('<option></option>').val(val).text(val)
+    //     );
+    // });
+    // $.each(data["tsne_perplexity"], function(key, val) {
+    //     $(".methylation-tsne-perplexity").append(
+    //         $('<option></option>').val(val).text(val)
+    //     );
+    // });
+    
     $.each(data["clustering_algorithms"], function(key, val) {
         $(".methylation-clustering-algorithms").append(
             $('<option></option>').val(val).text(val)
@@ -695,7 +695,7 @@ function dynamicMethylationTSNEOptions_dimensions(matching_tsne_options = []) {
     let methylation_list = [...methylation_set];
 
     $(".methylation-tsne-methylation").empty();
-    $(".methylation-tsna-perplexity").empty();
+    $(".methylation-tsne-perplexity").empty();
     for (let i = 0; i < methylation_list.length; i++) {
         if (methylation_list[i] === "mCHmCG") {
             $(".methylation-tsne-methylation").append(

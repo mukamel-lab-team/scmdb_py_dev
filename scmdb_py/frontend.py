@@ -56,6 +56,7 @@ def ensemble(ensemble_name):
     methylation_tsne_options = get_methylation_tsne_options(ensemble)
     num_algorithm_options = len(methylation_tsne_options['clustering_algorithms'])
     num_dims_options = len(methylation_tsne_options['tsne_dimensions'])
+    num_perplexity_options = len(methylation_tsne_options['tsne_perplexity'])
 
     if ensemble_info['public_access'] == 1 or (ensemble_info['public_access'] == 0 and current_user.is_authenticated):
         return render_template('ensembleview.html', 
@@ -66,7 +67,8 @@ def ensemble(ensemble_name):
                                RS2 = RS2_included,
                                methylation_tsne_options = json.dumps(methylation_tsne_options),
                                num_algorithm_options = num_algorithm_options,
-                               num_dims_options = num_dims_options)
+                               num_dims_options = num_dims_options,
+                               num_perplexity_options = num_perplexity_options)
     else:
         flash('Data for ensemble {} is not publicly accessible. You must log in to continue. \
               <li>Click on "Ensembles" at the top of the page to select publicly accessible data.</li>'.format(ensemble_name), 'form-error')

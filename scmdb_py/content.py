@@ -644,9 +644,9 @@ def get_methylation_tsne_options(ensemble):
 			'all_clustering_settings': list_clustering_types,
 			'all_clustering_settings2': dict_clustering_types_and_numclusters,
 			'clustering_algorithms': list_algorithms_clustering,
-			'tsne_dimensions': list_dims_tsne_first,}
+			'tsne_dimensions': list_dims_tsne_first,
+			'tsne_perplexity': list_perp_tsne_first,}
 			#'clustering_methylation': list_mc_types_clustering,}
-			#'tsne_perplexity': list_perp_tsne_first,
 			#'clustering_npc': list_npc_clustering,
 			#'clustering_k': list_k_clustering,}
 
@@ -2177,7 +2177,7 @@ def get_gene_snATAC(ensemble, gene, grouping, outliers):
 	query = "SELECT cells.cell_id, cells.cell_name, cells.dataset, \
 		%(ensemble)s.annotation_ATAC, %(ensemble)s.cluster_ATAC, \
 		%(ensemble)s.tsne_x_ATAC, %(ensemble)s.tsne_y_ATAC, \
-		%(gene_table_name)s.normalized_counts, \
+		%(gene_table_name)s.normalized_counts as normalized_counts, \
 		datasets.target_region \
 		FROM cells \
 		INNER JOIN %(ensemble)s ON cells.cell_id = %(ensemble)s.cell_id \
