@@ -122,7 +122,6 @@ function initGeneNameSearch() {
     let defaultGene = storage.load('lastViewedGenes');
     if (!defaultGene || defaultGene.length === 0) {
         //no entry or browser does not support localStorage, set default to GAD2
-        // defaultGene = [{gene_name: 'GAD2', gene_id: 'ENSMUSG00000026787', gene_id: 'ENSG00000136750'}];
         defaultGene = [{gene_name: 'GAD2', gene_id: 'ENSMUSG00000026787'}, {gene_name: 'GAD2', gene_id: 'ENSG00000136750'}];
     }
     console.log('Default gene: '+defaultGene[0])
