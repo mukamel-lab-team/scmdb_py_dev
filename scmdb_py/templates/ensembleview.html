@@ -10,7 +10,7 @@
 				</div>
 			</div>
 			{%- endif %} {%- endwith %}
-			<div style="position:relative; left:0; z-index:2;">
+			<div style="position:relative; left:0; z-index:3;">
                 <div class="col-md-12">
                     <div class="panel panel-info" id="options-panel" style="margin-left:auto; margin-right:auto; ">
                         <div class="panel-heading">
@@ -522,8 +522,8 @@
     });
     */
 
-    $("#methylation-tsne-grouping, #methylation-box-heat-grouping").change(function() {
-         $("#methylation-tsne-grouping, #methylation-box-heat-grouping").val($(this).val());
+    $("#methylation-tsne-grouping").change(function() {
+         $("#methylation-tsne-grouping").val($(this).val());
     });
     $("#methylation-clustering-algorithm, #methylation-clustering-box-heat-algorithm").change(function() {
          $("#methylation-clustering-algorithm, #methylation-clustering-box-heat-algorithm").val($(this).val());

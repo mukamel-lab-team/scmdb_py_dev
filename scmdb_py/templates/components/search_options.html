@@ -1,163 +1,130 @@
 <div class="col-sm-12">
-    <div class="form-group col-md-4 col-sm-12" style="margin-bottom:0px;">
-        <label for="geneName" class="control-label">
-            Search gene by name:
-        </label><br>
-        <select id="geneName" multiple style="width:100%">
-            <option>Select..</option>
-        </select>
-    </div>
-    <div class="col-md-3 col-sm-6">
-        <div style="display:inline-block; float:left;" id="methylationLevelDiv">
-            <label for="levels" class="control-label">
-                <a href="javascript:void(0);" class="hover-tooltip" data-toggle="popover" data-trigger="hover" data-placement="top" title="Methylation Levels" data-content="Display original methylation values or normalize by the global methylation value for each cell.">Methylation Levels</a>
-            </label>
-            <br>
-            <input type="radio" name="levels" id="levelsOriginal" value="original">&nbsp;Original<br>
-            <input type="radio" name="levels" id="levelsNormalized" value="normalized" checked>&nbsp;Normalized
-        </div>
-        <div style="display:inline-block; float:left;">
-            &nbsp;
-        </div>
-        <div style="display:inline-block; float:left;" id="methylationTypeDiv">
-            <label for="mType" class="control-label">
-                <a href="javascript:void(0);" class="hover-tooltip" data-toggle="popover" data-trigger="hover" data-placement="top" title="Methylation Type" data-content="Type of gene-body methylation values to display.">Methylation Type</a>
-            </label>
-            <br>
-            <input type="radio" name="mType" id="type_mch" value="mCH" checked>&nbsp;mCH<br>
-            <input type="radio" name="mType" id="type_mcg" value="mCG">&nbsp;mCG<br>
-            <input type="radio" name="mType" id="type_mcg" value="mCA">&nbsp;mCA<br>
-        </div>
-    </div>
-    <div class="col-md-3 col-sm-12" id="geneModuleDiv">
-        <label for="geneModulesSelect" class="control-label">
-            <a href="javascript:void(0);" class="hover-tooltip pop" data-toggle="popover" data-trigger="hover" data-placement="top" title="Gene Modules" data-content="Populate gene search with pre-selected list of known and predicted marker genes for different cell types. (Gene modules were curated from supplementary figure S10. <a href='http://science.sciencemag.org/content/357/6351/600' target='_blank'>Link</a>)" data-html="true">Gene Modules</a>
-        </label>
-        <br>
-        <select id="geneModulesSelect" style="width:100%">
-            <option value="0">Select..</option>
-        </select>
-    </div>
-    <div class="form-group col-md-2 col-sm-3" style="margin-bottom:0px; margin-top:15px;">
-        <div style="display: inline-block;">
-            <button type="button" class="btn btn-success btn-sm" id="gene-search-btn" style="padding-right:10px;">
-                <span class="glyphicon glyphicon-search"></span>&nbsp;&nbsp;Update
-            </button>
-            <button type="button" class="btn btn-default btn-sm" id="clear-gene-search-btn">
-                Clear
-            </button>
-        </div>
-    </div>
+	<div class="form-group col-md-4 col-sm-12" style="margin-bottom:0px;">
+		<label for="geneName" class="control-label">
+			Search gene by name:
+		</label><br>
+		<select id="geneName" multiple style="width:100%">
+			<option>Select..</option>
+		</select>
+	</div>
+	<div class="col-md-3 col-sm-6">
+		<div style="display:inline-block; float:left;" id="methylationLevelDiv">
+			<label for="levels" class="control-label">
+				<a href="javascript:void(0);" class="hover-tooltip" data-toggle="popover" data-trigger="hover" data-placement="top" title="Methylation Levels" data-content="Display original methylation values or normalize by the global methylation value for each cell.">Methylation Levels</a>
+			</label>
+			<br>
+			<input type="radio" name="levels" id="levelsOriginal" value="original">&nbsp;Original<br>
+			<input type="radio" name="levels" id="levelsNormalized" value="normalized" checked>&nbsp;Normalized
+		</div>
+		<div style="display:inline-block; float:left;">
+			&nbsp;
+		</div>
+		<div style="display:inline-block; float:left;" id="methylationTypeDiv">
+			<div class="form-group">
+				<label for="mType" class="control-label">
+					<a href="javascript:void(0);" class="hover-tooltip" data-toggle="popover" data-trigger="hover" data-placement="top" title="Methylation Type" data-content="Type of gene-body methylation values to display.">Methylation Type</a>
+				</label>
+				<select  id="mType">
+		 			<option value="mCH" selected>mCH</option>
+					<option value="mCG">mCG</option>
+					<option value="mCA">mCA</option>
+	 			</select>
+ 			</div>
+ 		</div>
+	</div>
+	<div class="col-md-3 col-sm-12" id="geneModuleDiv">
+		<label for="geneModulesSelect" class="control-label">
+			<a href="javascript:void(0);" class="hover-tooltip pop" data-toggle="popover" data-trigger="hover" data-placement="top" title="Gene Modules" data-content="Populate gene search with pre-selected list of known and predicted marker genes for different cell types. (Gene modules were curated from supplementary figure S10. <a href='http://science.sciencemag.org/content/357/6351/600' target='_blank'>Link</a>)" data-html="true">Gene Modules</a>
+		</label>
+		<br>
+		<select id="geneModulesSelect" style="width:100%">
+			<option value="0">Select..</option>
+		</select>
+	</div>
+	<div class="form-group col-md-2 col-sm-3" style="margin-bottom:0px; margin-top:15px;">
+		<div style="display: inline-block;">
+			<button type="button" class="btn btn-success btn-sm" id="gene-search-btn" style="padding-right:10px;">
+				<span class="glyphicon glyphicon-search"></span>&nbsp;&nbsp;Update
+			</button>
+			<button type="button" class="btn btn-default btn-sm" id="clear-gene-search-btn">
+				Clear
+			</button>
+		</div>
+	</div>
 </div>
-<!-- <a data-toggle="collapse" title="" data-placement="left" href=".methylation-plots-options" class="btn btn-sm btn-basic pull-right" style="margin-top: 0px;" data-original-title="Collapse Methylation tSNE Options"><i class="glyphicon glyphicon-cog"></i> Options</a> -->
-<!-- <div class="panel-collapse collapse in cluster_options_group methylation-plots-options" id="methylation-tsneplots_options">
-    <div class="panel-body option-panel" style="padding-top:0px; padding-bottom: 0px;">
-        <div class="container">
-            <div class="form-group" style="margin-bottom:0px;">
-                <div class="col-sm-12 col-md-3">
- -->
- <div class="col-sm-12">
-    <div class="form-group col-md-4 col-sm-12" style="margin-bottom:0px;">
-        <div id="methylation_tsneType" class="col-md-12">
-            <h6>tSNE options:</h6>
-            {% if num_dims_options > 1 %}
-                <div style="display:inline-block">
-            {% else %}
-                <div style="display:none">
-            {% endif %}
-                <label for="methylation-tsne-dimensions">
-                    <a href="javascript:void(0);" class="hover-tooltip" data-toggle="popover" data-trigger="hover" data-placement="bottom" title="Number of Dimensions" data-content="Choose between 2D or 3D (if available) tSNE coordinates."># Dimensions: </a>
-                </label>
-                <select id="methylation-tsne-dimensions" class="methylation-tsne-dimensions methylation-tsneoption" name="methylation-tsne-dimensions">
-                </select>
-                &nbsp;
-            </div>
-            <div style="display:inline-block">
-                <label for="methylation-tsne-methylation">
-                    <a href="javascript:void(0);" class="hover-tooltip" data-toggle="popover" data-trigger="hover" data-placement="bottom" title="Methylation Type" data-content="Type of methylation used to calculate tSNE coordinates.">Methylation Type: </a>
-                </label>
-                <select id="methylation-tsne-methylation" class="methylation-tsne-methylation methylation-tsneoption" name="methylation-tsne-methylation">
-                </select>
-                &nbsp;
-            </div>
-            <div style="display:inline-block">                            
-                {% if num_perplexity_options > 1 %}
-                <label for="methylation-tsne-perplexity">
-                    <a href="javascript:void(0);" class="hover-tooltip" data-toggle="popover" data-trigger="hover" data-placement="bottom" title="Perplexity" data-content="Parameter for tuning tSNE.">Perplexity: </a>
-                </label>
-                <select id="methylation-tsne-perplexity" class="methylation-tsne-perplexity methylation-tsneoption" name="methylation-tsne-perplexity">
-                </select>
-                {% endif %}
-            </div>
-        </div> 
-    </div>
-    <div class="col-sm-12 col-md-3">
-        <div class="col-md-12" id="methylation_tsneGrouping">
-            <h6>Grouping options: </h6>
-            <select id="methylation-tsne-grouping" class="methylation-tsne-grouping methylation-tsneoption" name="methylation-tsnegrouping">
-                <option value="cluster" selected>by cluster</option>
-                <option value="annotation">by cluster annotation</option>
-                <option value="dataset">by dataset</option>
-                <option value="slice">by slice</option>
-                <option value="sex">by sex</option>
-                {% if RS2 == true %}
-                    <option value="target_region">by RS2 target region</option>
-                {% endif %}
-                <!-- <option value="layer">by dissection layer</option> -->
-                <!-- <option value="cluster_biosample">by cluster+biosample</option> -->
-            </select>
-        </div>
-    </div>
-    <div class="col-sm-12 col-md-3" style="display:flex;">
-        <div class="col-md-12" id="methylation_tsneClustering">
-            <h6>Clustering options: </h6>
-            <!--
-            <label for="methylation-tsneclustering">Clustering: </label>
-            <select id ="methylation-tsneclustering" class="methylation-tsneoption" name="methylation-tsneclustering">
-            </select>
-            -->
-            {% if num_algorithm_options > 1 %}
-                <div style="display: inline-block">
-            {% else %}
-                <div style="display: none">
-            {% endif %}
-                <label for="methylation-clustering-algorithms">
-                    <a class="hover-tooltip" href="javascript:void(0);" data-toggle="popover" data-trigger="hover" data-placement="bottom" title="Algorithm" data-content="lv = Louvain Modularity.">Algorithm: </a>
-                </label>
-                <select id="methylation-clustering-algorithms" class="methylation-clustering-algorithms methylation-tsneoption" name="methylation-clustering-algorithms"></select>
-                &nbsp;
-            </div>
-            <div style="display: inline-block">
-                <label for="methylation-clustering-methylation">
-                    <a class="hover-tooltip" href="javascript:void(0);" data-toggle="popover" data-trigger="hover" data-placement="bottom" title="Methylation Type" data-content="Types of methylation used for clustering.">Methylation Type: </a>
-                </label>
-                <select id="methylation-clustering-methylation" class="methylation-clustering-methylation methylation-tsneoption" name="methylation-clustering-methylation"></select>
-                &nbsp;
-            </div>
-            <!--
-            <label for="methylation-clustering-npc">
-                <a class="hover-tooltip" href="javascript:void(0);" data-toggle="popover" data-trigger="hover" data-placement="bottom" title="Principal Components" data-content="Number of principal components kept for clustering."># of PC's: </a>
-            </label>
-            <select id="methylation-clustering-npc" class="methylation-clustering-npc methylation-tsneoption" name="methylation-clustering-npc"></select>
-            &nbsp;
-        -->
-            <div style="display: inline-block">
-                <label for="methylation-clustering-k">
-                    <a class="hover-tooltip" href="javascript:void(0);" data-toggle="popover" data-trigger="hover" data-placement="bottom" title="K-value" data-content="Number of nearest neighbors (neighboring cells).">K-value: </a>
-                </label>
-                <select id="methylation-clustering-k" class="methylation-clustering-k methylation-tsneoption" name="methylation-clustering-k"></select>
-            </div>
-        </div>
-    </div>
-    <div class="form-group col-md-2 col-sm-3" style="margin-bottom:0px; margin-top:15px;">
-    <!-- <div class="col-sm-12 col-md-3" style="position:relative"> -->
-        <button class="btn-sm btn-primary methylation-tsneUpdateBtn" id="methylation-tsneUpdateBtn" style="bottom:0; float:right;">Update 
-        </button>
-    </div>
+
+<!-- tSNE options -->
+<!-- <a data-toggle="collapse" title="" data-placement="left" href=".methylation-plots-options" class="btn btn-sm btn-basic pull-right" style="margin-top: 0px; float:right;" data-original-title="Collapse Methylation tSNE Options"><i class="glyphicon glyphicon-cog"></i> tSNE and Clustering Options</a>
+-->
+<div class="col-md-12">
+	<a data-toggle="collapse" title="" data-placement="left" data-target="#methylation-plots-options" class="btn btn-sm btn-basic pull-left" style="margin-top: 0px; float:left;" data-original-title="Collapse Methylation tSNE Options"> 
+		<h6><i class="glyphicon glyphicon-cog"></i> tSNE and Clustering Options</h6>
+	</a>
 </div>
-<!--                 </div>
-            </div>
-        </div>
-    </div>
+
+<div id="methylation-plots-options" class="collapse">
+	<form class="form-horizontal">
+		<div class="form-group">
+			<div id="methylation_tsneType" class="col-md-12">
+					<h6>tSNE options:</h6>
+					{% if num_dims_options > 1 %}
+					<div style="display:inline-block">
+					{% else %}
+					<div style="display:none">
+					{% endif %}
+						<label class="control-label" for="methylation-tsne-dimensions">
+							<a href="javascript:void(0);" class="hover-tooltip" data-toggle="popover" data-trigger="hover" data-placement="bottom" title="Number of Dimensions" data-content="Choose between 2D or 3D (if available) tSNE coordinates."># Dimensions: </a>
+						</label>
+						<select id="methylation-tsne-dimensions" class="methylation-tsne-dimensions methylation-tsneoption" name="methylation-tsne-dimensions">
+						</select>
+						&nbsp;
+					</div>
+					<div style="display:inline-block">
+						<label class="control-label" for="methylation-tsne-methylation">
+							<a href="javascript:void(0);" class="hover-tooltip" data-toggle="popover" data-trigger="hover" data-placement="bottom" title="Methylation Type" data-content="Type of methylation used to calculate tSNE coordinates.">Methylation Type: </a>
+						</label>
+						<select id="methylation-tsne-methylation" class="methylation-tsne-methylation methylation-tsneoption" name="methylation-tsne-methylation">
+						</select>
+						&nbsp;
+					</div>
+					<div style="display:inline-block">                            
+						{% if num_perplexity_options > 1 %}
+						<label class="control-label" for="methylation-tsne-perplexity">
+							<a href="javascript:void(0);" class="hover-tooltip" data-toggle="popover" data-trigger="hover" data-placement="bottom" title="Perplexity" data-content="Parameter for tuning tSNE.">Perplexity: </a>
+						</label>
+						<select id="methylation-tsne-perplexity" class="methylation-tsne-perplexity methylation-tsneoption" name="methylation-tsne-perplexity">
+						</select>
+						{% endif %}
+					</div>
+				</div>
+		</div>
+		<div class="form-group col-md-12">
+			<label class="control-label"><h6>Grouping options:</h6></label>
+			<select id="methylation-tsne-grouping" class="methylation-tsne-grouping methylation-tsneoption" name="methylation-tsnegrouping">
+				<option value="cluster" selected>by cluster</option>
+				<option value="annotation">by cluster annotation</option>
+				<option value="dataset">by dataset</option>
+				<option value="slice">by slice</option>
+				<option value="sex">by sex</option>
+				{% if RS2 == true %}
+				<option value="target_region">by RS2 target region</option>
+				{% endif %}
+				<!-- <option value="layer">by dissection layer</option> -->
+				<!-- <option value="cluster_biosample">by cluster+biosample</option> -->
+			</select>
+		</div>
+	    <div class="form-group col-md-12">
+	    	<input id="methylation-box-heat-outlierToggle" data-toggle="toggle" data-on="Outliers On" data-off="Outliers Off" type="checkbox">
+	    </div>
+	    <div class="form-group col-md-12">
+	    	<input id="methylation-box-heat-normalize-toggle" name="methylation-box-heat-normalize-checkbox" value="normalize" type="checkbox">
+	    	<label for="methylation-box-heat-normalize-toggle">
+	    		<a class="hover-tooltip" href="javascript:void(0);" data-toggle="popover" data-trigger="hover" data-placement="bottom" title="Normalize by Gene" data-content="Min-Max normalization across each row. (Only for heatmap).">Normalize by gene</a>
+	    	</label>
+	    </div>
+	    <div class="form-group col-md-12">
+	    	<button class="btn-sm btn-primary methylation-tsneUpdateBtn" id="methylation-tsneUpdateBtn">Update 
+	    	</button>
+	    </div>
+	</form>
 </div>
- -->

@@ -951,12 +951,12 @@ function updateMCHBoxPlot() {
     let levelType = $('input[name=levels]').filter(':checked').val();
     let methylationType = $('input[name=mType]').filter(':checked').val();
     let geneSelected = $('#geneName option:selected').val();
-    let grouping = $('#methylation-box-heat-grouping').val();
+    let grouping = $('#methylation-tsne-grouping').val();
     let clustering = $("#methylation-clustering-box-heat-methylation").val()+"_"+$("#methylation-clustering-box-heat-algorithms").val()+"_npc50"+"_k"+$("#methylation-clustering-box-heat-k").val();
     if ($('#orthologsToggle').prop('checked')) {
         return updateMCHCombinedBoxPlot(mmu_gID, hsa_gID);
     }
-    if ($('#methylation-box-heat-outlierToggle').prop('checked')) {
+    if ($('#methylation-tsneOutlierToggle').prop('checked')) {
         var outlierOption = 'outliers';
     } else {
         var outlierOption = 'false';
@@ -968,24 +968,24 @@ function updateMCHBoxPlot() {
         beforeSend: function() {
             $("#mch-box-loader").show();
             $("#plot-mch-heat").html("");
-            $("#methylation-box-heat-UpdateBtn").attr("disabled", true);
+            $("#methylation-tsneUpdateBtn").attr("disabled", true);
         },
         complete: function() {
             $('#mch-box-loader').hide();
         },
         success: function(data) {
             $("#plot-mch-box").html(data);
-            $("#methylation-box-heat-UpdateBtn").attr("disabled", false);
+            $("#methylation-tsneUpdateBtn").attr("disabled", false);
         }
     });
 
 }
 
 function updateClustersBarPlot() {
-    let grouping = $('#methylation-box-heat-grouping').val();
+    let grouping = $('#methylation-tsne-grouping').val();
     let normalize = $('#clusters-bar-normalize-toggle').prop('checked');
     let clustering = $("#methylation-clustering-box-heat-methylation").val()+"_"+$("#methylation-clustering-box-heat-algorithms").val()+"_npc50"+"_k"+$("#methylation-clustering-box-heat-k").val();
-    if ($('#methylation-box-heat-outlierToggle').prop('checked')) {
+    if ($('#methylation-tsneOutlierToggle').prop('checked')) {
         var outlierOption = 'outliers';
     } else {
         var outlierOption = 'false';
@@ -1070,7 +1070,7 @@ function updateRNABoxPlot() {
 function updateMCHCombinedBoxPlot(mmu_gid, hsa_gid) {
     let levelType = $('input[name=levels]').filter(':checked').val();
     let methylationType = $('input[name=mType]').filter(':checked').val();
-    if ($('#methylation-box-heat-outlierToggle').prop('checked')) {
+    if ($('#methylation-tsneOutlierToggle').prop('checked')) {
         var outlierOption = 'outliers';
     } else {
         var outlierOption = 'false';
@@ -1095,7 +1095,7 @@ function updateMethylationHeatmap() {
     let methylation_box_color_percentile_Values = methylation_box_color_percentile_Slider.getValue();
     let genes = $("#geneName").select2('data');
     let genes_query = "";
-    let grouping = $("#methylation-box-heat-grouping").val();
+    let grouping = $("#methylation-tsne-grouping").val();
     let clustering = $("#methylation-clustering-box-heat-methylation").val()+"_"+$("#methylation-clustering-box-heat-algorithms").val()+"_npc50"+"_k"+$("#methylation-clustering-box-heat-k").val();
 
     for (i = 0; i < genes.length; i++) {
@@ -1124,8 +1124,8 @@ function updateMethylationHeatmap() {
             $('#gene_table_div').hide();
             $('#mch_box_div').removeClass("col-md-9");
             $('#plot-mch-heat').html(data);
-            $("#methylation-box-heat-UpdateBtn").attr("disabled", false);
-            $('#methylation-box-heat-outlierToggle').bootstrapToggle('disable');
+            $("#methylation-tsneUpdateBtn").attr("disabled", false);
+            $('#methylation-tsneOutlierToggle').bootstrapToggle('disable');
         }
     });
 }
