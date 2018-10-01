@@ -411,14 +411,6 @@
         }
     });
 
-    $("#snATAC-box-heat-outlierToggle").change(function() {
-        if ($('#geneName').select2('data').length === 1)
-            updatesnATACBoxPlot();
-        else {
-            updatesnATACHeatmap();
-        }
-    });
-
     $("#RNA-box-heat-outlierToggle").change(function() {
         if ($('#geneName').select2('data').length === 1)
             updateRNABoxPlot();
@@ -436,12 +428,6 @@
         }
     });
 
-    $("#snATAC-box-heat-normalize-toggle").change(function() {
-        if ($('#geneName').select2('data').length > 1) {
-            updatesnATACHeatmap();
-        }
-    });
-
     $("#RNA-box-heat-normalize-toggle").change(function() {
         if ($('#geneName').select2('data').length > 1) {
             updateRNAHeatmap();
@@ -452,6 +438,10 @@
         updateClustersBarPlot();
     });
 
+    $("#snATAC-smoothing-toggle").change(function() {
+        updatesnATACScatterPlot();
+    });
+
     $("#toggle-3d").change(function() {
         display3DPlotToggle();
     });
@@ -459,6 +449,9 @@
     $("#methylation-tsneUpdateBtn:enabled, #methylation-box-heat-UpdateBtn:enabled").click(function() {
         updateMCHScatterPlot(onlyUpdatetSNEandClustering=true);
         initClusterSpecificMarkerGeneTable();
+        if (snATAC_data_available === 1) {
+                updatesnATACScatterPlot();
+        }
         if ($('#geneName').select2('data').length > 1) {
             updateMethylationHeatmap();
         } 
@@ -469,15 +462,6 @@
         else {}
     });
 
-
-    $("#snATAC-tsneUpdateBtn:enabled, #snATAC-box-heat-UpdateBtn:enabled").click(function() {
-        updatesnATACScatterPlot(onlyUpdatetSNEandClustering=true);
-        if ($('#geneName').select2('data').length > 1) {
-            updatesnATACHeatmap();
-        } else {
-            updatesnATACBoxPlot();
-        }
-    });
 
     $("#RNA-tsneUpdateBtn:enabled, #RNA-box-heat-UpdateBtn:enabled").click(function() {
         updateRNAScatterPlot(onlyUpdatetSNEandClustering=true);
@@ -538,10 +522,6 @@
     */
     $("#methylation-clustering-k, #methylation-clustering-box-heat-k").change(function() {
          $("#methylation-clustering-k, #methylation-clustering-box-heat-k").val($(this).val());
-    });
-
-    $("#snATAC-tsne-grouping, #snATAC-box-heat-grouping").change(function() {
-         $("#snATAC-tsne-grouping, #snATAC-box-heat-grouping").val($(this).val());
     });
 
     $("#RNA-tsne-grouping, #RNA-box-heat-grouping").change(function() {

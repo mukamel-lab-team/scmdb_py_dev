@@ -156,8 +156,8 @@ def plot_methylation_scatter(ensemble, tsne_type, methylation_type, level, group
         return "Failed to generate methylation tsne scatter plots for {}, please contact maintainer".format(ensemble)
 
 
-@frontend.route('/plot/snATAC/scatter/<ensemble>/<grouping>/<ptile_start>/<ptile_end>/<tsne_outlier>')
-def plot_snATAC_scatter(ensemble, grouping, ptile_start, ptile_end, tsne_outlier):
+@frontend.route('/plot/snATAC/scatter/<ensemble>/<grouping>/<ptile_start>/<ptile_end>/<tsne_outlier>/<smoothing>')
+def plot_snATAC_scatter(ensemble, grouping, ptile_start, ptile_end, tsne_outlier, smoothing):
 
     genes_query = request.args.get('q', 'MustHaveAQueryString')
     if grouping == 'NaN' or grouping == 'null':
@@ -167,13 +167,18 @@ def plot_snATAC_scatter(ensemble, grouping, ptile_start, ptile_end, tsne_outlier
     if tsne_outlier == 'true':
         tsne_outlier_bool = True
 
+    smoothing_bool = False
+    if smoothing == 'true':
+        smoothing_bool = True
+
     try:
         return get_snATAC_scatter(ensemble,
                                   genes_query, 
                                   grouping,
                                   float(ptile_start),
                                   float(ptile_end),
-                                  tsne_outlier_bool)
+                                  tsne_outlier_bool,
+                                  smoothing_bool)
     except FailToGraphException:
         return "Failed to load snATAC-seq data for {}, please contact maintainer".format(ensemble)
 

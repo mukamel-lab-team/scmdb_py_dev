@@ -2147,7 +2147,7 @@ def get_clusters_bar(ensemble, grouping, clustering, normalize, outliers):
 ### TODO: Refactor the code to combine the ATAC and RNA into one set of functions...
 ### snATAC
 @cache.memoize(timeout=3600)
-def get_gene_snATAC(ensemble, gene, grouping, outliers):
+def get_gene_snATAC(ensemble, gene, grouping, outliers, smoothing=False):
 	"""Return snATAC data points for a given gene.
 
 	Data from ID-to-Name mapping and tSNE points are combined for plot generation.
@@ -2174,16 +2174,22 @@ def get_gene_snATAC(ensemble, gene, grouping, outliers):
 	result = db.get_engine(current_app, 'snATAC_data').execute("SELECT gene_id FROM genes WHERE gene_id LIKE %s", (gene+"%",)).fetchone()
 	gene_table_name = 'gene_' + result['gene_id'].replace('.','_')
 	
+	if smoothing:
+		counts_type='smoothed_normalized_counts'
+	else:
+		counts_type='normalized_counts'
+
 	query = "SELECT cells.cell_id, cells.cell_name, cells.dataset, \
 		%(ensemble)s.annotation_ATAC, %(ensemble)s.cluster_ATAC, \
 		%(ensemble)s.tsne_x_ATAC, %(ensemble)s.tsne_y_ATAC, \
-		%(gene_table_name)s.normalized_counts as normalized_counts, \
+		%(gene_table_name)s.%(counts_type)s as normalized_counts, \
 		datasets.target_region \
 		FROM cells \
 		INNER JOIN %(ensemble)s ON cells.cell_id = %(ensemble)s.cell_id \
 		LEFT JOIN %(gene_table_name)s ON %(ensemble)s.cell_id = %(gene_table_name)s.cell_id \
 		LEFT JOIN datasets ON cells.dataset = datasets.dataset" % {'ensemble': ensemble, 
-																   'gene_table_name': gene_table_name,}
+																   'gene_table_name': gene_table_name,
+																   'counts_type': counts_type}
 
 	try:
 		df = pd.read_sql(query, db.get_engine(current_app, 'snATAC_data'))
@@ -2212,7 +2218,7 @@ def get_gene_snATAC(ensemble, gene, grouping, outliers):
 	return df
 
 @cache.memoize(timeout=1800)
-def get_mult_gene_snATAC(ensemble, genes, grouping):
+def get_mult_gene_snATAC(ensemble, genes, grouping, smoothing=False):
 	"""Return averaged methylation data ponts for a set of genes.
 
 	Data from ID-to-Name mapping and tSNE points are combined for plot generation.
@@ -2244,18 +2250,24 @@ def get_mult_gene_snATAC(ensemble, genes, grouping):
 
 	df_all = pd.DataFrame()
 	
+	if smoothing:
+		counts_type='smoothed_normalized_counts'
+	else:
+		counts_type='normalized_counts'
+
 	first = True
 	for gene_table_name in gene_table_names:
 		query = "SELECT cells.cell_id, cells.cell_name, cells.dataset, \
 			%(ensemble)s.annotation_ATAC, %(ensemble)s.cluster_ATAC, \
 			%(ensemble)s.tsne_x_ATAC, %(ensemble)s.tsne_y_ATAC, \
-			%(gene_table_name)s.normalized_counts, \
+			%(gene_table_name)s.%(counts_type)s as normalized_counts, \
 			datasets.target_region \
 			FROM cells \
 			INNER JOIN %(ensemble)s ON cells.cell_id = %(ensemble)s.cell_id \
 			LEFT JOIN %(gene_table_name)s ON %(ensemble)s.cell_id = %(gene_table_name)s.cell_id \
 			LEFT JOIN datasets ON cells.dataset = datasets.dataset" % {'ensemble': ensemble, 
-																	   'gene_table_name': gene_table_name,}
+																	   'gene_table_name': gene_table_name,
+																	   'counts_type': counts_type}
 		try:
 			df_all = df_all.append(pd.read_sql(query, db.get_engine(current_app, 'snATAC_data')))
 		except exc.ProgrammingError as e:
@@ -2289,7 +2301,7 @@ def get_mult_gene_snATAC(ensemble, genes, grouping):
 	return df_coords
 
 @cache.memoize(timeout=1800)
-def get_snATAC_scatter(ensemble, genes_query, grouping, ptile_start, ptile_end, tsne_outlier_bool):
+def get_snATAC_scatter(ensemble, genes_query, grouping, ptile_start, ptile_end, tsne_outlier_bool, smoothing=False):
 	"""Generate scatter plot and gene body snATAC scatter plot using tSNE coordinates from methylation(snmC-seq) data.
 
 	Arguments:
@@ -2312,11 +2324,11 @@ def get_snATAC_scatter(ensemble, genes_query, grouping, ptile_start, ptile_end, 
 	x, y, text, mch = list(), list(), list(), list()
 
 	if len(genes) == 1:
-		points = get_gene_snATAC(ensemble, genes[0], grouping, True)
+		points = get_gene_snATAC(ensemble, genes[0], grouping, True, smoothing)
 		gene_name = get_gene_by_id([ genes[0] ])[0]['gene_name']
 		title = 'Gene body snATAC normalized counts: ' + gene_name
 	else:
-		points = get_mult_gene_snATAC(ensemble, genes, grouping)
+		points = get_mult_gene_snATAC(ensemble, genes, grouping, smoothing)
 		gene_infos = get_gene_by_id(genes)
 		for i, gene in enumerate(gene_infos):
 			if i > 0 and i % 10 == 0:
@@ -2333,9 +2345,9 @@ def get_snATAC_scatter(ensemble, genes_query, grouping, ptile_start, ptile_end, 
 		if grouping+'_ATAC' not in points.columns: # If no cluster annotations available, group by cluster number instead
 			grouping = "cluster"
 			if len(genes) == 1:
-				points = get_gene_snATAC(ensemble, genes[0], grouping, True)
+				points = get_gene_snATAC(ensemble, genes[0], grouping, True, smoothing)
 			else:
-				points = get_mult_gene_snATAC(ensemble, genes, grouping)
+				points = get_mult_gene_snATAC(ensemble, genes, grouping, smoothing)
 			print("**** Grouping by cluster")
 
 	datasets = points['dataset'].unique().tolist()
