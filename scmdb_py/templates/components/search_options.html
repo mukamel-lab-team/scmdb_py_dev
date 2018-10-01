@@ -113,6 +113,46 @@
 				<!-- <option value="cluster_biosample">by cluster+biosample</option> -->
 			</select>
 		</div>
+            <div class="form-group col-sm-12">
+                <div id="methylation_tsneClustering">
+                    <h6>Clustering: </h6>
+                    <!--
+                    <label for="methylation-tsneclustering">Clustering: </label>
+                    <select id ="methylation-tsneclustering" class="methylation-tsneoption" name="methylation-tsneclustering">
+                    </select>
+                    -->
+                    {% if num_algorithm_options > 1 %}
+                        <div style="display: inline-block">
+                    {% else %}
+                        <div style="display: none">
+                    {% endif %}
+                        <label for="methylation-clustering-algorithms">
+                            <a class="hover-tooltip" href="javascript:void(0);" data-toggle="popover" data-trigger="hover" data-placement="bottom" title="Algorithm" data-content="lv = Louvain Modularity.">Algorithm: </a>
+                        </label>
+                        <select id="methylation-clustering-algorithms" class="methylation-clustering-algorithms methylation-tsneoption" name="methylation-clustering-algorithms"></select>
+                        &nbsp;
+                    </div>
+                    <div style="display: inline-block">
+                        <label for="methylation-clustering-methylation">
+                            <a class="hover-tooltip" href="javascript:void(0);" data-toggle="popover" data-trigger="hover" data-placement="bottom" title="Methylation Type" data-content="Types of methylation used for clustering.">Methylation Type: </a>
+                        </label>
+                        <select id="methylation-clustering-methylation" class="methylation-clustering-methylation methylation-tsneoption" name="methylation-clustering-methylation"></select>
+                        &nbsp;
+                    </div>
+                    <!--
+                    <label for="methylation-clustering-npc">
+                        <a class="hover-tooltip" href="javascript:void(0);" data-toggle="popover" data-trigger="hover" data-placement="bottom" title="Principal Components" data-content="Number of principal components kept for clustering."># of PC's: </a>
+                    </label>
+                    <select id="methylation-clustering-npc" class="methylation-clustering-npc methylation-tsneoption" name="methylation-clustering-npc"></select>
+                    &nbsp;
+-->
+                    <div style="display: inline-block">
+                        <label for="methylation-clustering-k">
+                            <a class="hover-tooltip" href="javascript:void(0);" data-toggle="popover" data-trigger="hover" data-placement="bottom" title="K-value" data-content="Number of nearest neighbors (neighboring cells).">K-value: </a>
+                        </label>
+                        <select id="methylation-clustering-k" class="methylation-clustering-k methylation-tsneoption" name="methylation-clustering-k"></select>
+                    </div>
+                </div>
 	    <div class="form-group col-md-12">
 	    	<input id="methylation-box-heat-outlierToggle" data-toggle="toggle" data-on="Outliers On" data-off="Outliers Off" type="checkbox">
 	    </div>

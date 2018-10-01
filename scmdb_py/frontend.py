@@ -75,20 +75,18 @@ def ensemble(ensemble_name):
         return redirect(url_for('frontend.login', q=ensemble_name))
 
 
-@frontend.route('/standalone/<ensemble>/<gene>')
-def standalone(ensemble, gene):  # View gene body mCH plots alone
-    return render_template('mch_standalone.html', ensemble=ensemble, gene=gene)
+# @frontend.route('/standalone/<ensemble>/<gene>')
+# def standalone(ensemble, gene):  # View gene body mCH plots alone
+#     return render_template('mch_standalone.html', ensemble=ensemble, gene=gene)
 
+# @frontend.route('/compare/<mmu_gene_id>/<hsa_gene_id>')
+# def compare(mmu_gene_id, hsa_gene_id):
+#     return render_template('compareview.html', mmu_gene_id=mmu_gene_id, hsa_gene_id=hsa_gene_id)
 
-@frontend.route('/compare/<mmu_gene_id>/<hsa_gene_id>')
-def compare(mmu_gene_id, hsa_gene_id):
-    return render_template('compareview.html', mmu_gene_id=mmu_gene_id, hsa_gene_id=hsa_gene_id)
-
-
-@frontend.route('/box_combined/<mmu_gene_id>/<hsa_gene_id>')
-def box_combined(mmu_gene_id, hsa_gene_id):
-    return render_template(
-        'combined_box_standalone.html', mmu_gene_id=mmu_gene_id, hsa_gene_id=hsa_gene_id)
+# @frontend.route('/box_combined/<mmu_gene_id>/<hsa_gene_id>')
+# def box_combined(mmu_gene_id, hsa_gene_id):
+#     return render_template(
+#         'combined_box_standalone.html', mmu_gene_id=mmu_gene_id, hsa_gene_id=hsa_gene_id)
 
 
 @frontend.route('/tabular/ensemble')
