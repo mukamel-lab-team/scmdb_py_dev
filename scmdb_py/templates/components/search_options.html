@@ -1,4 +1,11 @@
-<div class="col-sm-12">
+
+<div class="col-md-12">
+	<a data-toggle="collapse" title="" data-placement="left" data-target="#gene-search-options" class="btn btn-sm btn-basic pull-left" style="margin-top: 0px; float:left;" data-original-title="Collapse gene search options"> 
+		<h6><i class="glyphicon glyphicon-cog"></i> Gene display options</h6>
+	</a>
+</div>
+
+<div id="gene-search-options" class="collapse">
 	<div class="form-group col-md-4 col-sm-12" style="margin-bottom:0px;">
 		<label for="geneName" class="control-label">
 			Search gene by name:
@@ -12,10 +19,14 @@
 			<label for="levels" class="control-label">
 				<a href="javascript:void(0);" class="hover-tooltip" data-toggle="popover" data-trigger="hover" data-placement="top" title="Methylation Levels" data-content="Display original methylation values or normalize by the global methylation value for each cell.">Methylation Levels</a>
 			</label>
-			<br>
-			<input type="radio" name="levels" id="levelsOriginal" value="original">&nbsp;Original<br>
+			<select  id="levels">
+	 			<option value="original">Original</option>
+				<option value="normalized" selected>Normalized</option>
+ 			</select>
+			<!-- <br> -->
+<!-- 	 		<input type="radio" name="levels" id="levelsOriginal" value="original">&nbsp;Original<br>
 			<input type="radio" name="levels" id="levelsNormalized" value="normalized" checked>&nbsp;Normalized
-		</div>
+ -->		</div>
 		<div style="display:inline-block; float:left;">
 			&nbsp;
 		</div>
