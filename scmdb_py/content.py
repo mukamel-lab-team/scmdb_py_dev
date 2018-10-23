@@ -1770,7 +1770,8 @@ def get_mch_heatmap(ensemble, methylation_type, grouping, clustering, level, pti
 	mch = mch[dendro_leaves,:] # Reorder the genes according to the clustering
 	genes_labels = [gene_labels[i] for i in dendro_leaves]
 	hover_old = hover
-	hover = [hover_old[i] for i in dendro_leaves]
+	# hover = [hover_old[i] for i in dendro_leaves]
+	hover = [str(i) for i in dendro_leaves]
 
 	dendro_top = ff.create_dendrogram(mch.transpose(), orientation="bottom", labels=tuple([i for i in range(mch.shape[1])]), 
 		colorscale=['bbbbbbb'])
