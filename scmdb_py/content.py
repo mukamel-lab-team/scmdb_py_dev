@@ -35,6 +35,7 @@ cluster_annotation_order = ['mL2/3', 'mL4', 'mL5-1', 'mL5-2', 'mDL-1', 'mDL-2', 
 methylation_types_order = ['mCH', 'mCG', 'mCA', 'mCHmCG', 'mCHmCA', 'mCAmCG']
 
 num_sigfigs_ticklabels = 2;
+ncells_max = 5000; # Max number of cells to show for scatter/box plots
 
 class FailToGraphException(Exception):
 	"""Fail to generate data or graph due to an internal error."""
@@ -2188,9 +2189,11 @@ def get_gene_snATAC(ensemble, gene, grouping, outliers, smoothing=False):
 		FROM cells \
 		INNER JOIN %(ensemble)s ON cells.cell_id = %(ensemble)s.cell_id \
 		LEFT JOIN %(gene_table_name)s ON %(ensemble)s.cell_id = %(gene_table_name)s.cell_id \
-		LEFT JOIN datasets ON cells.dataset = datasets.dataset" % {'ensemble': ensemble, 
+		LEFT JOIN datasets ON cells.dataset = datasets.dataset \
+		ORDER BY RAND() LIMIT %(ncells)s" % {'ensemble': ensemble, 
 																   'gene_table_name': gene_table_name,
-																   'counts_type': counts_type}
+																   'counts_type': counts_type,
+																   'ncells': ncells_max}
 
 	try:
 		df = pd.read_sql(query, db.get_engine(current_app, 'snATAC_data'))
@@ -2257,6 +2260,7 @@ def get_mult_gene_snATAC(ensemble, genes, grouping, smoothing=False):
 		counts_type='normalized_counts'
 
 	first = True
+	ncells = 5000;
 	for gene_table_name in gene_table_names:
 		query = "SELECT cells.cell_id, cells.cell_name, cells.dataset, \
 			%(ensemble)s.annotation_ATAC, %(ensemble)s.cluster_ATAC, \
@@ -2266,9 +2270,11 @@ def get_mult_gene_snATAC(ensemble, genes, grouping, smoothing=False):
 			FROM cells \
 			INNER JOIN %(ensemble)s ON cells.cell_id = %(ensemble)s.cell_id \
 			LEFT JOIN %(gene_table_name)s ON %(ensemble)s.cell_id = %(gene_table_name)s.cell_id \
-			LEFT JOIN datasets ON cells.dataset = datasets.dataset" % {'ensemble': ensemble, 
+			LEFT JOIN datasets ON cells.dataset = datasets.dataset \
+			ORDER BY RAND() LIMIT %(ncells)s" % {'ensemble': ensemble, 
 																	   'gene_table_name': gene_table_name,
-																	   'counts_type': counts_type}
+																	   'counts_type': counts_type,
+																   'ncells': ncells_max}
 		try:
 			df_all = df_all.append(pd.read_sql(query, db.get_engine(current_app, 'snATAC_data')))
 		except exc.ProgrammingError as e:
@@ -3014,8 +3020,10 @@ def get_gene_RNA(ensemble, gene, grouping, outliers):
 		FROM cells \
 		INNER JOIN %(ensemble)s ON cells.cell_id = %(ensemble)s.cell_id \
 		LEFT JOIN %(gene_table_name)s ON %(ensemble)s.cell_id = %(gene_table_name)s.cell_id \
-		LEFT JOIN datasets ON cells.dataset = datasets.dataset" % {'ensemble': ensemble, 
-																   'gene_table_name': gene_table_name,}
+		LEFT JOIN datasets ON cells.dataset = datasets.dataset \
+		ORDER BY RAND() LIMIT %(ncells)s" % {'ensemble': ensemble, 
+																   'gene_table_name': gene_table_name,
+																   'ncells': ncells_max}
 
 	try:
 		df = pd.read_sql(query, db.get_engine(current_app, 'RNA_data'))
@@ -3086,8 +3094,10 @@ def get_mult_gene_RNA(ensemble, genes, grouping):
 			FROM cells \
 			INNER JOIN %(ensemble)s ON cells.cell_id = %(ensemble)s.cell_id \
 			LEFT JOIN %(gene_table_name)s ON %(ensemble)s.cell_id = %(gene_table_name)s.cell_id \
-			LEFT JOIN datasets ON cells.dataset = datasets.dataset" % {'ensemble': ensemble, 
-																	   'gene_table_name': gene_table_name,}
+			LEFT JOIN datasets ON cells.dataset = datasets.dataset \
+			ORDER BY RAND() LIMIT %(ncells)s" % {'ensemble': ensemble, 
+																	   'gene_table_name': gene_table_name,
+																	   'ncells': ncells_max}
 		try:
 			df_all = df_all.append(pd.read_sql(query, db.get_engine(current_app, 'RNA_data')))
 		except exc.ProgrammingError as e:
