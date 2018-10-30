@@ -3,7 +3,7 @@
 ## Development Setup
 1. Clone the git repo.
 
-   * `git clone https://github.com/mukamel-lab-team/scmdb_py_dev.git; cd scmdb_py_dev`
+   * `https://github.com/JoeyHou/scmdb_py_dev_Joeys_copy.git; cd scmdb_py_dev`
 
 2. Set up virtual environment.  Note that scmdb_py currently works with python3.5
 
