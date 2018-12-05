@@ -24,6 +24,7 @@ from sqlite3 import Error
 import plotly.figure_factory as ff
 from scipy.spatial.distance import pdist, squareform
 from scipy.cluster import hierarchy
+from multiprocessing import Pool
 
 from . import cache, db
 
@@ -904,8 +905,53 @@ def get_gene_methylation(ensemble, methylation_type, gene, grouping, clustering,
 
 	return df
 
+def get_gene_from_mysql(ensemble, gene_table_name, context, methylation_type, clustering, tsne_type):
+
+	t0=datetime.datetime.now()
+	print(' Running get_gene_from_mysql for '+gene_table_name+' : '+str(t0)+'; ', file=open('/var/www/scmdb_py_dev/scmdb_log','a'))# EAM - Profiling SQL
+	if 'ndim2' in tsne_type:
+		query = "SELECT cells.cell_id, cells.cell_name, cells.dataset, cells.global_%(methylation_type)s, \
+			%(ensemble)s.annotation_%(clustering)s, %(ensemble)s.cluster_%(clustering)s, \
+			%(ensemble)s.tsne_x_%(tsne_type)s, %(ensemble)s.tsne_y_%(tsne_type)s, \
+			%(gene_table_name)s.%(methylation_type)s, %(gene_table_name)s.%(context)s, \
+			datasets.target_region, datasets.sex \
+			FROM cells \
+			INNER JOIN %(ensemble)s ON cells.cell_id = %(ensemble)s.cell_id \
+			LEFT JOIN %(gene_table_name)s ON %(ensemble)s.cell_id = %(gene_table_name)s.cell_id \
+			LEFT JOIN datasets ON cells.dataset = datasets.dataset" % {'ensemble': ensemble, 
+																	   'gene_table_name': gene_table_name,
+																	   'tsne_type': tsne_type,
+																	   'methylation_type': methylation_type,
+																	   'context': context,
+																	   'clustering': clustering,}
+	else:
+		query = "SELECT cells.cell_id, cells.cell_name, cells.dataset, cells.global_%(methylation_type)s, \
+			%(ensemble)s.annotation_%(clustering)s, %(ensemble)s.cluster_%(clustering)s, \
+			%(ensemble)s.tsne_x_%(tsne_type)s, %(ensemble)s.tsne_y_%(tsne_type)s, %(ensemble)s.tsne_z_%(tsne_type)s, \
+			%(gene_table_name)s.%(methylation_type)s, %(gene_table_name)s.%(context)s, \
+			datasets.target_region, datasets.sex \
+			FROM cells \
+			INNER JOIN %(ensemble)s ON cells.cell_id = %(ensemble)s.cell_id \
+			LEFT JOIN %(gene_table_name)s ON %(ensemble)s.cell_id = %(gene_table_name)s.cell_id \
+			LEFT JOIN datasets ON cells.dataset = datasets.dataset" % {'ensemble': ensemble, 
+																	   'gene_table_name': gene_table_name,
+																	   'tsne_type': tsne_type,
+																	   'methylation_type': methylation_type,
+																	   'context': context,
+																	   'clustering': clustering,}
+	try:
+		df = pd.read_sql(query, db.get_engine(current_app, 'methylation_data'))
+	except exc.ProgrammingError as e:
+		now = datetime.datetime.now()
+		print("[{}] ERROR in app(get_mult_gene_methylation): {}".format(str(now), e))
+		sys.stdout.flush()
+		return None
+
+	return df
+
+
 @cache.memoize(timeout=3600)
-def get_mult_gene_methylation(ensemble, methylation_type, genes, grouping, clustering, level, tsne_type='mCH_ndim2_perp20'):
+def get_mult_gene_methylation(ensemble, methylation_type, genes, grouping, clustering, level, tsne_type):
 	"""Return averaged methylation data ponts for a set of genes.
 
 	Data from ID-to-Name mapping and tSNE points are combined for plot generation.
@@ -940,55 +986,84 @@ def get_mult_gene_methylation(ensemble, methylation_type, genes, grouping, clust
 
 	df_all = pd.DataFrame()
 	
-	first = True
-	for gene_table_name in gene_table_names:
-		if 'ndim2' in tsne_type:
-			query = "SELECT cells.cell_id, cells.cell_name, cells.dataset, cells.global_%(methylation_type)s, \
-				%(ensemble)s.annotation_%(clustering)s, %(ensemble)s.cluster_%(clustering)s, \
-				%(ensemble)s.tsne_x_%(tsne_type)s, %(ensemble)s.tsne_y_%(tsne_type)s, \
-				%(gene_table_name)s.%(methylation_type)s, %(gene_table_name)s.%(context)s, \
-				datasets.target_region, datasets.sex \
-				FROM cells \
-				INNER JOIN %(ensemble)s ON cells.cell_id = %(ensemble)s.cell_id \
-				LEFT JOIN %(gene_table_name)s ON %(ensemble)s.cell_id = %(gene_table_name)s.cell_id \
-				LEFT JOIN datasets ON cells.dataset = datasets.dataset" % {'ensemble': ensemble, 
-																		   'gene_table_name': gene_table_name,
-																		   'tsne_type': tsne_type,
-																		   'methylation_type': methylation_type,
-																		   'context': context,
-																		   'clustering': clustering,}
-		else:
-			query = "SELECT cells.cell_id, cells.cell_name, cells.dataset, cells.global_%(methylation_type)s, \
-				%(ensemble)s.annotation_%(clustering)s, %(ensemble)s.cluster_%(clustering)s, \
-				%(ensemble)s.tsne_x_%(tsne_type)s, %(ensemble)s.tsne_y_%(tsne_type)s, %(ensemble)s.tsne_z_%(tsne_type)s, \
-				%(gene_table_name)s.%(methylation_type)s, %(gene_table_name)s.%(context)s, \
-				datasets.target_region, datasets.sex \
-				FROM cells \
-				INNER JOIN %(ensemble)s ON cells.cell_id = %(ensemble)s.cell_id \
-				LEFT JOIN %(gene_table_name)s ON %(ensemble)s.cell_id = %(gene_table_name)s.cell_id \
-				LEFT JOIN datasets ON cells.dataset = datasets.dataset" % {'ensemble': ensemble, 
-																		   'gene_table_name': gene_table_name,
-																		   'tsne_type': tsne_type,
-																		   'methylation_type': methylation_type,
-																		   'context': context,
-																		   'clustering': clustering,}
-		try:
-			df_all = df_all.append(pd.read_sql(query, db.get_engine(current_app, 'methylation_data')))
-		except exc.ProgrammingError as e:
-			now = datetime.datetime.now()
-			print("[{}] ERROR in app(get_mult_gene_methylation): {}".format(str(now), e))
-			sys.stdout.flush()
-			return None
-		
-		if first:
-			df_coords = df_all
-		first = False
+	# # t0=datetime.datetime.now() # EAM - Profiling SQL
+	# first = True
+	# queries = []
+	# for i, gene_table_name in enumerate(gene_table_names):
+	# 	if 'ndim2' in tsne_type:
+	# 		query = "SELECT cells.cell_id, cells.cell_name, cells.dataset, cells.global_%(methylation_type)s, \
+	# 			%(ensemble)s.annotation_%(clustering)s, %(ensemble)s.cluster_%(clustering)s, \
+	# 			%(ensemble)s.tsne_x_%(tsne_type)s, %(ensemble)s.tsne_y_%(tsne_type)s, \
+	# 			%(gene_table_name)s.%(methylation_type)s, %(gene_table_name)s.%(context)s, \
+	# 			datasets.target_region, datasets.sex \
+	# 			FROM cells \
+	# 			INNER JOIN %(ensemble)s ON cells.cell_id = %(ensemble)s.cell_id \
+	# 			LEFT JOIN %(gene_table_name)s ON %(ensemble)s.cell_id = %(gene_table_name)s.cell_id \
+	# 			LEFT JOIN datasets ON cells.dataset = datasets.dataset" % {'ensemble': ensemble, 
+	# 																	   'gene_table_name': gene_table_name,
+	# 																	   'tsne_type': tsne_type,
+	# 																	   'methylation_type': methylation_type,
+	# 																	   'context': context,
+	# 																	   'clustering': clustering,}
+	# 	else:
+	# 		query = "SELECT cells.cell_id, cells.cell_name, cells.dataset, cells.global_%(methylation_type)s, \
+	# 			%(ensemble)s.annotation_%(clustering)s, %(ensemble)s.cluster_%(clustering)s, \
+	# 			%(ensemble)s.tsne_x_%(tsne_type)s, %(ensemble)s.tsne_y_%(tsne_type)s, %(ensemble)s.tsne_z_%(tsne_type)s, \
+	# 			%(gene_table_name)s.%(methylation_type)s, %(gene_table_name)s.%(context)s, \
+	# 			datasets.target_region, datasets.sex \
+	# 			FROM cells \
+	# 			INNER JOIN %(ensemble)s ON cells.cell_id = %(ensemble)s.cell_id \
+	# 			LEFT JOIN %(gene_table_name)s ON %(ensemble)s.cell_id = %(gene_table_name)s.cell_id \
+	# 			LEFT JOIN datasets ON cells.dataset = datasets.dataset" % {'ensemble': ensemble, 
+	# 																	   'gene_table_name': gene_table_name,
+	# 																	   'tsne_type': tsne_type,
+	# 																	   'methylation_type': methylation_type,
+	# 																	   'context': context,
+	# 																	   'clustering': clustering,}
+	# 	try:
+	# 		# print(str(i)+' Starting mysql query '+str(t0)+'; ', file=open('/var/www/scmdb_py_dev/scmdb_log','a'))
+	# 		df_all = df_all.append(pd.read_sql(query, db.get_engine(current_app, 'methylation_data')))
+	# 		# x = pd.read_sql(query, db.get_engine(current_app, 'methylation_data'))
+	# 		# t1=datetime.datetime.now()
+	# 		# print(str(i)+' Finished mysql query '+str(t1)+'; ', file=open('/var/www/scmdb_py_dev/scmdb_log','a'))# EAM - Profiling SQL
+	# 		# print(str(i)+' Elapsed time '+str(t1-t0)+'; ', file=open('/var/www/scmdb_py_dev/scmdb_log','a'))# EAM - Profiling SQL
+	# 	except exc.ProgrammingError as e:
+	# 		now = datetime.datetime.now()
+	# 		print("[{}] ERROR in app(get_mult_gene_methylation): {}".format(str(now), e))
+	# 		sys.stdout.flush()
+	# 		return None
+	# 	queries.append(query)
+	# 	if first:
+	# 		df_coords = df_all
+	# 	first = False
 
+
+	############
+	t0=datetime.datetime.now()
+	print(' Starting mysql queries '+str(t0)+'; ', file=open('/var/www/scmdb_py_dev/scmdb_log','a'))# EAM - Profiling SQL
+	with Pool(4) as pool:
+		df_list = [pool.apply_async(get_gene_from_mysql,
+                                       args=(ensemble, gene_table_name, context, methylation_type, clustering, tsne_type)).get()
+                               		for gene_table_name in gene_table_names ]
+
+	t1=datetime.datetime.now()
+	print(' Finished mysql queries '+str(t1)+'; ', file=open('/var/www/scmdb_py_dev/scmdb_log','a'))# EAM - Profiling SQL
+	print(' Time '+str(t1-t0)+'; ', file=open('/var/www/scmdb_py_dev/scmdb_log','a'))# EAM - Profiling SQL
+	# print(' Size of df_list '+str(len(df_list))+'; ', file=open('/var/www/scmdb_py_dev/scmdb_log','a'))# EAM - Profiling SQL
+	# print(' Size of df_list[0] '+str(df_list[0].shape)+'; ', file=open('/var/www/scmdb_py_dev/scmdb_log','a'))# EAM - Profiling SQL
+	# print(' Size of df_list[0] '+str(df_list[0].index)+'; ', file=open('/var/www/scmdb_py_dev/scmdb_log','a'))# EAM - Profiling SQL
+	# print(' Size of df_list[0] '+str(df_list[0].columns)+'; ', file=open('/var/www/scmdb_py_dev/scmdb_log','a'))# EAM - Profiling SQL
+	# df_all = pd.concat(df_list, axis=0)
+	df_coords = df_list[0]
+	for df in df_list:
+		df_all = df_all.append(df)
+	############
 
 	df_all[[methylation_type, context]] = df_all[[methylation_type, context]].apply(pd.to_numeric)
 
 	df_avg_methylation = df_all.groupby(by='cell_id', as_index=False)[[methylation_type, context]].mean()
 	df_coords.update(df_avg_methylation)
+
 
 	if df_coords[context].isnull().all(): # If no data in column, return None 
 		return None
