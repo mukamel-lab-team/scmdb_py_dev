@@ -22,13 +22,17 @@
                                         </a>
                                     </h5>
                                 </div>
-                                {% if AnnoJexists %}
                                 <div style="display:inline-block; float:right;">
-                                    <a href="#" target="_blank" id="epiBrowserLink" class="btn btn-info pull-right"role="button">
+                                    {% if AnnoJexists %}
+                                    <a href="#" target="_blank" id="epiBrowserLink" class="btn btn-info pull-right" role="button">
                                         <small style="color:white;">Epigenome browser (AnnoJ)</small>
                                     </a>
+                                    {% else %}
+                                    <div class="btn btn-info pull-right" disabled="disabled" role="button">
+                                        <small style="color:white;">Epigenome browser (AnnoJ; <i>not available</i>)</small>
+                                    </div>
+                                    {% endif %}
                                 </div>
-                                {% endif %}
                             </div>
                         </div>
                         <div class="panel-body collapse in" id="search-panel-body" style="padding-top:10px;">
