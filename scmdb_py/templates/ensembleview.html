@@ -1,7 +1,6 @@
 {%- extends "base.html" %} {% import "bootstrap/utils.html" as utils %}
 {% block content %}
 <div class="Site" id="options">
-    <br />
 	<div class="Site-content">
 
         {% include "components/search_options.html" %}
@@ -34,6 +33,7 @@
                                             <li role="presentation" class="active"><a id="methylation-box-tab-btn" href="#methylation-scatter" role="tab" data-toggle="tab">Scatter</a></li>
                                             <li role="presentation"><a id="methylation-box-tab-btn" href="#methylation-box" role="tab" data-toggle="tab">Box plot / Heatmap</a></li>
                                             <li role="presentation"><a id="clusters-bar-btn" href="#clusters-bar" role="tab" data-toggle="tab">Cluster statistics</a></li>
+                                            <li role="clusterGeneTable"><a href="#clusterGeneTable" role="tab" data-toggle="tab">Cluster Specific Markers</a></li>
                                         </ul>
                                     </div>
                                     <div class="col-md-12 col-sm-12 flex-item tab-content" id="methyl_scatter_div" style="padding: 0px">
@@ -46,6 +46,8 @@
                                         <div class="tab-pane" id="clusters-bar">
                                             {% include "components/clusters_bar.html" %}
                                         </div>
+                                        <div class="tab-pane" id="clusterGeneTable">
+                                            {% include "components/cluster_specific_marker_genes.html" %}
                                     </div>
                                 </div>
                             </div>
@@ -138,7 +140,7 @@
             {% endif %}
 		</div>
 
-        <!-- Cluster specific marker genes table -->
+        <!-- Cluster specific marker genes table 
         <div style="position:relative; left:0;">
             <div class="col-md-12 col-sm-12">
                 <div class="panel panel-default panel-main" style="overflow-x: auto; margin-left:auto; margin-right:auto;">
@@ -157,11 +159,11 @@
                                     {% include "components/cluster_specific_marker_genes.html" %}
                                 </div>
                             </div>
-                        </div>
-                    </div>
+                        </div> 
+                    </div> 
                 </div>
             </div>
-        </div>
+        </div>-->
 	</div>
 
     <footer id="footer" class="footer">
