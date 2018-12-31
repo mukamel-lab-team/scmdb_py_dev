@@ -71,13 +71,14 @@ function getMax(arr, prop) {
 }
 
 function generateBrowserURL(gene) {
-    let base = 'http://brainome.ucsd.edu/annoj_private/CEMBA/index';
+    // let base = 'http://brainome.ucsd.edu/annoj_private/CEMBA/index';
+    let base = 'http://brainome.ucsd.edu/annoj_private/CEMBA/cemba.php?ens='+ensemble.replace(/Ens/g, "");
     
-    if (ensemble === 'Ens1') {
-        base += '.html';
-    } else { 
-        base += '_' + ensemble + '.html';
-    }
+    // if (ensemble === 'Ens1') {
+    //     base += '.html';
+    // } else { 
+    //     base += '_' + ensemble + '.html';
+    // }
 
     const chrom = gene.chr.replace(/^\D+/g, "");
 
@@ -86,7 +87,7 @@ function generateBrowserURL(gene) {
     } else {
         var position = gene.end;
     }
-    return base+'?assembly='+chrom+'&position='+position;
+    return base+'&assembly='+chrom+'&position='+position;
 }
 
 function initGeneNameSearch() {
