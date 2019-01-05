@@ -599,10 +599,15 @@ def get_ensemble_info(ensemble_name=str(), ensemble_id=str()):
 	"""
 	
 	if ensemble_name:
+		# result = db.get_engine(current_app, 'methylation_data').execute("SELECT * FROM ensembles WHERE ensemble_name=%s", (ensemble_name,)).fetchone()
 		result = db.get_engine(current_app, 'methylation_data').execute("SELECT * FROM ensembles WHERE ensemble_name=%s", (ensemble_name,)).fetchone()
+		if result is None:
+			result = db.get_engine(current_app, 'snATAC_data').execute("SELECT * FROM ensembles WHERE ensemble_name=%s", (ensemble_name,)).fetchone()
 	else:
 		ensemble_id = int(filter(str.isdigit, ensemble_id))
 		result = db.get_engine(current_app, 'methylation_data').execute("SELECT * FROM ensembles WHERE ensemble_id=%s", (ensemble_id,)).fetchone()
+		if result is None:
+			result = db.get_engine(current_app, 'snATAC_data').execute("SELECT * FROM ensembles WHERE ensemble_name=%s", (ensemble_id,)).fetchone()	
 
 	return result
 
