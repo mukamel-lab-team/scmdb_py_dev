@@ -345,7 +345,7 @@ def check_ensemble_similarities(new_ensemble_name, new_ensemble_datasets):
 # Utilities
 @cache.memoize(timeout=1800)
 def ensemble_exists(ensemble, modality='methylation'):
-	"""Check if data for a given ensemble exists by looking for its data directory.
+	"""Check if data for a given ensemble exists 
 
 	Arguments:
 		ensemble (str): Name of ensemble.
@@ -366,6 +366,21 @@ def ensemble_exists(ensemble, modality='methylation'):
 	else:
 		return 1
 
+# Utilities
+@cache.memoize(timeout=1800)
+def ensemble_annoj_exists(ensemble):
+	"""Check if AnnoJ browser for a given ensemble exists 
+
+	Arguments:
+		ensemble (str): Name of ensemble.
+		
+	Returns:
+		bool: Whether if given ensemble exists
+	"""
+	
+	result = os.path.isfile('/var/www/html/annoj_private/CEMBA/browser/fetchers/mc_cemba/mc_single_merged_mCG_cluster_mCHmCG_lv_npc50_k30_1_Ens'+ensemble+'.html');
+	return result
+	
 @cache.memoize(timeout=1800)
 def gene_exists(ensemble, methylation_type, gene):
 	"""Check if data for a given gene of ensemble exists by looking for its data directory.

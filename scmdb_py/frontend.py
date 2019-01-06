@@ -67,7 +67,8 @@ def ensemble(ensemble_name):
         num_algorithm_options = 0
         num_dims_options = 0
         num_perplexity_options = 0
-    AnnoJexists = os.path.isfile('/var/www/html/annoj_private/CEMBA/index_'+ensemble+'.html');
+        
+    AnnoJexists = ensemble_annoj_exists(ensemble)
     
     if ensemble_info['public_access'] == 1 or (ensemble_info['public_access'] == 0 and current_user.is_authenticated):
         return render_template('ensembleview.html', 
