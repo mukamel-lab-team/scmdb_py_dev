@@ -361,10 +361,10 @@ def ensemble_exists(ensemble, modality='methylation'):
 	"""
 
 	if modality=='methylation':
-		ensemble_name = 'ensemble_name'
+		ensemble_name = 'ensemble_id'
 	else:
 		ensemble_name = 'snmc_ensemble_id'
-	result = db.get_engine(current_app, modality+'_data').execute("SELECT * FROM ensembles WHERE "+ensemble_name+"=%s", (ensemble,)).fetchone()
+	result = db.get_engine(current_app, modality+'_data').execute("SELECT * FROM ensembles WHERE "+ensemble_name+"=%s", (str(ensemble),)).fetchone()
 
 	if result is None:
 		return 0

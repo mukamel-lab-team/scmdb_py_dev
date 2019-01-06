@@ -48,8 +48,8 @@ def index():
 @frontend.route('/<ensemble_name>')
 def ensemble(ensemble_name):
     ensemble_info = get_ensemble_info(ensemble_name=ensemble_name)
-    snATAC_included = ensemble_exists(ensemble_info['ensemble_id'],'snATAC')
-    methylation_included = ensemble_exists(ensemble_info['ensemble_id'],'methylation')
+    snATAC_included = ensemble_exists(ensemble_info['ensemble_id'], modality='snATAC')
+    methylation_included = ensemble_exists(ensemble_info['ensemble_id'], modality='methylation')
     RNA_included = ensemble_exists(ensemble_info['ensemble_id'],'RNA')
     ensemble = 'Ens'+str(ensemble_info['ensemble_id'])
     RS2_included = 0
