@@ -27,6 +27,7 @@ from scipy.cluster import hierarchy
 from multiprocessing import Pool
 
 from . import cache, db
+from os import path
 
 content = Blueprint('content', __name__) # Flask "bootstrap"
 
@@ -92,12 +93,14 @@ def get_ensembles_summary():
 		except exc.ProgrammingError as e:
 			snATAC_cell_counts = None
 
+		annoj_exists = ensemble_annoj_exists(ensemble['ensemble_id'])
 		ensembles_cell_counts.append( {"id": ensemble['ensemble_id'], 
 									   "ensemble": ensemble['ensemble_name'], 
 									   "ens_methylation_counts": methylation_cell_counts,
 									   "ens_snATAC_counts": snATAC_cell_counts,
 									   "public_access": ensemble['public_access'],
-									   "description": ensemble['description']})
+									   "description": ensemble['description'],
+									   "annoj_exists": annoj_exists})
 
 	ensembles_json_list = []
 	for ens in ensembles_cell_counts:
@@ -167,6 +170,8 @@ def get_ensembles_summary():
 			else:
 				ens_dict["public_access_icon"] = "fas fa-lock-open"
 				ens_dict["public_access_color"] = "green"
+
+			ens_dict["annoj_exists"] = ens['annoj_exists']
 
 
 			if regions == ['None']:
@@ -345,7 +350,7 @@ def check_ensemble_similarities(new_ensemble_name, new_ensemble_datasets):
 # Utilities
 @cache.memoize(timeout=1800)
 def ensemble_exists(ensemble, modality='methylation'):
-	"""Check if data for a given ensemble exists by looking for its data directory.
+	"""Check if data for a given ensemble exists 
 
 	Arguments:
 		ensemble (str): Name of ensemble.
@@ -365,6 +370,20 @@ def ensemble_exists(ensemble, modality='methylation'):
 		return 0
 	else:
 		return 1
+
+# Utilities
+@cache.memoize(timeout=1800)
+def ensemble_annoj_exists(ensemble):
+	"""Check if AnnoJ browser for a given ensemble exists 
+
+	Arguments:
+		ensemble (str): Name of ensemble.
+		
+	Returns:
+		bool: Whether if given ensemble exists
+	"""
+	result = path.isfile('/var/www/html/annoj_private/CEMBA/browser/fetchers/mc_cemba/mc_single_merged_mCG_cluster_mCHmCG_lv_npc50_k30_1_Ens'+str(ensemble)+'.php');
+	return result
 
 @cache.memoize(timeout=1800)
 def gene_exists(ensemble, methylation_type, gene):
