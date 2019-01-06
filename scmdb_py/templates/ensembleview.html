@@ -23,7 +23,7 @@
                                     </h5>
                                 </div>
                                 <div style="display:inline-block; float:right;">
-                                    {% if AnnoJexists %}
+                                    {% if AnnoJexists == True %}
                                     <a href="#" target="_blank" id="epiBrowserLink" class="btn btn-info pull-right" role="button">
                                         <small style="color:white;">Epigenome browser (AnnoJ)</small>
                                     </a>
@@ -304,9 +304,7 @@
     var buttons;
     var table;
     var clusterMarkerGeneTable;
-
-    // var AnnoJexists = UrlExists('https://brainome.ucsd.edu/annoj_private/CEMBA/cemba.php?ens='+ensemble+'.html');
-    // console.log('AnnoJexists: '+AnnoJexists)
+    var AnnoJexists = "{{ AnnoJexists }}";
 
     $(document).ready(function() {
         $('[data-toggle="popover"]').popover();
