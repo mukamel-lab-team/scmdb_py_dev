@@ -23,6 +23,7 @@ from .email import send_email
 from .forms import LoginForm, ChangeUserEmailForm, ChangeAccountTypeForm, InviteUserForm, CreatePasswordForm, NewUserForm, RequestResetPasswordForm, ResetPasswordForm, ChangePasswordForm
 from .user import User, Role
 
+import os
 
 frontend = Blueprint('frontend', __name__, template_folder="templates", static_folder="static") # Flask "bootstrap"
 
@@ -56,6 +57,7 @@ def ensemble(ensemble_name):
     methylation_tsne_options = get_methylation_tsne_options(ensemble)
     num_algorithm_options = len(methylation_tsne_options['clustering_algorithms'])
     num_dims_options = len(methylation_tsne_options['tsne_dimensions'])
+    AnnoJexists = os.path.isfile('/var/www/html/annoj_private/CEMBA/index_'+ensemble+'.html');
 
     if ensemble_info['public_access'] == 1 or (ensemble_info['public_access'] == 0 and current_user.is_authenticated):
         return render_template('ensembleview.html', 
@@ -66,7 +68,8 @@ def ensemble(ensemble_name):
                                RS2 = RS2_included,
                                methylation_tsne_options = json.dumps(methylation_tsne_options),
                                num_algorithm_options = num_algorithm_options,
-                               num_dims_options = num_dims_options)
+                               num_dims_options = num_dims_options,
+                               AnnoJexists = AnnoJexists)
     else:
         flash('Data for ensemble {} is not publicly accessible. You must log in to continue. \
               <li>Click on "Ensembles" at the top of the page to select publicly accessible data.</li>'.format(ensemble_name), 'form-error')

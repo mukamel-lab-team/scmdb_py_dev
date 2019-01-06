@@ -22,11 +22,15 @@
                                         </a>
                                     </h5>
                                 </div>
-                                <div style="display:inline-block; float:right;">
-                                    <a href="#" target="_blank" id="epiBrowserLink" class="btn btn-info disabled pull-right"role="button">
+                                    {% if AnnoJexists %}
+                                    <a href="#" target="_blank" id="epiBrowserLink" class="btn btn-info pull-right" role="button">
                                         <small style="color:white;">Epigenome browser (AnnoJ)</small>
                                     </a>
-                                </div>
+                                    {% else %}
+                                    <div class="btn btn-info pull-right" disabled="disabled" role="button">
+                                        <small style="color:white;">Epigenome browser (AnnoJ; <i>not available</i>)</small>
+                                    </div>
+                                    {% endif %}
                             </div>
                         </div>
                         <div class="panel-body collapse in" id="search-panel-body" style="padding-top:10px;">
@@ -297,7 +301,7 @@
 
     $(document).ready(function() {
         $('[data-toggle="popover"]').popover();
-        $('#methylation-box-heat-outlierToggle').bootstrapToggle();
+        // $('#methylation-box-heat-outlierToggle').bootstrapToggle();
         $('#orthologsToggle').bootstrapToggle();
         $('#orthologsToggle').bootstrapToggle('disable');
         $('#methylation_tsneOutlierToggle').bootstrapToggle();
@@ -399,17 +403,17 @@
         }
     });
 
-    $("#methylation-box-heat-outlierToggle, #orthologsToggle").change(function() {
-        if ($('#geneName').select2('data').length === 1) {
-            updateMCHBoxPlot();
-            updateClustersBarPlot(); }              
-        else {
-            if ($('#orthologsToggle').prop('checked'))
-                updateMethylationHeatmapTwoSpecies();
-            else
-                updateMethylationHeatmap();
-        }
-    });
+    // $("#methylation-box-heat-outlierToggle, #orthologsToggle").change(function() {
+    //     if ($('#geneName').select2('data').length === 1) {
+    //         updateMCHBoxPlot();
+    //         updateClustersBarPlot(); }              
+    //     else {
+    //         if ($('#orthologsToggle').prop('checked'))
+    //             updateMethylationHeatmapTwoSpecies();
+    //         else
+    //             updateMethylationHeatmap();
+    //     }
+    // });
 
     $("#snATAC-box-heat-outlierToggle").change(function() {
         if ($('#geneName').select2('data').length === 1)
@@ -522,9 +526,9 @@
     });
     */
 
-    $("#methylation-tsne-grouping, #methylation-box-heat-grouping").change(function() {
-         $("#methylation-tsne-grouping, #methylation-box-heat-grouping").val($(this).val());
-    });
+    // $("#methylation-tsne-grouping, #methylation-box-heat-grouping").change(function() {
+    //      $("#methylation-tsne-grouping, #methylation-box-heat-grouping").val($(this).val());
+    // });
     $("#methylation-clustering-algorithm, #methylation-clustering-box-heat-algorithm").change(function() {
          $("#methylation-clustering-algorithm, #methylation-clustering-box-heat-algorithm").val($(this).val());
     });
