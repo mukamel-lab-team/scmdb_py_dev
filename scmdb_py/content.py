@@ -382,7 +382,10 @@ def ensemble_annoj_exists(ensemble):
 	Returns:
 		bool: Whether if given ensemble exists
 	"""
+
+	ensemble = ensemble.strip('Ens')
 	result = path.isfile('/var/www/html/annoj_private/CEMBA/browser/fetchers/mc_cemba/mc_single_merged_mCG_cluster_mCHmCG_lv_npc50_k30_1_Ens'+str(ensemble)+'.php');
+
 	return result
 
 @cache.memoize(timeout=1800)
