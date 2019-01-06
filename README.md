@@ -5,9 +5,9 @@
 
    * `git clone https://github.com/mukamel-lab-team/scmdb_py_dev.git; cd scmdb_py_dev`
 
-2. Set up virtual environment. 
+2. Set up virtual environment.  Note that scmdb_py currently works with python3.5
 
-   * `virtualenv venv -p python3`
+   * `virtualenv venv -p python3.5`
    * `source venv/bin/activate`
    * `pip install --upgrade pip`
    * `pip install -r requirements.txt`

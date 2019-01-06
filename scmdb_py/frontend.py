@@ -49,26 +49,36 @@ def index():
 def ensemble(ensemble_name):
     ensemble_info = get_ensemble_info(ensemble_name=ensemble_name)
     snATAC_included = ensemble_exists(ensemble_info['ensemble_id'],'snATAC')
+    methylation_included = ensemble_exists(ensemble_info['ensemble_id'],'methylation')
     RNA_included = ensemble_exists(ensemble_info['ensemble_id'],'RNA')
     ensemble = 'Ens'+str(ensemble_info['ensemble_id'])
     RS2_included = 0
     if 'RS2' in ensemble_info['datasets']:
         RS2_included = 1
-    methylation_tsne_options = get_methylation_tsne_options(ensemble)
-    num_algorithm_options = len(methylation_tsne_options['clustering_algorithms'])
-    num_dims_options = len(methylation_tsne_options['tsne_dimensions'])
+    if methylation_included:
+        methylation_tsne_options = get_methylation_tsne_options(ensemble)
+        num_algorithm_options = len(methylation_tsne_options['clustering_algorithms'])
+        num_dims_options = len(methylation_tsne_options['tsne_dimensions'])
+        num_perplexity_options = len(methylation_tsne_options['tsne_perplexity'])
+    else:
+        methylation_tsne_options = []
+        num_algorithm_options = 0
+        num_dims_options = 0
+        num_perplexity_options = 0
     AnnoJexists = os.path.isfile('/var/www/html/annoj_private/CEMBA/index_'+ensemble+'.html');
 
     if ensemble_info['public_access'] == 1 or (ensemble_info['public_access'] == 0 and current_user.is_authenticated):
         return render_template('ensembleview.html', 
                                ensemble = ensemble, 
                                ensemble_name = ensemble_name,
+                               methylation_data_available = methylation_included,
                                snATAC_data_available = snATAC_included,
                                RNA_data_available = RNA_included,
                                RS2 = RS2_included,
                                methylation_tsne_options = json.dumps(methylation_tsne_options),
                                num_algorithm_options = num_algorithm_options,
                                num_dims_options = num_dims_options,
+                               num_perplexity_options = num_perplexity_options,
                                AnnoJexists = AnnoJexists)
     else:
         flash('Data for ensemble {} is not publicly accessible. You must log in to continue. \
@@ -76,20 +86,18 @@ def ensemble(ensemble_name):
         return redirect(url_for('frontend.login', q=ensemble_name))
 
 
-@frontend.route('/standalone/<ensemble>/<gene>')
-def standalone(ensemble, gene):  # View gene body mCH plots alone
-    return render_template('mch_standalone.html', ensemble=ensemble, gene=gene)
+# @frontend.route('/standalone/<ensemble>/<gene>')
+# def standalone(ensemble, gene):  # View gene body mCH plots alone
+#     return render_template('mch_standalone.html', ensemble=ensemble, gene=gene)
 
+# @frontend.route('/compare/<mmu_gene_id>/<hsa_gene_id>')
+# def compare(mmu_gene_id, hsa_gene_id):
+#     return render_template('compareview.html', mmu_gene_id=mmu_gene_id, hsa_gene_id=hsa_gene_id)
 
-@frontend.route('/compare/<mmu_gene_id>/<hsa_gene_id>')
-def compare(mmu_gene_id, hsa_gene_id):
-    return render_template('compareview.html', mmu_gene_id=mmu_gene_id, hsa_gene_id=hsa_gene_id)
-
-
-@frontend.route('/box_combined/<mmu_gene_id>/<hsa_gene_id>')
-def box_combined(mmu_gene_id, hsa_gene_id):
-    return render_template(
-        'combined_box_standalone.html', mmu_gene_id=mmu_gene_id, hsa_gene_id=hsa_gene_id)
+# @frontend.route('/box_combined/<mmu_gene_id>/<hsa_gene_id>')
+# def box_combined(mmu_gene_id, hsa_gene_id):
+#     return render_template(
+#         'combined_box_standalone.html', mmu_gene_id=mmu_gene_id, hsa_gene_id=hsa_gene_id)
 
 
 @frontend.route('/tabular/ensemble')
@@ -159,8 +167,8 @@ def plot_methylation_scatter(ensemble, tsne_type, methylation_type, level, group
         return "Failed to generate methylation tsne scatter plots for {}, please contact maintainer".format(ensemble)
 
 
-@frontend.route('/plot/snATAC/scatter/<ensemble>/<grouping>/<ptile_start>/<ptile_end>/<tsne_outlier>')
-def plot_snATAC_scatter(ensemble, grouping, ptile_start, ptile_end, tsne_outlier):
+@frontend.route('/plot/snATAC/scatter/<ensemble>/<grouping>/<ptile_start>/<ptile_end>/<tsne_outlier>/<smoothing>')
+def plot_snATAC_scatter(ensemble, grouping, ptile_start, ptile_end, tsne_outlier, smoothing):
 
     genes_query = request.args.get('q', 'MustHaveAQueryString')
     if grouping == 'NaN' or grouping == 'null':
@@ -170,13 +178,18 @@ def plot_snATAC_scatter(ensemble, grouping, ptile_start, ptile_end, tsne_outlier
     if tsne_outlier == 'true':
         tsne_outlier_bool = True
 
+    smoothing_bool = False
+    if smoothing == 'true':
+        smoothing_bool = True
+
     try:
         return get_snATAC_scatter(ensemble,
                                   genes_query, 
                                   grouping,
                                   float(ptile_start),
                                   float(ptile_end),
-                                  tsne_outlier_bool)
+                                  tsne_outlier_bool,
+                                  smoothing_bool)
     except FailToGraphException:
         return "Failed to load snATAC-seq data for {}, please contact maintainer".format(ensemble)
 

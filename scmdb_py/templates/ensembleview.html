@@ -10,7 +10,7 @@
 				</div>
 			</div>
 			{%- endif %} {%- endwith %}
-			<div style="position:relative; left:0; z-index:2;">
+			<div style="position:relative; left:0; z-index:3;">
                 <div class="col-md-12">
                     <div class="panel panel-info" id="options-panel" style="margin-left:auto; margin-right:auto; ">
                         <div class="panel-heading">
@@ -18,10 +18,11 @@
                                 <div style="display:inline-block;">
                                     <h5>
                                         <a class="accordion-toggle" data-parent="#options-panel" data-toggle="collapse" title="" style="margin-top: 0px;" data-original-title="Collapse Search Options" href="#search-panel-body">
-                                            <div class="accordion-chevron">Gene Methylation Search </div>
+                                            <div class="accordion-chevron">Options </div>
                                         </a>
                                     </h5>
                                 </div>
+                                <div style="display:inline-block; float:right;">
                                     {% if AnnoJexists %}
                                     <a href="#" target="_blank" id="epiBrowserLink" class="btn btn-info pull-right" role="button">
                                         <small style="color:white;">Epigenome browser (AnnoJ)</small>
@@ -31,6 +32,7 @@
                                         <small style="color:white;">Epigenome browser (AnnoJ; <i>not available</i>)</small>
                                     </div>
                                     {% endif %}
+                                </div>
                             </div>
                         </div>
                         <div class="panel-body collapse in" id="search-panel-body" style="padding-top:10px;">
@@ -40,6 +42,8 @@
                 </div>
             </div>
 
+
+            {% if methylation_data_available == 1 %}
             <!-- Methylation PLOTS -->
 			<div style="position:relative; left:0; z-index:2;">
 				<div class="col-md-12 col-sm-12">
@@ -55,7 +59,6 @@
                                     </div>
                                     <div class="accordion-chevron" style="display: inline-block;"></div>
                                 </a>
-                                <a data-toggle="collapse" title="" data-placement="left" href=".methylation-plots-options" class="btn btn-sm btn-basic pull-right" style="margin-top: 0px;" data-original-title="Collapse Methylation tSNE Options"><i class="glyphicon glyphicon-cog"></i> Options</a>
 							</div>
 						</div>
                         <div class="panel-collapse collapse in" id="methylation-plots">
@@ -85,6 +88,7 @@
                     </div>
                 </div>
             </div>
+            {% endif %}
 
             <!-- snATAC Plots -->
             {% if snATAC_data_available == 1 %}
@@ -104,7 +108,7 @@
                                     </div>
                                     <div class="accordion-chevron" style="display:inline-block;"></div>
                                 </a>
-                                <a data-toggle="collapse" title="" data-placement="left" href=".snATAC-plots-options" class="btn btn-sm btn-basic pull-right" style="margin-top: 0px;" data-original-title="Collapse snATAC tSNE Options"><i class="glyphicon glyphicon-cog"></i> Options</a>
+ <!--                                <a data-toggle="collapse" title="" data-placement="left" href=".snATAC-plots-options" class="btn btn-sm btn-basic pull-right" style="margin-top: 0px;" data-original-title="Collapse snATAC tSNE Options"><i class="glyphicon glyphicon-cog"></i> Options</a> -->
 							</div>
 						</div>
                         <div class="panel-collapse collapse in" id="snATAC-plots">
@@ -283,10 +287,12 @@
     var ensemble = "{{ ensemble }}";
     var ensemble_name = "{{ ensemble_name }}";
     var RS2 = {{ RS2 }};
+    var methylation_data_available = {{ methylation_data_available }};
     var snATAC_data_available = {{ snATAC_data_available }};
     var RNA_data_available = {{ RNA_data_available }};
     var num_algorithm_options = {{ num_algorithm_options }};
     var num_dims_options = {{ num_dims_options }};
+    var num_perplexity_options = {{ num_perplexity_options }};
     var methylation_tsne_options = {{ methylation_tsne_options|safe }};
     var methylation_color_percentile_Slider;
     var snATAC_color_percentile_Slider;
@@ -298,6 +304,9 @@
     var buttons;
     var table;
     var clusterMarkerGeneTable;
+
+    // var AnnoJexists = UrlExists('https://brainome.ucsd.edu/annoj_private/CEMBA/cemba.php?ens='+ensemble+'.html');
+    // console.log('AnnoJexists: '+AnnoJexists)
 
     $(document).ready(function() {
         $('[data-toggle="popover"]').popover();
@@ -415,14 +424,6 @@
     //     }
     // });
 
-    $("#snATAC-box-heat-outlierToggle").change(function() {
-        if ($('#geneName').select2('data').length === 1)
-            updatesnATACBoxPlot();
-        else {
-            updatesnATACHeatmap();
-        }
-    });
-
     $("#RNA-box-heat-outlierToggle").change(function() {
         if ($('#geneName').select2('data').length === 1)
             updateRNABoxPlot();
@@ -440,12 +441,6 @@
         }
     });
 
-    $("#snATAC-box-heat-normalize-toggle").change(function() {
-        if ($('#geneName').select2('data').length > 1) {
-            updatesnATACHeatmap();
-        }
-    });
-
     $("#RNA-box-heat-normalize-toggle").change(function() {
         if ($('#geneName').select2('data').length > 1) {
             updateRNAHeatmap();
@@ -456,6 +451,10 @@
         updateClustersBarPlot();
     });
 
+    $("#snATAC-smoothing-toggle").change(function() {
+        updatesnATACScatterPlot();
+    });
+
     $("#toggle-3d").change(function() {
         display3DPlotToggle();
     });
@@ -463,6 +462,9 @@
     $("#methylation-tsneUpdateBtn:enabled, #methylation-box-heat-UpdateBtn:enabled").click(function() {
         updateMCHScatterPlot(onlyUpdatetSNEandClustering=true);
         initClusterSpecificMarkerGeneTable();
+        if (snATAC_data_available === 1) {
+                updatesnATACScatterPlot();
+        }
         if ($('#geneName').select2('data').length > 1) {
             updateMethylationHeatmap();
         } 
@@ -473,15 +475,6 @@
         else {}
     });
 
-
-    $("#snATAC-tsneUpdateBtn:enabled, #snATAC-box-heat-UpdateBtn:enabled").click(function() {
-        updatesnATACScatterPlot(onlyUpdatetSNEandClustering=true);
-        if ($('#geneName').select2('data').length > 1) {
-            updatesnATACHeatmap();
-        } else {
-            updatesnATACBoxPlot();
-        }
-    });
 
     $("#RNA-tsneUpdateBtn:enabled, #RNA-box-heat-UpdateBtn:enabled").click(function() {
         updateRNAScatterPlot(onlyUpdatetSNEandClustering=true);
@@ -526,9 +519,9 @@
     });
     */
 
-    // $("#methylation-tsne-grouping, #methylation-box-heat-grouping").change(function() {
-    //      $("#methylation-tsne-grouping, #methylation-box-heat-grouping").val($(this).val());
-    // });
+    $("#methylation-tsne-grouping").change(function() {
+         $("#methylation-tsne-grouping").val($(this).val());
+    });
     $("#methylation-clustering-algorithm, #methylation-clustering-box-heat-algorithm").change(function() {
          $("#methylation-clustering-algorithm, #methylation-clustering-box-heat-algorithm").val($(this).val());
     });
@@ -542,10 +535,6 @@
     */
     $("#methylation-clustering-k, #methylation-clustering-box-heat-k").change(function() {
          $("#methylation-clustering-k, #methylation-clustering-box-heat-k").val($(this).val());
-    });
-
-    $("#snATAC-tsne-grouping, #snATAC-box-heat-grouping").change(function() {
-         $("#snATAC-tsne-grouping, #snATAC-box-heat-grouping").val($(this).val());
     });
 
     $("#RNA-tsne-grouping, #RNA-box-heat-grouping").change(function() {

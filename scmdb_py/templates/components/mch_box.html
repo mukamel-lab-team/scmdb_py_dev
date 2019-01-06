@@ -1,73 +1,4 @@
-<div class="panel-collapse collapse in methylation-plots-options" id="methylation-box-heatmap-options">
-    <div class="panel-body option-panel" style="padding-top: 0px; padding-bottom: 0px;">
-        <div class="col-md-12">
-            <div class="container">
-                <div>
-                    <div class="col-md-offset-2" id="methylation_tsneGrouping">
-                        <h6>Grouping: </h6>
-                        <select id="methylation-box-heat-grouping" class="methylation-tsne-grouping methylation-tsne-box-heat-option" name="methylation-box-heat-grouping">
-                            <option value="cluster" selected>by cluster</option>
-                            <option value="annotation">by cluster annotation</option>
-                            <option value="dataset">by dataset</option>
-                            <option value="slice">by slice</option>
-                            <option value="sex">by sex</option>
-                            {% if RS2 == true %}
-                            <option value="target_region">by RS2 target region</option>
-                            {% endif %}
-                        </select>
-                    </div>
-                </div>
-                <div>
-                    <div class="col-md-offset-2" id="methylation_tsneClustering">
-                        <h6>Clustering: </h6>
-                        {% if num_algorithm_options > 1 %}
-                        <div style="display: inline-block">
-                            {% else %}
-                            <div style="display: none">
-                                {% endif %}
-                                <label for="methylation-clustering-box-heat-algorithms">
-                                    <a class="hover-tooltip" href="javascript:void(0);" data-toggle="popover" data-trigger="hover" data-placement="bottom" title="Algorithm" data-content="lv = Louvain Modularity.">Algorithm: </a>
-                                </label>
-                                <select id="methylation-clustering-box-heat-algorithms" class="methylation-clustering-algorithms methylation-tsne-box-heat-option" name="methylation-clustering-box-heat-algorithms"></select>
-                                &nbsp;
-                            </div>
-                            <div style="display: inline-block">
-                                <label for="methylation-clustering-box-heat-methylation">
-                                    <a class="hover-tooltip" href="javascript:void(0);" data-toggle="popover" data-trigger="hover" data-placement="bottom" title="Methylation Type" data-content="Types of methylation used for clustering.">Methylation Type: </a>
-                                </label>
-                                <select id="methylation-clustering-box-heat-methylation" class="methylation-clustering-methylation methylation-tsne-box-heat-option" name="methylation-clustering-box-heat-methylation"></select>
-                                &nbsp;
-                            </div>
-                        <!--
-                        <label for="methylation-clustering-box-heat-npc">
-                            <a class="hover-tooltip" href="javascript:void(0);" data-toggle="popover" data-trigger="hover" data-placement="bottom" title="Principal Components" data-content="Number of principal components kept for clustering."># of PC's: </a>
-                        </label>
-                        <select id="methylation-clustering-box-heat-npc" class="methylation-clustering-npc methylation-tsne-box-heat-option" name="methylation-clustering-box-heat-npc"></select>
-                        &nbsp;
-                    -->
-                        <label for="methylation-clustering-box-heat-k">
-                            <a class="hover-tooltip" href="javascript:void(0);" data-toggle="popover" data-trigger="hover" data-placement="bottom" title="K-value" data-content="Number of nearest neighbors (neighboring cells).">K-value: </a>
-                        </label>
-                        <select id="methylation-clustering-box-heat-k" class="methylation-clustering-k methylation-tsne-box-heat-option" name="methylation-clustering-box-heat-k"></select>
-                </div>
-            </div>
-        </div>
-        <br>
-        <div>
-            <div class="col-md-offset-2">
-                <input id="methylation-box-heat-normalize-toggle" name="methylation-box-heat-normalize-checkbox" value="normalize" type="checkbox">
-                <label for="methylation-box-heat-normalize-toggle">
-                    <a class="hover-tooltip" href="javascript:void(0);" data-toggle="popover" data-trigger="hover" data-placement="bottom" title="Normalize by Gene" data-content="Min-Max normalization across each row. (Only for heatmap).">Normalize by gene</a>
-                </label>
-            </div>
-            <div class="col-md-offset-2">
-                <!-- <div class="col-sm-12 col-md-1 col-md-offset-4" style="position:relative">-->
-                    <button class="btn-sm btn-primary" id="methylation-box-heat-UpdateBtn">Update</button>
-                </div>
-            </div>
-        </div>
-    </div>
-</div>
+
 <div class="panel-body" style="padding-top:0px;">
     <div class="container">
         <div id="methylation-box-and-heat">
@@ -75,9 +6,6 @@
             <div class="plot-panel" id="plot-mch-box"></div> <!-- boxplots/heatmaps are put into these two divs -->
             <div class="plot-panel" id="plot-mch-heat"></div>
         </div>
-    </div>
-    <div class="outlierOptions" style="float:left;">
-        <input id="methylation-box-heat-outlierToggle" data-toggle="toggle" data-on="Outliers On" data-off="Outliers Off" type="checkbox">
     </div>
     <div class="col-xs-12 col-sm-3" id="methylation_box_color_percentileCol" style="float:right;">
         <label for="methylation_box_color_percentile" class="control-label" style="text-align: right">Color scale percentile:&nbsp;</label>
