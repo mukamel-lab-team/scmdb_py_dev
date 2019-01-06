@@ -64,8 +64,9 @@ def get_ensembles_summary():
 	ensemble_list = db.get_engine(current_app, 'methylation_data').execute("SELECT * FROM ensembles").fetchall()
 	ensemble_list_atac = db.get_engine(current_app, 'snATAC_data').execute("SELECT * FROM ensembles").fetchall()
 	# ensemble_list = ensemble_list.join(ensemble_list_atac, on="ensemble_id", how="outer")
+	ensemble_list_ids = [ensemble['ensemble_id'] for ensemble in ensemble_list]
 	for ensemble_atac in ensemble_list_atac:
-		if (ensemble_atac['ensemble_id'] not in ensemble_list):
+		if (ensemble_atac['ensemble_id'] not in ensemble_list_ids):
 			ensemble_list.append(ensemble_atac)
 
 	total_methylation_cell_each_dataset = db.get_engine(current_app, 'methylation_data').execute("SELECT dataset, COUNT(*) as `num` FROM cells GROUP BY dataset").fetchall()
