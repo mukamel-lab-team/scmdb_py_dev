@@ -47,7 +47,11 @@ function initEnsembleDataTable() {
                 "className": 'redirect-control dt-center',
                 "orderable": false,
                 "fnCreatedCell": function (nTd, sData, oData, iRow, iCol) {
-                    $(nTd).html('<a href="https://brainome.ucsd.edu/annoj_private/CEMBA/cemba.php?ens='+oData.ensemble_id+'" target="_blank"><i class="fas fa-eye"></i></a>');
+                    if ( oData.annoj_exists == 1 )   {
+                        $(nTd).html('<a href="https://brainome.ucsd.edu/annoj_private/CEMBA/cemba.php?ens='+oData.ensemble_id+'" target="_blank"><i class="fas fa-eye"></i></a>');
+                    } else {
+                        $(nTd).html('<i class="fas fa-eye-slash" style="color: gray"></i>')
+                    }
                 }
             },
         ],
