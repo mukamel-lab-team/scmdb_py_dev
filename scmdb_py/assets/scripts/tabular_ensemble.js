@@ -6,7 +6,7 @@ function initEnsembleDataTable() {
     
     var table = $('#ensemble-table').DataTable({
         "order": [[3, 'desc']], //Initially sort by "Total Cells (snmC-seq)" in descending order. 
-        "pageLength": 100,
+        "pageLength": 50,
         "ajax": {
             //"url": "/portal/content/ensembles",
             "url": $SCRIPT_ROOT+'/content/ensembles?region=' + region,
@@ -43,14 +43,13 @@ function initEnsembleDataTable() {
                 }
             },
             {
-                "data": "ensemble_name",
-                "className": 'redirect-control dt-center',
-                "orderable": false,
+                "data": "annoj_exists",
+                "className": 'dt-center',
                 "fnCreatedCell": function (nTd, sData, oData, iRow, iCol) {
-                    if ( oData.annoj_exists == 1 )   {
-                        $(nTd).html('<a href="https://brainome.ucsd.edu/annoj_private/CEMBA/cemba.php?ens='+oData.ensemble_id+'" target="_blank"><i class="fas fa-eye"></i></a>');
+                    if ( oData.annoj_exists == 1 )  {
+                        $(nTd).html('<a href="https://brainome.ucsd.edu/annoj_private/CEMBA/cemba.php?ens='+oData.ensemble_id+'" target="_blank"><i class="fas fa-dna"></i></a>');
                     } else {
-                        $(nTd).html('<i class="fas fa-eye-slash" style="color: gray"></i>')
+                        $(nTd).html('<i class="fas fa-dna" style="color: gray"></i>');
                     }
                 }
             },
@@ -92,7 +91,7 @@ function initEnsembleDataTable() {
                 ' ATAC cells across '+grand_total_ensembles+' ensembles'
             );
         }
-    } );
+    });
     
 
     $('#ensemble-table tbody').on('click', 'td.details-control', function() {
