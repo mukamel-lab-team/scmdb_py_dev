@@ -10,7 +10,7 @@
 
             <!-- Methylation PLOTS -->
 			<div style="position:relative; left:0; z-index:2;">
-				<div class="col-md-12 col-sm-12">
+				<div id="snmC-seq-view" class="col-md-12 col-sm-12">
 					<div class="panel panel-default panel-main" style="overflow-x: auto; margin-left:auto; margin-right:auto;">
 						<div class="panel-heading">
 							<div class="panel-title">
@@ -59,7 +59,7 @@
             <!-- snATAC Plots -->
             {% if snATAC_data_available == 1 %}
 			<div style="position:relative; left:0; z-index:2;">
-				<div class="col-md-12 col-sm-12">
+				<div id = "snATAC-seq-view" class="col-md-12 col-sm-12">
 					<div class="panel panel-default panel-main" style="overflow-x: auto; margin-left:auto; margin-right:auto;">
 						<div class="panel-heading">
 							<div class="panel-title">
@@ -100,7 +100,7 @@
             <!-- RNA Plots -->
             {% if RNA_data_available == 1 %}
             <div style="position:relative; left:0; z-index:2;">
-                <div class="col-md-12 col-sm-12">
+                <div id = "RNA-seq-view" class="col-md-12 col-sm-12">
                     <div class="panel panel-default panel-main" style="overflow-x: auto; margin-left:auto; margin-right:auto;">
                         <div class="panel-heading">
                             <div class="panel-title">
@@ -273,6 +273,7 @@
             }).on('slideStop', updatesnATACScatterPlot).data('slider');
 
             $('#snATAC_tsneOutlierToggle').bootstrapToggle();
+            $("#snATAC-seq-view").hide();
         }
 
         if (RNA_data_available === 1) {
@@ -284,6 +285,7 @@
             }).on('slideStop', updateRNAScatterPlot).data('slider');
 
             $('#RNA_tsneOutlierToggle').bootstrapToggle();
+            $("#RNA-seq-view").hide();
         }
 
         table = $('#corrGeneTable').DataTable( {
@@ -461,6 +463,24 @@
     });
     $("#methylation-clustering-methylation, #methylation-clustering-box-heat-methylation").change(function() {
          $("#methylation-clustering-methylation, #methylation-clustering-box-heat-methylation").val($(this).val());
+    });
+
+    /* Data Modality*/
+    $("#data-modality").change(function() {
+          if($(this).val() ===  "snmC-seq" ) {
+                    $("#snmC-seq-view").show();
+                    $("#snATAC-seq-view").hide();
+                    $("#RNA-seq-view").hide();
+                } else if($(this).val() === "snATAC-seq" ) {
+                    $("#snATAC-seq-view").show();
+                    $("#snmC-seq-view").hide();
+                    $("#RNA-seq-view").hide();
+                }
+                else {
+                    $("#RNA-seq-view").show();
+                    $("#snmC-seq-view").hide();
+                    $("#snATAC-seq-view").hide();
+                }
     });
     /*
     $("#methylation-clustering-npc, #methylation-clustering-box-heat-npc").change(function() {
