@@ -38,7 +38,7 @@
 		/*transition: margin-left .5s;*/
 	    /*padding: 20px;*/
 	    font-size: 18px;
-	    /*color: white;*/
+	    color: white;
 	}
 	.control-label {
 		/*transition: margin-left .5s;*/
@@ -51,16 +51,13 @@
 	    .sidenav {padding-top: 15px;}
 	    .sidenav a {font-size: 18px;}
 	}
-	
+
 	h6 {
 		font-weight: 700;
 		font-size: 17px;
 		color: #f1f1f1;
 	}
 
-	.hover-tooltip: hover{
-		background-color: black;
-	}
 
 </style>
 
@@ -189,7 +186,7 @@
 					</div>
 
 					<!--Data Modality -->
-					<label class="control-label">Data Modality: </label>
+					<label class="control-label" style="color:white">Data Modality: </label>
 					<select id="data-modality" style="width:60%">
 						<option value="DNA-methylation">DNA methylation (snmC-seq)</option>
 						<option value="chromatin-accessibility">Chromatin accessibility (snATAC-seq)</option>
@@ -199,7 +196,7 @@
 
 
 					<!-- Search gene by name: -->
-					<label for="geneName" class="control-label">
+					<label for="geneName" class="control-label" style="color:white">
 						Search gene by name:
 					</label>
 					<br>
@@ -224,17 +221,17 @@
 						<option value="0">Select..</option>
 					</select>
 
-				
+
 
 					<!-- Cluster Marker Genes -->
-					<label class="control-label">Cluster marker genes: </label>
+					<label class="control-label" style="color:white">Cluster marker genes: </label>
 					<select id="" style="width:50%">
 						<option value="0">Select..</option>
 					</select>
 					<br>
 
 					<!-- Color Points By -->
-					<label class="control-label">Color points by:</label>
+					<label class="control-label" style="color:white">Color points by:</label>
 					<select id="methylation-tsne-grouping" class="methylation-tsne-grouping methylation-tsneoption" name="methylation-tsnegrouping">
 						<option value="cluster" selected>by cluster</option>
 						<option value="annotation">by cluster annotation</option>
@@ -279,13 +276,13 @@
 						<option value="cluster">by cluster</option>
 					</select>
 					<br>
-					
+
 					<!-- Show Outliers -->
 					<label for="methylation-box-heat-outlierToggle">
 			    		<a class="hover-tooltip" href="javascript:void(0);" data-toggle="popover" data-trigger="hover" data-placement="bottom" title="Show outliers" data-content="">Show outliers</a>
 			    	</label>
 					<input id="methylation-box-heat-outlierToggle" data-toggle="toggle" data-on="Outliers On" data-off="Outliers Off" type="checkbox">
-			    	
+
 				<div style="display: inline-block;">
 					<button type="button" class="btn btn-success btn-sm" id="gene-search-btn" style="padding-right:10px;">
 						<span class="glyphicon glyphicon-search"></span>&nbsp;&nbsp;Update
