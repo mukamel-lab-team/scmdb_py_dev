@@ -882,7 +882,8 @@ function initClusterSpecificMarkerGeneTable() {
         success: function(data) {
             let columns = [ { mData: "rank", sTitle: "rank" } ];
             $.each(data.columns, function(i, cluster) {
-                columns.push({ mData: cluster, sTitle: cluster });
+                columns.push({ mData: cluster, sTitle: cluster, 
+                "defaultContent": "-", });
             });
             clusterMarkerGeneTable = $('#clusterMarkerGeneTable').DataTable( {
                 "pageLength": 50,

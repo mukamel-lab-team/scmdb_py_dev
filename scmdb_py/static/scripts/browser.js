@@ -989,24 +989,6 @@ function updateGeneElements(updateMCHScatter=true) {
     }
 }
 
-/*
-function loadClusterPlots() {
-    let grouping = $('.methylation-tsne-grouping').val();
-    let clustering = $('.methylation-tsne-clustering').val();
-    let tsne_setting = $('.methylation-tsne-settings').val();
-
-    $.ajax({
-        type: "GET",
-        url: './plot/tsne/'+ensemble+'/'+tsne_setting+'/'+grouping+'/'+clustering, 
-        success: function(data) {
-            num_colors = getMax(data["traces"], "legendgroup");
-            Plotly.newPlot("plot-2d-cluster", Object.values(data["traces"]), data["layout"], {showLink: false});
-            $('#loading_2dtsne').html("");
-        }
-    });
-}
-*/
-
 function updateMCHScatterPlot(onlyUpdatetSNEandClustering=false) {
     let levelType = $('#level').val();;
     let methylationType = $("#mType").val();
@@ -1261,7 +1243,8 @@ function initClusterSpecificMarkerGeneTable() {
         success: function(data) {
             let columns = [ { mData: "rank", sTitle: "rank" } ];
             $.each(data.columns, function(i, cluster) {
-                columns.push({ mData: cluster, sTitle: cluster });
+                columns.push({ mData: cluster, sTitle: cluster, 
+                "defaultContent": "-", });
             });
             clusterMarkerGeneTable = $('#clusterMarkerGeneTable').DataTable( {
                 "pageLength": 50,

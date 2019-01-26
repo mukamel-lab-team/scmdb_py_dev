@@ -86,9 +86,9 @@ function initEnsembleDataTable() {
  
             // Update footer
             $( api.column( 10 ).footer() ).html(
-                numberWithCommas(grand_total_methylation_cells) +' mC cells, '+ 
+                grand_total_ensembles+' ensembles including '+numberWithCommas(grand_total_methylation_cells) +' mC cells, '+ 
                 numberWithCommas(grand_total_snATAC_cells) +
-                ' ATAC cells across '+grand_total_ensembles+' ensembles'
+                ' ATAC cells across (NOTE some cells appear in multiple ensembles)'
             );
         }
     });
