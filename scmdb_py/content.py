@@ -952,7 +952,7 @@ def get_gene_methylation(ensemble, methylation_type, gene, grouping, clustering,
 def get_gene_from_mysql(ensemble, gene_table_name, context, methylation_type, clustering, tsne_type):
 
 	t0=datetime.datetime.now()
-	print(' Running get_gene_from_mysql for '+gene_table_name+' : '+str(t0)+'; ', file=open('/var/www/scmdb_py_dev/scmdb_log','a'))# EAM - Profiling SQL
+	# print(' Running get_gene_from_mysql for '+gene_table_name+' : '+str(t0)+'; ', file=open('/var/www/scmdb_py_dev/scmdb_log','a'))# EAM - Profiling SQL
 	if 'ndim2' in tsne_type:
 		query = "SELECT cells.cell_id, cells.cell_name, cells.dataset, cells.global_%(methylation_type)s, \
 			%(ensemble)s.annotation_%(clustering)s, %(ensemble)s.cluster_%(clustering)s, \
@@ -1084,15 +1084,15 @@ def get_mult_gene_methylation(ensemble, methylation_type, genes, grouping, clust
 
 	############
 	t0=datetime.datetime.now()
-	print(' Starting mysql queries '+str(t0)+'; ', file=open('/var/www/scmdb_py_dev/scmdb_log','a'))# EAM - Profiling SQL
+	# print(' Starting mysql queries '+str(t0)+'; ', file=open('/var/www/scmdb_py_dev/scmdb_log','a'))# EAM - Profiling SQL
 	with Pool(4) as pool:
 		df_list = [pool.apply_async(get_gene_from_mysql,
                                        args=(ensemble, gene_table_name, context, methylation_type, clustering, tsne_type)).get()
                                		for gene_table_name in gene_table_names ]
 
 	t1=datetime.datetime.now()
-	print(' Finished mysql queries '+str(t1)+'; ', file=open('/var/www/scmdb_py_dev/scmdb_log','a'))# EAM - Profiling SQL
-	print(' Time '+str(t1-t0)+'; ', file=open('/var/www/scmdb_py_dev/scmdb_log','a'))# EAM - Profiling SQL
+	# print(' Finished mysql queries '+str(t1)+'; ', file=open('/var/www/scmdb_py_dev/scmdb_log','a'))# EAM - Profiling SQL
+	# print(' Time '+str(t1-t0)+'; ', file=open('/var/www/scmdb_py_dev/scmdb_log','a'))# EAM - Profiling SQL
 	# print(' Size of df_list '+str(len(df_list))+'; ', file=open('/var/www/scmdb_py_dev/scmdb_log','a'))# EAM - Profiling SQL
 	# print(' Size of df_list[0] '+str(df_list[0].shape)+'; ', file=open('/var/www/scmdb_py_dev/scmdb_log','a'))# EAM - Profiling SQL
 	# print(' Size of df_list[0] '+str(df_list[0].index)+'; ', file=open('/var/www/scmdb_py_dev/scmdb_log','a'))# EAM - Profiling SQL
