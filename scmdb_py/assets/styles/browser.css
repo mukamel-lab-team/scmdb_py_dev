@@ -9,8 +9,8 @@
 html is set to 62.5% so that all the REM measurements throughout Skeleton
 are based on 10px sizing. So basically 1.5rem = 15px :) */
 html {
-    font-size: 62.5%; 
-    color: rgb(50, 50, 50); 
+    font-size: 62.5%;
+    color: rgb(50, 50, 50);
     height: 100%;
     min-width: 100%;
 }
@@ -21,9 +21,9 @@ body {
     font-weight: 400;
     font-family: "Open Sans", "HelveticaNeue", "Helvetica Neue", Helvetica, Arial, sans-serif;
     /* CNDD website colour */
-    background-color: #F8F9F3 !important; 
+    background-color: #F8F9F3 !important;
     min-width: 100%;
-} 
+}
 
 .Site {
     display: flex;
@@ -32,7 +32,7 @@ body {
 }
 
 .Site-content {
-    flex: 1;
+    /* flex: 1; */
 }
 
 .container {
@@ -452,7 +452,7 @@ select {
   border: 1px solid #D1D1D1;
   border-radius: 4px;
   box-shadow: none;
-  box-sizing: border-box; 
+  box-sizing: border-box;
   font-family: inherit;
   font-size: 10; /*https://stackoverflow.com/questions/6080413/why-doesnt-input-inherit-the-font-from-body*/}
 /* Removes awkward default styles on some inputs for iOS */
