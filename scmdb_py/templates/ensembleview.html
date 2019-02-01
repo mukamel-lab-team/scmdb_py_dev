@@ -140,7 +140,7 @@
             {% endif %}
 		</div>
 
-        <!-- Cluster specific marker genes table 
+        <!-- Cluster specific marker genes table
         <div style="position:relative; left:0;">
             <div class="col-md-12 col-sm-12">
                 <div class="panel panel-default panel-main" style="overflow-x: auto; margin-left:auto; margin-right:auto;">
@@ -159,8 +159,8 @@
                                     {% include "components/cluster_specific_marker_genes.html" %}
                                 </div>
                             </div>
-                        </div> 
-                    </div> 
+                        </div>
+                    </div>
                 </div>
             </div>
         </div>-->
@@ -390,7 +390,9 @@
     $("#methylation-tsneUpdateBtn:enabled, #methylation-box-heat-UpdateBtn:enabled").click(function() {
 
         // Update the scatter plot (only update tSNE and clusting)
-        updateMCHScatterPlot(onlyUpdatetSNEandClustering=true);
+        // updateMCHScatterPlot(onlyUpdatetSNEandClustering=true);
+		updateMCHScatterPlot();
+		updateGeneElements();
 
         // Build the table
         initClusterSpecificMarkerGeneTable();

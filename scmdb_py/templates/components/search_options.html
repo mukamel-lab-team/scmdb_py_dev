@@ -39,17 +39,12 @@
     }
 
     .control-label a {
-        /*transition: margin-left .5s;*/
-        /*padding: 20px;*/
-        font-size: 18px;
+        font-size: 15px;
         color: white;
     }
 
     .control-label {
-        /*transition: margin-left .5s;*/
-        /*padding: 20px;*/
-        font-size: 18px;
-        /*color: white;*/
+        font-size: 15px;
     }
 
     /* On smaller screens, where height is less than 450px, change the style of the sidenav (less padding and a smaller font size) */
@@ -59,7 +54,7 @@
         }
 
         .sidenav a {
-            font-size: 18px;
+            font-size: 15px;
         }
     }
 
@@ -78,10 +73,10 @@
     function optionOnclick() {
         if (close) {
             document.getElementById("mySidenav").style.marginLeft = "0px";
-            document.getElementById("options").style.marginLeft = "500px";
+            document.getElementById("options").style.marginLeft = "400px";
             close = 0;
         } else if (close == 0) {
-            document.getElementById("mySidenav").style.marginLeft = "-500px";
+            document.getElementById("mySidenav").style.marginLeft = "-400px";
             document.getElementById("options").style.marginLeft = "0";
             close = 1;
         }
@@ -90,7 +85,7 @@
     function openNav() {
         // document.getElementById("mySidenav").style.width = "250px";
         document.getElementById("mySidenav").style.marginLeft = "0px";
-        document.getElementById("options").style.marginLeft = "500px";
+        document.getElementById("options").style.marginLeft = "400px";
         close = 1;
         // document.body.style.backgroundColor = "rgba(0,0,0,0.4)";
     }
@@ -98,7 +93,7 @@
     /* Set the width of the side navigation to 0 and the left margin of the page content to 0, and the background color of body to white */
     function closeNav() {
         // document.getElementById("mySidenav").style.width = "0";
-        document.getElementById("mySidenav").style.marginLeft = "-500px";
+        document.getElementById("mySidenav").style.marginLeft = "-400px";
         document.getElementById("options").style.marginLeft = "0";
         // document.body.style.backgroundColor = "white";
     }
@@ -107,7 +102,7 @@
 <!-- Use any element to open the sidenav -->
 <button onclick="optionOnclick()" style="position:relative; left:0; z-index:2;">Options</button>
 
-<div id="mySidenav" class="sidenav" style="width: 500px; margin-left: -500px; padding: 40px">
+<div id="mySidenav" class="sidenav" style="width: 400px; margin-left: -400px; padding: 40px">
 
     <a href="javascript:void(0)" class="closebtn" onclick="closeNav()">&times;</a>
 
@@ -329,19 +324,19 @@
                 <br>
 
                 <!-- Show Outliers -->
-                <label for="methylation-box-heat-outlierToggle">
+                <!-- <label for="methylation-box-heat-outlierToggle">
                     <a class="hover-tooltip" href="javascript:void(0);" data-toggle="popover" data-trigger="hover"
                        data-placement="bottom" title="Show outliers" data-content="">Show outliers</a>
                 </label>
                 <input id="methylation-box-heat-outlierToggle" data-toggle="toggle" data-on="Outliers On"
-                       data-off="Outliers Off" type="checkbox">
+                       data-off="Outliers Off" type="checkbox"> -->
 
-                <div style="display: inline-block;">
+                <!-- <div style="display: inline-block;">
                     <button type="button" class="btn btn-success btn-sm" id="gene-search-btn"
                             style="padding-right:10px;">
                         <span class="glyphicon glyphicon-search"></span>&nbsp;&nbsp;Update
                     </button>
-                </div>
+                </div> -->
 
                 <button class="btn-sm btn-primary methylation-tsneUpdateBtn" id="methylation-tsneUpdateBtn">Update
                 </button>
