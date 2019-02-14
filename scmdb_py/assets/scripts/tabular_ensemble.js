@@ -167,9 +167,9 @@ function format ( d ) {
     var url=''
     var slices=[... new Set(d.slices.split(', ').map(x => x.charAt(0)))] // Get the unique slices contributing to this ensemble
     for (i=0; i<slices.length; i++) {
-        url='https://brainome.ucsd.edu/CEMBA_dissection_images/CEMBA_Slice'+slices[i]+'.png'
+        url='https://brainome.ucsd.edu/CEMBA_dissection_images/CEMBA_Slice'+slices[i]
         out = out+'<td> '+
-          '<a href="'+url+'" target="_blank"><img src="'+url+'" ' +
+          '<a href="'+url+'.png" target="_blank"><img src="'+url+'_sm.png" ' +
           ' width=200 alt="CEMBA Slice'+slices[i]+'"></a> </td>'
     }
     out = out + '</tr></table>'
