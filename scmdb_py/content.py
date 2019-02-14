@@ -2286,7 +2286,7 @@ def get_gene_snatac_from_mysql(ensemble, gene_table_name, counts_type, tsne_type
 		query = "SELECT %(gene_table_name)s.%(counts_type)s as normalized_counts \
 			FROM %(ensemble)s  \
 			LEFT JOIN %(gene_table_name)s ON %(ensemble)s.cell_id = %(gene_table_name)s.cell_id \
-			ORDER BY rand(42) LIMIT 5000" % {'ensemble': ensemble, 
+			LIMIT 5000" % {'ensemble': ensemble, 
 			   'gene_table_name': gene_table_name,
 			   'counts_type': counts_type,}
 	else:
@@ -2299,7 +2299,7 @@ def get_gene_snatac_from_mysql(ensemble, gene_table_name, counts_type, tsne_type
 			INNER JOIN %(ensemble)s ON cells.cell_id = %(ensemble)s.cell_id \
 			LEFT JOIN %(gene_table_name)s ON %(ensemble)s.cell_id = %(gene_table_name)s.cell_id \
 			LEFT JOIN datasets ON cells.dataset = datasets.dataset \
-			ORDER BY rand(42) LIMIT 5000" % {'ensemble': ensemble, 
+			LIMIT 5000" % {'ensemble': ensemble, 
 																	   'gene_table_name': gene_table_name,
 																	   'counts_type': counts_type}
 	try:
@@ -2312,6 +2312,7 @@ def get_gene_snatac_from_mysql(ensemble, gene_table_name, counts_type, tsne_type
 
 	t1=datetime.datetime.now()
 	print(' Running get_gene_snatac_from_mysql for '+gene_table_name+' : '+str(t1-t0)+'; ', file=open(log_file,'a')) # EAM - Profiling SQL
+	print(' query: '+query, file=open(log_file,'a'))
 
 	return df
 
