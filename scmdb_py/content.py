@@ -27,6 +27,7 @@ from scipy.cluster import hierarchy
 from multiprocessing import Pool
 
 from . import cache, db
+from os import path
 
 content = Blueprint('content', __name__) # Flask "bootstrap"
 
@@ -61,7 +62,14 @@ def get_ensembles_summary():
 	regions_lower = [ region.lower() for region in regions ]
 	
 	ensemble_list=[]
+	# ensemble_list = db.get_engine(current_app, 'methylation_data').execute("SELECT * FROM ensembles").fetchall()
 	ensemble_list = db.get_engine(current_app, 'methylation_data').execute("SELECT * FROM ensembles").fetchall()
+	ensemble_list_atac = db.get_engine(current_app, 'snATAC_data').execute("SELECT * FROM ensembles").fetchall()
+	# ensemble_list = ensemble_list.join(ensemble_list_atac, on="ensemble_id", how="outer")
+	ensemble_list_ids = [ensemble['ensemble_id'] for ensemble in ensemble_list]
+	for ensemble_atac in ensemble_list_atac:
+		if (ensemble_atac['ensemble_id'] not in ensemble_list_ids):
+			ensemble_list.append(ensemble_atac)
 
 	total_methylation_cell_each_dataset = db.get_engine(current_app, 'methylation_data').execute("SELECT dataset, COUNT(*) as `num` FROM cells GROUP BY dataset").fetchall()
 	total_methylation_cell_each_dataset = [ {d['dataset']: d['num']} for d in total_methylation_cell_each_dataset ]
@@ -71,9 +79,12 @@ def get_ensembles_summary():
 	for ensemble in ensemble_list:
 		ensemble_tbl = 'Ens' + str(ensemble['ensemble_id'])
 		query_methylation = "SELECT dataset, COUNT(*) as `num` FROM cells INNER JOIN {} ON cells.cell_id = {}.cell_id GROUP BY dataset".format(ensemble_tbl, ensemble_tbl)
-		methylation_cell_counts = db.get_engine(current_app, 'methylation_data').execute(query_methylation).fetchall()
-		methylation_cell_counts = [ {d['dataset']: d['num']} for d in methylation_cell_counts]
-		methylation_cell_counts = { k.split('_',maxsplit=1)[1]: v for d in methylation_cell_counts for k, v in d.items() }
+		try:
+			methylation_cell_counts = db.get_engine(current_app, 'methylation_data').execute(query_methylation).fetchall()
+			methylation_cell_counts = [ {d['dataset']: d['num']} for d in methylation_cell_counts]
+			methylation_cell_counts = { k.split('_',maxsplit=1)[1]: v for d in methylation_cell_counts for k, v in d.items() }
+		except:
+			methylation_cell_counts = None
 
 		query_snATAC = "SELECT dataset, COUNT(*) as `num` FROM cells INNER JOIN {} ON cells.cell_id = {}.cell_id GROUP BY dataset".format(ensemble_tbl, ensemble_tbl)
 		try:
@@ -83,12 +94,14 @@ def get_ensembles_summary():
 		except exc.ProgrammingError as e:
 			snATAC_cell_counts = None
 
+		annoj_exists = ensemble_annoj_exists(ensemble['ensemble_id'])
 		ensembles_cell_counts.append( {"id": ensemble['ensemble_id'], 
 									   "ensemble": ensemble['ensemble_name'], 
 									   "ens_methylation_counts": methylation_cell_counts,
 									   "ens_snATAC_counts": snATAC_cell_counts,
 									   "public_access": ensemble['public_access'],
-									   "description": ensemble['description']})
+									   "description": ensemble['description'],
+									   "annoj_exists": annoj_exists})
 
 	ensembles_json_list = []
 	for ens in ensembles_cell_counts:
@@ -98,17 +111,19 @@ def get_ensembles_summary():
 		datasets_in_ensemble = []
 		snATAC_datasets_in_ensemble = []
 		ens_dict = {}
-		for dataset, count in ens['ens_methylation_counts'].items():
-			total_methylation_cells += count
-			datasets_in_ensemble.append('CEMBA_'+dataset)
-			datasets_in_ensemble_cell_count.append(dataset+" ("+str(count)+" cells)")
-			ens_dict[dataset] = str(count) + '/' + str(total_methylation_cell_each_dataset[dataset])
+		if ens['ens_methylation_counts'] is not None:
+			for dataset, count in ens['ens_methylation_counts'].items():
+				total_methylation_cells += count
+				datasets_in_ensemble.append('CEMBA_'+dataset)
+				datasets_in_ensemble_cell_count.append(dataset+" ("+str(count)+" cells)")
+				ens_dict[dataset] = str(count) + '/' + str(total_methylation_cell_each_dataset[dataset])
 		if ens['ens_snATAC_counts'] is not None:
 			for dataset, count in ens['ens_snATAC_counts'].items():
-				snATAC_datasets_in_ensemble.append(dataset+" ("+str(count)+" cells)")
 				total_snATAC_cells += count
+				datasets_in_ensemble.append('CEMBA_'+dataset)
+				snATAC_datasets_in_ensemble.append(dataset+" ("+str(count)+" cells)")
 
-		if total_methylation_cells > 200: # Do not display ensembles that contain less than 200 total cells. (mainly RS2 data)
+		if total_methylation_cells>200 or total_snATAC_cells>200: # Do not display ensembles that contain less than 200 total cells. (mainly RS2 data)
 
 			ens_dict["ensemble_id"] = ens['id']
 			ens_dict["ensemble_name"] = ens['ensemble']
@@ -130,21 +145,25 @@ def get_ensembles_summary():
 
 			ens_dict["snATAC_datasets_rs1"] = ",  ".join(sorted([x for x in snATAC_datasets_in_ensemble if 'RS2' not in x]))
 			ens_dict["snATAC_datasets_rs2"] = ",  ".join(sorted([x for x in snATAC_datasets_in_ensemble if 'RS2' in x]))
-			ens_dict["num_datasets"] = len(datasets_in_ensemble_cell_count)
+			ens_dict["num_datasets"] = len(datasets_in_ensemble_cell_count)+len(snATAC_datasets_in_ensemble)
+
 			slices_list_rs1 = [d.split('_')[0] for d in datasets_in_ensemble_cell_count if 'RS2' not in d]
+			slices_list_rs1.extend([d.split('_')[0] for d in snATAC_datasets_in_ensemble if 'RS2' not in d])
 			slices_list_rs2 = [d.split('_')[1][2:4] for d in datasets_in_ensemble_cell_count if 'RS2' in d]
+			slices_list_rs2.extend([d.split('_')[0] for d in snATAC_datasets_in_ensemble if 'RS2' in d])
 			slices_set = set(slices_list_rs1)
 			slices_set.update(slices_list_rs2)
 			ens_dict["slices"] = ",  ".join(sorted(list(slices_set)))
 			ens_dict["total_methylation_cells"] = total_methylation_cells
 			ens_dict["total_snATAC_cells"] = total_snATAC_cells
 
-			ens_regions_query = "SELECT DISTINCT(ABA_acronym), ABA_description FROM ABA_regions WHERE `code` IN (" + ",".join("'"+x+"'" for x in list(slices_set)) + ")"
-			ens_regions_result = db.get_engine(current_app, 'methylation_data').execute(ens_regions_query).fetchall()
-			ens_regions_acronyms = [d['ABA_acronym'] for d in ens_regions_result]
-			ens_regions_descriptions = [d['ABA_description'] for d in ens_regions_result]
-			ens_dict["ABA_regions_acronym"] = ", ".join(ens_regions_acronyms).replace('+',', ')
-			ens_dict["ABA_regions_description"] = ", ".join(ens_regions_descriptions).replace('+',', ')
+			if slices_set:
+				ens_regions_query = "SELECT DISTINCT(ABA_acronym), ABA_description FROM ABA_regions WHERE `code` IN (" + ",".join("'"+x+"'" for x in list(slices_set)) + ")"
+				ens_regions_result = db.get_engine(current_app, 'methylation_data').execute(ens_regions_query).fetchall()
+				ens_regions_acronyms = [d['ABA_acronym'] for d in ens_regions_result]
+				ens_regions_descriptions = [d['ABA_description'] for d in ens_regions_result]
+				ens_dict["ABA_regions_acronym"] = ", ".join(ens_regions_acronyms).replace('+',', ')
+				ens_dict["ABA_regions_description"] = ", ".join(ens_regions_descriptions).replace('+',', ')
 
 			if ens['public_access'] == 0:
 				ens_dict["public_access_icon"] = "fas fa-lock"
@@ -152,6 +171,8 @@ def get_ensembles_summary():
 			else:
 				ens_dict["public_access_icon"] = "fas fa-lock-open"
 				ens_dict["public_access_color"] = "green"
+
+			ens_dict["annoj_exists"] = ens['annoj_exists']
 
 
 			if regions == ['None']:
@@ -330,7 +351,7 @@ def check_ensemble_similarities(new_ensemble_name, new_ensemble_datasets):
 # Utilities
 @cache.memoize(timeout=1800)
 def ensemble_exists(ensemble, modality='methylation'):
-	"""Check if data for a given ensemble exists by looking for its data directory.
+	"""Check if data for a given ensemble exists 
 
 	Arguments:
 		ensemble (str): Name of ensemble.
@@ -341,15 +362,33 @@ def ensemble_exists(ensemble, modality='methylation'):
 	"""
 
 	if modality=='methylation':
-		ensemble_name = 'ensemble_name'
+		ensemble_name = 'ensemble_id'
 	else:
 		ensemble_name = 'snmc_ensemble_id'
-	result = db.get_engine(current_app, modality+'_data').execute("SELECT * FROM ensembles WHERE "+ensemble_name+"=%s", (ensemble,)).fetchone()
+	result = db.get_engine(current_app, modality+'_data').execute("SELECT * FROM ensembles WHERE "+ensemble_name+"=%s", (str(ensemble),)).fetchone()
 
 	if result is None:
 		return 0
 	else:
 		return 1
+
+# Utilities
+@cache.memoize(timeout=1800)
+def ensemble_annoj_exists(ensemble):
+	"""Check if AnnoJ browser for a given ensemble exists 
+
+	Arguments:
+		ensemble (str): Name of ensemble.
+		
+	Returns:
+		bool: Whether if given ensemble exists
+	"""
+
+	ensemble = str(ensemble)
+	ensemble = ensemble.strip('Ens')
+	result = path.isfile('/var/www/html/annoj_private/CEMBA/browser/fetchers/mc_cemba/mc_single_merged_mCG_cluster_mCHmCG_lv_npc50_k30_1_Ens'+str(ensemble)+'.php');
+
+	return result
 
 @cache.memoize(timeout=1800)
 def gene_exists(ensemble, methylation_type, gene):
@@ -585,10 +624,15 @@ def get_ensemble_info(ensemble_name=str(), ensemble_id=str()):
 	"""
 	
 	if ensemble_name:
+		# result = db.get_engine(current_app, 'methylation_data').execute("SELECT * FROM ensembles WHERE ensemble_name=%s", (ensemble_name,)).fetchone()
 		result = db.get_engine(current_app, 'methylation_data').execute("SELECT * FROM ensembles WHERE ensemble_name=%s", (ensemble_name,)).fetchone()
+		if result is None:
+			result = db.get_engine(current_app, 'snATAC_data').execute("SELECT * FROM ensembles WHERE ensemble_name=%s", (ensemble_name,)).fetchone()
 	else:
 		ensemble_id = int(filter(str.isdigit, ensemble_id))
 		result = db.get_engine(current_app, 'methylation_data').execute("SELECT * FROM ensembles WHERE ensemble_id=%s", (ensemble_id,)).fetchone()
+		if result is None:
+			result = db.get_engine(current_app, 'snATAC_data').execute("SELECT * FROM ensembles WHERE ensemble_name=%s", (ensemble_id,)).fetchone()	
 
 	return result
 

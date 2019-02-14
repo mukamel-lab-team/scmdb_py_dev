@@ -23,9 +23,15 @@
                                     </h5>
                                 </div>
                                 <div style="display:inline-block; float:right;">
-                                    <a href="#" target="_blank" id="epiBrowserLink" class="btn btn-info pull-right"role="button">
+                                    {% if AnnoJexists == True %}
+                                    <a href="#" target="_blank" id="epiBrowserLink" class="btn btn-info pull-right" role="button">
                                         <small style="color:white;">Epigenome browser (AnnoJ)</small>
                                     </a>
+                                    {% else %}
+                                    <div class="btn btn-info pull-right" disabled="disabled" role="button">
+                                        <small style="color:white;">Epigenome browser (AnnoJ; <i>not available</i>)</small>
+                                    </div>
+                                    {% endif %}
                                 </div>
                             </div>
                         </div>
@@ -36,6 +42,8 @@
                 </div>
             </div>
 
+
+            {% if methylation_data_available == 1 %}
             <!-- Methylation PLOTS -->
 			<div style="position:relative; left:0; z-index:2;">
 				<div class="col-md-12 col-sm-12">
@@ -80,6 +88,7 @@
                     </div>
                 </div>
             </div>
+            {% endif %}
 
             <!-- snATAC Plots -->
             {% if snATAC_data_available == 1 %}
@@ -278,6 +287,7 @@
     var ensemble = "{{ ensemble }}";
     var ensemble_name = "{{ ensemble_name }}";
     var RS2 = {{ RS2 }};
+    var methylation_data_available = {{ methylation_data_available }};
     var snATAC_data_available = {{ snATAC_data_available }};
     var RNA_data_available = {{ RNA_data_available }};
     var num_algorithm_options = {{ num_algorithm_options }};
@@ -294,6 +304,7 @@
     var buttons;
     var table;
     var clusterMarkerGeneTable;
+    var AnnoJexists = "{{ AnnoJexists }}";
 
     $(document).ready(function() {
         $('[data-toggle="popover"]').popover();

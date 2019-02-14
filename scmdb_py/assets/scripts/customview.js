@@ -71,13 +71,14 @@ function getMax(arr, prop) {
 }
 
 function generateBrowserURL(gene) {
-    let base = 'http://brainome.ucsd.edu/annoj_private/CEMBA/index';
+    // let base = 'http://brainome.ucsd.edu/annoj_private/CEMBA/index';
+    let base = 'http://brainome.ucsd.edu/annoj_private/CEMBA/cemba.php?ens='+ensemble.replace(/Ens/g, "");
     
-    if (ensemble === 'Ens1') {
-        base += '.html';
-    } else { 
-        base += '_' + ensemble + '.html';
-    }
+    // if (ensemble === 'Ens1') {
+    //     base += '.html';
+    // } else { 
+    //     base += '_' + ensemble + '.html';
+    // }
 
     const chrom = gene.chr.replace(/^\D+/g, "");
 
@@ -86,7 +87,7 @@ function generateBrowserURL(gene) {
     } else {
         var position = gene.end;
     }
-    return base+'?assembly='+chrom+'&position='+position;
+    return base+'&assembly='+chrom+'&position='+position;
 }
 
 function initGeneNameSearch() {
@@ -627,26 +628,8 @@ function updateGeneElements(updateMCHScatter=true) {
     }
 }
 
-/*
-function loadClusterPlots() {
-    let grouping = $('.methylation-tsne-grouping').val();
-    let clustering = $('.methylation-tsne-clustering').val();
-    let tsne_setting = $('.methylation-tsne-settings').val();
-
-    $.ajax({
-        type: "GET",
-        url: './plot/tsne/'+ensemble+'/'+tsne_setting+'/'+grouping+'/'+clustering, 
-        success: function(data) {
-            num_colors = getMax(data["traces"], "legendgroup");
-            Plotly.newPlot("plot-2d-cluster", Object.values(data["traces"]), data["layout"], {showLink: false});
-            $('#loading_2dtsne').html("");
-        }
-    });
-}
-*/
-
 function updateMCHScatterPlot(onlyUpdatetSNEandClustering=false) {
-    let levelType = $('input[name=levels]').filter(':checked').val();
+    let levelType = $('#level').val();;
     let methylationType = $("#mType").val();
     let methylation_color_percentile_Values = methylation_color_percentile_Slider.getValue();
     let genes = $("#geneName").select2('data');
@@ -899,7 +882,8 @@ function initClusterSpecificMarkerGeneTable() {
         success: function(data) {
             let columns = [ { mData: "rank", sTitle: "rank" } ];
             $.each(data.columns, function(i, cluster) {
-                columns.push({ mData: cluster, sTitle: cluster });
+                columns.push({ mData: cluster, sTitle: cluster, 
+                "defaultContent": "-", });
             });
             clusterMarkerGeneTable = $('#clusterMarkerGeneTable').DataTable( {
                 "pageLength": 50,
@@ -940,7 +924,7 @@ function initClusterSpecificMarkerGeneTable() {
 }
 
 function updateMCHBoxPlot() {
-    let levelType = $('input[name=levels]').filter(':checked').val();
+    let levelType = $('#level').val();;
     let methylationType = $("#mType").val();
     let geneSelected = $('#geneName option:selected').val();
     let grouping = $('#methylation-tsne-grouping').val();
@@ -1060,7 +1044,7 @@ function updateRNABoxPlot() {
 }
 
 function updateMCHCombinedBoxPlot(mmu_gid, hsa_gid) {
-    let levelType = $('input[name=levels]').filter(':checked').val();
+    let levelType = $('#level').val();;
     let methylationType = $("#mType").val();
     if ($('#methylation-tsneOutlierToggle').prop('checked')) {
         var outlierOption = 'outliers';
@@ -1082,7 +1066,7 @@ function updateMCHCombinedBoxPlot(mmu_gid, hsa_gid) {
 }
 
 function updateMethylationHeatmap() {
-    let levelType = $('input[name=levels]').filter(':checked').val();
+    let levelType = $('#level').val();;
     let methylationType = $("#mType").val();
     let methylation_box_color_percentile_Values = methylation_box_color_percentile_Slider.getValue();
     let genes = $("#geneName").select2('data');
@@ -1123,7 +1107,7 @@ function updateMethylationHeatmap() {
 }
 
 function updatesnATACHeatmap() {
-    let levelType = $('input[name=levels]').filter(':checked').val();
+    let levelType = $('#level').val();;
     let snATAC_color_percentile_Values = methylation_box_color_percentile_Slider.getValue();
     let genes = $("#geneName").select2('data');
     let genes_query = "";
@@ -1160,7 +1144,7 @@ function updatesnATACHeatmap() {
 }
 
 function updateRNAHeatmap() {
-    let levelType = $('input[name=levels]').filter(':checked').val();
+    let levelType = $('#level').val();;
     let RNA_color_percentile_Values = methylation_box_color_percentile_Slider.getValue();
     let genes = $("#geneName").select2('data');
     let genes_query = "";
@@ -1197,7 +1181,7 @@ function updateRNAHeatmap() {
 }
 
 function updateMethylationHeatmapTwoSpecies() {
-    let levelType = $('input[name=levels]').filter(':checked').val();
+    let levelType = $('#level').val();;
     let methylationType = $("#mType").val();
     let methylation_color_percentile_Values = methylation_color_percentile_Slider.getValue();
     let genes = $("#geneName").select2('data');
