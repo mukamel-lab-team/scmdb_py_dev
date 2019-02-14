@@ -24,8 +24,10 @@ from sqlite3 import Error
 import plotly.figure_factory as ff
 from scipy.spatial.distance import pdist, squareform
 from scipy.cluster import hierarchy
+from multiprocessing import Pool
 
 from . import cache, db
+from os import path
 
 content = Blueprint('content', __name__) # Flask "bootstrap"
 
@@ -35,6 +37,8 @@ cluster_annotation_order = ['mL2/3', 'mL4', 'mL5-1', 'mL5-2', 'mDL-1', 'mDL-2', 
 methylation_types_order = ['mCH', 'mCG', 'mCA', 'mCHmCG', 'mCHmCA', 'mCAmCG']
 
 num_sigfigs_ticklabels = 2;
+ncells_max = 5000; # Max number of cells to show for scatter/box plots
+log_file='/var/www/scmdb_py_dev/scmdb_log'
 
 class FailToGraphException(Exception):
 	"""Fail to generate data or graph due to an internal error."""
@@ -58,7 +62,14 @@ def get_ensembles_summary():
 	regions_lower = [ region.lower() for region in regions ]
 	
 	ensemble_list=[]
+	# ensemble_list = db.get_engine(current_app, 'methylation_data').execute("SELECT * FROM ensembles").fetchall()
 	ensemble_list = db.get_engine(current_app, 'methylation_data').execute("SELECT * FROM ensembles").fetchall()
+	ensemble_list_atac = db.get_engine(current_app, 'snATAC_data').execute("SELECT * FROM ensembles").fetchall()
+	# ensemble_list = ensemble_list.join(ensemble_list_atac, on="ensemble_id", how="outer")
+	ensemble_list_ids = [ensemble['ensemble_id'] for ensemble in ensemble_list]
+	for ensemble_atac in ensemble_list_atac:
+		if (ensemble_atac['ensemble_id'] not in ensemble_list_ids):
+			ensemble_list.append(ensemble_atac)
 
 	total_methylation_cell_each_dataset = db.get_engine(current_app, 'methylation_data').execute("SELECT dataset, COUNT(*) as `num` FROM cells GROUP BY dataset").fetchall()
 	total_methylation_cell_each_dataset = [ {d['dataset']: d['num']} for d in total_methylation_cell_each_dataset ]
@@ -68,9 +79,12 @@ def get_ensembles_summary():
 	for ensemble in ensemble_list:
 		ensemble_tbl = 'Ens' + str(ensemble['ensemble_id'])
 		query_methylation = "SELECT dataset, COUNT(*) as `num` FROM cells INNER JOIN {} ON cells.cell_id = {}.cell_id GROUP BY dataset".format(ensemble_tbl, ensemble_tbl)
-		methylation_cell_counts = db.get_engine(current_app, 'methylation_data').execute(query_methylation).fetchall()
-		methylation_cell_counts = [ {d['dataset']: d['num']} for d in methylation_cell_counts]
-		methylation_cell_counts = { k.split('_',maxsplit=1)[1]: v for d in methylation_cell_counts for k, v in d.items() }
+		try:
+			methylation_cell_counts = db.get_engine(current_app, 'methylation_data').execute(query_methylation).fetchall()
+			methylation_cell_counts = [ {d['dataset']: d['num']} for d in methylation_cell_counts]
+			methylation_cell_counts = { k.split('_',maxsplit=1)[1]: v for d in methylation_cell_counts for k, v in d.items() }
+		except:
+			methylation_cell_counts = None
 
 		query_snATAC = "SELECT dataset, COUNT(*) as `num` FROM cells INNER JOIN {} ON cells.cell_id = {}.cell_id GROUP BY dataset".format(ensemble_tbl, ensemble_tbl)
 		try:
@@ -80,12 +94,14 @@ def get_ensembles_summary():
 		except exc.ProgrammingError as e:
 			snATAC_cell_counts = None
 
+		annoj_exists = ensemble_annoj_exists(ensemble['ensemble_id'])
 		ensembles_cell_counts.append( {"id": ensemble['ensemble_id'], 
 									   "ensemble": ensemble['ensemble_name'], 
 									   "ens_methylation_counts": methylation_cell_counts,
 									   "ens_snATAC_counts": snATAC_cell_counts,
 									   "public_access": ensemble['public_access'],
-									   "description": ensemble['description']})
+									   "description": ensemble['description'],
+									   "annoj_exists": annoj_exists})
 
 	ensembles_json_list = []
 	for ens in ensembles_cell_counts:
@@ -95,17 +111,19 @@ def get_ensembles_summary():
 		datasets_in_ensemble = []
 		snATAC_datasets_in_ensemble = []
 		ens_dict = {}
-		for dataset, count in ens['ens_methylation_counts'].items():
-			total_methylation_cells += count
-			datasets_in_ensemble.append('CEMBA_'+dataset)
-			datasets_in_ensemble_cell_count.append(dataset+" ("+str(count)+" cells)")
-			ens_dict[dataset] = str(count) + '/' + str(total_methylation_cell_each_dataset[dataset])
+		if ens['ens_methylation_counts'] is not None:
+			for dataset, count in ens['ens_methylation_counts'].items():
+				total_methylation_cells += count
+				datasets_in_ensemble.append('CEMBA_'+dataset)
+				datasets_in_ensemble_cell_count.append(dataset+" ("+str(count)+" cells)")
+				ens_dict[dataset] = str(count) + '/' + str(total_methylation_cell_each_dataset[dataset])
 		if ens['ens_snATAC_counts'] is not None:
 			for dataset, count in ens['ens_snATAC_counts'].items():
-				snATAC_datasets_in_ensemble.append(dataset+" ("+str(count)+" cells)")
 				total_snATAC_cells += count
+				datasets_in_ensemble.append('CEMBA_'+dataset)
+				snATAC_datasets_in_ensemble.append(dataset+" ("+str(count)+" cells)")
 
-		if total_methylation_cells > 200: # Do not display ensembles that contain less than 200 total cells. (mainly RS2 data)
+		if total_methylation_cells>200 or total_snATAC_cells>200: # Do not display ensembles that contain less than 200 total cells. (mainly RS2 data)
 
 			ens_dict["ensemble_id"] = ens['id']
 			ens_dict["ensemble_name"] = ens['ensemble']
@@ -127,21 +145,25 @@ def get_ensembles_summary():
 
 			ens_dict["snATAC_datasets_rs1"] = ",  ".join(sorted([x for x in snATAC_datasets_in_ensemble if 'RS2' not in x]))
 			ens_dict["snATAC_datasets_rs2"] = ",  ".join(sorted([x for x in snATAC_datasets_in_ensemble if 'RS2' in x]))
-			ens_dict["num_datasets"] = len(datasets_in_ensemble_cell_count)
+			ens_dict["num_datasets"] = len(datasets_in_ensemble_cell_count)+len(snATAC_datasets_in_ensemble)
+
 			slices_list_rs1 = [d.split('_')[0] for d in datasets_in_ensemble_cell_count if 'RS2' not in d]
+			slices_list_rs1.extend([d.split('_')[0] for d in snATAC_datasets_in_ensemble if 'RS2' not in d])
 			slices_list_rs2 = [d.split('_')[1][2:4] for d in datasets_in_ensemble_cell_count if 'RS2' in d]
+			slices_list_rs2.extend([d.split('_')[0] for d in snATAC_datasets_in_ensemble if 'RS2' in d])
 			slices_set = set(slices_list_rs1)
 			slices_set.update(slices_list_rs2)
 			ens_dict["slices"] = ",  ".join(sorted(list(slices_set)))
 			ens_dict["total_methylation_cells"] = total_methylation_cells
 			ens_dict["total_snATAC_cells"] = total_snATAC_cells
 
-			ens_regions_query = "SELECT DISTINCT(ABA_acronym), ABA_description FROM ABA_regions WHERE `code` IN (" + ",".join("'"+x+"'" for x in list(slices_set)) + ")"
-			ens_regions_result = db.get_engine(current_app, 'methylation_data').execute(ens_regions_query).fetchall()
-			ens_regions_acronyms = [d['ABA_acronym'] for d in ens_regions_result]
-			ens_regions_descriptions = [d['ABA_description'] for d in ens_regions_result]
-			ens_dict["ABA_regions_acronym"] = ", ".join(ens_regions_acronyms).replace('+',', ')
-			ens_dict["ABA_regions_description"] = ", ".join(ens_regions_descriptions).replace('+',', ')
+			if slices_set:
+				ens_regions_query = "SELECT DISTINCT(ABA_acronym), ABA_description FROM ABA_regions WHERE `code` IN (" + ",".join("'"+x+"'" for x in list(slices_set)) + ")"
+				ens_regions_result = db.get_engine(current_app, 'methylation_data').execute(ens_regions_query).fetchall()
+				ens_regions_acronyms = [d['ABA_acronym'] for d in ens_regions_result]
+				ens_regions_descriptions = [d['ABA_description'] for d in ens_regions_result]
+				ens_dict["ABA_regions_acronym"] = ", ".join(ens_regions_acronyms).replace('+',', ')
+				ens_dict["ABA_regions_description"] = ", ".join(ens_regions_descriptions).replace('+',', ')
 
 			if ens['public_access'] == 0:
 				ens_dict["public_access_icon"] = "fas fa-lock"
@@ -149,6 +171,8 @@ def get_ensembles_summary():
 			else:
 				ens_dict["public_access_icon"] = "fas fa-lock-open"
 				ens_dict["public_access_color"] = "green"
+
+			ens_dict["annoj_exists"] = ens['annoj_exists']
 
 
 			if regions == ['None']:
@@ -327,7 +351,7 @@ def check_ensemble_similarities(new_ensemble_name, new_ensemble_datasets):
 # Utilities
 @cache.memoize(timeout=1800)
 def ensemble_exists(ensemble, modality='methylation'):
-	"""Check if data for a given ensemble exists by looking for its data directory.
+	"""Check if data for a given ensemble exists 
 
 	Arguments:
 		ensemble (str): Name of ensemble.
@@ -338,15 +362,33 @@ def ensemble_exists(ensemble, modality='methylation'):
 	"""
 
 	if modality=='methylation':
-		ensemble_name = 'ensemble_name'
+		ensemble_name = 'ensemble_id'
 	else:
 		ensemble_name = 'snmc_ensemble_id'
-	result = db.get_engine(current_app, modality+'_data').execute("SELECT * FROM ensembles WHERE "+ensemble_name+"=%s", (ensemble,)).fetchone()
+	result = db.get_engine(current_app, modality+'_data').execute("SELECT * FROM ensembles WHERE "+ensemble_name+"=%s", (str(ensemble),)).fetchone()
 
 	if result is None:
 		return 0
 	else:
 		return 1
+
+# Utilities
+@cache.memoize(timeout=1800)
+def ensemble_annoj_exists(ensemble):
+	"""Check if AnnoJ browser for a given ensemble exists 
+
+	Arguments:
+		ensemble (str): Name of ensemble.
+		
+	Returns:
+		bool: Whether if given ensemble exists
+	"""
+
+	ensemble = str(ensemble)
+	ensemble = ensemble.strip('Ens')
+	result = path.isfile('/var/www/html/annoj_private/CEMBA/browser/fetchers/mc_cemba/mc_single_merged_mCG_cluster_mCHmCG_lv_npc50_k30_1_Ens'+str(ensemble)+'.php');
+
+	return result
 
 @cache.memoize(timeout=1800)
 def gene_exists(ensemble, methylation_type, gene):
@@ -582,10 +624,15 @@ def get_ensemble_info(ensemble_name=str(), ensemble_id=str()):
 	"""
 	
 	if ensemble_name:
+		# result = db.get_engine(current_app, 'methylation_data').execute("SELECT * FROM ensembles WHERE ensemble_name=%s", (ensemble_name,)).fetchone()
 		result = db.get_engine(current_app, 'methylation_data').execute("SELECT * FROM ensembles WHERE ensemble_name=%s", (ensemble_name,)).fetchone()
+		if result is None:
+			result = db.get_engine(current_app, 'snATAC_data').execute("SELECT * FROM ensembles WHERE ensemble_name=%s", (ensemble_name,)).fetchone()
 	else:
 		ensemble_id = int(filter(str.isdigit, ensemble_id))
 		result = db.get_engine(current_app, 'methylation_data').execute("SELECT * FROM ensembles WHERE ensemble_id=%s", (ensemble_id,)).fetchone()
+		if result is None:
+			result = db.get_engine(current_app, 'snATAC_data').execute("SELECT * FROM ensembles WHERE ensemble_name=%s", (ensemble_id,)).fetchone()	
 
 	return result
 
@@ -903,8 +950,69 @@ def get_gene_methylation(ensemble, methylation_type, gene, grouping, clustering,
 
 	return df
 
+def get_gene_from_mysql(ensemble, gene_table_name, methylation_type, clustering, tsne_type):
+	"""Helper function to fetch a gene's methylation information from mysql.
+
+	TODO: Don't need to fetch tsne info, annotations etc. except once
+
+	Returns:
+		DataFrame
+	"""
+
+	context = methylation_type[1:]
+
+	t0=datetime.datetime.now()
+	print(' Running get_gene_from_mysql for '+gene_table_name+' : '+str(t0)+'; ', file=open(log_file,'a'))# EAM - Profiling SQL
+	if tsne_type=='noTSNE':
+		query = "SELECT %(gene_table_name)s.%(methylation_type)s, %(gene_table_name)s.%(context)s, \
+			FROM %(ensemble)s  \
+			LEFT JOIN %(gene_table_name)s ON %(ensemble)s.cell_id = %(gene_table_name)s.cell_id" % {'ensemble': ensemble, 
+																	   'gene_table_name': gene_table_name,
+																	   'methylation_type': methylation_type,
+																	   'context': context,}
+	elif 'ndim2' in tsne_type:
+		query = "SELECT cells.cell_id, cells.cell_name, cells.dataset, cells.global_%(methylation_type)s, \
+			%(ensemble)s.annotation_%(clustering)s, %(ensemble)s.cluster_%(clustering)s, \
+			%(ensemble)s.tsne_x_%(tsne_type)s, %(ensemble)s.tsne_y_%(tsne_type)s, \
+			%(gene_table_name)s.%(methylation_type)s, %(gene_table_name)s.%(context)s, \
+			datasets.target_region, datasets.sex \
+			FROM cells \
+			INNER JOIN %(ensemble)s ON cells.cell_id = %(ensemble)s.cell_id \
+			LEFT JOIN %(gene_table_name)s ON %(ensemble)s.cell_id = %(gene_table_name)s.cell_id \
+			LEFT JOIN datasets ON cells.dataset = datasets.dataset" % {'ensemble': ensemble, 
+																	   'gene_table_name': gene_table_name,
+																	   'tsne_type': tsne_type,
+																	   'methylation_type': methylation_type,
+																	   'context': context,
+																	   'clustering': clustering,}
+	else:
+		query = "SELECT cells.cell_id, cells.cell_name, cells.dataset, cells.global_%(methylation_type)s, \
+			%(ensemble)s.annotation_%(clustering)s, %(ensemble)s.cluster_%(clustering)s, \
+			%(ensemble)s.tsne_x_%(tsne_type)s, %(ensemble)s.tsne_y_%(tsne_type)s, %(ensemble)s.tsne_z_%(tsne_type)s, \
+			%(gene_table_name)s.%(methylation_type)s, %(gene_table_name)s.%(context)s, \
+			datasets.target_region, datasets.sex \
+			FROM cells \
+			INNER JOIN %(ensemble)s ON cells.cell_id = %(ensemble)s.cell_id \
+			LEFT JOIN %(gene_table_name)s ON %(ensemble)s.cell_id = %(gene_table_name)s.cell_id \
+			LEFT JOIN datasets ON cells.dataset = datasets.dataset" % {'ensemble': ensemble, 
+																	   'gene_table_name': gene_table_name,
+																	   'tsne_type': tsne_type,
+																	   'methylation_type': methylation_type,
+																	   'context': context,
+																	   'clustering': clustering,}
+	try:
+		df = pd.read_sql(query, db.get_engine(current_app, 'methylation_data'))
+	except exc.ProgrammingError as e:
+		now = datetime.datetime.now()
+		print("[{}] ERROR in app(get_mult_gene_methylation): {}".format(str(now), e))
+		sys.stdout.flush()
+		return None
+
+	return df
+
+
 @cache.memoize(timeout=3600)
-def get_mult_gene_methylation(ensemble, methylation_type, genes, grouping, clustering, level, tsne_type='mCH_ndim2_perp20'):
+def get_mult_gene_methylation(ensemble, methylation_type, genes, grouping, clustering, level, tsne_type):
 	"""Return averaged methylation data ponts for a set of genes.
 
 	Data from ID-to-Name mapping and tSNE points are combined for plot generation.
@@ -939,55 +1047,45 @@ def get_mult_gene_methylation(ensemble, methylation_type, genes, grouping, clust
 
 	df_all = pd.DataFrame()
 	
-	first = True
-	for gene_table_name in gene_table_names:
-		if 'ndim2' in tsne_type:
-			query = "SELECT cells.cell_id, cells.cell_name, cells.dataset, cells.global_%(methylation_type)s, \
-				%(ensemble)s.annotation_%(clustering)s, %(ensemble)s.cluster_%(clustering)s, \
-				%(ensemble)s.tsne_x_%(tsne_type)s, %(ensemble)s.tsne_y_%(tsne_type)s, \
-				%(gene_table_name)s.%(methylation_type)s, %(gene_table_name)s.%(context)s, \
-				datasets.target_region, datasets.sex \
-				FROM cells \
-				INNER JOIN %(ensemble)s ON cells.cell_id = %(ensemble)s.cell_id \
-				LEFT JOIN %(gene_table_name)s ON %(ensemble)s.cell_id = %(gene_table_name)s.cell_id \
-				LEFT JOIN datasets ON cells.dataset = datasets.dataset" % {'ensemble': ensemble, 
-																		   'gene_table_name': gene_table_name,
-																		   'tsne_type': tsne_type,
-																		   'methylation_type': methylation_type,
-																		   'context': context,
-																		   'clustering': clustering,}
-		else:
-			query = "SELECT cells.cell_id, cells.cell_name, cells.dataset, cells.global_%(methylation_type)s, \
-				%(ensemble)s.annotation_%(clustering)s, %(ensemble)s.cluster_%(clustering)s, \
-				%(ensemble)s.tsne_x_%(tsne_type)s, %(ensemble)s.tsne_y_%(tsne_type)s, %(ensemble)s.tsne_z_%(tsne_type)s, \
-				%(gene_table_name)s.%(methylation_type)s, %(gene_table_name)s.%(context)s, \
-				datasets.target_region, datasets.sex \
-				FROM cells \
-				INNER JOIN %(ensemble)s ON cells.cell_id = %(ensemble)s.cell_id \
-				LEFT JOIN %(gene_table_name)s ON %(ensemble)s.cell_id = %(gene_table_name)s.cell_id \
-				LEFT JOIN datasets ON cells.dataset = datasets.dataset" % {'ensemble': ensemble, 
-																		   'gene_table_name': gene_table_name,
-																		   'tsne_type': tsne_type,
-																		   'methylation_type': methylation_type,
-																		   'context': context,
-																		   'clustering': clustering,}
-		try:
-			df_all = df_all.append(pd.read_sql(query, db.get_engine(current_app, 'methylation_data')))
-		except exc.ProgrammingError as e:
-			now = datetime.datetime.now()
-			print("[{}] ERROR in app(get_mult_gene_methylation): {}".format(str(now), e))
-			sys.stdout.flush()
-			return None
-		
-		if first:
-			df_coords = df_all
-		first = False
+	############
+	# t0=datetime.datetime.now()
+	# print(' Starting mysql queries '+str(t0)+'; ', file=open(log_file,'a'))# EAM - Profiling SQL
+	# print('Pool size 12', file=open(log_file,'a'))
+	# with Pool(12) as pool:
+	# 	df_list = [pool.apply_async(get_gene_from_mysql,
+ #                                       args=(ensemble, gene_table_name, methylation_type, clustering, tsne_type)).get()
+ #                               		for gene_table_name in gene_table_names ]
+	# t1=datetime.datetime.now()
+	# print(' Finished mysql queries '+str(t1)+'; ', file=open(log_file,'a'))# EAM - Profiling SQL
+	# print(' Time '+str(t1-t0)+'; ', file=open(log_file,'a'))# EAM - Profiling SQL
 
+	t0=datetime.datetime.now()
+	print(' Starting mysql queries '+str(t0)+'; ', file=open(log_file,'a'))# EAM - Profiling SQL
+	print('Pool size 1', file=open(log_file,'a'))
+	df_list = []
+	for i, gene_table_name in enumerate(gene_table_names):
+		t0a=datetime.datetime.now()
+		if i>0:
+			tsne_typeu='noTSNE'
+		else:
+			tsne_typeu=tsne_type
+		df_all = df_all.append(get_gene_from_mysql(ensemble, gene_table_name, methylation_type, clustering, tsne_typeu))
+		if i==0:
+			df_coords=df_all
+		t1a=datetime.datetime.now()
+		print(str(i)+' : ',str(t1a-t0a), file=open(log_file,'a'))
+
+
+	t1=datetime.datetime.now()
+	print(' Finished mysql queries '+str(t1)+'; ', file=open(log_file,'a'))# EAM - Profiling SQL
+	print(' Time '+str(t1-t0)+'; ', file=open(log_file,'a'))# EAM - Profiling SQL
+	############
 
 	df_all[[methylation_type, context]] = df_all[[methylation_type, context]].apply(pd.to_numeric)
 
 	df_avg_methylation = df_all.groupby(by='cell_id', as_index=False)[[methylation_type, context]].mean()
 	df_coords.update(df_avg_methylation)
+
 
 	if df_coords[context].isnull().all(): # If no data in column, return None 
 		return None
@@ -2188,9 +2286,11 @@ def get_gene_snATAC(ensemble, gene, grouping, outliers, smoothing=False):
 		FROM cells \
 		INNER JOIN %(ensemble)s ON cells.cell_id = %(ensemble)s.cell_id \
 		LEFT JOIN %(gene_table_name)s ON %(ensemble)s.cell_id = %(gene_table_name)s.cell_id \
-		LEFT JOIN datasets ON cells.dataset = datasets.dataset" % {'ensemble': ensemble, 
+		LEFT JOIN datasets ON cells.dataset = datasets.dataset \
+		ORDER BY RAND() LIMIT %(ncells)s" % {'ensemble': ensemble, 
 																   'gene_table_name': gene_table_name,
-																   'counts_type': counts_type}
+																   'counts_type': counts_type,
+																   'ncells': ncells_max}
 
 	try:
 		df = pd.read_sql(query, db.get_engine(current_app, 'snATAC_data'))
@@ -2216,6 +2316,48 @@ def get_gene_snATAC(ensemble, gene, grouping, outliers, smoothing=False):
 
 	df['normalized_counts'].fillna(0, inplace=True)
 	
+	return df
+
+def get_gene_snatac_from_mysql(ensemble, gene_table_name, counts_type, tsne_type):
+	"""Helper function to fetch a gene's snatac information from mysql.
+
+	Returns:
+		DataFrame
+	"""
+
+	t0=datetime.datetime.now()
+	if tsne_type=='noTSNE':
+		query = "SELECT %(gene_table_name)s.%(counts_type)s as normalized_counts \
+			FROM %(ensemble)s  \
+			LEFT JOIN %(gene_table_name)s ON %(ensemble)s.cell_id = %(gene_table_name)s.cell_id \
+			LIMIT 5000" % {'ensemble': ensemble, 
+			   'gene_table_name': gene_table_name,
+			   'counts_type': counts_type,}
+	else:
+		query = "SELECT cells.cell_id, cells.cell_name, cells.dataset, \
+			%(ensemble)s.annotation_ATAC, %(ensemble)s.cluster_ATAC, \
+			%(ensemble)s.tsne_x_ATAC, %(ensemble)s.tsne_y_ATAC, \
+			%(gene_table_name)s.%(counts_type)s as normalized_counts, \
+			datasets.target_region \
+			FROM cells \
+			INNER JOIN %(ensemble)s ON cells.cell_id = %(ensemble)s.cell_id \
+			LEFT JOIN %(gene_table_name)s ON %(ensemble)s.cell_id = %(gene_table_name)s.cell_id \
+			LEFT JOIN datasets ON cells.dataset = datasets.dataset \
+			LIMIT 5000" % {'ensemble': ensemble, 
+																	   'gene_table_name': gene_table_name,
+																	   'counts_type': counts_type}
+	try:
+		df = pd.read_sql(query, db.get_engine(current_app, 'snATAC_data'))
+	except exc.ProgrammingError as e:
+		now = datetime.datetime.now()
+		print("[{}] ERROR in app(get_gene_snatac_from_mysql): {}".format(str(now), e))
+		sys.stdout.flush()
+		return None
+
+	t1=datetime.datetime.now()
+	print(' Running get_gene_snatac_from_mysql for '+gene_table_name+' : '+str(t1-t0)+'; ', file=open(log_file,'a')) # EAM - Profiling SQL
+	print(' query: '+query, file=open(log_file,'a'))
+
 	return df
 
 @cache.memoize(timeout=1800)
@@ -2256,30 +2398,70 @@ def get_mult_gene_snATAC(ensemble, genes, grouping, smoothing=False):
 	else:
 		counts_type='normalized_counts'
 
-	first = True
-	for gene_table_name in gene_table_names:
-		query = "SELECT cells.cell_id, cells.cell_name, cells.dataset, \
-			%(ensemble)s.annotation_ATAC, %(ensemble)s.cluster_ATAC, \
-			%(ensemble)s.tsne_x_ATAC, %(ensemble)s.tsne_y_ATAC, \
-			%(gene_table_name)s.%(counts_type)s as normalized_counts, \
-			datasets.target_region \
-			FROM cells \
-			INNER JOIN %(ensemble)s ON cells.cell_id = %(ensemble)s.cell_id \
-			LEFT JOIN %(gene_table_name)s ON %(ensemble)s.cell_id = %(gene_table_name)s.cell_id \
-			LEFT JOIN datasets ON cells.dataset = datasets.dataset" % {'ensemble': ensemble, 
-																	   'gene_table_name': gene_table_name,
-																	   'counts_type': counts_type}
-		try:
-			df_all = df_all.append(pd.read_sql(query, db.get_engine(current_app, 'snATAC_data')))
-		except exc.ProgrammingError as e:
-			now = datetime.datetime.now()
-			print("[{}] ERROR in app(get_mult_gene_snATAC): {}".format(str(now), e))
-			sys.stdout.flush()
-			return None
+	# first = True
+	# for i,gene_table_name in enumerate(gene_table_names):
+	# 	t0=datetime.datetime.now()
+	# 	if first:
+	# 		query = "SELECT cells.cell_id, cells.cell_name, cells.dataset, \
+	# 			%(ensemble)s.annotation_ATAC, %(ensemble)s.cluster_ATAC, \
+	# 			%(ensemble)s.tsne_x_ATAC, %(ensemble)s.tsne_y_ATAC, \
+	# 			%(gene_table_name)s.%(counts_type)s as normalized_counts, \
+	# 			datasets.target_region \
+	# 			FROM cells \
+	# 			INNER JOIN %(ensemble)s ON cells.cell_id = %(ensemble)s.cell_id \
+	# 			LEFT JOIN %(gene_table_name)s ON %(ensemble)s.cell_id = %(gene_table_name)s.cell_id \
+	# 			LEFT JOIN datasets ON cells.dataset = datasets.dataset" % {'ensemble': ensemble, 
+	# 																	   'gene_table_name': gene_table_name,
+	# 																	   'counts_type': counts_type}
+	# 	else:
+	# 		query = "SELECT %(gene_table_name)s.%(counts_type)s as normalized_counts \
+	# 			FROM %(ensemble)s  \
+	# 			LEFT JOIN %(gene_table_name)s ON %(ensemble)s.cell_id = %(gene_table_name)s.cell_id" % {'ensemble': ensemble, 
+	# 																	   'gene_table_name': gene_table_name,
+	# 																	   'counts_type': counts_type}
+
+	# 		# query = "SELECT %(gene_table_name)s.%(counts_type)s as normalized_counts \
+	# 		# 	FROM %(gene_table_name)s  \
+	# 		# 	INNER JOIN %(ensemble)s ON %(ensemble)s.cell_id = %(gene_table_name)s.cell_id" % {'ensemble': ensemble, 
+	# 		# 															   'gene_table_name': gene_table_name,
+	# 		# 															   'counts_type': counts_type}			
+
+	# 	try:
+	# 		df_all = df_all.append(pd.read_sql(query, db.get_engine(current_app, 'snATAC_data')))
+	# 	except exc.ProgrammingError as e:
+	# 		now = datetime.datetime.now()
+	# 		print("[{}] ERROR in app(get_mult_gene_snATAC): {}".format(str(now), e))
+	# 		sys.stdout.flush()
+	# 		return None
 		
-		if first:
-			df_coords = df_all
-		first = False
+	# 	if first:
+	# 		df_coords = df_all
+	# 	first = False
+	# 	t1=datetime.datetime.now()
+	# 	print(str(i)+' loading snATAC: '+str(t1-t0), file=open(log_file, 'a'))
+
+	t0=datetime.datetime.now()
+	print('Pool size 1', file=open(log_file,'a'))
+	df_list = []
+	df = get_gene_snatac_from_mysql(ensemble, gene_table_names[0], counts_type, 'TSNE')
+	df_all = df_all.append(df)
+	df_coords = df;
+	# df_list.append()
+	for gene_table_name in gene_table_names[1:]:
+		df_all = df_all.append(get_gene_snatac_from_mysql(ensemble, gene_table_name, counts_type, 'noTSNE'))
+	# with Pool(12) as pool:
+	# 	df_list = [pool.apply_async(get_gene_snatac_from_mysql,
+ # 	                                      args=(ensemble, gene_table_name, counts_type, 'noTSNE')).get()
+ #                               		for gene_table_name in gene_table_names[1:] ]
+
+	t1=datetime.datetime.now()
+	print('All done: '+str(t1-t0), file=open(log_file,'a'))
+	# df_coords=df_list[0]
+	# for df in df_list:
+		# df_all = df_all.append(df)
+
+	t1=datetime.datetime.now()
+	print('All done: '+str(t1-t0), file=open(log_file,'a'))
 
 	if df_all.empty: # If no data in column, return None 
 		now = datetime.datetime.now()
@@ -3014,8 +3196,10 @@ def get_gene_RNA(ensemble, gene, grouping, outliers):
 		FROM cells \
 		INNER JOIN %(ensemble)s ON cells.cell_id = %(ensemble)s.cell_id \
 		LEFT JOIN %(gene_table_name)s ON %(ensemble)s.cell_id = %(gene_table_name)s.cell_id \
-		LEFT JOIN datasets ON cells.dataset = datasets.dataset" % {'ensemble': ensemble, 
-																   'gene_table_name': gene_table_name,}
+		LEFT JOIN datasets ON cells.dataset = datasets.dataset \
+		ORDER BY RAND() LIMIT %(ncells)s" % {'ensemble': ensemble, 
+																   'gene_table_name': gene_table_name,
+																   'ncells': ncells_max}
 
 	try:
 		df = pd.read_sql(query, db.get_engine(current_app, 'RNA_data'))
@@ -3086,8 +3270,10 @@ def get_mult_gene_RNA(ensemble, genes, grouping):
 			FROM cells \
 			INNER JOIN %(ensemble)s ON cells.cell_id = %(ensemble)s.cell_id \
 			LEFT JOIN %(gene_table_name)s ON %(ensemble)s.cell_id = %(gene_table_name)s.cell_id \
-			LEFT JOIN datasets ON cells.dataset = datasets.dataset" % {'ensemble': ensemble, 
-																	   'gene_table_name': gene_table_name,}
+			LEFT JOIN datasets ON cells.dataset = datasets.dataset \
+			ORDER BY RAND() LIMIT %(ncells)s" % {'ensemble': ensemble, 
+																	   'gene_table_name': gene_table_name,
+																	   'ncells': ncells_max}
 		try:
 			df_all = df_all.append(pd.read_sql(query, db.get_engine(current_app, 'RNA_data')))
 		except exc.ProgrammingError as e:

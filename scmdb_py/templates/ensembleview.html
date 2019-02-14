@@ -3,11 +3,48 @@
 <div class="Site" id="options">
 	<div class="Site-content">
 
+		<div class="container">
+			{%- with messages = get_flashed_messages(with_categories=True) %} {%- if messages %}
+			<div class="row">
+				<div class="col-md-12">
+					{{utils.flashed_messages(messages)}}
+				</div>
+			</div>
+			{%- endif %} {%- endwith %}
+			<div style="position:relative; left:0; z-index:3;">
+                <div class="col-md-12">
+                    <div class="panel panel-info" id="options-panel" style="margin-left:auto; margin-right:auto; ">
+                        <div class="panel-heading">
+                            <div class="panel-title">
+                                <div style="display:inline-block;">
+                                    <h5>
+                                        <a class="accordion-toggle" data-parent="#options-panel" data-toggle="collapse" title="" style="margin-top: 0px;" data-original-title="Collapse Search Options" href="#search-panel-body">
+                                            <div class="accordion-chevron">Options </div>
+                                        </a>
+                                    </h5>
+                                </div>
+                                <div style="display:inline-block; float:right;">
+                                    {% if AnnoJexists == True %}
+                                    <a href="#" target="_blank" id="epiBrowserLink" class="btn btn-info pull-right" role="button">
+                                        <small style="color:white;">Epigenome browser (AnnoJ)</small>
+                                    </a>
+                                    {% else %}
+                                    <div class="btn btn-info pull-right" disabled="disabled" role="button">
+                                        <small style="color:white;">Epigenome browser (AnnoJ; <i>not available</i>)</small>
+                                    </div>
+                                    {% endif %}
+                                </div>
+                            </div>
+                        </div>
+                        <div class="panel-body collapse in" id="search-panel-body" style="padding-top:10px;">
+                            {% include "components/search_options.html" %}
+                        </div>
+                    </div>
+                </div>
+            </div>
 
 
-		<div class="container" style="margin-top: 50px;">
-			{% include "components/search_options.html" %}
-
+            {% if methylation_data_available == 1 %}
             <!-- Methylation PLOTS -->
 			<div style="position:relative; left:0; z-index:2;">
 				<div id="snmC-seq-view" class="col-md-12 col-sm-12">
@@ -55,6 +92,7 @@
                     </div>
                 </div>
             </div>
+            {% endif %}
 
             <!-- snATAC Plots -->
             {% if snATAC_data_available == 1 %}
@@ -212,6 +250,7 @@
     var ensemble = "{{ ensemble }}";
     var ensemble_name = "{{ ensemble_name }}";
     var RS2 = {{ RS2 }};
+    var methylation_data_available = {{ methylation_data_available }};
     var snATAC_data_available = {{ snATAC_data_available }};
     var RNA_data_available = {{ RNA_data_available }};
     var num_algorithm_options = {{ num_algorithm_options }};
@@ -228,6 +267,7 @@
     var buttons;
     var table;
     var clusterMarkerGeneTable;
+    var AnnoJexists = "{{ AnnoJexists }}";
 
     $(document).ready(function() {
         $('[data-toggle="popover"]').popover();

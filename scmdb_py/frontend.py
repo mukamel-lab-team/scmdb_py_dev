@@ -23,6 +23,9 @@ from .email import send_email
 from .forms import LoginForm, ChangeUserEmailForm, ChangeAccountTypeForm, InviteUserForm, CreatePasswordForm, NewUserForm, RequestResetPasswordForm, ResetPasswordForm, ChangePasswordForm
 from .user import User, Role
 
+# import requests
+import os
+
 
 frontend = Blueprint('frontend', __name__, template_folder="templates", static_folder="static") # Flask "bootstrap"
 
@@ -47,28 +50,39 @@ def index():
 @frontend.route('/<ensemble_name>')
 def ensemble(ensemble_name):
     ensemble_info = get_ensemble_info(ensemble_name=ensemble_name)
-    snATAC_included = ensemble_exists(ensemble_info['ensemble_id'],'snATAC')
+    snATAC_included = ensemble_exists(ensemble_info['ensemble_id'], modality='snATAC')
+    methylation_included = ensemble_exists(ensemble_info['ensemble_id'], modality='methylation')
     RNA_included = ensemble_exists(ensemble_info['ensemble_id'],'RNA')
     ensemble = 'Ens'+str(ensemble_info['ensemble_id'])
     RS2_included = 0
     if 'RS2' in ensemble_info['datasets']:
         RS2_included = 1
-    methylation_tsne_options = get_methylation_tsne_options(ensemble)
-    num_algorithm_options = len(methylation_tsne_options['clustering_algorithms'])
-    num_dims_options = len(methylation_tsne_options['tsne_dimensions'])
-    num_perplexity_options = len(methylation_tsne_options['tsne_perplexity'])
-
+    if methylation_included:
+        methylation_tsne_options = get_methylation_tsne_options(ensemble)
+        num_algorithm_options = len(methylation_tsne_options['clustering_algorithms'])
+        num_dims_options = len(methylation_tsne_options['tsne_dimensions'])
+        num_perplexity_options = len(methylation_tsne_options['tsne_perplexity'])
+    else:
+        methylation_tsne_options = []
+        num_algorithm_options = 0
+        num_dims_options = 0
+        num_perplexity_options = 0
+        
+    AnnoJexists = ensemble_annoj_exists(ensemble)
+    
     if ensemble_info['public_access'] == 1 or (ensemble_info['public_access'] == 0 and current_user.is_authenticated):
         return render_template('ensembleview.html', 
                                ensemble = ensemble, 
                                ensemble_name = ensemble_name,
+                               methylation_data_available = methylation_included,
                                snATAC_data_available = snATAC_included,
                                RNA_data_available = RNA_included,
                                RS2 = RS2_included,
                                methylation_tsne_options = json.dumps(methylation_tsne_options),
                                num_algorithm_options = num_algorithm_options,
                                num_dims_options = num_dims_options,
-                               num_perplexity_options = num_perplexity_options)
+                               num_perplexity_options = num_perplexity_options,
+                               AnnoJexists = AnnoJexists)
     else:
         flash('Data for ensemble {} is not publicly accessible. You must log in to continue. \
               <li>Click on "Ensembles" at the top of the page to select publicly accessible data.</li>'.format(ensemble_name), 'form-error')

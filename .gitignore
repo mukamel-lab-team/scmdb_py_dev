@@ -122,3 +122,4 @@ scmdb_py/static/styles/*
 *.webassets*
 *package-lock.json
 user-login.sqlite
+scmdb_log

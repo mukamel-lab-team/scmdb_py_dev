@@ -6,7 +6,7 @@ function initEnsembleDataTable() {
     
     var table = $('#ensemble-table').DataTable({
         "order": [[3, 'desc']], //Initially sort by "Total Cells (snmC-seq)" in descending order. 
-        "pageLength": 100,
+        "pageLength": 50,
         "ajax": {
             //"url": "/portal/content/ensembles",
             "url": $SCRIPT_ROOT+'/content/ensembles?region=' + region,
@@ -42,6 +42,17 @@ function initEnsembleDataTable() {
                     $(nTd).html('<a href="'+$SCRIPT_ROOT+'/'+oData.ensemble_name+'"><i class="fas fa-eye"></i></a>');
                 }
             },
+            {
+                "data": "annoj_exists",
+                "className": 'dt-center',
+                "fnCreatedCell": function (nTd, sData, oData, iRow, iCol) {
+                    if ( oData.annoj_exists == 1 )  {
+                        $(nTd).html('<a href="https://brainome.ucsd.edu/annoj_private/CEMBA/cemba.php?ens='+oData.ensemble_id+'" target="_blank"><i class="fas fa-dna"></i></a>');
+                    } else {
+                        $(nTd).html('<i class="fas fa-dna" style="color: gray"></i>');
+                    }
+                }
+            },
         ],
         "fixedHeader": {
             "header": false,
@@ -75,12 +86,12 @@ function initEnsembleDataTable() {
  
             // Update footer
             $( api.column( 10 ).footer() ).html(
-                numberWithCommas(grand_total_methylation_cells) +' mC cells, '+ 
+                grand_total_ensembles+' ensembles including '+numberWithCommas(grand_total_methylation_cells) +' mC cells, '+ 
                 numberWithCommas(grand_total_snATAC_cells) +
-                ' ATAC cells across '+grand_total_ensembles+' ensembles'
+                ' ATAC cells across (NOTE some cells appear in multiple ensembles)'
             );
         }
-    } );
+    });
     
 
     $('#ensemble-table tbody').on('click', 'td.details-control', function() {
@@ -148,11 +159,19 @@ function format ( d ) {
                 '<td>'+d.target_regions_rs2_descriptive+'</td>'+
             '</tr>'
         }
-        out = out + 
-            '<tr>'+
-                '<td><b>View Dissection Drawings:</b></td>'+
-                '<td><a href="https://drive.google.com/file/d/1dAUzB1GtKMUgmf_AInAGgI6OlgefUHok/preview" target="_blank">Link</a> (go to page '+d.slices+')</td>'+
-            '</tr>'+
-        '</table>'
+    out = out + 
+        '<tr>'+
+            '<td><b>View Dissection Drawings:</b></td>'+
+            '<td><a href="https://drive.google.com/file/d/1dAUzB1GtKMUgmf_AInAGgI6OlgefUHok/preview" target="_blank">Link</a> (go to page '+d.slices+')</td>'+
+        '</tr><tr>'
+    var url=''
+    var slices=[... new Set(d.slices.split(', ').map(x => x.charAt(0)))] // Get the unique slices contributing to this ensemble
+    for (i=0; i<slices.length; i++) {
+        url='https://brainome.ucsd.edu/CEMBA_dissection_images/CEMBA_Slice'+slices[i]
+        out = out+'<td> '+
+          '<a href="'+url+'.png" target="_blank"><img src="'+url+'_sm.png" ' +
+          ' width=200 alt="CEMBA Slice'+slices[i]+'"></a> </td>'
+    }
+    out = out + '</tr></table>'
     return out
 }
