@@ -1,0 +1,18 @@
+{% import 'macros/nav_macros.html' as nav %}
+<!DOCTYPE html>
+<html>
+    <base target="_parent">
+    <head>
+        {% include 'partials/_head.html' %}
+    </head>
+    <body>
+      {# add dropdown variable here to the render_nav method to render dropdowns #}
+      {{ nav.render_nav(current_user) }}
+
+    <script> 
+        $(document).ready(function() {
+            $("#browser").attr("href", "javascript:window.top.location.reload();");
+        });
+    </script>
+    </body>
+</html>

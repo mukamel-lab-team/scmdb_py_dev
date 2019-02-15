@@ -1,0 +1,45 @@
+<div class="panel-collapse collapse in cluster_options_group" id="tsne_plots_options">
+    <div class="panel-body option-panel" style="padding-top:0px; padding-bottom: 0px;">
+        <div class="container-fluid">
+            <div class="row-fluid">
+                <div class="span4 offset4 text-center" style="display:inline-block;">
+                    <div id="tsneType" style="float:left; display:block;">
+                        <label for="tsne_types">tSNE:</label>
+                        <select id="tsne_types" class="tsne_option" name="tsne_types">
+                        </select>
+                    </div>
+                    <div id="tsneGrouping" style="float:left; display:block;">
+                        <label for="tsne_grouping">Grouping:</label>
+                        <select id="tsne_grouping" class="tsne_option" name="tsne_grouping">
+                            <option value="cluster">by cluster</option>
+                            <option value="annotation" selected>by cluster annotation</option>
+                            <option value="dataset">by dataset</option>
+                            <!-- <option value="layer">by dissection layer</option> -->
+                            <!-- <option value="cluster_biosample">by cluster+biosample</option> -->
+                        </select>
+                    </div>
+                    <div id="tsneClustering" style="float:left; display:block;">
+                        <label for="tsne_clustering">Clustering: </label>
+                        <select id ="tsne_clustering" class="tsne_option" name="tsne_clustering">
+                        </select>
+                    </div>
+                    <!-- <div id="toggle-3d-cluster-div" class="col-sm-2" style="display:inline-block; padding:0px;">
+                        <input id="toggle-3d" name="3d-checkbox" value="show3d" type="checkbox">
+                        <label for="toggle-3d">Display 3D Plot</label>
+                    </div> -->
+                    <!--<div class="col-sm-3" style="display: inline-block; padding:0px;">
+                        <button type="button" class="btn btn-info btn-xs" id="randomizeColorBtn">Randomize Color</button>
+                    </div> -->
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+<div class="panel-body" style="margin: auto; padding-top:0px; max-width: 550px">
+	<div id="loading_2dtsne">Loading..</div>
+	<div id="plot-2d-cluster"></div>
+	<div id="plot-3d-cluster-div">
+        <div id="loading-3d-plot"></div>
+        <div id="plot-3d-cluster"></div>
+	</div>
+</div>

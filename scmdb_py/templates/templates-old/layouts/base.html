@@ -1,0 +1,53 @@
+{% import 'macros/nav_macros.html' as nav %}
+
+<!DOCTYPE html>
+<html>
+    <head>
+        {% block head%}
+            {% include 'partials/_head.html' %}
+            <title>{%- block title %}{% endblock title %}</title>
+        {%- endblock head %}
+    </head>
+
+    <body>
+        {% block body %}
+            {# When extended, the content block contains all the html of the webpage #}
+            {% block navbar %}
+              {# add dropdown variable here to the render_nav method to render dropdowns #}
+              {{ nav.render_nav(current_user) }}
+            {% endblock navbar %}
+
+            {% include 'partials/_flashes.html' %}
+
+            {% block content %}
+            {% endblock content %}
+
+            {# Implement CSRF protection for site #}
+            {% if csrf_token()|safe %}
+                <div style="visibility: hidden; display: none">
+                  <input type="hidden" name="csrf_token" value="{{ csrf_token()|safe }}">
+                </div>
+            {% endif %}
+
+            {% block scripts %}
+                <script>
+                    $SCRIPT_ROOT = {{ request.script_root|tojson|safe }};
+                </script>
+                <script> 
+                    $(document).ready(function() {
+                        var last_viewed_ensemble = storage.load("last_viewed_ensemble");
+                        if (last_viewed_ensemble !== false) {
+                            $("#browser").attr("href", $SCRIPT_ROOT+"/"+last_viewed_ensemble);
+                            //$("#browser").attr("href", Flask.url_for('frontend.ensemble', ensemble_name=last_viewed_ensemble));
+                        }
+                        else {
+                            $("#browser").attr("href", $SCRIPT_ROOT+"/tabular/ensemble?redirect=true");
+                            console.log($SCRIPT_ROOT);
+                            //$("#browser").attr("href", Flask.url_for('frontend.ensemble_tabular_screen', redirect='true'));
+                        }
+                    });
+                </script>
+            {% endblock scripts %}
+        {% endblock body %}
+    </body>
+</html>

@@ -1,0 +1,45 @@
+{% extends 'layouts/base.html' %}
+
+{% macro dashboard_option(title, endpoint, description=None, icon=None) %}
+    <a class="column" href="{{ url_for(endpoint) }}">
+        <div class="ui padded segment">
+            <h3 class="ui header">
+                {% if icon is not none %}
+                    <i class="{{ icon }}"></i>
+                {% endif %}
+                <div class="content">
+                    {{ title }}
+                    {% if description is not none %}
+                        <div class="sub header">
+                            {{ description }}
+                        </div>
+                    {% endif %}
+                </div>
+            </h3>
+        </div>
+    </a>
+{% endmacro %}
+
+{% block title %}Admin Dashboard {% endblock %}
+
+{% block content %}
+    {{ super() }}
+    <div class="ui stackable centered grid container">
+        <div class="twelve wide column">
+            <br>
+            <div class="ui raised very padded segment">
+                <h2 class="ui header">
+                    Admin Dashboard
+                </h2>
+                <div class="ui two column stackable grid">
+                    {{ dashboard_option('Registered Users', 'frontend.registered_users',
+                                        description='View and manage user accounts.', icon='fas fa-users') }}
+                    {{ dashboard_option('Add New User', 'frontend.new_user',
+                                        description='Create a new user account.', icon='fas fa-user-plus') }}
+                    {{ dashboard_option('Invite New User', 'frontend.invite_user',
+                                        description='Send an invitation via email.', icon='fas fa-envelope-open') }}
+                </div>
+            </div>
+        </div>
+    </div>
+{% endblock content %}
