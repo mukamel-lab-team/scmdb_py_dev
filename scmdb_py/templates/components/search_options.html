@@ -30,66 +30,7 @@
         font-size: 36px;
         margin-left: 50px;
     }
-<div id="gene-search-options" class="collapse">
-	<div class="form-group col-md-4 col-sm-12" style="margin-bottom:0px;">
-		<label for="geneName" class="control-label">
-			Search gene by name:
-		</label><br>
-		<select id="geneName" multiple style="width:100%">
-			<option>Select..</option>
-		</select>
-	</div>
-	<div class="col-md-3 col-sm-6">
-		<div style="display:inline-block; float:left;" id="methylationLevelDiv">
-			<label for="level" class="control-label">
-				<a href="javascript:void(0);" class="hover-tooltip" data-toggle="popover" data-trigger="hover" data-placement="top" title="Methylation Levels" data-content="Display original methylation values or normalize by the global methylation value for each cell.">Methylation Levels</a>
-			</label>
-			<select  id="level">
-	 			<option value="original">Original</option>
-				<option value="normalized" selected>Normalized</option>
- 			</select>
-			<!-- <br> -->
-<!-- 	 		<input type="radio" name="level" id="levelOriginal" value="original">&nbsp;Original<br>
-			<input type="radio" name="level" id="levelNormalized" value="normalized" checked>&nbsp;Normalized
- -->		</div>
-		<div style="display:inline-block; float:left;">
-			&nbsp;
-		</div>
-		<div style="display:inline-block; float:left;" id="methylationTypeDiv">
-			<div class="form-group">
-				<label for="mType" class="control-label">
-					<a href="javascript:void(0);" class="hover-tooltip" data-toggle="popover" data-trigger="hover" data-placement="top" title="Methylation Type" data-content="Type of gene-body methylation values to display.">Methylation Type</a>
-				</label>
-				<select  id="mType">
-		 			<option value="mCH" selected>mCH</option>
-					<option value="mCG">mCG</option>
-					<option value="mCA">mCA</option>
-	 			</select>
- 			</div>
- 		</div>
-	</div>
-	<div class="col-md-3 col-sm-12" id="geneModuleDiv">
-		<label for="geneModulesSelect" class="control-label">
-			<a href="javascript:void(0);" class="hover-tooltip pop" data-toggle="popover" data-trigger="hover" data-placement="top" title="Gene Modules" data-content="Populate gene search with pre-selected list of known and predicted marker genes for different cell types. (Gene modules were curated from supplementary figure S10. <a href='http://science.sciencemag.org/content/357/6351/600' target='_blank'>Link</a>)" data-html="true">Gene Modules</a>
-		</label>
-		<br>
-		<select id="geneModulesSelect" style="width:100%">
-			<option value="0">Select..</option>
-		</select>
-	</div>
-	<div class="form-group col-md-2 col-sm-3" style="margin-bottom:0px; margin-top:15px;">
-		<div style="display: inline-block;">
-			<button type="button" class="btn btn-success btn-sm" id="gene-search-btn" style="padding-right:10px;">
-				<span class="glyphicon glyphicon-search"></span>&nbsp;&nbsp;Update
-			</button>
-			<button type="button" class="btn btn-default btn-sm" id="clear-gene-search-btn">
-				Clear
-			</button>
-		</div>
-	</div>
-</div>
->>>>>>> 7569df33248cd935936ff4c96fc4241b8ea88f19
-
+    
      /* Styple of options button*/
      .option-button{
 	margin-left: 50px;
