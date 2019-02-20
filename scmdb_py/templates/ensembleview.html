@@ -7,9 +7,9 @@
         </div>
 
         <div class="container" style="margin-top: 50px; margin-bottom: 50px;">
-            <!-- Methylation PLOTS -->
-            {% if methylation_data_available == 1 %}
             <div style="position:relative; left:0; z-index:2;">
+                <!-- Methylation PLOTS -->
+                {% if methylation_data_available == 1 %}
                 <div id="snmC-seq-view" class="col-md-12 col-sm-12">
                    <div class="panel panel-default panel-main" style="overflow-x: auto; margin-left:auto; margin-right:auto;">
                       <div class="panel-heading">
@@ -47,197 +47,191 @@
                                     {% include "components/clusters_bar.html" %}
                                 </div>
                                 <!--<div class="tab-pane" id="clusterGeneTable">-->
-                                    <!--{% include "components/cluster_specific_marker_genes.html" %}-->
-                                    <!--</div>-->
+                                <!--{% include "components/cluster_specific_marker_genes.html" %}-->
+                                <!--</div>-->
+                            </div>
+                        </div>
+                    </div>
+                    {% endif %}
+
+                    <!-- snATAC Plots -->
+                    {% if snATAC_data_available == 1 %}
+                    <div id = "snATAC-seq-view" class="col-md-12 col-sm-12">
+                       <div class="panel panel-default panel-main" style="overflow-x: auto; margin-left:auto; margin-right:auto;">
+                          <div class="panel-heading">
+                             <div class="panel-title">
+                                <a class="accordion-toggle" data-toggle="collapse" title="" href="#snATAC-plots" style="margin-top: 0px;" data-original-title="Collapse snATAC Scatter Plot Container">
+                                    <div style="display:inline-block;">
+                                        <b>{{ ensemble_name }} (snATAC-seq)</b>
+                                        {% if gene is defined %} - {{ gene }}{% endif %}&nbsp;
+                                    </div>
+                                    <div class="accordion-chevron" style="display:inline-block;"></div>
+                                </a>
+                            </div>
+                        </div>
+                        <div class="panel-collapse collapse in" id="snATAC-plots">
+                         <div class="panel-body flex-container" style="padding:10px 0 0 0;">
+                            <div class="container" id="snATAC_tabs">
+                                <div class="col-sm-12">
+                                    <ul class="nav nav-tabs" role="tablist">
+                                        <li role="presentation" class="active"><a id="snATAC-scatter-tab-btn" href="#snATAC-scatter" role="tab" data-toggle="tab">Scatter</a></li>
+                                        <li role="presentation"><a id="snATAC-box-tab-btn" href="#snATAC-box" role="tab" data-toggle="tab">Box plot / Heatmap</a></li>
+                                    </ul>
+                                </div>
+                                <div class="col-md-12 col-sm-12 flex-item tab-content" id="snATAC_scatter_div" style="padding: 0px">
+                                    <div class="tab-pane active in" id="snATAC-scatter">
+                                        {% include "components/snATAC_scatter.html" %}
+                                    </div>
+                                    <div class="tab-pane" id="snATAC-box">
+                                        {% include "components/snATAC_box.html" %}
+                                    </div>
                                 </div>
                             </div>
                         </div>
                     </div>
-                </div>
-            </div>
-            {% endif %}
+                    {% endif %}
 
-            <!-- snATAC Plots -->
-            {% if snATAC_data_available == 1 %}
-            <div style="position:relative; left:0; z-index:2;">
-                <div id = "snATAC-seq-view" class="col-md-12 col-sm-12">
-                   <div class="panel panel-default panel-main" style="overflow-x: auto; margin-left:auto; margin-right:auto;">
-                      <div class="panel-heading">
-                         <div class="panel-title">
-                            <a class="accordion-toggle" data-toggle="collapse" title="" href="#snATAC-plots" style="margin-top: 0px;" data-original-title="Collapse snATAC Scatter Plot Container">
-                                <div style="display:inline-block;">
-                                    <b>{{ ensemble_name }} (snATAC-seq)</b>
-                                    {% if gene is defined %} - {{ gene }}{% endif %}&nbsp;
-                                </div>
-                                <div class="accordion-chevron" style="display:inline-block;"></div>
-                            </a>
-                        </div>
-                    </div>
-                    <div class="panel-collapse collapse in" id="snATAC-plots">
-                     <div class="panel-body flex-container" style="padding:10px 0 0 0;">
-                        <div class="container" id="snATAC_tabs">
-                            <div class="col-sm-12">
-                                <ul class="nav nav-tabs" role="tablist">
-                                    <li role="presentation" class="active"><a id="snATAC-scatter-tab-btn" href="#snATAC-scatter" role="tab" data-toggle="tab">Scatter</a></li>
-                                    <li role="presentation"><a id="snATAC-box-tab-btn" href="#snATAC-box" role="tab" data-toggle="tab">Box plot / Heatmap</a></li>
-                                </ul>
-                            </div>
-                            <div class="col-md-12 col-sm-12 flex-item tab-content" id="snATAC_scatter_div" style="padding: 0px">
-                                <div class="tab-pane active in" id="snATAC-scatter">
-                                    {% include "components/snATAC_scatter.html" %}
-                                </div>
-                                <div class="tab-pane" id="snATAC-box">
-                                    {% include "components/snATAC_box.html" %}
+                    <!-- RNA Plots -->
+                    {% if RNA_data_available == 1 %}
+                    <div id = "RNA-seq-view" class="col-md-12 col-sm-12">
+                        <div class="panel panel-default panel-main" style="overflow-x: auto; margin-left:auto; margin-right:auto;">
+                            <div class="panel-heading">
+                                <div class="panel-title">
+                                    <a class="accordion-toggle" data-toggle="collapse" title="" href="#RNA-plots" style="margin-top: 0px;" data-original-title="Collapse RNA Scatter Plot Container">
+                                        <div style="display:inline-block;">
+                                            <b>{{ ensemble_name }} (RNA-seq)</b>
+                                            {% if gene is defined %} - {{ gene }}{% endif %}&nbsp;
+                                        </div>
+                                        <div class="accordion-chevron" style="display:inline-block;"></div>
+                                    </a>
+                                    <a data-toggle="collapse" title="" data-placement="left" href=".RNA-plots-options" class="btn btn-sm btn-basic pull-right" style="margin-top: 0px;" data-original-title="Collapse RNA tSNE Options"><i class="glyphicon glyphicon-cog"></i> Options</a>
                                 </div>
                             </div>
-                        </div>
-                    </div>
-                </div>
-            </div>
-        </div>
-    </div>
-    {% endif %}
-
-    <!-- RNA Plots -->
-    {% if RNA_data_available == 1 %}
-    <div style="position:relative; left:0; z-index:2;">
-        <div id = "RNA-seq-view" class="col-md-12 col-sm-12">
-            <div class="panel panel-default panel-main" style="overflow-x: auto; margin-left:auto; margin-right:auto;">
-                <div class="panel-heading">
-                    <div class="panel-title">
-                        <a class="accordion-toggle" data-toggle="collapse" title="" href="#RNA-plots" style="margin-top: 0px;" data-original-title="Collapse RNA Scatter Plot Container">
-                            <div style="display:inline-block;">
-                                <b>{{ ensemble_name }} (RNA-seq)</b>
-                                {% if gene is defined %} - {{ gene }}{% endif %}&nbsp;
-                            </div>
-                            <div class="accordion-chevron" style="display:inline-block;"></div>
-                        </a>
-                        <a data-toggle="collapse" title="" data-placement="left" href=".RNA-plots-options" class="btn btn-sm btn-basic pull-right" style="margin-top: 0px;" data-original-title="Collapse RNA tSNE Options"><i class="glyphicon glyphicon-cog"></i> Options</a>
-                    </div>
-                </div>
-                <div class="panel-collapse collapse in" id="RNA-plots">
-                    <div class="panel-body flex-container" style="padding:10px 0 0 0;">
-                        <div class="container" id="RNA_tabs">
-                            <div class="col-sm-12">
-                                <ul class="nav nav-tabs" role="tablist">
-                                    <li role="presentation" class="active"><a id="RNA-scatter-tab-btn" href="#RNA-scatter" role="tab" data-toggle="tab">Scatter</a></li>
-                                    <li role="presentation"><a id="RNA-box-tab-btn" href="#RNA-box" role="tab" data-toggle="tab">Box plot / Heatmap</a></li>
-                                </ul>
-                            </div>
-                            <div class="col-md-12 col-sm-12 flex-item tab-content" id="RNA_scatter_div" style="padding: 0px">
-                                <div class="tab-pane active in" id="RNA-scatter">
-                                    {% include "components/RNA_scatter.html" %}
-                                </div>
-                                <div class="tab-pane" id="RNA-box">
-                                    {% include "components/RNA_box.html" %}
+                            <div class="panel-collapse collapse in" id="RNA-plots">
+                                <div class="panel-body flex-container" style="padding:10px 0 0 0;">
+                                    <div class="container" id="RNA_tabs">
+                                        <div class="col-sm-12">
+                                            <ul class="nav nav-tabs" role="tablist">
+                                                <li role="presentation" class="active"><a id="RNA-scatter-tab-btn" href="#RNA-scatter" role="tab" data-toggle="tab">Scatter</a></li>
+                                                <li role="presentation"><a id="RNA-box-tab-btn" href="#RNA-box" role="tab" data-toggle="tab">Box plot / Heatmap</a></li>
+                                            </ul>
+                                        </div>
+                                        <div class="col-md-12 col-sm-12 flex-item tab-content" id="RNA_scatter_div" style="padding: 0px">
+                                            <div class="tab-pane active in" id="RNA-scatter">
+                                                {% include "components/RNA_scatter.html" %}
+                                            </div>
+                                            <div class="tab-pane" id="RNA-box">
+                                                {% include "components/RNA_box.html" %}
+                                            </div>
+                                        </div>
+                                    </div>
                                 </div>
                             </div>
                         </div>
                     </div>
-                </div>
-            </div>
-        </div>
-    </div>
-    {% endif %}
-</div>
+                    {% endif %}
 
-<!-- Cluster specific marker genes table -->
-<div style="position:relative; left:0;">
-    <div id = "marker-table-view" class="col-md-12 col-sm-12">
-        <div class="panel panel-default panel-main" style="overflow-x: auto; margin-left:auto; margin-right:auto;">
-            <div class="panel-heading">
-                <div class="panel-title">
-                    <a class="accordion-toggle" data-toggle="collapse" title="" href="#cluster-specific-marker-genes" style="margin-top: 0px;" data-original-title="Collapse Cluster Specific Marker Genes Table Container"><b>Cluster specific marker genes</b>&nbsp;
-                        <div class="accordion-chevron" style="display: inline-block;"></div>
-                    </a>
-                </div>
-            </div>
+                    <!-- Cluster specific marker genes table -->
+                    <div style="position:relative; left:0;">
+                        <div id = "marker-table-view" class="col-md-12 col-sm-12">
+                            <div class="panel panel-default panel-main" style="overflow-x: auto; margin-left:auto; margin-right:auto;">
+                                <div class="panel-heading">
+                                    <div class="panel-title">
+                                        <a class="accordion-toggle" data-toggle="collapse" title="" href="#cluster-specific-marker-genes" style="margin-top: 0px;" data-original-title="Collapse Cluster Specific Marker Genes Table Container"><b>Cluster specific marker genes</b>&nbsp;
+                                            <div class="accordion-chevron" style="display: inline-block;"></div>
+                                        </a>
+                                    </div>
+                                </div>
 
-            <div class="panel-body collapse in" id="cluster-specific-marker-genes" style="padding-top:10px;">
-                <div class="panel-body flex-container" style="padding:10px 0 0 0;">
-                    <div class="container" id="cluster-specific-marker-genes-cont">
-                        <div class="col-sm-12" id="cluster-specific-marker-genes">
-                            {% include "components/cluster_specific_marker_genes.html" %}
+                                <div class="panel-body collapse in" id="cluster-specific-marker-genes" style="padding-top:10px;">
+                                    <div class="panel-body flex-container" style="padding:10px 0 0 0;">
+                                        <div class="container" id="cluster-specific-marker-genes-cont">
+                                            <div class="col-sm-12" id="cluster-specific-marker-genes">
+                                                {% include "components/cluster_specific_marker_genes.html" %}
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
                         </div>
                     </div>
                 </div>
             </div>
         </div>
-    </div>
-</div>
-</div>
 
-<footer id="footer" class="footer">
-    <div class="line" style="border-bottom: 1px solid #F8F9F3; height:2px">
-    </div>
-    <div id="padding" style="height:50px">
-    </div>
-    <div class="container">
-        <span class="text-muted">
-            <h2>Contact</h2>
-            <div class="foot_contact">
-                <address>
-                    <p> Browser developed by: <br>
-                        Tomohiko Ishihara, Tianhao Xiao, and Junhao Li <br>
-                        ({tishihar94} [at] gmail.com, {hox017, jul307} [at] ucsd.edu)
-                    </p>
-                    <br>
-                    Social Sciences Research Building, Floor 2<br>
-                    Dept. of Cognitive Science<br>
-                    University of California, San Diego<br>
-                    9500 Gilman Dr. #0515<br>
-                    La Jolla, CA 92037-0515<br>
-                    <br>
-                </address>
-            </div>
-            <div class="footbox last">
-                Web: <a href="http://brainome.ucsd.edu">brainome.ucsd.edu</a><br>
-                Email: <a href="mailto:lab@brainome.ucsd.edu">lab@brainome.ucsd.edu</a><br>
-            </div>
-        </span>
-    </div>
-</footer>
-</div>
-{% endblock %}
 
-{% block scripts %}
-{{super()}}
-{% assets "browser_js" %}
-<script type="text/javascript" src="{{ ASSET_URL }}"></script>
-{% endassets %}
-{% assets "browser_css" %}
-<link href="{{ ASSET_URL }}" rel="stylesheet"/>
-{% endassets  %}
+        <footer id="footer" class="footer">
+            <div class="line" style="border-bottom: 1px solid #F8F9F3; height:2px">
+            </div>
+            <div id="padding" style="height:50px">
+            </div>
+            <div class="container">
+                <span class="text-muted">
+                    <h2>Contact</h2>
+                    <div class="foot_contact">
+                        <address>
+                            <p> Browser developed by: <br>
+                                Tomohiko Ishihara, Tianhao Xiao, and Junhao Li <br>
+                                ({tishihar94} [at] gmail.com, {hox017, jul307} [at] ucsd.edu)
+                            </p>
+                            <br>
+                            Social Sciences Research Building, Floor 2<br>
+                            Dept. of Cognitive Science<br>
+                            University of California, San Diego<br>
+                            9500 Gilman Dr. #0515<br>
+                            La Jolla, CA 92037-0515<br>
+                            <br>
+                        </address>
+                    </div>
+                    <div class="footbox last">
+                        Web: <a href="http://brainome.ucsd.edu">brainome.ucsd.edu</a><br>
+                        Email: <a href="mailto:lab@brainome.ucsd.edu">lab@brainome.ucsd.edu</a><br>
+                    </div>
+                </span>
+            </div>
+        </footer>
+    </div>
+    {% endblock %}
+
+    {% block scripts %}
+    {{super()}}
+    {% assets "browser_js" %}
+    <script type="text/javascript" src="{{ ASSET_URL }}"></script>
+    {% endassets %}
+    {% assets "browser_css" %}
+    <link href="{{ ASSET_URL }}" rel="stylesheet"/>
+    {% endassets  %}
+</div>
 
 <script>
-    var ensemble = "{{ ensemble }}";
-    var ensemble_name = "{{ ensemble_name }}";
-    var RS2 = {{ RS2 }};
-    var methylation_data_available = {{ methylation_data_available }};
-    var snATAC_data_available = {{ snATAC_data_available }};
-    var RNA_data_available = {{ RNA_data_available }};
-    var num_algorithm_options = {{ num_algorithm_options }};
-    var num_dims_options = {{ num_dims_options }};
-    var num_perplexity_options = {{ num_perplexity_options }};
-    var methylation_tsne_options = {{ methylation_tsne_options|safe }};
-    var methylation_color_percentile_Slider;
-    var snATAC_color_percentile_Slider;
-    var RNA_color_percentile_Slider;
-    var geneSearchCache;
-    var mmu_gID;
-    var hsa_gID;
-    var grouping;
-    var buttons;
-    var table;
-    var clusterMarkerGeneTable;
+var ensemble = "{{ ensemble }}";
+var ensemble_name = "{{ ensemble_name }}";
+var RS2 = {{ RS2 }};
+var methylation_data_available = {{ methylation_data_available }};
+var snATAC_data_available = {{ snATAC_data_available }};
+var RNA_data_available = {{ RNA_data_available }};
+var num_algorithm_options = {{ num_algorithm_options }};
+var num_dims_options = {{ num_dims_options }};
+var num_perplexity_options = {{ num_perplexity_options }};
+var methylation_tsne_options = {{ methylation_tsne_options|safe }};
+var methylation_color_percentile_Slider;
+var snATAC_color_percentile_Slider;
+var RNA_color_percentile_Slider;
+var geneSearchCache;
+var mmu_gID;
+var hsa_gID;
+var grouping;
+var buttons;
+var table;
+var clusterMarkerGeneTable;
 
-    $(document).ready(function() {
-        $('[data-toggle="popover"]').popover();
-        $('#methylation-box-heat-outlierToggle').bootstrapToggle();
-        $('#orthologsToggle').bootstrapToggle();
-        $('#orthologsToggle').bootstrapToggle('disable');
-        $('#methylation_tsneOutlierToggle').bootstrapToggle();
-        $('#methylation_tsne_header').append($('#methylation_tsne_settings').val());
+$(document).ready(function() {
+    $('[data-toggle="popover"]').popover();
+    $('#methylation-box-heat-outlierToggle').bootstrapToggle();
+    $('#orthologsToggle').bootstrapToggle();
+    $('#orthologsToggle').bootstrapToggle('disable');
+    $('#methylation_tsneOutlierToggle').bootstrapToggle();
+    $('#methylation_tsne_header').append($('#methylation_tsne_settings').val());
         storage.save("last_viewed_ensemble", ensemble_name, 30); // Cache last viewed ensemble
 
         // Percentile changes are handled separately, as every change would result in a plot update, but we want
@@ -462,49 +456,49 @@
     $(".methylation-clustering-npc").change(function() {
         dynamicMethylationClusteringOptions_npc();
     });
-    */
+*/
 
-    $("#methylation-tsne-grouping").change(function() {
-       $("#methylation-tsne-grouping").val($(this).val());
-   });
-    $("#methylation-clustering-algorithm, #methylation-clustering-box-heat-algorithm").change(function() {
-       $("#methylation-clustering-algorithm, #methylation-clustering-box-heat-algorithm").val($(this).val());
-   });
-    $("#methylation-clustering-methylation, #methylation-clustering-box-heat-methylation").change(function() {
-       $("#methylation-clustering-methylation, #methylation-clustering-box-heat-methylation").val($(this).val());
-   });
+$("#methylation-tsne-grouping").change(function() {
+   $("#methylation-tsne-grouping").val($(this).val());
+});
+$("#methylation-clustering-algorithm, #methylation-clustering-box-heat-algorithm").change(function() {
+   $("#methylation-clustering-algorithm, #methylation-clustering-box-heat-algorithm").val($(this).val());
+});
+$("#methylation-clustering-methylation, #methylation-clustering-box-heat-methylation").change(function() {
+   $("#methylation-clustering-methylation, #methylation-clustering-box-heat-methylation").val($(this).val());
+});
 
-    /* Data Modality*/
-    $("#data-modality").change(function() {
-      if($(this).val() ===  "snmC-seq" ) {
-        $("#snmC-seq-view").show();
-        $("#snATAC-seq-view").hide();
-        $("#RNA-seq-view").hide();
-        $("#marker-table-view").hide();
-    } else if($(this).val() === "snATAC-seq" ) {
-        $("#snATAC-seq-view").show();
-        $("#snmC-seq-view").hide();
-        $("#RNA-seq-view").hide();
-        $("#marker-table-view").hide();
-    }
-    else if($(this).val() === "RNA-seq"){
-        $("#RNA-seq-view").show();
-        $("#snmC-seq-view").hide();
-        $("#snATAC-seq-view").hide();
-        $("#marker-table-view").hide();
-    } else {
-      $("#snmC-seq-view").hide();
-      $("#snATAC-seq-view").hide();
-      $("#RNA-seq-view").hide();
-      $("#marker-table-view").show();
+/* Data Modality*/
+$("#data-modality").change(function() {
+  if($(this).val() ===  "snmC-seq" ) {
+    $("#snmC-seq-view").show();
+    $("#snATAC-seq-view").hide();
+    $("#RNA-seq-view").hide();
+    $("#marker-table-view").hide();
+} else if($(this).val() === "snATAC-seq" ) {
+    $("#snATAC-seq-view").show();
+    $("#snmC-seq-view").hide();
+    $("#RNA-seq-view").hide();
+    $("#marker-table-view").hide();
+}
+else if($(this).val() === "RNA-seq"){
+    $("#RNA-seq-view").show();
+    $("#snmC-seq-view").hide();
+    $("#snATAC-seq-view").hide();
+    $("#marker-table-view").hide();
+} else {
+  $("#snmC-seq-view").hide();
+  $("#snATAC-seq-view").hide();
+  $("#RNA-seq-view").hide();
+  $("#marker-table-view").show();
 
-  }
+}
 });
     /*
     $("#methylation-clustering-npc, #methylation-clustering-box-heat-npc").change(function() {
          $("#methylation-clustering-npc, #methylation-clustering-box-heat-npc").val($(this).val());
     });
-    */
+*/
 
     // 1.1 Updating K-value
     $("#methylation-clustering-k, #methylation-clustering-box-heat-k").change(function() {
@@ -532,5 +526,5 @@
             }
         }, 300);
     });
-</script>
-{% endblock %}
+    </script>
+    {% endblock %}
