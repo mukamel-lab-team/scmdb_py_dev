@@ -432,14 +432,7 @@ function getMax(arr, prop) {
 }
 
 function generateBrowserURL(gene) {
-    // let base = 'http://brainome.ucsd.edu/annoj_private/CEMBA/index';
     let base = 'http://brainome.ucsd.edu/annoj_private/CEMBA/cemba.php?ens='+ensemble.replace(/Ens/g, "");
-    
-    // if (ensemble === 'Ens1') {
-    //     base += '.html';
-    // } else { 
-    //     base += '_' + ensemble + '.html';
-    // }
 
     const chrom = gene.chr.replace(/^\D+/g, "");
 
@@ -566,7 +559,7 @@ function populateMethylationTSNEDropdowns(data) {
         );
     });
     dynamicMethylationTSNEOptions_dimensions();
-    
+
     // $.each(data['tsne_methylation'], function(key, val) {
     //     $(".methylation-tsne-methylation").append(
     //         $('<option></option>').val(val).text(val)
@@ -577,7 +570,7 @@ function populateMethylationTSNEDropdowns(data) {
     //         $('<option></option>').val(val).text(val)
     //     );
     // });
-    
+
     $.each(data["clustering_algorithms"], function(key, val) {
         $(".methylation-clustering-algorithms").append(
             $('<option></option>').val(val).text(val)
@@ -713,11 +706,12 @@ function dynamicMethylationTSNEOptions_dimensions(matching_tsne_options = []) {
     dynamicMethylationTSNEOptions_methylation(matching_tsne_options);
 }
 
+// Updating tsne methylation Levels
 function dynamicMethylationTSNEOptions_methylation(matching_tsne_options = []) {
 
     if (matching_tsne_options.length === 0) {
         const regex = new RegExp('^'+$(".methylation-tsne-methylation").val()+"_ndim"+$(".methylation-tsne-dimensions").val()+ "_\\w+");
-
+		// console.log(regex);
         for (let i = 0; i < global_all_methylation_tsne_settings.length; i++) {
             if (global_all_methylation_tsne_settings[i].match(regex) !== null) {
                 matching_tsne_options.push(global_all_methylation_tsne_settings[i]);
@@ -738,7 +732,7 @@ function dynamicMethylationTSNEOptions_methylation(matching_tsne_options = []) {
             $("<option></option>").val(perplexity_list[i]).text(perplexity_list[i])
         );
     }
-}   
+}
 
 function dynamicMethylationClusteringOptions_algorithm() {
     var matching_clustering_options = [];
@@ -834,7 +828,7 @@ function dynamicMethylationClusteringOptions_npc(matching_clustering_options = [
                 $("<option selected></option>").val(k_list[i]).text(k_clusters_list[i])
             );
         }
-        else { 
+        else {
             $(".methylation-clustering-k").append(
                 $("<option></option>").val(k_list[i]).text(k_clusters_list[i])
             );
@@ -992,22 +986,29 @@ function updateGeneElements(updateMCHScatter=true) {
 }
 
 function updateMCHScatterPlot(onlyUpdatetSNEandClustering=false) {
-    let levelType = $('#level').val();;
+	// Methylation type
+	let levelType = $('#methylation-levels').val();
+    // let levelType = $('#level').val();
     let methylationType = $("#mType").val();
     let methylation_color_percentile_Values = methylation_color_percentile_Slider.getValue();
     let genes = $("#geneName").select2('data');
     let grouping = $('#methylation-tsne-grouping').val();
     let genes_query = "";
 
+	// Used variables: methylation type (tSNE), tSNE perplexity, methylation-tsne-dimensions
     let tsne_setting = $("#methylation-tsne-methylation").val() + "_ndim" + $("#methylation-tsne-dimensions").val() + "_perp" + $("#methylation-tsne-perplexity").val();
-    let clustering = $("#methylation-clustering-methylation").val()+"_"+$("#methylation-clustering-algorithms").val()+"_npc50"+"_k"+$("#methylation-clustering-k").val();
 
+	// Used variables: methylationType (clustering), methylation-algorithms(???), k-value
+	let clustering = $("#methylation-clustering-methylation").val()+"_"+$("#methylation-clustering-algorithms").val()+"_npc50"+"_k"+$("#methylation-clustering-k").val();
+	console.log(clustering);
+	// Check the outlier option
     if ($('#methylation_tsneOutlierToggle').prop('checked')) {
         var tsneOutlierOption = 'false';
     } else {
         var tsneOutlierOption = 'true';
     }
 
+	// Update genes if needed
     if (!onlyUpdatetSNEandClustering) {
         for (i = 0; i < genes.length; i++) {
             genes_query += (genes[i].id + "+");
@@ -1021,6 +1022,7 @@ function updateMCHScatterPlot(onlyUpdatetSNEandClustering=false) {
     }
     genes_query = genes_query.slice(0,-1);
 
+	// Load the data
     if ($('#geneName option:selected').val() != 'Select..') {
         $.ajax({
         //$.getJSON({
@@ -1238,7 +1240,7 @@ function initClusterSpecificMarkerGeneTable() {
     if ($('#clusterMarkerGeneTable').length > 0) {
         //$('#clusterMarkerGeneTable').DataTable().destroy(true);
         $('#clusterMarkerGeneTableDiv').html(htmlTable);
-    } 
+    }
     $.ajax({
         type: "GET",
         url: './cluster/marker_genes/'+ensemble+'/'+clustering,
@@ -1262,7 +1264,7 @@ function initClusterSpecificMarkerGeneTable() {
             clusterMarkerGeneTable.select.items('column');
             delayLoad(clusterMarkerGeneTable.draw());
 
-            // Fills gene search bar with genes in column when user clicks. 
+            // Fills gene search bar with genes in column when user clicks.
             clusterMarkerGeneTable.on('select', function(e, dt, type, indexes) {
                 var data = clusterMarkerGeneTable.columns( indexes ).data();
                 genes_query = data[0].join('+');
@@ -1287,7 +1289,8 @@ function initClusterSpecificMarkerGeneTable() {
 }
 
 function updateMCHBoxPlot() {
-    let levelType = $('#level').val();;
+    let levelType = $('#methylation-levels').val();
+    // let levelType = $('#level').val();
     let methylationType = $("#mType").val();
     let geneSelected = $('#geneName option:selected').val();
     let grouping = $('#methylation-tsne-grouping').val();
@@ -1407,8 +1410,9 @@ function updateRNABoxPlot() {
 }
 
 function updateMCHCombinedBoxPlot(mmu_gid, hsa_gid) {
-    let levelType = $('#level').val();;
-    let methylationType = $("#mType").val();
+    let levelType = $('#methylation-levels').val();
+    // let levelType = $('#level').val();
+   let methylationType = $("#mType").val();
     if ($('#methylation-tsneOutlierToggle').prop('checked')) {
         var outlierOption = 'outliers';
     } else {
@@ -1429,7 +1433,8 @@ function updateMCHCombinedBoxPlot(mmu_gid, hsa_gid) {
 }
 
 function updateMethylationHeatmap() {
-    let levelType = $('#level').val();;
+    let levelType = $('#methylation-levels').val();
+    // let levelType = $('#level').val();
     let methylationType = $("#mType").val();
     let methylation_box_color_percentile_Values = methylation_box_color_percentile_Slider.getValue();
     let genes = $("#geneName").select2('data');
@@ -1470,7 +1475,8 @@ function updateMethylationHeatmap() {
 }
 
 function updatesnATACHeatmap() {
-    let levelType = $('#level').val();;
+    let levelType = $('#methylation-levels').val();
+    // let levelType = $('#level').val();
     let snATAC_color_percentile_Values = methylation_box_color_percentile_Slider.getValue();
     let genes = $("#geneName").select2('data');
     let genes_query = "";
@@ -1507,7 +1513,8 @@ function updatesnATACHeatmap() {
 }
 
 function updateRNAHeatmap() {
-    let levelType = $('#level').val();;
+    let levelType = $('#methylation-levels').val();
+    // let levelType = $('#level').val();
     let RNA_color_percentile_Values = methylation_box_color_percentile_Slider.getValue();
     let genes = $("#geneName").select2('data');
     let genes_query = "";
@@ -1544,12 +1551,13 @@ function updateRNAHeatmap() {
 }
 
 function updateMethylationHeatmapTwoSpecies() {
-    let levelType = $('#level').val();;
+    let levelType = $('#methylation-levels').val();
+    // let levelType = $('#level').val();
     let methylationType = $("#mType").val();
     let methylation_color_percentile_Values = methylation_color_percentile_Slider.getValue();
     let genes = $("#geneName").select2('data');
     let genes_query = "";
-    
+
     for (i = 0; i < genes.length; i++) {
         genes_query += (genes[i].id + "+");
     }

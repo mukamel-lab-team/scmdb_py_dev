@@ -8,6 +8,7 @@
 
         <div class="container" style="margin-top: 50px; margin-bottom: 50px;">
             <!-- Methylation PLOTS -->
+            {% if methylation_data_available == 1 %}
             <div style="position:relative; left:0; z-index:2;">
                 <div id="snmC-seq-view" class="col-md-12 col-sm-12">
                    <div class="panel panel-default panel-main" style="overflow-x: auto; margin-left:auto; margin-right:auto;">
@@ -54,6 +55,7 @@
                     </div>
                 </div>
             </div>
+            {% endif %}
 
             <!-- snATAC Plots -->
             {% if snATAC_data_available == 1 %}
@@ -211,6 +213,7 @@
     var ensemble = "{{ ensemble }}";
     var ensemble_name = "{{ ensemble_name }}";
     var RS2 = {{ RS2 }};
+    var methylation_data_available = {{ methylation_data_available }};
     var snATAC_data_available = {{ snATAC_data_available }};
     var RNA_data_available = {{ RNA_data_available }};
     var num_algorithm_options = {{ num_algorithm_options }};
@@ -250,18 +253,20 @@
         }
         ).data('slider');
 
-        methylation_box_color_percentile_Slider = $("#methylation_box_color_percentile").slider({
-            min: 0,
-            max: 1,
-            step: 0.05,
-            value: [0.05, 0.95],
-        }).on('slideStop', function()
-        {
-            updateMethylationHeatmap();
-            updatesnATACHeatmap();
-            updateRNAHeatmap();
+        if (methylation_data_available === 1) {
+            methylation_box_color_percentile_Slider = $("#methylation_box_color_percentile").slider({
+                min: 0,
+                max: 1,
+                step: 0.05,
+                value: [0.05, 0.95],
+            }).on('slideStop', function()
+            {
+                updateMethylationHeatmap();
+                updatesnATACHeatmap();
+                updateRNAHeatmap();
+            }
+            ).data('slider');
         }
-        ).data('slider');
 
         if (snATAC_data_available === 1) {
             snATAC_color_percentile_Slider = $("#snATAC_color_percentile").slider({
