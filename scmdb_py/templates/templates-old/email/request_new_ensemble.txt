@@ -1,0 +1,10 @@
+Hello,
+
+{{ user.full_name() }} would like to create a new ensemble.
+Ensemble Name: {{ ensemble_name }}
+Datasets to include: {{ datasets }}
+Description: {{ description }}
+
+Thank you
+
+Note: replies to this email address are not monitored.

@@ -1,0 +1,78 @@
+{% macro render_menu_items(endpoints) %}
+    {% for endpoint, name, icon, id in endpoints %}
+    <a id="{{ id }}" class="item {% if request.endpoint == endpoint %}active{% endif %}" href="{% if endpoint == 'frontend.ensemble' %} {{ url_for(endpoint, ensemble_name=name) }} {% else %} {{ url_for(endpoint) }} {% endif %}">
+            {% if icon %}
+                <i class="{{ icon }}">&nbsp;&nbsp;</i>
+            {% endif %}
+            {{ name | safe }}
+        </a>
+    {% endfor %}
+{% endmacro %}
+
+{% macro header_items(current_user) %}
+    {% set endpoints = [
+      ('frontend.index', 'Browser', 'fas fa-home fa-sm', 'browser'),
+      ('frontend.ensemble_tabular_screen', 'Ensembles', 'fas fa-eye fa-sm', 'ensemble-tabular-rs1'),
+      ('frontend.dataset_tabular_screen_rs1', 'RS1 Summary', 'fas fa-table fa-sm', 'dataset-tabular-rs1'),
+      ('frontend.dataset_tabular_screen_rs2', 'RS2 Summary', 'fas fa-table fa-sm', 'dataset-tabular-rs1'),
+      ('frontend.CEMBA_lims', 'LIMS', 'fas fa-clipboard-list fa-sm', 'lims'),
+      ('frontend.request_new_ensemble', 'Request a new ensemble', 'fas fa-plus-square fa-sm', 'request_new_ensemble'),
+    ]%}
+    
+    {{ render_menu_items( endpoints ) }}
+{% endmacro %}
+
+{# This renders the right hand side of the navigation bar. If the user is logged in, it links to
+   manage their account and logout (account routes). Otherwise, it links to register and login.
+#}
+{% macro account_items(current_user) %}
+    {% set user = [] %}
+    {% if current_user.can(255) %}
+      {% set user = ([( 'frontend.admin',  'Administrator Dashboard', 'fas fa-cogs fa-sm', 'admin-dashboard')]) %}
+    {% endif %}
+    {% if current_user.is_authenticated %}
+      {% set endpoints = [
+        ('frontend.manage', 'Account', 'fas fa-user fa-sm', 'manage-account'),
+        ('frontend.logout', 'Logout', 'fas fa-sign-out-alt fa-sm', 'logout')
+      ] %}
+    {% else %}
+      {% set endpoints = [
+        ('frontend.login', 'Login', 'fas fa-sign-in-alt fa-sm', 'login')
+      ] %}
+    {% endif %}
+    {{ render_menu_items(user + endpoints) }}
+{% endmacro %}
+
+{% macro create_dropdown(dropdown) %}
+  {% for item in dropdown %}
+    {% if item | length == 3 %}
+      {{ render_menu_items([item]) }}
+    {% elif item | length == 2 %}
+      <div class="ui dropdown item" onClick="changeMenu(this)">{{ item[0] }} <i class="dropdown icon"></i>
+        <div class="inverted black menu">
+          {{ create_dropdown(item[1]) }}
+        </div>
+      </div>
+    {% endif %}
+  {% endfor %}
+{% endmacro %}
+
+{% macro desktop_nav(current_user, dropdown=None) %}
+    <div class="computer tablet only row">
+        <div class="ui fixed inverted black main menu" id="navbar">
+            <div class="ui container">
+                {{ header_items(current_user) }}
+                {{ create_dropdown(dropdown) }}
+            </div>
+            <div class="right menu">
+                    {{ account_items(current_user) }}
+            </div>
+        </div>
+    </div>
+{% endmacro %}
+
+{% macro render_nav(current_user, dropdown=[]) %}
+    <nav class="ui navigation grid {% if endpoints %}has-submenu{% endif %}">
+        {{ desktop_nav(current_user, dropdown=dropdown) }}
+    </nav>
+{% endmacro %}

@@ -1,0 +1,21 @@
+<div class="panel-body" style="padding-top:0px;">
+    <div class="container">
+        <div class="col-md-offset-2">
+            <input id="snATAC-smoothing-toggle" data-on="Normalized" data-off="Unnormalized" type="checkbox" checked>
+            <label for="snATAC-smoothing-toggle">
+                Show smoothed snATAC values
+            </label>
+        </div>                
+        <div id="snATAC-scatter-loader" class="loader"></div>
+        <div id="plot-snATAC-scatter"></div>
+    </div>
+    <div id="snATAC_tsneOutlierOptions" style="float:left;">
+        <input id="snATAC_tsneOutlierToggle" data-toggle="toggle" data-on="Outliers On" data-off="Outliers Off" type="checkbox">
+    </div>
+    <div class="col-xs-12 col-sm-3" id="snATAC_color_percentileCol" style="float:right;">
+        <label for="snATAC_color_percentile" class="control-label" style="text-align: right">Color scale percentile:&nbsp;</label>
+        <input id="snATAC_color_percentile" type="text" value="" />
+    </div>
+</div>
+
+
