@@ -940,7 +940,9 @@ function updateGeneElements(updateMCHScatter=true) {
             storage.save('lastViewedGenes', lastViewedGenes, 30);  // store last viewed genes for 30 minutes
         }
         if (updateMCHScatter){
-            updateMCHScatterPlot();
+            if (methylation_data_available === 1) {
+                updateMCHScatterPlot();
+            }
             if (snATAC_data_available === 1) {
                 updatesnATACScatterPlot();
             }
@@ -948,7 +950,7 @@ function updateGeneElements(updateMCHScatter=true) {
                 updateRNAScatterPlot();
             }
         }
-        updateClustersBarPlot();
+        try {updateClustersBarPlot();} catch(err) {};
         $('#epiBrowserLink').removeClass('disabled');
         if($("#geneName").select2('data').length > 1) {
             $('#normalize-heatmap').show();

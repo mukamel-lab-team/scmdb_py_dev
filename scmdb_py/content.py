@@ -957,6 +957,7 @@ def get_gene_methylation(ensemble, methylation_type, gene, grouping, clustering,
 
 	return df
 
+@cache.memoize(timeout=3600)
 def get_gene_from_mysql(ensemble, gene_table_name, methylation_type, clustering, tsne_type):
 	"""Helper function to fetch a gene's methylation information from mysql.
 
