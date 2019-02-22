@@ -1245,7 +1245,7 @@ function initClusterSpecificMarkerGeneTable() {
         success: function(data) {
             let columns = [ { mData: "rank", sTitle: "rank" } ];
             $.each(data.columns, function(i, cluster) {
-                columns.push({ mData: cluster, sTitle: cluster, 
+                columns.push({ mData: cluster, sTitle: cluster,
                 "defaultContent": "-", });
             });
             clusterMarkerGeneTable = $('#clusterMarkerGeneTable').DataTable( {
@@ -1510,7 +1510,7 @@ function updatesnATACHeatmap() {
     });
 }
 
-function updateRNAHeatmap() {
+function updateRNAHeatmap(normalize) {
     let levelType = $('#methylation-levels').val();
     // let levelType = $('#level').val();
     let RNA_color_percentile_Values = methylation_box_color_percentile_Slider.getValue();
@@ -1521,12 +1521,12 @@ function updateRNAHeatmap() {
     for (i = 0; i < genes.length; i++) {
         genes_query += (genes[i].id + "+");
     }
-    if ($('#RNA-box-heat-normalize-toggle').prop('checked')) {
-        var normalize = 'true';
-    }
-    else {
-        var normalize = 'false';
-    }
+    // if ($('#RNA-box-heat-normalize-toggle').prop('checked')) {
+    //     var normalize = 'true';
+    // }
+    // else {
+    //     var normalize = 'false';
+    // }
     genes_query = genes_query.slice(0,-1);
 
     $.ajax({

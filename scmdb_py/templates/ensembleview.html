@@ -227,6 +227,7 @@
     var buttons;
     var table;
     var clusterMarkerGeneTable;
+	// var normalized = false;
 
     $(document).ready(function() {
         $('[data-toggle="popover"]').popover();
@@ -360,20 +361,32 @@
         }
     });
 
-    $("#methylation-box-heat-normalize-toggle").change(function() {
+	$("#methylation-box-heat-normalize-toggle").change(function() {
+		if ($("#methylation-box-heat-normalize-toggle").prop('checked')){
+			var normalize = true;
+		} else {
+			var normalize = false;
+		}
+
         if ($('#geneName').select2('data').length > 1) {
             if ($('#orthologsToggle').prop('checked'))
                 updateMethylationHeatmapTwoSpecies();
             else
                 updateMethylationHeatmap();
         }
-    });
 
-    $("#RNA-box-heat-normalize-toggle").change(function() {
-        if ($('#geneName').select2('data').length > 1) {
-            updateRNAHeatmap();
+		if ($('#geneName').select2('data').length > 1) {
+            updateRNAHeatmap(normalize);
+			// console.log('Hello!');
         }
     });
+
+    // $("#RNA-box-heat-normalize-toggle").change(function() {
+    //     if ($('#geneName').select2('data').length > 1) {
+    //         updateRNAHeatmap();
+	// 		console.log('Hello1!');
+    //     }
+    // });
 
     $("#clusters-bar-normalize-toggle").change(function() {
         updateClustersBarPlot();
