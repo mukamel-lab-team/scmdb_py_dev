@@ -181,6 +181,7 @@
 
     <h6>Display Options</h6>
     {% if num_dims_options > 1 %}
+            <!-- <div style="display:inline-block"> -->
         {% else %}
         <div style="display:none">
             {% endif %}
@@ -195,7 +196,7 @@
             &nbsp;
         </div>
 
-    <!--Data Modality -->
+        <!--Data Modality -->
     <div>
         <label class="control-label">
             <a href="javascript:void(0);" class="hover-tooltip" data-toggle="popover" data-trigger="hover"
@@ -210,7 +211,7 @@
             {% if RNA_data_available == 1 %}
             <option value="RNA-seq">Transcriptome (RNA-seq)</option>
             {% endif %}
-    		 <option value="Gene-marker">Cluster specific marker genes table</option>
+             <option value="Gene-marker">Cluster specific marker genes table</option>
         </select>
     </div>
 
@@ -246,18 +247,6 @@
         </select>
     </div>
 
-    <!-- Cluster Marker Genes -->
-    <!-- <div>
-        <label class="control-label">
-            <a href="javascript:void(0);" class="hover-tooltip" data-toggle="popover" data-trigger="hover"
-                   data-placement="bottom" title="Cluster marker genes"
-                   data-content="Cluster marker genes to be explained.">Cluster marker genes: </a>
-             </label>
-        <select id="" style="width:30%">
-            <option value="0">Select..</option>
-        </select>
-    </div> -->
-
     <!-- Color Points By -->
     <div>
         <label class="control-label">
@@ -276,88 +265,6 @@
             <option value="target_region">by RS2 target region</option>
             {% endif %}
         </select>
-    </div>
-
-    <!-- Methylation Type for Display -->
-    {% if num_algorithm_options > 1 %}
-    <div style="display: inline-block; float: left;">
-        {% else %}
-        <div style="display: none">
-            {% endif %}
-            <label for="methylation-clustering-algorithms" class="control-label">
-                <a class="hover-tooltip" href="javascript:void(0);" data-toggle="popover"
-                           data-trigger="hover" data-placement="bottom" title="Algorithm"
-                           data-content="lv = Louvain Modularity.">Algorithm: </a>
-            </label>
-            <select id="methylation-clustering-algorithms"
-                            class="methylation-clustering-algorithms methylation-tsneoption"
-                            name="methylation-clustering-algorithms"></select>
-            &nbsp;
-        </div>
-        <div style="display: inline-block; float: left;">
-            <label for="methylation-clustering-methylation" class="control-label">
-                <a class="hover-tooltip" href="javascript:void(0);" data-toggle="popover"
-                           data-trigger="hover" data-placement="bottom" title="Methylation Type"
-                           data-content="Types of methylation used for clustering.">Methylation type for
-                            display: </a>
-            </label>
-            <select id="methylation-clustering-methylation"
-                            class="methylation-clustering-methylation methylation-tsneoption"
-                            name="methylation-clustering-methylation"></select>
-        </div>
-
-    <!-- Normalization -->
-    <div>
-    <label for="methylation-box-heat-normalize-toggle" class="control-label">
-        <a class="hover-tooltip" href="javascript:void(0);" data-toggle="popover" data-trigger="hover"
-                   data-placement="bottom" title="Normalize by Gene"
-                       data-content="Min-Max normalization across each row. (Only for heatmap).">Normalization</a>
-        </label>
-        <input id="methylation-box-heat-normalize-toggle" name="methylation-box-heat-normalize-checkbox"
-                       value="normalize" type="checkbox">
-    </div>
-
-
-
-    <h6>Analysis Parameters</h6>
-
-    <!-- K-value -->
-    <div style="display: inline-block">
-        <label class="control-label" for="methylation-clustering-k">
-            <a class="hover-tooltip" href="javascript:void(0);" data-toggle="popover" data-trigger="hover"
-               data-placement="bottom" title="K-value"
-               data-content="Number of nearest neighbors (neighboring cells).">K-value: </a>
-        </label>
-        <select id="methylation-clustering-k" class="methylation-clustering-k methylation-tsneoption"
-                name="methylation-clustering-k"></select>
-    </div>
-
-    <!-- tSNE Methylation Type -->
-    <div style="display:inline-block">
-        <label class="control-label" for="methylation-tsne-methylation">
-                    <a href="javascript:void(0);" class="hover-tooltip" data-toggle="popover" data-trigger="hover"
-                       data-placement="bottom" title="Methylation Type"
-                       data-content="Type of methylation used to calculate tSNE coordinates.">tSNE Methylation
-                        Type: </a>
-        </label>
-        <select id="methylation-tsne-methylation" class="methylation-tsne-methylation methylation-tsneoption"
-                name="methylation-tsne-methylation">
-        </select>
-        &nbsp;
-    </div>
-
-    <!-- tSNE Perplexity -->
-    <div style="display:inline-block">
-        <!-- {% if num_perplexity_options > 1 %} -->
-        <label class="control-label" for="ethylation-tsne-perplexity">
-            <a href="javascript:void(0);" class="hover-tooltip" data-toggle="popover" data-trigger="hover"
-                       data-placement="bottom" title="Perplexity" data-content="Parameter for tuning tSNE.">tSNE
-                        Perplexity: </a>
-        </label>
-        <select id="methylation-tsne-perplexity" class="methylation-tsne-perplexity methylation-tsneoption"
-                        name="methylation-tsne-perplexity">
-        </select>
-                <!-- {% endif %} -->
     </div>
 
     <!-- Methylation Type -->
@@ -391,6 +298,90 @@
         </select>
     </div>
 
+    <!-- Normalization -->
+    <div>
+    <label for="methylation-box-heat-normalize-toggle" class="control-label">
+        <a class="hover-tooltip" href="javascript:void(0);" data-toggle="popover" data-trigger="hover"
+                   data-placement="bottom" title="Normalize by Gene"
+                       data-content="Min-Max normalization across each row. (Only for heatmap).">Normalization</a>
+        </label>
+        <input id="methylation-box-heat-normalize-toggle" name="methylation-box-heat-normalize-checkbox"
+                       value="normalize" type="checkbox">
+    </div>
+
+
+    <h6>Analysis Parameters</h6>
+
+    <!-- K-value -->
+    <div style="display: inline-block">
+        <label class="control-label" for="methylation-clustering-k">
+            <a class="hover-tooltip" href="javascript:void(0);" data-toggle="popover" data-trigger="hover"
+               data-placement="bottom" title="K-value"
+               data-content="Number of nearest neighbors (neighboring cells).">K-value: </a>
+        </label>
+        <select id="methylation-clustering-k" class="methylation-clustering-k methylation-tsneoption"
+                name="methylation-clustering-k"></select>
+    </div>
+
+    <!-- Methylation Type for Display -->
+    {% if num_algorithm_options > 1 %}
+    <div style="display: inline-block; float: left;">
+        {% else %}
+        <div style="display: none">
+            {% endif %}
+            <label for="methylation-clustering-algorithms" class="control-label">
+                <a class="hover-tooltip" href="javascript:void(0);" data-toggle="popover"
+                           data-trigger="hover" data-placement="bottom" title="Algorithm"
+                           data-content="lv = Louvain Modularity.">Algorithm: </a>
+            </label>
+            <select id="methylation-clustering-algorithms"
+                            class="methylation-clustering-algorithms methylation-tsneoption"
+                            name="methylation-clustering-algorithms"></select>
+            &nbsp;
+        </div>
+
+        <h6 style="font-size: 15px; color: white; font-weight: bold; padding-left: 32px;">Methylation Type:</h6>
+
+        <div style="display: inline-block; float: left; padding-left: 32px;">
+            <label for="methylation-clustering-methylation" class="control-label">
+                <a class="hover-tooltip" href="javascript:void(0);" data-toggle="popover"
+                           data-trigger="hover" data-placement="bottom" title="Methylation Type"
+                           data-content="Types of methylation used for clustering.">For
+                            Clustering </a>
+            </label>
+            <select style="width:70px;" id="methylation-clustering-methylation"
+                            class="methylation-clustering-methylation methylation-tsneoption"
+                            name="methylation-clustering-methylation"></select>
+        </div>
+
+    <!-- tSNE Methylation Type -->
+    <div style="display:inline-block; padding-left: 32px;">
+        <label class="control-label" for="methylation-tsne-methylation">
+                    <a href="javascript:void(0);" class="hover-tooltip" data-toggle="popover" data-trigger="hover"
+                       data-placement="bottom" title="Methylation Type"
+                       data-content="Type of methylation used to calculate tSNE coordinates.">For tSNE </a>
+        </label>
+        <select id="methylation-tsne-methylation" class="methylation-tsne-methylation methylation-tsneoption"
+                name="methylation-tsne-methylation">
+        </select>
+        &nbsp;
+    </div>
+
+    <!-- tSNE Perplexity -->
+    <div style="display:inline-block">
+        <!-- {% if num_perplexity_options > 1 %} -->
+        <label class="control-label" for="ethylation-tsne-perplexity">
+            <a href="javascript:void(0);" class="hover-tooltip" data-toggle="popover" data-trigger="hover"
+                       data-placement="bottom" title="Perplexity" data-content="Parameter for tuning tSNE.">tSNE
+                        Perplexity: </a>
+        </label>
+        <select id="methylation-tsne-perplexity" class="methylation-tsne-perplexity methylation-tsneoption"
+                        name="methylation-tsne-perplexity">
+        </select>
+                <!-- {% endif %} -->
+    </div>
+
+
     <div style="display:inline-block;">
         &nbsp;
     </div>
@@ -402,12 +393,9 @@
     <!-- <div class="container">
         <div class="row"> -->
             <!-- <div id="methylation_tsneType"> -->
-
-
-    <br>
     <br>
 
-    <button class="btn-sm btn-primary methylation-tsneUpdateBtn" id="methylation-tsneUpdateBtn" style="width:100%">Update
+    <button class="btn-sm btn-primary methylation-tsneUpdateBtn" id="methylation-tsneUpdateBtn" onclick="closeNav()" style="width:100%">Update
     </button>
                 <!-- </div> -->
 
