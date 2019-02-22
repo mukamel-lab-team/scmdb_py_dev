@@ -44,13 +44,11 @@ class FailToGraphException(Exception):
 	"""Fail to generate data or graph due to an internal error."""
 	pass
 
-# @content.route('/content/metadata/')
-# def get_metadata():
-
-# 	result = db.get_engine(current_app, 'methylation_data').execute("SELECT * FROM cells;").fetchall()
-# 	result = [dict(r) for r in result]
-
-# 	return json.dumps({"data": result})
+@content.route('/content/metadata/')
+def get_metadata():
+	result = db.get_engine(current_app, 'methylation_data').execute("SELECT * FROM cells;").fetchall()
+	result = [dict(r) for r in result]
+	return json.dumps({"data": result})
 
 
 @content.route('/content/ensembles')
@@ -687,11 +685,13 @@ def get_methylation_tsne_options(ensemble):
 
 	list_algorithms_clustering = list(set([x.split('_')[1] for x in list_clustering_types]))
 
+
 	#list_mc_types_clustering = sorted(list(set([x.split('_')[0] for x in list_clustering_types])), key=lambda mC_type: methylation_types_order.index(mC_type))
 	#list_algorithms_clustering = sorted(list(set([x.split('_')[1] for x in list_clustering_types if list_mc_types_clustering[0] == x.split('_')[0]])))
 	#list_npc_clustering = sorted(list(set([int(x.split('_')[2].replace('npc', '')) for x in list_clustering_types if (list_mc_types_clustering[0]+'_'+list_algorithms_clustering[0]) in x])))
 	#list_k_clustering = sorted(list(set([int(x.split('_')[3].replace('k', '')) for x in list_clustering_types if (list_mc_types_clustering[0]+'_'+list_algorithms_clustering[0]+'_npc'+str(list_npc_clustering[0])) in x])))
 
+	metadata = get_metadata();
 
 	return {'all_tsne_settings': list_tsne_types, 
 			'tsne_methylation': list_mc_types_tsne,
@@ -699,7 +699,8 @@ def get_methylation_tsne_options(ensemble):
 			'all_clustering_settings2': dict_clustering_types_and_numclusters,
 			'clustering_algorithms': list_algorithms_clustering,
 			'tsne_dimensions': list_dims_tsne_first,
-			'tsne_perplexity': list_perp_tsne_first,}
+			'tsne_perplexity': list_perp_tsne_first,
+			'methylation_metadata_fields': metadata}
 			#'clustering_methylation': list_mc_types_clustering,}
 			#'clustering_npc': list_npc_clustering,
 			#'clustering_k': list_k_clustering,}

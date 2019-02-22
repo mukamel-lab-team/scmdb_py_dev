@@ -217,6 +217,7 @@
     var num_algorithm_options = {{ num_algorithm_options }};
     var num_dims_options = {{ num_dims_options }};
     var num_perplexity_options = {{ num_perplexity_options }};
+    var methylation_metadata_fields = {{ methylation_metadata_fields|safe }};
     var methylation_tsne_options = {{ methylation_tsne_options|safe }};
     var methylation_color_percentile_Slider;
     var snATAC_color_percentile_Slider;
@@ -301,7 +302,6 @@
         buttons = $('.modebar-btn');
 
         $("#marker-table-view").hide();
-
 
         populateMethylationTSNEDropdowns(methylation_tsne_options)
         initGeneNameSearch();

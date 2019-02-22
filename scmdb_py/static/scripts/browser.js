@@ -552,6 +552,7 @@ function populateMethylationTSNEDropdowns(data) {
     window.global_all_methylation_tsne_settings = data['all_tsne_settings'];
     window.global_all_methylation_clustering_settings = data['all_clustering_settings'];
     window.global_all_methylation_clustering_settings2 = data['all_clustering_settings2'];
+    // window.global_all_methylation_metadata_fields = data['methylation_metadata_fields'];
 
     $.each(data["tsne_dimensions"], function(key, val) {
         $(".methylation-tsne-dimensions").append(
@@ -559,6 +560,13 @@ function populateMethylationTSNEDropdowns(data) {
         );
     });
     dynamicMethylationTSNEOptions_dimensions();
+
+    $.each(data["tsne_dimensions"], function(key, val) {
+        $(".methylation-tsne-grouping").append(
+            $('<option></option>').val(val).text(val)
+        );
+    });
+
 
     // $.each(data['tsne_methylation'], function(key, val) {
     //     $(".methylation-tsne-methylation").append(
@@ -798,6 +806,9 @@ function dynamicMethylationClusteringOptions_methylation(matching_clustering_opt
     dynamicMethylationClusteringOptions_npc(matching_clustering_options);
 }
 
+function dynamicMetadataFields() {
+
+}
 
 function dynamicMethylationClusteringOptions_npc(matching_clustering_options = []) {
     if (matching_clustering_options.length === 0) {
