@@ -44,11 +44,11 @@ class FailToGraphException(Exception):
 	"""Fail to generate data or graph due to an internal error."""
 	pass
 
-@content.route('/content/metadata/')
-def get_metadata():
-	result = db.get_engine(current_app, 'methylation_data').execute("SELECT * FROM cells;").fetchall()
-	result = [dict(r) for r in result]
-	return json.dumps({"data": result})
+# @content.route('/content/metadata/')
+# def get_metadata():
+# 	result = db.get_engine(current_app, 'methylation_data').execute("SELECT * FROM cells LIMIT 1;").fetchall()
+# 	result = [dict(r) for r in result]
+# 	return json.dumps({"data": result})
 
 
 @content.route('/content/ensembles')
@@ -690,7 +690,11 @@ def get_methylation_tsne_options(ensemble):
 	#list_npc_clustering = sorted(list(set([int(x.split('_')[2].replace('npc', '')) for x in list_clustering_types if (list_mc_types_clustering[0]+'_'+list_algorithms_clustering[0]) in x])))
 	#list_k_clustering = sorted(list(set([int(x.split('_')[3].replace('k', '')) for x in list_clustering_types if (list_mc_types_clustering[0]+'_'+list_algorithms_clustering[0]+'_npc'+str(list_npc_clustering[0])) in x])))
 
-	metadata = get_metadata();
+	df_metadata = pd.read_sql("SELECT * FROM cells LIMIT 1;", db.get_engine(current_app, 'methylation_data'))
+	df_metadata = df_metadata.filter(regex='^cell_id', axis='columns')
+	df_metadata = df_metadata.filter(regex='^cell_name', axis='columns')
+	list_metadata = [i for i in df_metadata.columns]
+	
 	return {'all_tsne_settings': list_tsne_types, 
 			'tsne_methylation': list_mc_types_tsne,
 			'all_clustering_settings': list_clustering_types,
@@ -698,7 +702,7 @@ def get_methylation_tsne_options(ensemble):
 			'clustering_algorithms': list_algorithms_clustering,
 			'tsne_dimensions': list_dims_tsne_first,
 			'tsne_perplexity': list_perp_tsne_first,
-			'methylation_metadata_fields': metadata,}
+			'methylation_metadata_fields': list_metadata,}
 			#'clustering_methylation': list_mc_types_clustering,}
 			#'clustering_npc': list_npc_clustering,
 			#'clustering_k': list_k_clustering,}

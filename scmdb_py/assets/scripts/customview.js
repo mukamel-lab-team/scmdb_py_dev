@@ -192,6 +192,12 @@ function populateMethylationTSNEDropdowns(data) {
     window.global_all_methylation_clustering_settings = data['all_clustering_settings'];
     window.global_all_methylation_clustering_settings2 = data['all_clustering_settings2'];
 
+    $.each(data["methylation_metadata_fields"], function(key, val) {
+        $(".methylation-tsne-grouping").append(
+            $('<option></option>').val(val).text(val)
+        );
+    });
+    
     $.each(data["tsne_dimensions"], function(key, val) {
         $(".methylation-tsne-dimensions").append(
             $('<option></option>').val(val).text(val)
