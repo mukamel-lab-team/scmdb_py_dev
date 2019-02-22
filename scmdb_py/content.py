@@ -212,6 +212,9 @@ def get_datasets_summary(rs):
 		total_snATAC_cell_each_dataset = db.get_engine(current_app, 'snATAC_data').execute("SELECT dataset, COUNT(*) as `num` FROM cells WHERE dataset LIKE 'CEMBA_RS2_%%' GROUP BY dataset").fetchall()
 	elif rs == "all":
 		dataset_list = db.get_engine(current_app, 'methylation_data').execute("SELECT * FROM datasets").fetchall()
+		dataset_list += db.get_engine(current_app, 'snATAC_data').execute("SELECT * FROM datasets").fetchall()
+		# This is a hack to get unique values in a list of dictionaries
+		dataset_list = list({x['dataset']:x for x in dataset_list}.values()); 
 		total_methylation_cell_each_dataset = db.get_engine(current_app, 'methylation_data').execute("SELECT dataset, COUNT(*) as `num` FROM cells GROUP BY dataset").fetchall()
 		total_snATAC_cell_each_dataset = db.get_engine(current_app, 'snATAC_data').execute("SELECT dataset, COUNT(*) as `num` FROM cells GROUP BY dataset").fetchall()
 	else:
