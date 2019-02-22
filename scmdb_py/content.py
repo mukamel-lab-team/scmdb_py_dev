@@ -690,14 +690,15 @@ def get_methylation_tsne_options(ensemble):
 	#list_npc_clustering = sorted(list(set([int(x.split('_')[2].replace('npc', '')) for x in list_clustering_types if (list_mc_types_clustering[0]+'_'+list_algorithms_clustering[0]) in x])))
 	#list_k_clustering = sorted(list(set([int(x.split('_')[3].replace('k', '')) for x in list_clustering_types if (list_mc_types_clustering[0]+'_'+list_algorithms_clustering[0]+'_npc'+str(list_npc_clustering[0])) in x])))
 
-
+	metadata = get_metadata();
 	return {'all_tsne_settings': list_tsne_types, 
 			'tsne_methylation': list_mc_types_tsne,
 			'all_clustering_settings': list_clustering_types,
 			'all_clustering_settings2': dict_clustering_types_and_numclusters,
 			'clustering_algorithms': list_algorithms_clustering,
 			'tsne_dimensions': list_dims_tsne_first,
-			'tsne_perplexity': list_perp_tsne_first,}
+			'tsne_perplexity': list_perp_tsne_first,
+			'methylation_metadata_fields': metadata,}
 			#'clustering_methylation': list_mc_types_clustering,}
 			#'clustering_npc': list_npc_clustering,
 			#'clustering_k': list_k_clustering,}
