@@ -44,13 +44,11 @@ class FailToGraphException(Exception):
 	"""Fail to generate data or graph due to an internal error."""
 	pass
 
-# @content.route('/content/metadata/')
-# def get_metadata():
-
-# 	result = db.get_engine(current_app, 'methylation_data').execute("SELECT * FROM cells;").fetchall()
-# 	result = [dict(r) for r in result]
-
-# 	return json.dumps({"data": result})
+@content.route('/content/metadata/')
+def get_metadata():
+	result = db.get_engine(current_app, 'methylation_data').execute("SELECT * FROM cells;").fetchall()
+	result = [dict(r) for r in result]
+	return json.dumps({"data": result})
 
 
 @content.route('/content/ensembles')
@@ -200,6 +198,12 @@ def get_datasets_summary(rs):
 	
 	if rs == "rs1":
 		dataset_list = db.get_engine(current_app, 'methylation_data').execute("SELECT * FROM datasets WHERE dataset NOT LIKE 'CEMBA_RS2_%%'").fetchall()
+		dataset_list += db.get_engine(current_app, 'snATAC_data').execute("SELECT * FROM datasets WHERE dataset NOT LIKE 'CEMBA_RS2_%%'").fetchall()
+		total_methylation_cell_each_dataset = db.get_engine(current_app, 'methylation_data').execute("SELECT dataset, COUNT(*) as `num` FROM cells WHERE dataset NOT LIKE 'CEMBA_RS2_%%' GROUP BY dataset").fetchall()
+		total_snATAC_cell_each_dataset = db.get_engine(current_app, 'snATAC_data').execute("SELECT dataset, COUNT(*) as `num` FROM cells WHERE dataset NOT LIKE 'CEMBA_RS2_%%' GROUP BY dataset").fetchall()
+		
+		# This is a hack to get unique values in a list of dictionaries
+		dataset_list = list({x['dataset']:x for x in dataset_list}.values()); 
 		total_methylation_cell_each_dataset = db.get_engine(current_app, 'methylation_data').execute("SELECT dataset, COUNT(*) as `num` FROM cells WHERE dataset NOT LIKE 'CEMBA_RS2_%%' GROUP BY dataset").fetchall()
 		total_snATAC_cell_each_dataset = db.get_engine(current_app, 'snATAC_data').execute("SELECT dataset, COUNT(*) as `num` FROM cells WHERE dataset NOT LIKE 'CEMBA_RS2_%%' GROUP BY dataset").fetchall()
 	elif rs == "rs2":
