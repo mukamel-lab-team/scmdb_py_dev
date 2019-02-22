@@ -970,7 +970,7 @@ def get_gene_from_mysql(ensemble, gene_table_name, methylation_type, clustering,
 	context = methylation_type[1:]
 
 	t0=datetime.datetime.now()
-	print(' Running get_gene_from_mysql for '+gene_table_name+' : '+str(t0)+'; ', file=open(log_file,'a'))# EAM - Profiling SQL
+	# print(' Running get_gene_from_mysql for '+gene_table_name+' : '+str(t0)+'; ', file=open(log_file,'a'))# EAM - Profiling SQL
 	if tsne_type=='noTSNE':
 		query = "SELECT %(gene_table_name)s.%(methylation_type)s, %(gene_table_name)s.%(context)s, \
 			FROM %(ensemble)s  \
@@ -1068,8 +1068,8 @@ def get_mult_gene_methylation(ensemble, methylation_type, genes, grouping, clust
 	# print(' Time '+str(t1-t0)+'; ', file=open(log_file,'a'))# EAM - Profiling SQL
 
 	t0=datetime.datetime.now()
-	print(' Starting mysql queries '+str(t0)+'; ', file=open(log_file,'a'))# EAM - Profiling SQL
-	print('Pool size 1', file=open(log_file,'a'))
+	# print(' Starting mysql queries '+str(t0)+'; ', file=open(log_file,'a'))# EAM - Profiling SQL
+	# print('Pool size 1', file=open(log_file,'a'))
 	df_list = []
 	for i, gene_table_name in enumerate(gene_table_names):
 		t0a=datetime.datetime.now()
@@ -1081,12 +1081,12 @@ def get_mult_gene_methylation(ensemble, methylation_type, genes, grouping, clust
 		if i==0:
 			df_coords=df_all
 		t1a=datetime.datetime.now()
-		print(str(i)+' : ',str(t1a-t0a), file=open(log_file,'a'))
+		# print(str(i)+' : ',str(t1a-t0a), file=open(log_file,'a'))
 
 
 	t1=datetime.datetime.now()
-	print(' Finished mysql queries '+str(t1)+'; ', file=open(log_file,'a'))# EAM - Profiling SQL
-	print(' Time '+str(t1-t0)+'; ', file=open(log_file,'a'))# EAM - Profiling SQL
+	# print(' Finished mysql queries '+str(t1)+'; ', file=open(log_file,'a'))# EAM - Profiling SQL
+	# print(' Time '+str(t1-t0)+'; ', file=open(log_file,'a'))# EAM - Profiling SQL
 	############
 
 	df_all[[methylation_type, context]] = df_all[[methylation_type, context]].apply(pd.to_numeric)
@@ -2363,8 +2363,8 @@ def get_gene_snatac_from_mysql(ensemble, gene_table_name, counts_type, tsne_type
 		return None
 
 	t1=datetime.datetime.now()
-	print(' Running get_gene_snatac_from_mysql for '+gene_table_name+' : '+str(t1-t0)+'; ', file=open(log_file,'a')) # EAM - Profiling SQL
-	print(' query: '+query, file=open(log_file,'a'))
+	# print(' Running get_gene_snatac_from_mysql for '+gene_table_name+' : '+str(t1-t0)+'; ', file=open(log_file,'a')) # EAM - Profiling SQL
+	# print(' query: '+query, file=open(log_file,'a'))
 
 	return df
 
@@ -2449,7 +2449,7 @@ def get_mult_gene_snATAC(ensemble, genes, grouping, smoothing=False):
 	# 	print(str(i)+' loading snATAC: '+str(t1-t0), file=open(log_file, 'a'))
 
 	t0=datetime.datetime.now()
-	print('Pool size 1', file=open(log_file,'a'))
+	# print('Pool size 1', file=open(log_file,'a'))
 	df_list = []
 	df = get_gene_snatac_from_mysql(ensemble, gene_table_names[0], counts_type, 'TSNE')
 	df_all = df_all.append(df)
@@ -2463,13 +2463,13 @@ def get_mult_gene_snATAC(ensemble, genes, grouping, smoothing=False):
  #                               		for gene_table_name in gene_table_names[1:] ]
 
 	t1=datetime.datetime.now()
-	print('All done: '+str(t1-t0), file=open(log_file,'a'))
+	# print('All done: '+str(t1-t0), file=open(log_file,'a'))
 	# df_coords=df_list[0]
 	# for df in df_list:
 		# df_all = df_all.append(df)
 
 	t1=datetime.datetime.now()
-	print('All done: '+str(t1-t0), file=open(log_file,'a'))
+	# print('All done: '+str(t1-t0), file=open(log_file,'a'))
 
 	if df_all.empty: # If no data in column, return None 
 		now = datetime.datetime.now()
