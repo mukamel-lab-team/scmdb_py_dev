@@ -1,4 +1,4 @@
-<iframe src="{{ url_for('frontend.nav_bar_screen') }}" scrolling="no" frameborder="0" style="position: relative; height: 40px; width: 100%;"></iframe>
+<iframe src="{{ url_for('frontend.nav_bar_screen') }}" scrolling="no" frameborder="0" style="position: fixed; z-index: 999; height: 40px; width: 100%;"></iframe>
 {%- extends "bootstrap/base.html" %}
 {% block title %}Single Cell Methylome{% endblock %}
 {% import "bootstrap/fixes.html" as fixes %}

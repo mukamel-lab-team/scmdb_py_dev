@@ -46,10 +46,8 @@ class FailToGraphException(Exception):
 
 # @content.route('/content/metadata/')
 # def get_metadata():
-
-# 	result = db.get_engine(current_app, 'methylation_data').execute("SELECT * FROM cells;").fetchall()
+# 	result = db.get_engine(current_app, 'methylation_data').execute("SELECT * FROM cells LIMIT 1;").fetchall()
 # 	result = [dict(r) for r in result]
-
 # 	return json.dumps({"data": result})
 
 
@@ -692,6 +690,11 @@ def get_methylation_tsne_options(ensemble):
 	#list_npc_clustering = sorted(list(set([int(x.split('_')[2].replace('npc', '')) for x in list_clustering_types if (list_mc_types_clustering[0]+'_'+list_algorithms_clustering[0]) in x])))
 	#list_k_clustering = sorted(list(set([int(x.split('_')[3].replace('k', '')) for x in list_clustering_types if (list_mc_types_clustering[0]+'_'+list_algorithms_clustering[0]+'_npc'+str(list_npc_clustering[0])) in x])))
 
+	query = "SELECT * FROM cells LIMIT 1"
+	df_metadata = pd.read_sql(query, con=db.get_engine(current_app, 'methylation_data'))
+	df_metadata = df_metadata.drop(list(df_metadata.filter(regex='cell_.*', axis='columns')), axis=1)
+	list_metadata = ['cluster','annotation']
+	list_metadata += list([i for i in df_metadata.columns.values])
 
 	return {'all_tsne_settings': list_tsne_types, 
 			'tsne_methylation': list_mc_types_tsne,
@@ -699,10 +702,8 @@ def get_methylation_tsne_options(ensemble):
 			'all_clustering_settings2': dict_clustering_types_and_numclusters,
 			'clustering_algorithms': list_algorithms_clustering,
 			'tsne_dimensions': list_dims_tsne_first,
-			'tsne_perplexity': list_perp_tsne_first,}
-			#'clustering_methylation': list_mc_types_clustering,}
-			#'clustering_npc': list_npc_clustering,
-			#'clustering_k': list_k_clustering,}
+			'tsne_perplexity': list_perp_tsne_first,
+			'methylation_metadata_fields': list_metadata,}
 
 @cache.memoize(timeout=3600)
 def get_snATAC_tsne_options(ensemble):
@@ -889,22 +890,40 @@ def get_gene_methylation(ensemble, methylation_type, gene, grouping, clustering,
 	gene_table_name = 'gene_' + result.gene_id.replace('.','_')
 
 	context = methylation_type[1:]
+	if grouping in ['annotation','cluster']:
+		groupingu = ensemble+"."+grouping+"_"+clustering
+	else:
+		groupingu = "cells."+grouping
 
 	if 'ndim2' in tsne_type:
-		query = "SELECT cells.cell_id, cells.cell_name, cells.dataset, cells.global_%(methylation_type)s, \
-			%(ensemble)s.annotation_%(clustering)s, %(ensemble)s.cluster_%(clustering)s, \
+		query = "SELECT cells.cell_id, cells.dataset, %(ensemble)s.cluster_%(clustering)s, datasets.target_region, \
+			%(ensemble)s.annotation_%(clustering)s, %(gene_table_name)s.%(methylation_type)s, \
+			cells.global_%(methylation_type)s, %(groupingu)s as grouping, \
 			%(ensemble)s.tsne_x_%(tsne_type)s, %(ensemble)s.tsne_y_%(tsne_type)s, \
-			%(gene_table_name)s.%(methylation_type)s, %(gene_table_name)s.%(context)s, \
-			datasets.target_region, datasets.sex \
+			%(gene_table_name)s.%(context)s, datasets.sex \
 			FROM cells \
 			INNER JOIN %(ensemble)s ON cells.cell_id = %(ensemble)s.cell_id \
 			LEFT JOIN %(gene_table_name)s ON %(ensemble)s.cell_id = %(gene_table_name)s.cell_id \
-			LEFT JOIN datasets ON cells.dataset = datasets.dataset" % {'ensemble': ensemble,
+			LEFT JOIN datasets ON cells.dataset = datasets.dataset" % {'ensemble': ensemble, 'groupingu': groupingu,
 																	   'gene_table_name': gene_table_name,
 																	   'tsne_type': tsne_type,
 																	   'methylation_type': methylation_type,
 																	   'context': context,
 																	   'clustering': clustering,}
+		# query = "SELECT cells.cell_id, cells.cell_name, cells.dataset, cells.global_%(methylation_type)s, \
+		# 	%(ensemble)s.annotation_%(clustering)s, %(ensemble)s.cluster_%(clustering)s, \
+		# 	%(ensemble)s.tsne_x_%(tsne_type)s, %(ensemble)s.tsne_y_%(tsne_type)s, \
+		# 	%(gene_table_name)s.%(methylation_type)s, %(gene_table_name)s.%(context)s, \
+		# 	datasets.target_region, datasets.sex \
+		# 	FROM cells \
+		# 	INNER JOIN %(ensemble)s ON cells.cell_id = %(ensemble)s.cell_id \
+		# 	LEFT JOIN %(gene_table_name)s ON %(ensemble)s.cell_id = %(gene_table_name)s.cell_id \
+		# 	LEFT JOIN datasets ON cells.dataset = datasets.dataset" % {'ensemble': ensemble,
+		# 															   'gene_table_name': gene_table_name,
+		# 															   'tsne_type': tsne_type,
+		# 															   'methylation_type': methylation_type,
+		# 															   'context': context,
+		# 															   'clustering': clustering,}
 	else:
 		query = "SELECT cells.cell_id, cells.cell_name, cells.dataset, cells.global_%(methylation_type)s, \
 			%(ensemble)s.annotation_%(clustering)s, %(ensemble)s.cluster_%(clustering)s, \
@@ -943,8 +962,8 @@ def get_gene_methylation(ensemble, methylation_type, gene, grouping, clustering,
 
 	
 	if grouping == 'annotation':
-		df.fillna({'annotation_'+clustering: 'None'}, inplace=True)
-		df['annotation_cat'] = pd.Categorical(df['annotation_'+clustering], cluster_annotation_order)
+		df.fillna({'grouping': 'None'}, inplace=True)
+		df['annotation_cat'] = pd.Categorical(df['grouping'], cluster_annotation_order)
 		df.sort_values(by='annotation_cat', inplace=True)
 		df.drop('annotation_cat', axis=1, inplace=True)
 	elif grouping == 'cluster':
@@ -957,8 +976,7 @@ def get_gene_methylation(ensemble, methylation_type, gene, grouping, clustering,
 
 	return df
 
-@cache.memoize(timeout=3600)
-def get_gene_from_mysql(ensemble, gene_table_name, methylation_type, clustering, tsne_type):
+def get_gene_from_mysql(ensemble, gene_table_name, methylation_type, clustering, tsne_type, grouping='cluster'):
 	"""Helper function to fetch a gene's methylation information from mysql.
 
 	TODO: Don't need to fetch tsne info, annotations etc. except once
@@ -968,9 +986,13 @@ def get_gene_from_mysql(ensemble, gene_table_name, methylation_type, clustering,
 	"""
 
 	context = methylation_type[1:]
+	if grouping in ['annotation','cluster']:
+		groupingu = ensemble+"."+grouping+"_"+clustering
+	else:
+		groupingu = "cells."+grouping
 
 	t0=datetime.datetime.now()
-	print(' Running get_gene_from_mysql for '+gene_table_name+' : '+str(t0)+'; ', file=open(log_file,'a'))# EAM - Profiling SQL
+	# print(' Running get_gene_from_mysql for '+gene_table_name+' : '+str(t0)+'; ', file=open(log_file,'a'))# EAM - Profiling SQL
 	if tsne_type=='noTSNE':
 		query = "SELECT %(gene_table_name)s.%(methylation_type)s, %(gene_table_name)s.%(context)s, \
 			FROM %(ensemble)s  \
@@ -979,21 +1001,36 @@ def get_gene_from_mysql(ensemble, gene_table_name, methylation_type, clustering,
 																	   'methylation_type': methylation_type,
 																	   'context': context,}
 	elif 'ndim2' in tsne_type:
-		query = "SELECT cells.cell_id, cells.cell_name, cells.dataset, cells.global_%(methylation_type)s, \
-			%(ensemble)s.annotation_%(clustering)s, %(ensemble)s.cluster_%(clustering)s, \
+		query = "SELECT cells.cell_id, cells.dataset, %(ensemble)s.cluster_%(clustering)s, datasets.target_region, \
+			%(ensemble)s.annotation_%(clustering)s, %(gene_table_name)s.%(methylation_type)s, \
+			cells.global_%(methylation_type)s, %(groupingu)s as grouping, \
 			%(ensemble)s.tsne_x_%(tsne_type)s, %(ensemble)s.tsne_y_%(tsne_type)s, \
-			%(gene_table_name)s.%(methylation_type)s, %(gene_table_name)s.%(context)s, \
-			datasets.target_region, datasets.sex \
+			%(gene_table_name)s.%(context)s, datasets.sex \
 			FROM cells \
 			INNER JOIN %(ensemble)s ON cells.cell_id = %(ensemble)s.cell_id \
 			LEFT JOIN %(gene_table_name)s ON %(ensemble)s.cell_id = %(gene_table_name)s.cell_id \
-			LEFT JOIN datasets ON cells.dataset = datasets.dataset" % {'ensemble': ensemble, 
+			LEFT JOIN datasets ON cells.dataset = datasets.dataset" % {'ensemble': ensemble, 'groupingu': groupingu,
 																	   'gene_table_name': gene_table_name,
 																	   'tsne_type': tsne_type,
 																	   'methylation_type': methylation_type,
 																	   'context': context,
 																	   'clustering': clustering,}
-	else:
+		
+		# query = "SELECT cells.cell_id, cells.cell_name, cells.dataset, cells.global_%(methylation_type)s, \
+		# 	%(ensemble)s.annotation_%(clustering)s, %(ensemble)s.cluster_%(clustering)s, \
+		# 	%(ensemble)s.tsne_x_%(tsne_type)s, %(ensemble)s.tsne_y_%(tsne_type)s, \
+		# 	%(gene_table_name)s.%(methylation_type)s, %(gene_table_name)s.%(context)s, \
+		# 	datasets.target_region, datasets.sex \
+		# 	FROM cells \
+		# 	INNER JOIN %(ensemble)s ON cells.cell_id = %(ensemble)s.cell_id \
+		# 	LEFT JOIN %(gene_table_name)s ON %(ensemble)s.cell_id = %(gene_table_name)s.cell_id \
+		# 	LEFT JOIN datasets ON cells.dataset = datasets.dataset" % {'ensemble': ensemble, 
+		# 															   'gene_table_name': gene_table_name,
+		# 															   'tsne_type': tsne_type,
+		# 															   'methylation_type': methylation_type,
+		# 															   'context': context,
+		# 															   'clustering': clustering,}
+	else: # 3D tSNE
 		query = "SELECT cells.cell_id, cells.cell_name, cells.dataset, cells.global_%(methylation_type)s, \
 			%(ensemble)s.annotation_%(clustering)s, %(ensemble)s.cluster_%(clustering)s, \
 			%(ensemble)s.tsne_x_%(tsne_type)s, %(ensemble)s.tsne_y_%(tsne_type)s, %(ensemble)s.tsne_z_%(tsne_type)s, \
@@ -1068,8 +1105,8 @@ def get_mult_gene_methylation(ensemble, methylation_type, genes, grouping, clust
 	# print(' Time '+str(t1-t0)+'; ', file=open(log_file,'a'))# EAM - Profiling SQL
 
 	t0=datetime.datetime.now()
-	print(' Starting mysql queries '+str(t0)+'; ', file=open(log_file,'a'))# EAM - Profiling SQL
-	print('Pool size 1', file=open(log_file,'a'))
+#	print(' Starting mysql queries '+str(t0)+'; ', file=open(log_file,'a'))# EAM - Profiling SQL
+#	print('Pool size 1', file=open(log_file,'a'))
 	df_list = []
 	for i, gene_table_name in enumerate(gene_table_names):
 		t0a=datetime.datetime.now()
@@ -1077,16 +1114,16 @@ def get_mult_gene_methylation(ensemble, methylation_type, genes, grouping, clust
 			tsne_typeu='noTSNE'
 		else:
 			tsne_typeu=tsne_type
-		df_all = df_all.append(get_gene_from_mysql(ensemble, gene_table_name, methylation_type, clustering, tsne_typeu))
+		df_all = df_all.append(get_gene_from_mysql(ensemble, gene_table_name, methylation_type, clustering, tsne_typeu, grouping))
 		if i==0:
 			df_coords=df_all
 		t1a=datetime.datetime.now()
-		print(str(i)+' : ',str(t1a-t0a), file=open(log_file,'a'))
+		# print(str(i)+' : ',str(t1a-t0a), file=open(log_file,'a'))
 
 
 	t1=datetime.datetime.now()
-	print(' Finished mysql queries '+str(t1)+'; ', file=open(log_file,'a'))# EAM - Profiling SQL
-	print(' Time '+str(t1-t0)+'; ', file=open(log_file,'a'))# EAM - Profiling SQL
+#	print(' Finished mysql queries '+str(t1)+'; ', file=open(log_file,'a'))# EAM - Profiling SQL
+#	print(' Time '+str(t1-t0)+'; ', file=open(log_file,'a'))# EAM - Profiling SQL
 	############
 
 	df_all[[methylation_type, context]] = df_all[[methylation_type, context]].apply(pd.to_numeric)
@@ -1160,34 +1197,21 @@ def get_methylation_scatter(ensemble, tsne_type, methylation_type, genes_query, 
 		if grouping+'_'+clustering not in points.columns or points[grouping+'_'+clustering].nunique() <= 1:
 			grouping = "cluster"
 			clustering = "mCH_lv_npc50_k30"
-			print("**** Using cluster_mCH_lv_npc50_k30")
+			# print("**** Using cluster_mCH_lv_npc50_k30")
 
 	datasets = points['dataset'].unique().tolist()
-	annotation_additional_y = 0.00 
-	if grouping == 'dataset':
-		unique_groups = datasets
-		num_clusters = len(unique_groups)
-	elif grouping == 'target_region':
-		points['target_region'].fillna('N/A', inplace=True)
-		unique_groups = points['target_region'].unique().tolist()
-		num_clusters = len(unique_groups)
-	elif grouping == 'slice':
-		datasets_all_cells = points['dataset'].tolist()
-		slices_list = [d.split('_')[1] if 'RS2' not in d else d.split('_')[2][2:4] for d in datasets_all_cells]
-		points['slice'] = slices_list
-		slices_set = set(slices_list)
-		unique_groups = list(slices_set)
-		num_clusters = len(unique_groups)
-	elif grouping == 'sex':
-		unique_groups = points['sex'].unique().tolist()
-		num_clusters = len(unique_groups)
-	elif grouping == 'cluster' or grouping == 'annotation':
-		if grouping == 'cluster':
-			annotation_additional_y = 0.025 # Necessary because legend items overlap with legend title (annotation) when there are many legend items
-		num_clusters = points['cluster_'+clustering].max()
-		unique_groups = points[grouping+'_'+clustering].unique().tolist()
+	if grouping in ['cluster','annotation','dataset','NeuN','sex']:
+		unique_groups = points['grouping'].unique().tolist()
 	else:
-		raise FailToGraphException
+		# For continuous (numerical) metadata (like global_mCH), don't use discrete clusters
+		unique_groups = ['All cells']
+
+	if grouping == 'cluster':
+		annotation_additional_y = 0.025 # Necessary because legend items overlap with legend title (annotation) when there are many legend items
+		num_clusters = points['cluster_'+clustering].max()
+	else:
+		annotation_additional_y = 0.00 
+		num_clusters = len(unique_groups)
 	
 	colors = generate_cluster_colors(len(unique_groups), grouping)
 	symbols = ['circle', 'square', 'cross', 'triangle-up', 'triangle-down', 'octagon', 'star', 'diamond']
@@ -1230,7 +1254,17 @@ def get_methylation_scatter(ensemble, tsne_type, methylation_type, genes_query, 
 	## 2D tSNE coordinates ##
 	if 'ndim2' in tsne_type:
 		for i, group in enumerate(unique_groups):
-			points_group = points[points[grouping_clustering]==group]
+			if group == 'All cells':
+				# Continuous variable
+				points_group = points
+				color_num = i
+				color = points['grouping']
+			else:
+				# Categorial variable
+				points_group = points[points['grouping']==group]
+				color_num = i
+				color = colors[color_num]
+
 			if grouping_clustering.startswith('cluster'):
 				group_str = 'cluster_' + str(group)
 			elif grouping_clustering== "dataset":
@@ -1238,8 +1272,9 @@ def get_methylation_scatter(ensemble, tsne_type, methylation_type, genes_query, 
 				group_str = group
 			else:
 				group_str = group
-
-			color_num = i
+			if group == 'All cells':
+				group_str = ''
+			
 			
 			trace2d = traces_tsne.setdefault(color_num, Scatter(
 				x=list(),
@@ -1250,7 +1285,8 @@ def get_methylation_scatter(ensemble, tsne_type, methylation_type, genes_query, 
 				name=group_str,
 				legendgroup=group,
 				marker={
-					   'color': colors[color_num],
+					   'color': color,
+					   'colorscale': 'Viridis',
 					   'size': marker_size,
 					   #'symbol': symbols[datasets.index(dataset)],
 				},
@@ -1258,9 +1294,10 @@ def get_methylation_scatter(ensemble, tsne_type, methylation_type, genes_query, 
 			trace2d['x'] = points_group['tsne_x_'+tsne_type].values.tolist()
 			trace2d['y'] = points_group['tsne_y_'+tsne_type].values.tolist()
 			trace2d['text'] = [build_hover_text(OrderedDict([('Annotation', point[4]),
-															 ('Cluster', point[5]),
-															 ('RS2 Target Region', point[10]),
-															 ('Dataset', point[2]),]))
+														  ('Cluster', point[2]),
+														  ('RS2 Target Region', point[3]),
+														  ('Dataset', point[1]),
+														  ('<b>'+grouping+'</b>', point[7]),]))
 							   for point in points_group.itertuples(index=False)]
 
 		### METHYLATION SCATTER ### 
@@ -1268,10 +1305,10 @@ def get_methylation_scatter(ensemble, tsne_type, methylation_type, genes_query, 
 		y = points['tsne_y_' + tsne_type].tolist()
 		mch = points[methylation_type + '/' + context + '_' + level]
 		text_methylation = [build_hover_text(OrderedDict([('Annotation', point[4]),
-														  ('Cluster', point[5]),
-														  ('RS2 Target Region', point[10]),
-														  ('Dataset', point[2]),
-														  ('<b>'+level.title()+' '+methylation_type+'</b>', round(point[12], 6)),]))
+														  ('Cluster', point[2]),
+														  ('RS2 Target Region', point[3]),
+														  ('Dataset', point[1]),
+														  ('<b>'+level.title()+' '+methylation_type+'</b>', round(point[5], 6)),]))
 							for point in points.itertuples(index=False)]
 
 
@@ -1618,7 +1655,7 @@ def get_methylation_scatter(ensemble, tsne_type, methylation_type, genes_query, 
 		figure_or_data=fig,
 		output_type='div',
 		show_link=False,
-		include_plotlyjs=False)
+			include_plotlyjs=False)
 
 @cache.memoize(timeout=3600)
 def get_mch_box(ensemble, methylation_type, gene, grouping, clustering, level, outliers):
@@ -1664,7 +1701,9 @@ def get_mch_box(ensemble, methylation_type, gene, grouping, clustering, level, o
 	elif grouping == 'cluster' or grouping == 'annotation':
 		unique_groups = points[grouping+'_'+clustering].unique()
 	else:
-		raise FailToGraphException
+		grouping = 'cluster'
+		unique_groups = points[grouping+'_'+clustering].unique()
+		# raise FailToGraphException
 	num_clusters = len(unique_groups)
 
 	colors = generate_cluster_colors(num_clusters, grouping)
@@ -2098,18 +2137,26 @@ def get_clusters(ensemble, grouping, clustering):
 	if ";" in ensemble or ";" in grouping or ";" in clustering:
 		return None
 
+	if grouping in ['annotation','cluster']:
+		groupingu = ensemble+"."+grouping+"_"+clustering
+	elif grouping in ['NeuN']:
+		groupingu = "CONCAT('NeuN',cells."+grouping+")"
+	else:
+		groupingu = "cells."+grouping
+
 	# Get methylation info
-	query = "SELECT count(cells.cell_id) ncells, 'snmC' AS modality, %(ensemble)s.%(grouping)s_%(clustering)s groups \
+	query = "SELECT count(cells.cell_id) ncells, 'snmC' as modality, \
+		%(groupingu)s as groups \
 		FROM cells \
 		INNER JOIN %(ensemble)s ON cells.cell_id = %(ensemble)s.cell_id \
 		GROUP BY groups " % {'ensemble': ensemble,
-					'grouping': grouping,
+					'groupingu': groupingu,
 					'clustering': clustering}
 	try:
 		df = pd.read_sql(query, db.get_engine(current_app, 'methylation_data'))
 	except exc.ProgrammingError as e:
 		now = datetime.datetime.now()
-		print("[{}] ERROR in app(get_gene_methylation): {}".format(str(now), e))
+		print("[{}] ERROR in app(get_clusters): {}".format(str(now), e))
 		sys.stdout.flush()
 		return None
 
@@ -2126,7 +2173,7 @@ def get_clusters(ensemble, grouping, clustering):
 		df=df.append(df_atac)
 	except exc.ProgrammingError as e:
 		now = datetime.datetime.now()
-		print("[{}] ERROR in app(get_gene_methylation): {}".format(str(now), e))
+		print("[{}] ERROR in app(get_clusters): {}".format(str(now), e))
 		sys.stdout.flush()
 
 
@@ -2143,7 +2190,7 @@ def get_clusters(ensemble, grouping, clustering):
 		df=df.append(df_rna)
 	except exc.ProgrammingError as e:
 		now = datetime.datetime.now()
-		print("[{}] ERROR in app(get_gene_methylation): {}".format(str(now), e))
+		print("[{}] ERROR in app(get_clusters): {}".format(str(now), e))
 		sys.stdout.flush()
 
 	return df
@@ -2163,6 +2210,8 @@ def get_clusters_bar(ensemble, grouping, clustering, normalize, outliers):
 	Returns:
 		str: HTML generated by Plot.ly.
 	"""
+	if grouping not in ['cluster','annotation','dataset','NeuN']:
+		grouping = 'cluster'
 	clusters = get_clusters(ensemble, grouping, clustering)
 
 	if (normalize=='true'):
@@ -2363,8 +2412,8 @@ def get_gene_snatac_from_mysql(ensemble, gene_table_name, counts_type, tsne_type
 		return None
 
 	t1=datetime.datetime.now()
-	print(' Running get_gene_snatac_from_mysql for '+gene_table_name+' : '+str(t1-t0)+'; ', file=open(log_file,'a')) # EAM - Profiling SQL
-	print(' query: '+query, file=open(log_file,'a'))
+#	print(' Running get_gene_snatac_from_mysql for '+gene_table_name+' : '+str(t1-t0)+'; ', file=open(log_file,'a')) # EAM - Profiling SQL
+#	print(' query: '+query, file=open(log_file,'a'))
 
 	return df
 
@@ -2449,7 +2498,7 @@ def get_mult_gene_snATAC(ensemble, genes, grouping, smoothing=False):
 	# 	print(str(i)+' loading snATAC: '+str(t1-t0), file=open(log_file, 'a'))
 
 	t0=datetime.datetime.now()
-	print('Pool size 1', file=open(log_file,'a'))
+#	print('Pool size 1', file=open(log_file,'a'))
 	df_list = []
 	df = get_gene_snatac_from_mysql(ensemble, gene_table_names[0], counts_type, 'TSNE')
 	df_all = df_all.append(df)
@@ -2463,13 +2512,13 @@ def get_mult_gene_snATAC(ensemble, genes, grouping, smoothing=False):
  #                               		for gene_table_name in gene_table_names[1:] ]
 
 	t1=datetime.datetime.now()
-	print('All done: '+str(t1-t0), file=open(log_file,'a'))
+#	print('All done: '+str(t1-t0), file=open(log_file,'a'))
 	# df_coords=df_list[0]
 	# for df in df_list:
 		# df_all = df_all.append(df)
 
 	t1=datetime.datetime.now()
-	print('All done: '+str(t1-t0), file=open(log_file,'a'))
+#	print('All done: '+str(t1-t0), file=open(log_file,'a'))
 
 	if df_all.empty: # If no data in column, return None 
 		now = datetime.datetime.now()
