@@ -990,6 +990,8 @@ def get_gene_from_mysql(ensemble, gene_table_name, methylation_type, clustering,
 	context = methylation_type[1:]
 	if grouping in ['annotation','cluster']:
 		groupingu = ensemble+"."+grouping+"_"+clustering
+	elif grouping in ['NeuN']:
+		groupingu = "CONCAT('NeuN',cells."+grouping+")"
 	else:
 		groupingu = "cells."+grouping
 
