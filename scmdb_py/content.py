@@ -2139,6 +2139,8 @@ def get_clusters(ensemble, grouping, clustering):
 
 	if grouping in ['annotation','cluster']:
 		groupingu = ensemble+"."+grouping+"_"+clustering
+	elif grouping in ['NeuN']:
+		groupingu = "CONCAT('NeuN',cells."+grouping+")"
 	else:
 		groupingu = "cells."+grouping
 
