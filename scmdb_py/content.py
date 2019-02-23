@@ -1193,31 +1193,6 @@ def get_methylation_scatter(ensemble, tsne_type, methylation_type, genes_query, 
 	else:
 		annotation_additional_y = 0.00 
 		num_clusters = len(unique_groups)
-
-	# if grouping == 'dataset':
-	# 	unique_groups = datasets
-	# 	num_clusters = len(unique_groups)
-	# elif grouping == 'target_region':
-	# 	points['target_region'].fillna('N/A', inplace=True)
-	# 	unique_groups = points['target_region'].unique().tolist()
-	# 	num_clusters = len(unique_groups)
-	# elif grouping == 'slice':
-	# 	datasets_all_cells = points['dataset'].tolist()
-	# 	slices_list = [d.split('_')[1] if 'RS2' not in d else d.split('_')[2][2:4] for d in datasets_all_cells]
-	# 	points['slice'] = slices_list
-	# 	slices_set = set(slices_list)
-	# 	unique_groups = list(slices_set)
-	# 	num_clusters = len(unique_groups)
-	# elif grouping == 'sex':
-	# 	unique_groups = points['sex'].unique().tolist()
-	# 	num_clusters = len(unique_groups)
-	# elif grouping == 'cluster' or grouping == 'annotation':
-	# 	if grouping == 'cluster':
-	# 		annotation_additional_y = 0.025 # Necessary because legend items overlap with legend title (annotation) when there are many legend items
-	# 	num_clusters = points['cluster_'+clustering].max()
-	# 	unique_groups = points[grouping+'_'+clustering].unique().tolist()
-	# else:
-	# 	raise FailToGraphException
 	
 	colors = generate_cluster_colors(len(unique_groups), grouping)
 	symbols = ['circle', 'square', 'cross', 'triangle-up', 'triangle-down', 'octagon', 'star', 'diamond']
@@ -1660,7 +1635,7 @@ def get_methylation_scatter(ensemble, tsne_type, methylation_type, genes_query, 
 		figure_or_data=fig,
 		output_type='div',
 		show_link=False,
-		include_plotlyjs=False)
+			include_plotlyjs=False)
 
 @cache.memoize(timeout=3600)
 def get_mch_box(ensemble, methylation_type, gene, grouping, clustering, level, outliers):
