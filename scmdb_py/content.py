@@ -892,6 +892,8 @@ def get_gene_methylation(ensemble, methylation_type, gene, grouping, clustering,
 	context = methylation_type[1:]
 	if grouping in ['annotation','cluster']:
 		groupingu = ensemble+"."+grouping+"_"+clustering
+	elif grouping in ['NeuN']:
+		groupingu = "CONCAT('NeuN',cells."+grouping+")"
 	else:
 		groupingu = "cells."+grouping
 
