@@ -974,7 +974,7 @@ def get_gene_methylation(ensemble, methylation_type, gene, grouping, clustering,
 	# for label, i in df[grouping]:
 	#     ncells[0]
 
-		return df
+	return df
 
 def get_gene_from_mysql(ensemble, gene_table_name, methylation_type, clustering, tsne_type):
 	"""Helper function to fetch a gene's methylation information from mysql.
