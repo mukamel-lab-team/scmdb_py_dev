@@ -690,11 +690,10 @@ def get_methylation_tsne_options(ensemble):
 	#list_npc_clustering = sorted(list(set([int(x.split('_')[2].replace('npc', '')) for x in list_clustering_types if (list_mc_types_clustering[0]+'_'+list_algorithms_clustering[0]) in x])))
 	#list_k_clustering = sorted(list(set([int(x.split('_')[3].replace('k', '')) for x in list_clustering_types if (list_mc_types_clustering[0]+'_'+list_algorithms_clustering[0]+'_npc'+str(list_npc_clustering[0])) in x])))
 
-	df_metadata = pd.read_sql("SELECT * FROM cells LIMIT 1;", db.get_engine(current_app, 'methylation_data'))
-	df_metadata = df_metadata.filter(regex='^cell_id', axis='columns')
-	df_metadata = df_metadata.filter(regex='^cell_name', axis='columns')
-	list_metadata = list([i for i in df_metadata.columns])
-	list_metadata = list(['a','b'])
+	query = "SELECT * FROM cells LIMIT 1"
+	df_metadata = pd.read_sql(query, con=db.get_engine(current_app, 'methylation_data'))
+	df_metadata = df_metadata.drop(list(df_metadata.filter(regex='cell_.*', axis='columns')), axis=1)
+	list_metadata = list([i for i in df_metadata.columns.values])
 	
 	return {'all_tsne_settings': list_tsne_types, 
 			'tsne_methylation': list_mc_types_tsne,
@@ -704,9 +703,6 @@ def get_methylation_tsne_options(ensemble):
 			'tsne_dimensions': list_dims_tsne_first,
 			'tsne_perplexity': list_perp_tsne_first,
 			'methylation_metadata_fields': list_metadata,}
-			#'clustering_methylation': list_mc_types_clustering,}
-			#'clustering_npc': list_npc_clustering,
-			#'clustering_k': list_k_clustering,}
 
 @cache.memoize(timeout=3600)
 def get_snATAC_tsne_options(ensemble):
