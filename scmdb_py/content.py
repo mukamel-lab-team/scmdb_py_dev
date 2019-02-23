@@ -974,7 +974,7 @@ def get_gene_methylation(ensemble, methylation_type, gene, grouping, clustering,
 	# for label, i in df[grouping]:
 	#     ncells[0]
 
-	return df
+		return df
 
 def get_gene_from_mysql(ensemble, gene_table_name, methylation_type, clustering, tsne_type):
 	"""Helper function to fetch a gene's methylation information from mysql.
@@ -1178,7 +1178,7 @@ def get_methylation_scatter(ensemble, tsne_type, methylation_type, genes_query, 
 		if grouping+'_'+clustering not in points.columns or points[grouping+'_'+clustering].nunique() <= 1:
 			grouping = "cluster"
 			clustering = "mCH_lv_npc50_k30"
-			print("**** Using cluster_mCH_lv_npc50_k30")
+			# print("**** Using cluster_mCH_lv_npc50_k30")
 
 	datasets = points['dataset'].unique().tolist()
 	if grouping in ['cluster','annotation','dataset','NeuN','sex']:
@@ -1277,7 +1277,8 @@ def get_methylation_scatter(ensemble, tsne_type, methylation_type, genes_query, 
 			trace2d['text'] = [build_hover_text(OrderedDict([('Annotation', point[4]),
 														  ('Cluster', point[2]),
 														  ('RS2 Target Region', point[3]),
-														  ('Dataset', point[1]),]))
+														  ('Dataset', point[1]),
+														  ('<b>'+grouping+'</b>', point[7]),]))
 							   for point in points_group.itertuples(index=False)]
 
 		### METHYLATION SCATTER ### 
