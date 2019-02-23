@@ -1181,31 +1181,43 @@ def get_methylation_scatter(ensemble, tsne_type, methylation_type, genes_query, 
 			print("**** Using cluster_mCH_lv_npc50_k30")
 
 	datasets = points['dataset'].unique().tolist()
-	annotation_additional_y = 0.00 
-	if grouping == 'dataset':
-		unique_groups = datasets
-		num_clusters = len(unique_groups)
-	elif grouping == 'target_region':
-		points['target_region'].fillna('N/A', inplace=True)
-		unique_groups = points['target_region'].unique().tolist()
-		num_clusters = len(unique_groups)
-	elif grouping == 'slice':
-		datasets_all_cells = points['dataset'].tolist()
-		slices_list = [d.split('_')[1] if 'RS2' not in d else d.split('_')[2][2:4] for d in datasets_all_cells]
-		points['slice'] = slices_list
-		slices_set = set(slices_list)
-		unique_groups = list(slices_set)
-		num_clusters = len(unique_groups)
-	elif grouping == 'sex':
-		unique_groups = points['sex'].unique().tolist()
-		num_clusters = len(unique_groups)
-	elif grouping == 'cluster' or grouping == 'annotation':
-		if grouping == 'cluster':
-			annotation_additional_y = 0.025 # Necessary because legend items overlap with legend title (annotation) when there are many legend items
-		num_clusters = points['cluster_'+clustering].max()
-		unique_groups = points[grouping+'_'+clustering].unique().tolist()
+	if grouping in ['cluster','annotation','dataset','NeuN','sex']:
+		unique_groups = points['grouping'].unique().tolist()
 	else:
-		raise FailToGraphException
+		# For continuous (numerical) metadata (like global_mCH), don't use discrete clusters
+		unique_groups = ['All cells']
+
+	if grouping == 'cluster':
+		annotation_additional_y = 0.025 # Necessary because legend items overlap with legend title (annotation) when there are many legend items
+		num_clusters = points['cluster_'+clustering].max()
+	else:
+		annotation_additional_y = 0.00 
+		num_clusters = len(unique_groups)
+
+	# if grouping == 'dataset':
+	# 	unique_groups = datasets
+	# 	num_clusters = len(unique_groups)
+	# elif grouping == 'target_region':
+	# 	points['target_region'].fillna('N/A', inplace=True)
+	# 	unique_groups = points['target_region'].unique().tolist()
+	# 	num_clusters = len(unique_groups)
+	# elif grouping == 'slice':
+	# 	datasets_all_cells = points['dataset'].tolist()
+	# 	slices_list = [d.split('_')[1] if 'RS2' not in d else d.split('_')[2][2:4] for d in datasets_all_cells]
+	# 	points['slice'] = slices_list
+	# 	slices_set = set(slices_list)
+	# 	unique_groups = list(slices_set)
+	# 	num_clusters = len(unique_groups)
+	# elif grouping == 'sex':
+	# 	unique_groups = points['sex'].unique().tolist()
+	# 	num_clusters = len(unique_groups)
+	# elif grouping == 'cluster' or grouping == 'annotation':
+	# 	if grouping == 'cluster':
+	# 		annotation_additional_y = 0.025 # Necessary because legend items overlap with legend title (annotation) when there are many legend items
+	# 	num_clusters = points['cluster_'+clustering].max()
+	# 	unique_groups = points[grouping+'_'+clustering].unique().tolist()
+	# else:
+	# 	raise FailToGraphException
 	
 	colors = generate_cluster_colors(len(unique_groups), grouping)
 	symbols = ['circle', 'square', 'cross', 'triangle-up', 'triangle-down', 'octagon', 'star', 'diamond']
@@ -1248,7 +1260,17 @@ def get_methylation_scatter(ensemble, tsne_type, methylation_type, genes_query, 
 	## 2D tSNE coordinates ##
 	if 'ndim2' in tsne_type:
 		for i, group in enumerate(unique_groups):
-			points_group = points[points[grouping_clustering]==group]
+			if group == 'All cells':
+				# Continuous variable
+				points_group = points
+				color_num = i
+				color = points['grouping']
+			else:
+				# Categorial variable
+				points_group = points[points['grouping']==group]
+				color_num = i
+				color = colors[color_num]
+
 			if grouping_clustering.startswith('cluster'):
 				group_str = 'cluster_' + str(group)
 			elif grouping_clustering== "dataset":
@@ -1256,8 +1278,9 @@ def get_methylation_scatter(ensemble, tsne_type, methylation_type, genes_query, 
 				group_str = group
 			else:
 				group_str = group
-
-			color_num = i
+			if group == 'All cells':
+				group_str = ''
+			
 			
 			trace2d = traces_tsne.setdefault(color_num, Scatter(
 				x=list(),
@@ -1268,7 +1291,8 @@ def get_methylation_scatter(ensemble, tsne_type, methylation_type, genes_query, 
 				name=group_str,
 				legendgroup=group,
 				marker={
-					   'color': colors[color_num],
+					   'color': color,
+					   'colorscale': 'Viridis',
 					   'size': marker_size,
 					   #'symbol': symbols[datasets.index(dataset)],
 				},
