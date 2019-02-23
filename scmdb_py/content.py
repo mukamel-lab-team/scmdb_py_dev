@@ -976,7 +976,7 @@ def get_gene_methylation(ensemble, methylation_type, gene, grouping, clustering,
 
 	return df
 
-def get_gene_from_mysql(ensemble, gene_table_name, methylation_type, clustering, tsne_type):
+def get_gene_from_mysql(ensemble, gene_table_name, methylation_type, clustering, tsne_type, grouping='cluster'):
 	"""Helper function to fetch a gene's methylation information from mysql.
 
 	TODO: Don't need to fetch tsne info, annotations etc. except once
@@ -986,6 +986,10 @@ def get_gene_from_mysql(ensemble, gene_table_name, methylation_type, clustering,
 	"""
 
 	context = methylation_type[1:]
+	if grouping in ['annotation','cluster']:
+		groupingu = ensemble+"."+grouping+"_"+clustering
+	else:
+		groupingu = "cells."+grouping
 
 	t0=datetime.datetime.now()
 	# print(' Running get_gene_from_mysql for '+gene_table_name+' : '+str(t0)+'; ', file=open(log_file,'a'))# EAM - Profiling SQL
@@ -997,21 +1001,36 @@ def get_gene_from_mysql(ensemble, gene_table_name, methylation_type, clustering,
 																	   'methylation_type': methylation_type,
 																	   'context': context,}
 	elif 'ndim2' in tsne_type:
-		query = "SELECT cells.cell_id, cells.cell_name, cells.dataset, cells.global_%(methylation_type)s, \
-			%(ensemble)s.annotation_%(clustering)s, %(ensemble)s.cluster_%(clustering)s, \
+		query = "SELECT cells.cell_id, cells.dataset, %(ensemble)s.cluster_%(clustering)s, datasets.target_region, \
+			%(ensemble)s.annotation_%(clustering)s, %(gene_table_name)s.%(methylation_type)s, \
+			cells.global_%(methylation_type)s, %(groupingu)s as grouping, \
 			%(ensemble)s.tsne_x_%(tsne_type)s, %(ensemble)s.tsne_y_%(tsne_type)s, \
-			%(gene_table_name)s.%(methylation_type)s, %(gene_table_name)s.%(context)s, \
-			datasets.target_region, datasets.sex \
+			%(gene_table_name)s.%(context)s, datasets.sex \
 			FROM cells \
 			INNER JOIN %(ensemble)s ON cells.cell_id = %(ensemble)s.cell_id \
 			LEFT JOIN %(gene_table_name)s ON %(ensemble)s.cell_id = %(gene_table_name)s.cell_id \
-			LEFT JOIN datasets ON cells.dataset = datasets.dataset" % {'ensemble': ensemble, 
+			LEFT JOIN datasets ON cells.dataset = datasets.dataset" % {'ensemble': ensemble, 'groupingu': groupingu,
 																	   'gene_table_name': gene_table_name,
 																	   'tsne_type': tsne_type,
 																	   'methylation_type': methylation_type,
 																	   'context': context,
 																	   'clustering': clustering,}
-	else:
+		
+		# query = "SELECT cells.cell_id, cells.cell_name, cells.dataset, cells.global_%(methylation_type)s, \
+		# 	%(ensemble)s.annotation_%(clustering)s, %(ensemble)s.cluster_%(clustering)s, \
+		# 	%(ensemble)s.tsne_x_%(tsne_type)s, %(ensemble)s.tsne_y_%(tsne_type)s, \
+		# 	%(gene_table_name)s.%(methylation_type)s, %(gene_table_name)s.%(context)s, \
+		# 	datasets.target_region, datasets.sex \
+		# 	FROM cells \
+		# 	INNER JOIN %(ensemble)s ON cells.cell_id = %(ensemble)s.cell_id \
+		# 	LEFT JOIN %(gene_table_name)s ON %(ensemble)s.cell_id = %(gene_table_name)s.cell_id \
+		# 	LEFT JOIN datasets ON cells.dataset = datasets.dataset" % {'ensemble': ensemble, 
+		# 															   'gene_table_name': gene_table_name,
+		# 															   'tsne_type': tsne_type,
+		# 															   'methylation_type': methylation_type,
+		# 															   'context': context,
+		# 															   'clustering': clustering,}
+	else: # 3D tSNE
 		query = "SELECT cells.cell_id, cells.cell_name, cells.dataset, cells.global_%(methylation_type)s, \
 			%(ensemble)s.annotation_%(clustering)s, %(ensemble)s.cluster_%(clustering)s, \
 			%(ensemble)s.tsne_x_%(tsne_type)s, %(ensemble)s.tsne_y_%(tsne_type)s, %(ensemble)s.tsne_z_%(tsne_type)s, \
@@ -1095,7 +1114,7 @@ def get_mult_gene_methylation(ensemble, methylation_type, genes, grouping, clust
 			tsne_typeu='noTSNE'
 		else:
 			tsne_typeu=tsne_type
-		df_all = df_all.append(get_gene_from_mysql(ensemble, gene_table_name, methylation_type, clustering, tsne_typeu))
+		df_all = df_all.append(get_gene_from_mysql(ensemble, gene_table_name, methylation_type, clustering, tsne_typeu, grouping))
 		if i==0:
 			df_coords=df_all
 		t1a=datetime.datetime.now()
