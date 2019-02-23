@@ -302,7 +302,6 @@
 
         $("#marker-table-view").hide();
 
-
         populateMethylationTSNEDropdowns(methylation_tsne_options)
         initGeneNameSearch();
         initGeneModules();
@@ -361,25 +360,25 @@
         }
     });
 
-	$("#methylation-box-heat-normalize-toggle").change(function() {
-		if ($("#methylation-box-heat-normalize-toggle").prop('checked')){
-			var normalize = true;
-		} else {
-			var normalize = false;
-		}
+	// $("#methylation-box-heat-normalize-toggle").change(function() {
+	// 	if ($("#methylation-box-heat-normalize-toggle").prop('checked')){
+	// 		var normalize = true;
+	// 	} else {
+	// 		var normalize = false;
+	// 	}
 
-        if ($('#geneName').select2('data').length > 1) {
-            if ($('#orthologsToggle').prop('checked'))
-                updateMethylationHeatmapTwoSpecies();
-            else
-                updateMethylationHeatmap();
-        }
+ //        if ($('#geneName').select2('data').length > 1) {
+ //            if ($('#orthologsToggle').prop('checked'))
+ //                updateMethylationHeatmapTwoSpecies();
+ //            else
+ //                updateMethylationHeatmap();
+ //        }
 
-		if ($('#geneName').select2('data').length > 1) {
-            updateRNAHeatmap(normalize);
-			// console.log('Hello!');
-        }
-    });
+	// 	if ($('#geneName').select2('data').length > 1) {
+ //            updateRNAHeatmap(normalize);
+	// 		// console.log('Hello!');
+ //        }
+ //    });
 
     // $("#RNA-box-heat-normalize-toggle").change(function() {
     //     if ($('#geneName').select2('data').length > 1) {

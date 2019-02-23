@@ -693,7 +693,8 @@ def get_methylation_tsne_options(ensemble):
 	df_metadata = pd.read_sql("SELECT * FROM cells LIMIT 1;", db.get_engine(current_app, 'methylation_data'))
 	df_metadata = df_metadata.filter(regex='^cell_id', axis='columns')
 	df_metadata = df_metadata.filter(regex='^cell_name', axis='columns')
-	list_metadata = [i for i in df_metadata.columns]
+	list_metadata = list([i for i in df_metadata.columns])
+	list_metadata = list(['a','b'])
 	
 	return {'all_tsne_settings': list_tsne_types, 
 			'tsne_methylation': list_mc_types_tsne,
