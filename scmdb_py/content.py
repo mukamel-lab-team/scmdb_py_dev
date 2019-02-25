@@ -1288,6 +1288,7 @@ def get_methylation_scatter(ensemble, tsne_type, methylation_type, genes_query, 
 				visible=True,
 				name=group_str,
 				legendgroup=group,
+				showlegend = (group != 'All cells'),
 				marker={
 					   'color': color,
 					   'colorscale': 'Viridis',
