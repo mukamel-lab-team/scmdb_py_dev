@@ -160,9 +160,9 @@ function format ( d ) {
         }
     out = out + 
         '<tr>'+
-            '<td><b>View Dissection Drawings:</b></td>'+
-            '<td><a href="https://drive.google.com/file/d/1dAUzB1GtKMUgmf_AInAGgI6OlgefUHok/preview" target="_blank">Link</a> (go to page '+d.slices+')</td>'+
-        '</tr><tr>'
+            '<td><a href="https://drive.google.com/file/d/1dAUzB1GtKMUgmf_AInAGgI6OlgefUHok/preview" target="_blank">Dissection drawings for all slices</a></td>'+
+        '</tr>'+
+        '<tr>'
     var url=''
     var slices=[... new Set(d.slices.split(', ').map(x => x.charAt(0)))] // Get the unique slices contributing to this ensemble
     for (i=0; i<slices.length; i++) {

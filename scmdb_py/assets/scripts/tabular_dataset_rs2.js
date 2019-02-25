@@ -68,25 +68,31 @@ function format ( d ) {
     //     snATAC_datasets = "None";
     // }
 
-    return (
-        '<table cellpadding="5" cellspacing="0" border="0" style="padding-left:50px;">'+
-            '<tr>'+
-                '<td><b>Description:</b></td>'+
-                '<td>'+d.description+'</td>'+
-            '</tr>'+
-            '<tr>'+
-                '<td><b>Dissection region(s):</b></td>'+
-                '<td>'+d.ABA_regions_descriptive+'</td>'+
-            '</tr>'+
-            '<tr>'+
-                '<td><b>Virus target region(s):</b></td>'+
-                '<td>'+d.target_region_descriptive+'</td>'+
-            '</tr>'+
-            '<tr>'+
-                '<td><b>View Dissection Drawings:</b></td>'+
-                '<td><a href="https://drive.google.com/file/d/1dAUzB1GtKMUgmf_AInAGgI6OlgefUHok/preview" target="_blank">Link</a> (go to page '+d.slice+')</td>'+
-            '</tr>'+
-        '</table>'
-    )
+    out = '<table cellpadding="5" cellspacing="0" border="0" style="padding-left:50px;">'+
+        '<tr>'+
+            '<td><b>Description:</b></td>'+
+            '<td>'+d.description+'</td>'+
+        '</tr>'+
+        '<tr>'+
+            '<td><b>Dissection region(s):</b></td>'+
+            '<td>'+d.ABA_regions_descriptive+'</td>'+
+        '</tr>'+
+        '<tr>'+
+            '<td><b>Virus target region(s):</b></td>'+
+            '<td>'+d.target_region_descriptive+'</td>'+
+        '</tr>'+        
+        '<tr>'+
+            '<td><a href="https://drive.google.com/file/d/1dAUzB1GtKMUgmf_AInAGgI6OlgefUHok/preview" target="_blank">Dissection drawings for all slices</a></td>'+
+        '</tr><tr>'
+    var url=''
+    var slices=[... new Set(d.slice.split(', ').map(x => x.charAt(0)))] // Get the unique slices contributing to this ensemble
+    for (i=0; i<slices.length; i++) {
+        url='https://brainome.ucsd.edu/CEMBA_dissection_images/CEMBA_Slice'+slices[i]
+        out = out+'<td> '+
+          '<a href="'+url+'.png" target="_blank"><img src="'+url+'_sm.png" ' +
+          ' width=200 alt="CEMBA Slice'+slices[i]+'"></a> </td>'
+        }
+    out = out+'</tr></table>'
+    return out
 }
         
