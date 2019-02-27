@@ -77,8 +77,8 @@ function format ( d ) {
     if (d.snATAC_datasets === "") {
         snATAC_datasets = "None";
     }
-
     
+    var slices=[... new Set(d.slice.split(', ').map(x => x.charAt(0)))] // Get the unique slices contributing to this ensemble
     out = '<table cellpadding="5" cellspacing="0" border="0" style="padding-left:50px;">'+
         '<tr>'+
             '<td><b>Description:</b></td>'+
@@ -89,11 +89,11 @@ function format ( d ) {
             '<td>'+d.ABA_regions_descriptive+'</td>'+
         '</tr>'+
         '<tr>'+
-            '<td><a href="https://drive.google.com/file/d/1dAUzB1GtKMUgmf_AInAGgI6OlgefUHok/preview" target="_blank">Dissection drawings for all slices</a></td>'+
+            '<td><a target=”_blank" href="https://brainome.ucsd.edu/CEMBA_dissection_images/index.php?slideIndex='+Math.min.apply(Math, slices)+'">'+
+            'Dissection drawings for all slices</a></td>'+
         '</tr>'+
         '<tr>'
     var url=''
-    var slices=[... new Set(d.slice.split(', ').map(x => x.charAt(0)))] // Get the unique slices contributing to this ensemble
     for (i=0; i<slices.length; i++) {
         url='https://brainome.ucsd.edu/CEMBA_dissection_images/CEMBA_Slice'+slices[i]
         out = out+'<td> '+

@@ -13,7 +13,7 @@
                    <div class="panel panel-default panel-main" style="overflow-x: auto; margin-left:auto; margin-right:auto;">
                       <div class="panel-heading">
                          <div class="panel-title">
-                                <b>Data ensemble: {{ ensemble_name }} (snmC-seq)</b>{% if gene is defined %} - {{ gene }}{% endif %}&nbsp;
+                                <b>Data ensemble {{ ensemble }}: {{ ensemble_name }} (snmC-seq)</b>{% if gene is defined %} - {{ gene }}{% endif %}&nbsp;
 <!--                                 <div style="display: inline-block;">
                                     <span>tSNE: </span>
                                     <span id="methylation-tsne-options-heading" style="font-size:0.8em;">&nbsp;</span>
@@ -21,6 +21,17 @@
                                     <span id="methylation-clustering-options-heading" style="font-size:0.8em;">&nbsp;</span>
                                 </div>
  -->
+                                <div style="display:inline-block; float:right;">
+                                    {% if AnnoJexists == True %}
+                                    <a href="#" target="_blank" id="epiBrowserLink" class="btn btn-info pull-right" role="button">
+                                        <small style="color:white;">Epigenome browser (AnnoJ)</small>
+                                    </a>
+                                    {% else %}
+                                    <div class="btn btn-info pull-right" disabled="disabled" role="button">
+                                        <small style="color:white;">Epigenome browser (AnnoJ; <i>not available</i>)</small>
+                                    </div>
+                                    {% endif %}
+                                </div>
                          </div>
                     </div>
                     <div class="panel-collapse collapse in" id="methylation-plots">
@@ -227,6 +238,7 @@
     var buttons;
     var table;
     var clusterMarkerGeneTable;
+    var AnnoJexists = "{{ AnnoJexists }}";
 	// var normalized = false;
 
     $(document).ready(function() {
