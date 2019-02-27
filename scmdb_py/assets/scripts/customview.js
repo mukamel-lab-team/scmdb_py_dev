@@ -592,6 +592,7 @@ function updateGeneElements(updateMCHScatter=true) {
         $('#epiBrowserLink').removeClass('disabled');
         if($("#geneName").select2('data').length > 1) {
             $('#normalize-heatmap').show();
+            $('#methylation-box-heat-normalize-toggle-div').show();
             $('#methylation-box-heat-normalize-toggle').prop('disabled', false);
             updateMethylationHeatmap();
             updateCorrelatingGeneDataTable("");
@@ -605,6 +606,7 @@ function updateGeneElements(updateMCHScatter=true) {
         }
         else{
             $('#normalize-heatmap').hide();
+            $('#methylation-box-heat-normalize-toggle-div').hide();
             $('#methylation-box-heat-normalize-toggle').prop('disabled', true);
             //updateOrthologToggle();
             updateMCHBoxPlot();
