@@ -5,7 +5,8 @@
 {# When extended, the content block contains all the html of the webpage #}
 {% block content -%}
     <br>
-    <div id="brain-dissection-map-div" style="display:none;" width="90%">
+    <div id="cemba-dissection-div" class="display compact" width="90%">
+        {% include "components/CEMBA_dissections.html" %}
     </div>
     <div id="ensemble-table-div" style="margin:auto; width:90%;">
         <table id="ensemble-table" class="display compact" width="90%">
