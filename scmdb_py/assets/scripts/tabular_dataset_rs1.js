@@ -97,7 +97,8 @@ function format ( d ) {
     for (i=0; i<slices.length; i++) {
         url='https://brainome.ucsd.edu/CEMBA_dissection_images/CEMBA_Slice'+slices[i]
         out = out+'<td> '+
-          '<a href="'+url+'.png" target="_blank"><img src="'+url+'_sm.png" ' +
+          '<a href="https://brainome.ucsd.edu/CEMBA_dissection_images/index.php?slideIndex='+slices[i]+'" target="_blank">'+
+          '<img src="'+url+'_sm.png" ' +
           ' width=200 alt="CEMBA Slice'+slices[i]+'"></a> </td>'
     }
     out = out + '</tr></table>'
