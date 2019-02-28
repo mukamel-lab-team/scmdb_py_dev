@@ -129,7 +129,7 @@
               $currfile = basename($value);
               $url = sprintf('https://brainome.ucsd.edu/CEMBA_dissection_images/%s', $currfile);
               printf('<div class="mySlides"">');
-              printf(' <h2 align="center">Slice %d / %d</h2>', $key+1, sizeof($files));
+              printf(' <h2 align="center" style="font-family:inherit;">Slice %d / %d</h2>', $key+1, sizeof($files));
               printf(' <a target="_blank" onclick="updateTable()"><img class="myimg" src="%s" align="center" style="height:400px; width:auto;"></a>',$url,$url);
               printf('</div>');
             }
