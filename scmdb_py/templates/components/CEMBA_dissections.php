@@ -166,7 +166,7 @@ a=getQueryVariable('slideIndex'); if (a) { slideIndex = a;}
 showSlides(slideIndex);
 
 function updateTable() {
-  $('#ensemble-table').DataTable
+  // Fill in the slice number that the user clicked into the search field of the table
 }
 
 function plusSlides(n) {
