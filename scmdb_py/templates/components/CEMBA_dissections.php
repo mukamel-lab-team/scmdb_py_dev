@@ -75,8 +75,16 @@
 .column {
   /*float: left;*/
   width: 33%;
+  max-width: 200px;
   display: inline-block;
   white-space: nowrap;
+}
+
+.stretch {
+  width: 100%;
+  display: inline-block;
+  font-size: 0;
+  line-height: 0
 }
 
 /* Add a transparency effect for thumnbail images */
@@ -96,7 +104,7 @@
   <table>
     <tr>
       <td>
-        <div style="height:450px; overflow:auto;">
+        <div style="height:450px; overflow:auto; text-align: justify;">
           <?php
             $pattern    = '/var/www/html/CEMBA_dissection_images/CEMBA_Slice*_sm.png';
             $files = glob($pattern);
@@ -104,11 +112,12 @@
             foreach ($files as $key => $value) {
               $currfile = basename($value);
               printf('<div class="column">');
-              printf(' <img class="demo cursor" src="https://brainome.ucsd.edu/CEMBA_dissection_images/%s" style="width:100%%; " onclick="currentSlide(%d)" alt="Slice %d / %d">', $currfile, $key+1, $key+1, sizeof($files));
+              printf(' <img class="demo cursor" src="https://brainome.ucsd.edu/CEMBA_dissection_images/%s" style="width:100%%;" onclick="currentSlide(%d)" alt="Slice %d / %d">', $currfile, $key+1, $key+1, sizeof($files));
               printf('</div>');
             }
           ?>
-        </div>
+            <span class="stretch"></span>
+          </div>
       </td>
       <td  style="min-width: 600px;">
         <div style="height:450px; overflow:auto;">
@@ -121,7 +130,7 @@
               $url = sprintf('https://brainome.ucsd.edu/CEMBA_dissection_images/%s', $currfile);
               printf('<div class="mySlides"">');
               printf(' <h2 align="center">Slice %d / %d</h2>', $key+1, sizeof($files));
-              printf(' <a target="_blank" onclick="updateTable()"><img class="myimg" src="%s" align="center" style="height:410px; width:auto;"></a>',$url,$url);
+              printf(' <a target="_blank" onclick="updateTable()"><img class="myimg" src="%s" align="center" style="height:400px; width:auto;"></a>',$url,$url);
               printf('</div>');
             }
           ?>
