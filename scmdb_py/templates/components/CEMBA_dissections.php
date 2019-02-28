@@ -2,7 +2,7 @@
 
 img {
   vertical-align: middle;
-  max-height: 450px;
+  width: 100%;
   display: block;
   margin-left: auto;
   margin-right: auto;
@@ -13,15 +13,14 @@ img {
   position: relative;
   width: 90%;
   margin: auto;
-  overflow: auto;
+  overflow: hidden;
 }
 
 /* Hide the images by default */
 .mySlides {
   display: none;
-  margin: auto;
-  width: 90%;
-  /*max-width:1500px;*/
+  margin: left;
+  width: 100%;
 }
 
 /* Add a pointer when hovering over the thumbnail images */
@@ -30,14 +29,13 @@ img {
 }
 
 /* Next & previous buttons */
-.prev,
-.next {
+.prevButton,
+.nextButton {
   cursor: pointer;
   position: absolute;
-  top: 40%;
+  top: 0px;
   width: auto;
   padding: 16px;
-  margin-top: -50px;
   color: black;
   font-weight: bold;
   font-size: 20px;
@@ -46,16 +44,17 @@ img {
   -webkit-user-select: none;
 }
 
-/* Position the "next button" to the right */
-.next {
+/* Position the "nextButton button" to the right */
+.nextButton {
   right: 0;
   border-radius: 3px 0 0 3px;
 }
 
 /* On hover, add a black background color with a little bit see-through */
-.prev:hover,
-.next:hover {
+.prevButton:hover,
+.nextButton:hover {
   background-color: rgba(0, 0, 0, 0.8);
+  color: yellow;
 }
 
 /* Number text (1/3 etc) */
@@ -75,7 +74,7 @@ img {
 /* Six columns side by side */
 .column {
   /*float: left;*/
-  width: 200px;
+  width: 33%;
   display: inline-block;
   white-space: nowrap;
 }
@@ -93,38 +92,45 @@ img {
 
 <!-- <h2 style="text-align:center">CEMBA - Mouse brain dissections</h2>
  -->
-<div class="container" style="border: solid;">
-  <div class="container" style="float: right; width: 45%; min-width: 200px;">
-    <?php
-      $pattern    = '/var/www/html/CEMBA_dissection_images/CEMBA_Slice*[0-9].png';
-      $files = glob($pattern);
-      sort($files,SORT_NATURAL);
-      foreach ($files as $key => $value) {
-        $currfile = basename($value);
-        printf('<div class="mySlides" style="max-width:550px;">');
-        printf(' <div class="numbertext">Slice %d / %d</div>', $key+1, sizeof($files));
-        printf(' <img src="https://brainome.ucsd.edu/CEMBA_dissection_images/%s" align="center">',$currfile);
-        printf('</div>');
-      }
-    ?>
-    <!-- <a class="prev" onclick="plusSlides(-1)">❮ Anterior</a> -->
-    <!-- <a class="next" onclick="plusSlides(1)">Posterior ❯</a> -->
-  </div>
-  <div class="container" style="float: left; width: 45%;">
-    <!-- <div class="row" style="display: inline-block; overflow-x: scroll; white-space: nowrap; width:550px"> -->
-    <?php
-      $pattern    = '/var/www/html/CEMBA_dissection_images/CEMBA_Slice*_sm.png';
-      $files = glob($pattern);
-      sort($files,SORT_NATURAL);
-      foreach ($files as $key => $value) {
-        $currfile = basename($value);
-        printf('<div class="column">');
-        printf(' <img class="demo cursor" src="https://brainome.ucsd.edu/CEMBA_dissection_images/%s" style="width:100%%" onclick="currentSlide(%d)" alt="Slice %d / %d">', $currfile, $key+1, $key+1, sizeof($files));
-        printf('</div>');
-      }
-    ?>
-    <!-- </div> -->
-  </div>
+<div class="container">
+  <table>
+    <tr>
+      <td>
+        <div style="height:450px; overflow:auto;">
+          <?php
+            $pattern    = '/var/www/html/CEMBA_dissection_images/CEMBA_Slice*_sm.png';
+            $files = glob($pattern);
+            sort($files,SORT_NATURAL);
+            foreach ($files as $key => $value) {
+              $currfile = basename($value);
+              printf('<div class="column">');
+              printf(' <img class="demo cursor" src="https://brainome.ucsd.edu/CEMBA_dissection_images/%s" style="width:100%%; " onclick="currentSlide(%d)" alt="Slice %d / %d">', $currfile, $key+1, $key+1, sizeof($files));
+              printf('</div>');
+            }
+          ?>
+        </div>
+      </td>
+      <td  style="min-width: 600px;">
+        <div style="height:450px; overflow:auto;">
+          <?php
+            $pattern    = '/var/www/html/CEMBA_dissection_images/CEMBA_Slice*[0-9].png';
+            $files = glob($pattern);
+            sort($files,SORT_NATURAL);
+            foreach ($files as $key => $value) {
+              $currfile = basename($value);
+              $url = sprintf('https://brainome.ucsd.edu/CEMBA_dissection_images/%s', $currfile);
+              printf('<div class="mySlides"">');
+              printf(' <h2 align="center">Slice %d / %d</h2>', $key+1, sizeof($files));
+              printf(' <a target="_blank" onclick="updateTable()"><img src="%s" align="center" style="height:410px; width:auto;"></a>',$url,$url);
+              printf('</div>');
+            }
+          ?>
+          <a class="prevButton" onclick="plusSlides(-1)">❮ Anterior</a>
+          <a class="nextButton" onclick="plusSlides(1)">Posterior ❯</a>
+        </div>
+      </td>
+    </tr>
+  </table>
 </div>
 
 <script>
@@ -149,6 +155,10 @@ function getQueryVariable(variable)
 a=getQueryVariable('slideIndex'); if (a) { slideIndex = a;}
 
 showSlides(slideIndex);
+
+function updateTable() {
+  $('#ensemble-table').DataTable
+}
 
 function plusSlides(n) {
   showSlides(slideIndex += n);
