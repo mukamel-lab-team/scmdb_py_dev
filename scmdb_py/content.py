@@ -121,7 +121,8 @@ def get_ensembles_summary():
 				datasets_in_ensemble.append('CEMBA_'+dataset)
 				snATAC_datasets_in_ensemble.append(dataset+" ("+str(count)+" cells)")
 
-		if total_methylation_cells>200 or total_snATAC_cells>200: # Do not display ensembles that contain less than 200 total cells. (mainly RS2 data)
+		# Do not display ensembles that contain less than 200 total cells. (mainly RS2 data)
+		if total_methylation_cells>0 or total_snATAC_cells>0: 
 
 			ens_dict["ensemble_id"] = ens['id']
 			ens_dict["ensemble_name"] = ens['ensemble']

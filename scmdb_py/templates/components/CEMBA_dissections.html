@@ -1,0 +1,167 @@
+<style>
+
+img {
+  vertical-align: middle;
+  width: 100%;
+  display: block;
+  margin-left: auto;
+  margin-right: auto;
+}
+
+/* Position the image container (needed to position the left and right arrows) */
+.container {
+  position: relative;
+  width: 90%;
+  margin: auto;
+  overflow: hidden;
+}
+
+/* Hide the images by default */
+.mySlides {
+  display: none;
+  margin: left;
+  width: 100%;
+}
+
+/* Add a pointer when hovering over the thumbnail images */
+.cursor {
+  cursor: pointer;
+}
+
+/* Next & previous buttons */
+.prevButton,
+.nextButton {
+  cursor: pointer;
+  position: absolute;
+  top: 0px;
+  width: auto;
+  padding: 16px;
+  color: black;
+  font-weight: bold;
+  font-size: 20px;
+  border-radius: 0 3px 3px 0;
+  user-select: none;
+  -webkit-user-select: none;
+}
+
+/* Position the "nextButton button" to the right */
+.nextButton {
+  right: 0;
+  border-radius: 3px 0 0 3px;
+}
+
+/* On hover, add a black background color with a little bit see-through */
+.prevButton:hover,
+.nextButton:hover {
+  background-color: rgba(0, 0, 0, 0.8);
+  color: yellow;
+}
+
+/* Number text (1/3 etc) */
+.numbertext {
+  font-size: 18px;
+  padding: 8px 12px;
+  position: absolute;
+  top: 0;
+}
+
+.row:after {
+  content: "";
+  display: table;
+  clear: both;
+}
+
+/* Six columns side by side */
+.column {
+  /*float: left;*/
+  width: 33%;
+  display: inline-block;
+  white-space: nowrap;
+}
+
+/* Add a transparency effect for thumnbail images */
+.demo {
+  opacity: 0.6;
+}
+
+.active,
+.demo:hover {
+  opacity: 1;
+}
+</style>
+
+<!-- <h2 style="text-align:center">CEMBA - Mouse brain dissections</h2>
+ -->
+<div class="container">
+  <table>
+    <tr>
+      <td>
+        <div style="height:450px; overflow:auto;">
+          <div class="column"> <img class="demo cursor" src="https://brainome.ucsd.edu/CEMBA_dissection_images/CEMBA_Slice1_sm.png" style="width:100%; " onclick="currentSlide(1)" alt="Slice 1 / 16"></div><div class="column"> <img class="demo cursor" src="https://brainome.ucsd.edu/CEMBA_dissection_images/CEMBA_Slice2_sm.png" style="width:100%; " onclick="currentSlide(2)" alt="Slice 2 / 16"></div><div class="column"> <img class="demo cursor" src="https://brainome.ucsd.edu/CEMBA_dissection_images/CEMBA_Slice3_sm.png" style="width:100%; " onclick="currentSlide(3)" alt="Slice 3 / 16"></div><div class="column"> <img class="demo cursor" src="https://brainome.ucsd.edu/CEMBA_dissection_images/CEMBA_Slice4_sm.png" style="width:100%; " onclick="currentSlide(4)" alt="Slice 4 / 16"></div><div class="column"> <img class="demo cursor" src="https://brainome.ucsd.edu/CEMBA_dissection_images/CEMBA_Slice5_sm.png" style="width:100%; " onclick="currentSlide(5)" alt="Slice 5 / 16"></div><div class="column"> <img class="demo cursor" src="https://brainome.ucsd.edu/CEMBA_dissection_images/CEMBA_Slice6_sm.png" style="width:100%; " onclick="currentSlide(6)" alt="Slice 6 / 16"></div><div class="column"> <img class="demo cursor" src="https://brainome.ucsd.edu/CEMBA_dissection_images/CEMBA_Slice7_sm.png" style="width:100%; " onclick="currentSlide(7)" alt="Slice 7 / 16"></div><div class="column"> <img class="demo cursor" src="https://brainome.ucsd.edu/CEMBA_dissection_images/CEMBA_Slice8_sm.png" style="width:100%; " onclick="currentSlide(8)" alt="Slice 8 / 16"></div><div class="column"> <img class="demo cursor" src="https://brainome.ucsd.edu/CEMBA_dissection_images/CEMBA_Slice9_sm.png" style="width:100%; " onclick="currentSlide(9)" alt="Slice 9 / 16"></div><div class="column"> <img class="demo cursor" src="https://brainome.ucsd.edu/CEMBA_dissection_images/CEMBA_Slice10_sm.png" style="width:100%; " onclick="currentSlide(10)" alt="Slice 10 / 16"></div><div class="column"> <img class="demo cursor" src="https://brainome.ucsd.edu/CEMBA_dissection_images/CEMBA_Slice11_sm.png" style="width:100%; " onclick="currentSlide(11)" alt="Slice 11 / 16"></div><div class="column"> <img class="demo cursor" src="https://brainome.ucsd.edu/CEMBA_dissection_images/CEMBA_Slice12_sm.png" style="width:100%; " onclick="currentSlide(12)" alt="Slice 12 / 16"></div><div class="column"> <img class="demo cursor" src="https://brainome.ucsd.edu/CEMBA_dissection_images/CEMBA_Slice13_sm.png" style="width:100%; " onclick="currentSlide(13)" alt="Slice 13 / 16"></div><div class="column"> <img class="demo cursor" src="https://brainome.ucsd.edu/CEMBA_dissection_images/CEMBA_Slice14_sm.png" style="width:100%; " onclick="currentSlide(14)" alt="Slice 14 / 16"></div><div class="column"> <img class="demo cursor" src="https://brainome.ucsd.edu/CEMBA_dissection_images/CEMBA_Slice15_sm.png" style="width:100%; " onclick="currentSlide(15)" alt="Slice 15 / 16"></div><div class="column"> <img class="demo cursor" src="https://brainome.ucsd.edu/CEMBA_dissection_images/CEMBA_Slice16_sm.png" style="width:100%; " onclick="currentSlide(16)" alt="Slice 16 / 16"></div>        </div>
+      </td>
+      <td  style="min-width: 600px;">
+        <div style="height:450px; overflow:auto;">
+          <div class="mySlides""> <h2 align="center">Slice 1 / 16</h2> <a target="_blank" onclick="updateTable()"><img src="https://brainome.ucsd.edu/CEMBA_dissection_images/CEMBA_Slice1.png" align="center" style="height:410px; width:auto;"></a></div><div class="mySlides""> <h2 align="center">Slice 2 / 16</h2> <a target="_blank" onclick="updateTable()"><img src="https://brainome.ucsd.edu/CEMBA_dissection_images/CEMBA_Slice2.png" align="center" style="height:410px; width:auto;"></a></div><div class="mySlides""> <h2 align="center">Slice 3 / 16</h2> <a target="_blank" onclick="updateTable()"><img src="https://brainome.ucsd.edu/CEMBA_dissection_images/CEMBA_Slice3.png" align="center" style="height:410px; width:auto;"></a></div><div class="mySlides""> <h2 align="center">Slice 4 / 16</h2> <a target="_blank" onclick="updateTable()"><img src="https://brainome.ucsd.edu/CEMBA_dissection_images/CEMBA_Slice4.png" align="center" style="height:410px; width:auto;"></a></div><div class="mySlides""> <h2 align="center">Slice 5 / 16</h2> <a target="_blank" onclick="updateTable()"><img src="https://brainome.ucsd.edu/CEMBA_dissection_images/CEMBA_Slice5.png" align="center" style="height:410px; width:auto;"></a></div><div class="mySlides""> <h2 align="center">Slice 6 / 16</h2> <a target="_blank" onclick="updateTable()"><img src="https://brainome.ucsd.edu/CEMBA_dissection_images/CEMBA_Slice6.png" align="center" style="height:410px; width:auto;"></a></div><div class="mySlides""> <h2 align="center">Slice 7 / 16</h2> <a target="_blank" onclick="updateTable()"><img src="https://brainome.ucsd.edu/CEMBA_dissection_images/CEMBA_Slice7.png" align="center" style="height:410px; width:auto;"></a></div><div class="mySlides""> <h2 align="center">Slice 8 / 16</h2> <a target="_blank" onclick="updateTable()"><img src="https://brainome.ucsd.edu/CEMBA_dissection_images/CEMBA_Slice8.png" align="center" style="height:410px; width:auto;"></a></div><div class="mySlides""> <h2 align="center">Slice 9 / 16</h2> <a target="_blank" onclick="updateTable()"><img src="https://brainome.ucsd.edu/CEMBA_dissection_images/CEMBA_Slice9.png" align="center" style="height:410px; width:auto;"></a></div><div class="mySlides""> <h2 align="center">Slice 10 / 16</h2> <a target="_blank" onclick="updateTable()"><img src="https://brainome.ucsd.edu/CEMBA_dissection_images/CEMBA_Slice10.png" align="center" style="height:410px; width:auto;"></a></div><div class="mySlides""> <h2 align="center">Slice 11 / 16</h2> <a target="_blank" onclick="updateTable()"><img src="https://brainome.ucsd.edu/CEMBA_dissection_images/CEMBA_Slice11.png" align="center" style="height:410px; width:auto;"></a></div><div class="mySlides""> <h2 align="center">Slice 12 / 16</h2> <a target="_blank" onclick="updateTable()"><img src="https://brainome.ucsd.edu/CEMBA_dissection_images/CEMBA_Slice12.png" align="center" style="height:410px; width:auto;"></a></div><div class="mySlides""> <h2 align="center">Slice 13 / 16</h2> <a target="_blank" onclick="updateTable()"><img src="https://brainome.ucsd.edu/CEMBA_dissection_images/CEMBA_Slice13.png" align="center" style="height:410px; width:auto;"></a></div><div class="mySlides""> <h2 align="center">Slice 14 / 16</h2> <a target="_blank" onclick="updateTable()"><img src="https://brainome.ucsd.edu/CEMBA_dissection_images/CEMBA_Slice14.png" align="center" style="height:410px; width:auto;"></a></div><div class="mySlides""> <h2 align="center">Slice 15 / 16</h2> <a target="_blank" onclick="updateTable()"><img src="https://brainome.ucsd.edu/CEMBA_dissection_images/CEMBA_Slice15.png" align="center" style="height:410px; width:auto;"></a></div><div class="mySlides""> <h2 align="center">Slice 16 / 16</h2> <a target="_blank" onclick="updateTable()"><img src="https://brainome.ucsd.edu/CEMBA_dissection_images/CEMBA_Slice16.png" align="center" style="height:410px; width:auto;"></a></div>          <a class="prevButton" onclick="plusSlides(-1)">❮ Anterior</a>
+          <a class="nextButton" onclick="plusSlides(1)">Posterior ❯</a>
+        </div>
+      </td>
+    </tr>
+  </table>
+</div>
+
+<script>
+var variables;
+var queryPost;
+var slideIndex = 1;
+
+// Get the slide index to be shown from the URL
+function getQueryVariable(variable) 
+{
+  if (!variables)
+  { 
+    if (!queryPost) queryPost = window.location.search.substring(1);
+    variables = decodeURI(queryPost).split("&");
+  }
+  for (var i=0;i<variables.length;i++) 
+  { 
+    var pair = variables[i].split("="); 
+    if (pair[0] == variable) return pair[1]; 
+  } 
+} 
+a=getQueryVariable('slideIndex'); if (a) { slideIndex = a;}
+
+showSlides(slideIndex);
+
+function updateTable() {
+  $('#ensemble-table').DataTable
+}
+
+function plusSlides(n) {
+  showSlides(slideIndex += n);
+}
+
+function currentSlide(n) {
+  showSlides(slideIndex = n);
+}
+
+function showSlides(n) {
+  var i;
+  var slides = document.getElementsByClassName("mySlides");
+  var dots = document.getElementsByClassName("demo");
+  // var captionText = document.getElementById("caption");
+  if (n > slides.length) {slideIndex = 1}
+  if (n < 1) {slideIndex = slides.length}
+  for (i = 0; i < slides.length; i++) {
+      slides[i].style.display = "none";
+  }
+  for (i = 0; i < dots.length; i++) {
+      dots[i].className = dots[i].className.replace(" active", "");
+  }
+  slides[slideIndex-1].style.display = "block";
+  dots[slideIndex-1].className += " active";
+  // captionText.innerHTML = dots[slideIndex-1].alt;
+}
+
+currentSlide(slideIndex);
+
+</script>
