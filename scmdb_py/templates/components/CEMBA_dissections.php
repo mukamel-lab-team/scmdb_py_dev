@@ -167,7 +167,11 @@ showSlides(slideIndex);
 
 function updateTable(num) {
   // Fill in the slice number that the user clicked into the search field of the table
-  document.getElementsByTagName("input")[0].value = num;
+  // 6 is the column for slices, search for input value
+  $('#ensemble-table').DataTable().columns(6)
+    .search(num)
+    .draw();
+
 }
 
 function plusSlides(n) {

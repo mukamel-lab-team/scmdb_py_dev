@@ -143,7 +143,12 @@ showSlides(slideIndex);
 
 function updateTable(num) {
   // Fill in the slice number that the user clicked into the search field of the table
-  document.getElementsByTagName("input")[0].value = num;
+  //var input = document.getElementsByTagName("input")[0];
+  //input.value = num;
+  $('#ensemble-table').DataTable().columns(6)
+    .search(num)
+    .draw();
+
 }
 
 function plusSlides(n) {
