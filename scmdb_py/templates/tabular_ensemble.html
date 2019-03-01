@@ -1,4 +1,4 @@
-{%- extends "layouts/base.html" %}
+{%- extends "layouts/base.html" %} {% import "bootstrap/utils.html" as utils %}
 
 {% block title %}Ensemble Summary{% endblock %} 
 
@@ -57,7 +57,9 @@
 
         $(document).ready( function () {
             initEnsembleDataTable(region);
+            $('#showAllSamplesToggle').bootstrapToggle();
         }); 
     </script>
+
 {% endblock scripts %}
 

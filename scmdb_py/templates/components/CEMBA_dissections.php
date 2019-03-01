@@ -108,7 +108,7 @@
 <!-- <h2 style="text-align:center">CEMBA - Mouse brain dissections</h2>
  -->
 <div class="container">
-  <a onclick="updateTable()">Show all samples.</a>
+  <!-- <a onclick="updateTable('.');">Show all samples.</a> -->
   <table>
     <tr>
       <td>
@@ -148,67 +148,82 @@
       </td>
     </tr>
   </table>
+  <div id="showAllSamples" style="float:left;">
+      <input id="showAllSamplesToggle" data-toggle="toggle" data-on="Show current slice" data-off="Show all slices" type="checkbox">
+  </div>
 </div>
 
-<script>
-var variables;
-var queryPost;
-var slideIndex = 1;
+    <!-- Scripts for dissection images -->
+    <script>
 
-// Get the slide index to be shown from the URL
-function getQueryVariable(variable) 
-{
-  if (!variables)
-  { 
-    if (!queryPost) queryPost = window.location.search.substring(1);
-    variables = decodeURI(queryPost).split("&");
-  }
-  for (var i=0;i<variables.length;i++) 
-  { 
-    var pair = variables[i].split("="); 
-    if (pair[0] == variable) return pair[1]; 
-  } 
-} 
-a=getQueryVariable('slideIndex'); if (a) { slideIndex = a;}
+    var variables;
+    var queryPost;
+    var slideIndex = 1;
 
-showSlides(slideIndex);
+    // Get the slide index to be shown from the URL
+    function getQueryVariable(variable) 
+    {
+      if (!variables)
+      { 
+        if (!queryPost) queryPost = window.location.search.substring(1);
+        variables = decodeURI(queryPost).split("&");
+      }
+      for (var i=0;i<variables.length;i++) 
+      { 
+        var pair = variables[i].split("="); 
+        if (pair[0] == variable) return pair[1]; 
+      } 
+    } 
+    a=getQueryVariable('slideIndex'); if (a) { slideIndex = a;}
 
-function updateTable(n) {
-  // Fill in the slice number that the user clicked into the search field of the table
-  // 6 is the column for slices, search for input value
-  $('#ensemble-table').DataTable().columns(6)
-    .search('(^'+n+'([A-Z,]|$)+|, '+n+'([A-Z,]|$)+)', true, false)
-    .draw();
+    showSlides(slideIndex);
 
-}
+    function updateTable(n) {
+      // Fill in the slice number that the user clicked into the search field of the table
+      // 6 is the column for slices, search for input value
+      if (n==="") { n='.'; }
+      $('#ensemble-table').DataTable().columns(6)
+        .search('(^'+n+'([A-Z,]|$)+|, '+n+'([A-Z,]|$)+)', true, false)
+        .draw();
+      slideIndex = n;
+    }
 
-function plusSlides(n) {
-  showSlides(slideIndex += n);
-}
+    function plusSlides(n) {
+      showSlides(slideIndex += n);
+    }
 
-function currentSlide(n) {
-  showSlides(slideIndex = n);
-  updateTable(n)
-}
+    function currentSlide(n) {
+      showSlides(slideIndex = n);
+      updateTable(n)
+    }
 
-function showSlides(n) {
-  var i;
-  var slides = document.getElementsByClassName("mySlides");
-  var dots = document.getElementsByClassName("demo");
-  // var captionText = document.getElementById("caption");
-  if (n > slides.length) {slideIndex = 1}
-  if (n < 1) {slideIndex = slides.length}
-  for (i = 0; i < slides.length; i++) {
-      slides[i].style.display = "none";
-  }
-  for (i = 0; i < dots.length; i++) {
-      dots[i].className = dots[i].className.replace(" active", "");
-  }
-  slides[slideIndex-1].style.display = "block";
-  dots[slideIndex-1].className += " active";
-  // captionText.innerHTML = dots[slideIndex-1].alt;
-}
+    function showSlides(n) {
+      var i;
+      var slides = document.getElementsByClassName("mySlides");
+      var dots = document.getElementsByClassName("demo");
+      // var captionText = document.getElementById("caption");
+      if (n > slides.length) {slideIndex = 1}
+      if (n < 1) {slideIndex = slides.length}
+      for (i = 0; i < slides.length; i++) {
+          slides[i].style.display = "none";
+      }
+      for (i = 0; i < dots.length; i++) {
+          dots[i].className = dots[i].className.replace(" active", "");
+      }
+      slides[slideIndex-1].style.display = "block";
+      dots[slideIndex-1].className += " active";
+      // captionText.innerHTML = dots[slideIndex-1].alt;
+    }
 
-currentSlide(slideIndex);
+    currentSlide(slideIndex);
 
-</script>
+    $("#showAllSamplesToggle").change(function() {
+      if ($('#showAllSamplesToggle').prop('unchecked')) { 
+        updateTable('.'); 
+      } else { 
+        updateTable(slideIndex); 
+      }
+    })
+
+    </script>
+
