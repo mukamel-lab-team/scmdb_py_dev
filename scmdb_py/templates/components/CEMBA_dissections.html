@@ -92,10 +92,17 @@
   opacity: 0.6;
 }
 
+.demo:focus {
+  opacity: 1;
+  border: solid;
+}
+
 .active,
 .demo:hover {
   opacity: 1;
 }
+
+
 </style>
 
 <!-- <h2 style="text-align:center">CEMBA - Mouse brain dissections</h2>
