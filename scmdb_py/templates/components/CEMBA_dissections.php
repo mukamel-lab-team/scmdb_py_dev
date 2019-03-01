@@ -137,7 +137,7 @@
               $url = sprintf('https://brainome.ucsd.edu/CEMBA_dissection_images/%s', $currfile);
               printf('<div class="mySlides"">');
               printf(' <h2 align="center" style="font-family:inherit;">Slice %d / %d</h2>', $key+1, sizeof($files));
-              printf(' <a target="_blank" onclick="updateTable()"><img class="myimg" src="%s" align="center" style="height:400px; width:auto;"></a>',$url,$url);
+              printf(' <a target="_blank" onclick="updateTable(%d)"><img class="myimg" src="%s" align="center" style="height:400px; width:auto;"></a>', $key+1, $url, $url);
               printf('</div>');
             }
           ?>
@@ -172,8 +172,13 @@ a=getQueryVariable('slideIndex'); if (a) { slideIndex = a;}
 
 showSlides(slideIndex);
 
-function updateTable() {
+function updateTable(num) {
   // Fill in the slice number that the user clicked into the search field of the table
+  // 6 is the column for slices, search for input value
+  $('#ensemble-table').DataTable().columns(6)
+    .search(num)
+    .draw();
+
 }
 
 function plusSlides(n) {
