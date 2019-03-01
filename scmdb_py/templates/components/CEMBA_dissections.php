@@ -108,6 +108,7 @@
 <!-- <h2 style="text-align:center">CEMBA - Mouse brain dissections</h2>
  -->
 <div class="container">
+  <a onclick="updateTable()">Show all samples.</a>
   <table>
     <tr>
       <td>
@@ -119,7 +120,7 @@
             foreach ($files as $key => $value) {
               $currfile = basename($value);
               printf('<div class="column">');
-              printf(' <img class="demo cursor" src="https://brainome.ucsd.edu/CEMBA_dissection_images/%s" style="width:100%%;" onclick="currentSlide(%d)" alt="Slice %d / %d">', $currfile, $key+1, $key+1, sizeof($files));
+              printf(' <img class="demo cursor" src="https://brainome.ucsd.edu/CEMBA_dissection_images/%s" style="width:100%%;" onclick="currentSlide(%d);" alt="Slice %d / %d">', $currfile, $key+1, $key+1, sizeof($files));
               printf('</div>');
             }
           ?>
@@ -172,11 +173,11 @@ a=getQueryVariable('slideIndex'); if (a) { slideIndex = a;}
 
 showSlides(slideIndex);
 
-function updateTable(num) {
+function updateTable(n) {
   // Fill in the slice number that the user clicked into the search field of the table
   // 6 is the column for slices, search for input value
   $('#ensemble-table').DataTable().columns(6)
-    .search(num)
+    .search('(^'+n+'([A-Z,]|$)+|, '+n+'([A-Z,]|$)+)', true, false)
     .draw();
 
 }
@@ -187,6 +188,7 @@ function plusSlides(n) {
 
 function currentSlide(n) {
   showSlides(slideIndex = n);
+  updateTable(n)
 }
 
 function showSlides(n) {
