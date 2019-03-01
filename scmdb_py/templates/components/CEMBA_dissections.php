@@ -53,8 +53,8 @@
 /* On hover, add a black background color with a little bit see-through */
 .prevButton:hover,
 .nextButton:hover {
-  background-color: rgba(0, 0, 0, 0.8);
-  color: yellow;
+  background-color: #05274A;
+  color: white;
 }
 
 /* Number text (1/3 etc) */
