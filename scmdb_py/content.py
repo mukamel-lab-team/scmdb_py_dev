@@ -624,21 +624,21 @@ def mean_cluster(gene_info, grouping, modality='ATAC'):
 		return None
 
 @cache.memoize(timeout=3600)
-def get_ensemble_info(ensemble_name=str(), ensemble_id=str()):
+def get_ensemble_info(ensemble_id=str()):
 	"""
 	Gets information regarding an ensemble. Requires either the ensemble name or ensemble id
 	"""
 	
-	if ensemble_name:
-		# result = db.get_engine(current_app, 'methylation_data').execute("SELECT * FROM ensembles WHERE ensemble_name=%s", (ensemble_name,)).fetchone()
-		result = db.get_engine(current_app, 'methylation_data').execute("SELECT * FROM ensembles WHERE ensemble_name=%s", (ensemble_name,)).fetchone()
+	if ensemble_id:
+		# result = db.get_engine(current_app, 'methylation_data').execute("SELECT * FROM ensembles WHERE ensemble_id=%s", (ensemble_id,)).fetchone()
+		result = db.get_engine(current_app, 'methylation_data').execute("SELECT * FROM ensembles WHERE ensemble_id=%s", (ensemble_id,)).fetchone()
 		if result is None:
-			result = db.get_engine(current_app, 'snATAC_data').execute("SELECT * FROM ensembles WHERE ensemble_name=%s", (ensemble_name,)).fetchone()
+			result = db.get_engine(current_app, 'snATAC_data').execute("SELECT * FROM ensembles WHERE ensemble_id=%s", (ensemble_id,)).fetchone()
 	else:
 		ensemble_id = int(filter(str.isdigit, ensemble_id))
 		result = db.get_engine(current_app, 'methylation_data').execute("SELECT * FROM ensembles WHERE ensemble_id=%s", (ensemble_id,)).fetchone()
 		if result is None:
-			result = db.get_engine(current_app, 'snATAC_data').execute("SELECT * FROM ensembles WHERE ensemble_name=%s", (ensemble_id,)).fetchone()	
+			result = db.get_engine(current_app, 'snATAC_data').execute("SELECT * FROM ensembles WHERE ensemble_id=%s", (ensemble_id,)).fetchone()	
 
 	return result
 

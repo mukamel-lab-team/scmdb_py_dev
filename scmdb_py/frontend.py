@@ -47,9 +47,9 @@ def index():
         return redirect(url_for('frontend.login'))
 
 
-@frontend.route('/<ensemble_name>')
-def ensemble(ensemble_name):
-    ensemble_info = get_ensemble_info(ensemble_name=ensemble_name)
+@frontend.route('/<ensemble_id>')
+def ensemble(ensemble_id):
+    ensemble_info = get_ensemble_info(ensemble_id=ensemble_id)
     snATAC_included = ensemble_exists(ensemble_info['ensemble_id'], modality='snATAC')
     methylation_included = ensemble_exists(ensemble_info['ensemble_id'], modality='methylation')
     RNA_included = ensemble_exists(ensemble_info['ensemble_id'],'RNA')
@@ -73,7 +73,7 @@ def ensemble(ensemble_name):
     if ensemble_info['public_access'] == 1 or (ensemble_info['public_access'] == 0 and current_user.is_authenticated):
         return render_template('ensembleview.html', 
                                ensemble = ensemble, 
-                               ensemble_name = ensemble_name,
+                               ensemble_id = ensemble_id,
                                methylation_data_available = methylation_included,
                                snATAC_data_available = snATAC_included,
                                RNA_data_available = RNA_included,
@@ -85,8 +85,8 @@ def ensemble(ensemble_name):
                                AnnoJexists = AnnoJexists)
     else:
         flash('Data for ensemble {} is not publicly accessible. You must log in to continue. \
-              <li>Click on "Ensembles" at the top of the page to select publicly accessible data.</li>'.format(ensemble_name), 'form-error')
-        return redirect(url_for('frontend.login', q=ensemble_name))
+              <li>Click on "Ensembles" at the top of the page to select publicly accessible data.</li>'.format(ensemble_id), 'form-error')
+        return redirect(url_for('frontend.login', q=ensemble_id))
 
 
 # @frontend.route('/standalone/<ensemble>/<gene>')
