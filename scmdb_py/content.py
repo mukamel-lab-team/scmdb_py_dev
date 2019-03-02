@@ -1709,7 +1709,6 @@ def get_mch_box(ensemble, methylation_type, gene, grouping, clustering, level, o
 	else:
 		grouping = 'cluster'
 		unique_groups = points[grouping+'_'+clustering].unique()
-		# raise FailToGraphException
 	num_clusters = len(unique_groups)
 
 	colors = generate_cluster_colors(num_clusters, grouping)
@@ -1802,7 +1801,7 @@ def get_mch_box(ensemble, methylation_type, gene, grouping, clustering, level, o
 		},
 		output_type='div',
 		show_link=False,
-		include_plotlyjs=False)
+			include_plotlyjs=False)
 
 @cache.memoize(timeout=3600)
 def get_mch_heatmap(ensemble, methylation_type, grouping, clustering, level, ptile_start, ptile_end, normalize_row, query):
@@ -3127,7 +3126,8 @@ def get_snATAC_box(ensemble, gene, grouping, outliers):
 			print("**** Grouping by cluster")
 		unique_groups = points[grouping+'_ATAC'].unique()
 	else: 
-		raise FailToGraphException
+		grouping = 'cluster'
+		unique_groups = points[grouping+'_'+clustering].unique()
 
 	num_clusters = len(unique_groups)
 	colors = generate_cluster_colors(num_clusters, grouping)
@@ -3144,9 +3144,25 @@ def get_snATAC_box(ensemble, gene, grouping, outliers):
 		boxpoints=False
 
 	traces = OrderedDict()
+
+	colors = generate_cluster_colors(num_clusters, grouping)
 	for point in points.to_dict('records'):
-		color = colors[int(np.where(unique_groups==point[grouping])[0]) % len(colors)]
-		group = point[grouping]
+		name_prepend = ""
+		if grouping == "dataset" or grouping == 'target_region' or grouping == 'slice' or grouping == 'sex':
+			color = colors[int(np.where(unique_groups==point[grouping])[0]) % len(colors)]
+			group = point[grouping]
+		else:
+			if grouping == "cluster":
+				name_prepend="cluster_"
+			color = colors[int(np.where(unique_groups==point[grouping+'_'+clustering])[0]) % len(colors)]
+			group = point[grouping+'_'+clustering]
+		if outliers:
+			boxpoints='suspectedoutliers';
+		else:
+			boxpoints=False	
+	# for point in points.to_dict('records'):
+	# 	color = colors[int(np.where(unique_groups==point[grouping])[0]) % len(colors)]
+	# 	group = point[grouping]
 		trace = traces.setdefault(group, Box(
 				y=list(),
 				name=name_prepend + str(group),
