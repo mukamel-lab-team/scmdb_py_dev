@@ -416,27 +416,48 @@
     // After clicking the update btn in the bottom
     $("#methylation-tsneUpdateBtn:enabled, #methylation-box-heat-UpdateBtn:enabled").click(function() {
 
-        // Update the scatter plot (only update tSNE and clusting)
-        // updateMCHScatterPlot(onlyUpdatetSNEandClustering=true);
-        updateMCHScatterPlot();
         updateGeneElements();
-
-        // Build the table
         initClusterSpecificMarkerGeneTable();
-        if (snATAC_data_available === 1) {
-            updatesnATACScatterPlot();
+
+        // methylatiohn
+        if (methylation_data_available === 1) {
+            // Update the scatter plot (only update tSNE and clusting)
+            // updateMCHScatterPlot(onlyUpdatetSNEandClustering=true);
+            updateMCHScatterPlot();
+            // If there are more than one gene, update heatmap
+            if ($('#geneName').select2('data').length > 1) {
+                updateMethylationHeatmap();
+            } 
+            // else, update the box plt and cluster bar plot
+            else if ($('#geneName').select2('data').length === 1 ) {
+                updateMCHBoxPlot();
+            }
         }
 
-        // If there are more than one gene, update heatmap
-        if ($('#geneName').select2('data').length > 1) {
-            updateMethylationHeatmap();
+        // snATAC
+        if (snATAC_data_available === 1) {
+            updatesnATACScatterPlot(); 
+            if ($('#geneName').select2('data').length > 1) {
+                updatesnATACHeatmap();                
+            } else {
+                updatesnATACBoxPlot(); 
+            }
         }
-        // else, update the box plt and cluster bar plot
-        else if ($('#geneName').select2('data').length === 1 ) {
-            updateMCHBoxPlot();
+
+        // RNA
+        if (RNA_data_available === 1) {
+            updateRNAScatterPlot(); 
+            if ($('#geneName').select2('data').length > 1) {
+                updateRNAHeatmap();                
+            } else {
+                updateRNABoxPlot(); 
+            }
+        }
+
+        if ($('#geneName').select2('data').length === 1 ) {
             updateClustersBarPlot();
         }
-        else {}
+
     });
 
 
