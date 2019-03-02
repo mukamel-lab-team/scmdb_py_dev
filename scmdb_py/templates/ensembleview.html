@@ -271,9 +271,9 @@
             value: [0.05, 0.95],
         }).on('slideStop', function()
         {
-            updateMethylationHeatmap();
-            updatesnATACHeatmap();
-            updateRNAHeatmap();
+            if (methylation_data_available===1) { updateMethylationHeatmap(); }
+            if (snATAC_data_available===1) { updatesnATACHeatmap(); }
+            if (RNA_data_available===1) { updateRNAHeatmap(); }
         }
         ).data('slider');
 
@@ -357,13 +357,10 @@
         if ($('#geneName').select2('data').length === 1) {
             updateMCHBoxPlot();
             updateClustersBarPlot(); }
-            else {
-                if ($('#orthologsToggle').prop('checked'))
-                    updateMethylationHeatmapTwoSpecies();
-                else
-                    updateMethylationHeatmap();
-            }
-        });
+        else {
+            updateMethylationHeatmap();
+        }
+    });
 
     $("#RNA-box-heat-outlierToggle").change(function() {
         if ($('#geneName').select2('data').length === 1)
