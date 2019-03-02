@@ -2931,7 +2931,7 @@ def get_snATAC_heatmap(ensemble, grouping, ptile_start, ptile_end, normalize_row
 			x.append(name_prepend+str(cluster))
 			text.append(build_hover_text(OrderedDict([('Gene', key),
 													  (grouping.title(), x[j]),
-													  ('Normalized Counts', snATAC_counts[i][j])
+													  ('Normalized Counts', round(snATAC_counts[i][j],4)),
 													  ])))
 			j += 1
 		hover.append(text)

@@ -941,7 +941,9 @@ function updateGeneElements(updateMCHScatter=true) {
             storage.save('lastViewedGenes', lastViewedGenes, 30);  // store last viewed genes for 30 minutes
         }
         if (updateMCHScatter){
-            updateMCHScatterPlot();
+            if (methylation_data_available === 1) {
+                updateMCHScatterPlot();
+            }
             if (snATAC_data_available === 1) {
                 updatesnATACScatterPlot();
             }
@@ -1519,7 +1521,7 @@ function updatesnATACHeatmap() {
     });
 }
 
-function updateRNAHeatmap(normalize) {
+function updateRNAHeatmap() {
     let levelType = $('#methylation-levels').val();
     // let levelType = $('#level').val();
     let RNA_color_percentile_Values = methylation_box_color_percentile_Slider.getValue();
@@ -1530,12 +1532,13 @@ function updateRNAHeatmap(normalize) {
     for (i = 0; i < genes.length; i++) {
         genes_query += (genes[i].id + "+");
     }
-    // if ($('#RNA-box-heat-normalize-toggle').prop('checked')) {
-    //     var normalize = 'true';
-    // }
-    // else {
-    //     var normalize = 'false';
-    // }
+
+    if ($('#methylation-box-heat-normalize-toggle').prop('checked')) {
+        var normalize = 'true';
+    }
+    else {
+        var normalize = 'false';
+    }
     genes_query = genes_query.slice(0,-1);
 
     $.ajax({

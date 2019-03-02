@@ -381,24 +381,11 @@
 		}
 
         if ($('#geneName').select2('data').length > 1) {
-            if ($('#orthologsToggle').prop('checked'))
-                updateMethylationHeatmapTwoSpecies();
-            else
-                updateMethylationHeatmap();
-        }
-
-		if ($('#geneName').select2('data').length > 1) {
-            updateRNAHeatmap(normalize);
-			// console.log('Hello!');
+            updateMethylationHeatmap();
+            updatesnATACHeatmap();
+            updateRNAHeatmap();
         }
     });
-
-    // $("#RNA-box-heat-normalize-toggle").change(function() {
-    //     if ($('#geneName').select2('data').length > 1) {
-    //         updateRNAHeatmap();
-	// 		console.log('Hello1!');
-    //     }
-    // });
 
     $("#clusters-bar-normalize-toggle").change(function() {
         updateClustersBarPlot();
