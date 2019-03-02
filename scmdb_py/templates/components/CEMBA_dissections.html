@@ -124,9 +124,6 @@
       </td>
     </tr>
   </table>
-  <div id="showAllSamples" style="float:left;">
-      <input id="showAllSamplesToggle" data-toggle="toggle" data-on="Show current slice" data-off="Show all slices" type="checkbox">
-  </div>
 </div>
 
     <!-- Scripts for dissection images -->
@@ -194,10 +191,10 @@
     currentSlide(slideIndex);
 
     $("#showAllSamplesToggle").change(function() {
-      if ($('#showAllSamplesToggle').prop('unchecked')) { 
-        updateTable('.'); 
-      } else { 
+      if ($('#showAllSamplesToggle').prop('checked')) { 
         updateTable(slideIndex); 
+      } else { 
+        updateTable('.'); 
       }
     })
 
