@@ -23,7 +23,6 @@ from .email import send_email
 from .forms import LoginForm, ChangeUserEmailForm, ChangeAccountTypeForm, InviteUserForm, CreatePasswordForm, NewUserForm, RequestResetPasswordForm, ResetPasswordForm, ChangePasswordForm
 from .user import User, Role
 
-# import requests
 import os
 
 
@@ -492,7 +491,7 @@ def login():
         if user is not None and user.password_hash is not None and \
                 user.verify_password(form.password.data):
             login_user(user, form.remember_me.data)
-            return redirect(url_for('frontend.ensemble', ensemble_name=ensemble))
+            return redirect(url_for('frontend.ensemble', ensemble_id=ensemble))
         else:
             flash('Invalid email or password.', 'form-error')
     return render_template('account/login.html', form=form)
