@@ -52,13 +52,13 @@ def ensemble(ensemble_id):
     ensemble_info = get_ensemble_info(ensemble_id=ensemble_id)
     snATAC_included = ensemble_exists(ensemble_info['ensemble_id'], modality='snATAC')
     methylation_included = ensemble_exists(ensemble_info['ensemble_id'], modality='methylation')
-    RNA_included = ensemble_exists(ensemble_info['ensemble_id'],'RNA')
-    ensemble = 'Ens'+str(ensemble_info['ensemble_id'])
+    RNA_included = ensemble_exists(ensemble_info['ensemble_id'],modality='RNA')
+    ensemble_name = str(ensemble_info['ensemble_name'])
     RS2_included = 0
     if 'RS2' in ensemble_info['datasets']:
         RS2_included = 1
     if methylation_included:
-        methylation_tsne_options = get_methylation_tsne_options(ensemble)
+        methylation_tsne_options = get_methylation_tsne_options(ensemble_id)
         num_algorithm_options = len(methylation_tsne_options['clustering_algorithms'])
         num_dims_options = len(methylation_tsne_options['tsne_dimensions'])
         num_perplexity_options = len(methylation_tsne_options['tsne_perplexity'])
@@ -68,11 +68,11 @@ def ensemble(ensemble_id):
         num_dims_options = 0
         num_perplexity_options = 0
         
-    AnnoJexists = ensemble_annoj_exists(ensemble)
+    AnnoJexists = ensemble_annoj_exists(ensemble_name)
     
     if ensemble_info['public_access'] == 1 or (ensemble_info['public_access'] == 0 and current_user.is_authenticated):
         return render_template('ensembleview.html', 
-                               ensemble = ensemble, 
+                               ensemble = ensemble_name, 
                                ensemble_id = ensemble_id,
                                methylation_data_available = methylation_included,
                                snATAC_data_available = snATAC_included,
@@ -87,21 +87,6 @@ def ensemble(ensemble_id):
         flash('Data for ensemble {} is not publicly accessible. You must log in to continue. \
               <li>Click on "Ensembles" at the top of the page to select publicly accessible data.</li>'.format(ensemble_id), 'form-error')
         return redirect(url_for('frontend.login', q=ensemble_id))
-
-
-# @frontend.route('/standalone/<ensemble>/<gene>')
-# def standalone(ensemble, gene):  # View gene body mCH plots alone
-#     return render_template('mch_standalone.html', ensemble=ensemble, gene=gene)
-
-# @frontend.route('/compare/<mmu_gene_id>/<hsa_gene_id>')
-# def compare(mmu_gene_id, hsa_gene_id):
-#     return render_template('compareview.html', mmu_gene_id=mmu_gene_id, hsa_gene_id=hsa_gene_id)
-
-# @frontend.route('/box_combined/<mmu_gene_id>/<hsa_gene_id>')
-# def box_combined(mmu_gene_id, hsa_gene_id):
-#     return render_template(
-#         'combined_box_standalone.html', mmu_gene_id=mmu_gene_id, hsa_gene_id=hsa_gene_id)
-
 
 @frontend.route('/tabular/ensemble')
 def ensemble_tabular_screen():

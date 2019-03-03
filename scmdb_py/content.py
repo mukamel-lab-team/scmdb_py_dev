@@ -629,6 +629,7 @@ def get_ensemble_info(ensemble_id=str()):
 	Gets information regarding an ensemble. Requires either the ensemble name or ensemble id
 	"""
 	
+	ensemble_id=ensemble_id.replace('Ens','') # Ensemble_id should be an integer
 	if ensemble_id:
 		# result = db.get_engine(current_app, 'methylation_data').execute("SELECT * FROM ensembles WHERE ensemble_id=%s", (ensemble_id,)).fetchone()
 		result = db.get_engine(current_app, 'methylation_data').execute("SELECT * FROM ensembles WHERE ensemble_id=%s", (ensemble_id,)).fetchone()
@@ -897,6 +898,8 @@ def get_gene_methylation(ensemble, methylation_type, gene, grouping, clustering,
 		groupingu = "CONCAT('NeuN',cells."+grouping+")"
 	else:
 		groupingu = "cells."+grouping
+
+	ensemble = ensemble.replace('EnsEns','Ens')
 
 	if 'ndim2' in tsne_type:
 		query = "SELECT cells.cell_id, cells.dataset, %(ensemble)s.cluster_%(clustering)s, datasets.target_region, \
@@ -2141,6 +2144,7 @@ def get_clusters(ensemble, grouping, clustering):
 	if ";" in ensemble or ";" in grouping or ";" in clustering:
 		return None
 
+	ensemble = ensemble.replace('EnsEns','Ens')
 	df = None;
 
 	if grouping in ['annotation','cluster']:
