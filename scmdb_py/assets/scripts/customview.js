@@ -1160,7 +1160,7 @@ function updatesnATACHeatmap() {
     });
 }
 
-function updateRNAHeatmap(normalize) {
+function updateRNAHeatmap() {
     let levelType = $('#methylation-levels').val();
     // let levelType = $('#level').val();
     let RNA_color_percentile_Values = methylation_box_color_percentile_Slider.getValue();
@@ -1171,12 +1171,13 @@ function updateRNAHeatmap(normalize) {
     for (i = 0; i < genes.length; i++) {
         genes_query += (genes[i].id + "+");
     }
-    // if ($('#RNA-box-heat-normalize-toggle').prop('checked')) {
-    //     var normalize = 'true';
-    // }
-    // else {
-    //     var normalize = 'false';
-    // }
+
+    if ($('#methylation-box-heat-normalize-toggle').prop('checked')) {
+        var normalize = 'true';
+    }
+    else {
+        var normalize = 'false';
+    }
     genes_query = genes_query.slice(0,-1);
 
     $.ajax({

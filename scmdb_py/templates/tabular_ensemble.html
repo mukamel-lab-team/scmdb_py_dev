@@ -1,4 +1,4 @@
-{%- extends "layouts/base.html" %}
+{%- extends "layouts/base.html" %} 
 
 {% block title %}Ensemble Summary{% endblock %} 
 
@@ -7,6 +7,11 @@
     <br>
     <div id="cemba-dissection-div" class="display compact" width="90%">
         {% include "components/CEMBA_dissections.html" %}
+    </div>
+
+    <div id="showAllSamples" style="margin:auto; width:90%; padding-top: 50px;">
+      <input id="showAllSamplesToggle" name="Show slices" type="button" onclick="updateTable('.');" value="Show all samples" style="padding:10px;">
+      <!-- <label for="showAllSamplesToggle">Show all samples</label> -->
     </div>
     <div id="ensemble-table-div" style="margin:auto; width:90%; padding-top: 50px;">
         <table id="ensemble-table" class="display compact" width="100%">
@@ -59,5 +64,6 @@
             initEnsembleDataTable(region);
         }); 
     </script>
+
 {% endblock scripts %}
 

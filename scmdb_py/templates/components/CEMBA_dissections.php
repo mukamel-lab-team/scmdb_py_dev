@@ -53,8 +53,8 @@
 /* On hover, add a black background color with a little bit see-through */
 .prevButton:hover,
 .nextButton:hover {
-  background-color: rgba(0, 0, 0, 0.8);
-  color: yellow;
+  background-color: #05274A;
+  color: white;
 }
 
 /* Number text (1/3 etc) */
@@ -92,14 +92,18 @@
   opacity: 0.6;
 }
 
+.demo:focus {
+  opacity: 1;
+  border: solid;
+}
+
 .active,
 .demo:hover {
   opacity: 1;
 }
-</style>
 
-<!-- <h2 style="text-align:center">CEMBA - Mouse brain dissections</h2>
- -->
+
+</style>
 <div class="container">
   <table>
     <tr>
@@ -112,7 +116,7 @@
             foreach ($files as $key => $value) {
               $currfile = basename($value);
               printf('<div class="column">');
-              printf(' <img class="demo cursor" src="https://brainome.ucsd.edu/CEMBA_dissection_images/%s" style="width:100%%;" onclick="currentSlide(%d)" alt="Slice %d / %d">', $currfile, $key+1, $key+1, sizeof($files));
+              printf(' <img class="demo cursor" title="Click image to restrict table to this slice" src="https://brainome.ucsd.edu/CEMBA_dissection_images/%s" style="width:100%%;" onclick="currentSlide(%d);" alt="Slice %d / %d">', $currfile, $key+1, $key+1, sizeof($files));
               printf('</div>');
             }
           ?>
@@ -129,8 +133,8 @@
               $currfile = basename($value);
               $url = sprintf('https://brainome.ucsd.edu/CEMBA_dissection_images/%s', $currfile);
               printf('<div class="mySlides"">');
-              printf(' <h2 align="center">Slice %d / %d</h2>', $key+1, sizeof($files));
-              printf(' <a target="_blank" onclick="updateTable()"><img class="myimg" src="%s" align="center" style="height:400px; width:auto;"></a>',$url,$url);
+              printf(' <h2 align="center" style="font-family:inherit;">Slice %d / %d</h2>', $key+1, sizeof($files));
+              printf(' <a target="_blank" onclick="updateTable(%d)"><img class="myimg" src="%s"  align="center" style="height:400px; width:auto;"></a>', $key+1, $url, $url);
               printf('</div>');
             }
           ?>
@@ -142,59 +146,77 @@
   </table>
 </div>
 
-<script>
-var variables;
-var queryPost;
-var slideIndex = 1;
+    <!-- Scripts for dissection images -->
+    <script>
 
-// Get the slide index to be shown from the URL
-function getQueryVariable(variable) 
-{
-  if (!variables)
-  { 
-    if (!queryPost) queryPost = window.location.search.substring(1);
-    variables = decodeURI(queryPost).split("&");
-  }
-  for (var i=0;i<variables.length;i++) 
-  { 
-    var pair = variables[i].split("="); 
-    if (pair[0] == variable) return pair[1]; 
-  } 
-} 
-a=getQueryVariable('slideIndex'); if (a) { slideIndex = a;}
+    var variables;
+    var queryPost;
+    var slideIndex = 1;
 
-showSlides(slideIndex);
+    // Get the slide index to be shown from the URL
+    function getQueryVariable(variable) 
+    {
+      if (!variables)
+      { 
+        if (!queryPost) queryPost = window.location.search.substring(1);
+        variables = decodeURI(queryPost).split("&");
+      }
+      for (var i=0;i<variables.length;i++) 
+      { 
+        var pair = variables[i].split("="); 
+        if (pair[0] == variable) return pair[1]; 
+      } 
+    } 
+    a=getQueryVariable('slideIndex'); if (a) { slideIndex = a;}
 
-function updateTable() {
-  $('#ensemble-table').DataTable
-}
+    showSlides(slideIndex);
 
-function plusSlides(n) {
-  showSlides(slideIndex += n);
-}
+    function updateTable(n) {
+      // Fill in the slice number that the user clicked into the search field of the table
+      // 6 is the column for slices, search for input value
+      if (n==="") { n='.'; }
+      $('#ensemble-table').DataTable().columns(6)
+        .search('(^'+n+'([A-Z,]|$)+|, '+n+'([A-Z,]|$)+)', true, false)
+        .draw();
+      slideIndex = n;
+    }
 
-function currentSlide(n) {
-  showSlides(slideIndex = n);
-}
+    function plusSlides(n) {
+      showSlides(slideIndex += n);
+    }
 
-function showSlides(n) {
-  var i;
-  var slides = document.getElementsByClassName("mySlides");
-  var dots = document.getElementsByClassName("demo");
-  // var captionText = document.getElementById("caption");
-  if (n > slides.length) {slideIndex = 1}
-  if (n < 1) {slideIndex = slides.length}
-  for (i = 0; i < slides.length; i++) {
-      slides[i].style.display = "none";
-  }
-  for (i = 0; i < dots.length; i++) {
-      dots[i].className = dots[i].className.replace(" active", "");
-  }
-  slides[slideIndex-1].style.display = "block";
-  dots[slideIndex-1].className += " active";
-  // captionText.innerHTML = dots[slideIndex-1].alt;
-}
+    function currentSlide(n) {
+      showSlides(slideIndex = n);
+      updateTable(n)
+    }
 
-currentSlide(slideIndex);
+    function showSlides(n) {
+      var i;
+      var slides = document.getElementsByClassName("mySlides");
+      var dots = document.getElementsByClassName("demo");
+      // var captionText = document.getElementById("caption");
+      if (n > slides.length) {slideIndex = 1}
+      if (n < 1) {slideIndex = slides.length}
+      for (i = 0; i < slides.length; i++) {
+          slides[i].style.display = "none";
+      }
+      for (i = 0; i < dots.length; i++) {
+          dots[i].className = dots[i].className.replace(" active", "");
+      }
+      slides[slideIndex-1].style.display = "block";
+      dots[slideIndex-1].className += " active";
+      // captionText.innerHTML = dots[slideIndex-1].alt;
+    }
 
-</script>
+    currentSlide(slideIndex);
+
+    $("#showAllSamplesToggle").change(function() {
+      if ($('#showAllSamplesToggle').prop('checked')) { 
+        updateTable(slideIndex); 
+      } else { 
+        updateTable('.'); 
+      }
+    })
+
+    </script>
+

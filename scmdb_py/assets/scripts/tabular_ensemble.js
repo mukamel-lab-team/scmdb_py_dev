@@ -34,11 +34,11 @@ function initEnsembleDataTable() {
                 }
             },
             {
-                "data": "ensemble_name",
+                "data": "ensemble_id",
                 "className": 'redirect-control dt-center',
                 "orderable": false,
                 "fnCreatedCell": function (nTd, sData, oData, iRow, iCol) {
-                    $(nTd).html('<a href="'+$SCRIPT_ROOT+'/'+oData.ensemble_name+'"><i class="fas fa-eye"></i></a>');
+                    $(nTd).html('<a href="'+$SCRIPT_ROOT+'/Ens'+oData.ensemble_id+'"><i class="fas fa-eye"></i></a>');
                 }
             },
             {

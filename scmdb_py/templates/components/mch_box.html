@@ -1,16 +1,4 @@
 <div class="panel-body" style="padding-top:0px;">
-    <script>
-    $("#methylation-box-heat-normalize-toggle").change(function() {
-        console.log("Hi!!");
-        if ($('#geneName').select2('data').length > 1) {
-            if ($('#orthologsToggle').prop('checked'))
-                updateMethylationHeatmapTwoSpecies();
-            else
-                updateMethylationHeatmap();
-        }
-        console.log("Hi!!");
-    });
-    </script>
     <div class="container">
         <div id="methylation-box-and-heat">
             <div id="mch-box-loader" class="loader"></div>

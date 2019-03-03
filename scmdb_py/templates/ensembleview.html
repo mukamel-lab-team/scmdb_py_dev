@@ -1,4 +1,5 @@
 {%- extends "base.html" %} {% import "bootstrap/utils.html" as utils %}
+
 {% block content %}
 <div class="Site" id="options">
 	<div class="Site-content">
@@ -218,7 +219,7 @@
 {% endassets  %}
 
 <script>
-    var ensemble = "{{ ensemble }}";
+    var ensemble = "{{ ensemble_id }}";
     var ensemble_name = "{{ ensemble_name }}";
     var RS2 = {{ RS2 }};
     var methylation_data_available = {{ methylation_data_available }};
@@ -270,9 +271,9 @@
             value: [0.05, 0.95],
         }).on('slideStop', function()
         {
-            updateMethylationHeatmap();
-            updatesnATACHeatmap();
-            updateRNAHeatmap();
+            if (methylation_data_available===1) { updateMethylationHeatmap(); }
+            if (snATAC_data_available===1) { updatesnATACHeatmap(); }
+            if (RNA_data_available===1) { updateRNAHeatmap(); }
         }
         ).data('slider');
 
@@ -356,13 +357,10 @@
         if ($('#geneName').select2('data').length === 1) {
             updateMCHBoxPlot();
             updateClustersBarPlot(); }
-            else {
-                if ($('#orthologsToggle').prop('checked'))
-                    updateMethylationHeatmapTwoSpecies();
-                else
-                    updateMethylationHeatmap();
-            }
-        });
+        else {
+            updateMethylationHeatmap();
+        }
+    });
 
     $("#RNA-box-heat-outlierToggle").change(function() {
         if ($('#geneName').select2('data').length === 1)
@@ -380,24 +378,11 @@
 		}
 
         if ($('#geneName').select2('data').length > 1) {
-            if ($('#orthologsToggle').prop('checked'))
-                updateMethylationHeatmapTwoSpecies();
-            else
-                updateMethylationHeatmap();
-        }
-
-		if ($('#geneName').select2('data').length > 1) {
-            updateRNAHeatmap(normalize);
-			// console.log('Hello!');
+            updateMethylationHeatmap();
+            updatesnATACHeatmap();
+            updateRNAHeatmap();
         }
     });
-
-    // $("#RNA-box-heat-normalize-toggle").change(function() {
-    //     if ($('#geneName').select2('data').length > 1) {
-    //         updateRNAHeatmap();
-	// 		console.log('Hello1!');
-    //     }
-    // });
 
     $("#clusters-bar-normalize-toggle").change(function() {
         updateClustersBarPlot();
@@ -415,27 +400,48 @@
     // After clicking the update btn in the bottom
     $("#methylation-tsneUpdateBtn:enabled, #methylation-box-heat-UpdateBtn:enabled").click(function() {
 
-        // Update the scatter plot (only update tSNE and clusting)
-        // updateMCHScatterPlot(onlyUpdatetSNEandClustering=true);
-        updateMCHScatterPlot();
         updateGeneElements();
-
-        // Build the table
         initClusterSpecificMarkerGeneTable();
-        if (snATAC_data_available === 1) {
-            updatesnATACScatterPlot();
+
+        // methylatiohn
+        if (methylation_data_available === 1) {
+            // Update the scatter plot (only update tSNE and clusting)
+            // updateMCHScatterPlot(onlyUpdatetSNEandClustering=true);
+            updateMCHScatterPlot();
+            // If there are more than one gene, update heatmap
+            if ($('#geneName').select2('data').length > 1) {
+                updateMethylationHeatmap();
+            } 
+            // else, update the box plt and cluster bar plot
+            else if ($('#geneName').select2('data').length === 1 ) {
+                updateMCHBoxPlot();
+            }
         }
 
-        // If there are more than one gene, update heatmap
-        if ($('#geneName').select2('data').length > 1) {
-            updateMethylationHeatmap();
+        // snATAC
+        if (snATAC_data_available === 1) {
+            updatesnATACScatterPlot(); 
+            if ($('#geneName').select2('data').length > 1) {
+                updatesnATACHeatmap();                
+            } else {
+                updatesnATACBoxPlot(); 
+            }
         }
-        // else, update the box plt and cluster bar plot
-        else if ($('#geneName').select2('data').length === 1 ) {
-            updateMCHBoxPlot();
+
+        // RNA
+        if (RNA_data_available === 1) {
+            updateRNAScatterPlot(); 
+            if ($('#geneName').select2('data').length > 1) {
+                updateRNAHeatmap();                
+            } else {
+                updateRNABoxPlot(); 
+            }
+        }
+
+        if ($('#geneName').select2('data').length === 1 ) {
             updateClustersBarPlot();
         }
-        else {}
+
     });
 
 
