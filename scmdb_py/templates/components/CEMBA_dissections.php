@@ -104,11 +104,7 @@
 
 
 </style>
-
-<!-- <h2 style="text-align:center">CEMBA - Mouse brain dissections</h2>
- -->
 <div class="container">
-  <!-- <a onclick="updateTable('.');">Show all samples.</a> -->
   <table>
     <tr>
       <td>
@@ -120,7 +116,7 @@
             foreach ($files as $key => $value) {
               $currfile = basename($value);
               printf('<div class="column">');
-              printf(' <img class="demo cursor" src="https://brainome.ucsd.edu/CEMBA_dissection_images/%s" style="width:100%%;" onclick="currentSlide(%d);" alt="Slice %d / %d">', $currfile, $key+1, $key+1, sizeof($files));
+              printf(' <img class="demo cursor" title="Click image to restrict table to this slice" src="https://brainome.ucsd.edu/CEMBA_dissection_images/%s" style="width:100%%;" onclick="currentSlide(%d);" alt="Slice %d / %d">', $currfile, $key+1, $key+1, sizeof($files));
               printf('</div>');
             }
           ?>
@@ -138,7 +134,7 @@
               $url = sprintf('https://brainome.ucsd.edu/CEMBA_dissection_images/%s', $currfile);
               printf('<div class="mySlides"">');
               printf(' <h2 align="center" style="font-family:inherit;">Slice %d / %d</h2>', $key+1, sizeof($files));
-              printf(' <a target="_blank" onclick="updateTable(%d)"><img class="myimg" src="%s" align="center" style="height:400px; width:auto;"></a>', $key+1, $url, $url);
+              printf(' <a target="_blank" onclick="updateTable(%d)"><img class="myimg" src="%s"  align="center" style="height:400px; width:auto;"></a>', $key+1, $url, $url);
               printf('</div>');
             }
           ?>
