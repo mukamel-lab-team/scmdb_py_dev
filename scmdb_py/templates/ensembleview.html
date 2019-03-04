@@ -14,14 +14,7 @@
                    <div class="panel panel-default panel-main" style="overflow-x: auto; margin-left:auto; margin-right:auto;">
                       <div class="panel-heading">
                          <div class="panel-title">
-                                <b>Data ensemble {{ ensemble }}: {{ ensemble_name }} (snmC-seq)</b>{% if gene is defined %} - {{ gene }}{% endif %}&nbsp;
-<!--                                 <div style="display: inline-block;">
-                                    <span>tSNE: </span>
-                                    <span id="methylation-tsne-options-heading" style="font-size:0.8em;">&nbsp;</span>
-                                    &nbsp;| Clustering:
-                                    <span id="methylation-clustering-options-heading" style="font-size:0.8em;">&nbsp;</span>
-                                </div>
- -->
+                                <b>Data ensemble {{ ensemble_id }}: {{ ensemble_name }} (snmC-seq)</b>{% if gene is defined %} - {{ gene }}{% endif %}&nbsp;
                                 <div style="display:inline-block; float:right;">
                                     {% if AnnoJexists == True %}
                                     <a href="#" target="_blank" id="epiBrowserLink" class="btn btn-info pull-right" role="button">
@@ -43,7 +36,6 @@
                                     <li role="presentation" class="active"><a id="methylation-box-tab-btn" href="#methylation-scatter" role="tab" data-toggle="tab">Scatter</a></li>
                                     <li role="presentation"><a id="methylation-box-tab-btn" href="#methylation-box" role="tab" data-toggle="tab">Box plot / Heatmap</a></li>
                                     <li role="presentation"><a id="clusters-bar-btn" href="#clusters-bar" role="tab" data-toggle="tab">Cluster statistics</a></li>
-                                    <!--<li role="clusterGeneTable"><a href="#clusterGeneTable" role="tab" data-toggle="tab">Cluster Specific Markers</a></li>-->
                                 </ul>
                             </div>
                             <div class="col-md-12 col-sm-12 flex-item tab-content" id="methyl_scatter_div" style="padding: 0px">
@@ -73,13 +65,20 @@
                    <div class="panel panel-default panel-main" style="overflow-x: auto; margin-left:auto; margin-right:auto;">
                       <div class="panel-heading">
                          <div class="panel-title">
-                            <a class="accordion-toggle" data-toggle="collapse" title="" href="#snATAC-plots" style="margin-top: 0px;" data-original-title="Collapse snATAC Scatter Plot Container">
-                                <div style="display:inline-block;">
-                                    <b>{{ ensemble_name }} (snATAC-seq)</b>
-                                    {% if gene is defined %} - {{ gene }}{% endif %}&nbsp;
+                                <div style="display:inline-block;">                                    
+                                <b>Data ensemble {{ ensemble_id }}: {{ ensemble_name }} (snATAC-seq)</b>{% if gene is defined %} - {{ gene }}{% endif %}&nbsp;
                                 </div>
-                                <div class="accordion-chevron" style="display:inline-block;"></div>
-                            </a>
+                                <div style="display:inline-block; float:right;">
+                                    {% if AnnoJexists == True %}
+                                    <a href="#" target="_blank" id="epiBrowserLink" class="btn btn-info pull-right" role="button">
+                                        <small style="color:white;">Epigenome browser (AnnoJ)</small>
+                                    </a>
+                                    {% else %}
+                                    <div class="btn btn-info pull-right" disabled="disabled" role="button">
+                                        <small style="color:white;">Epigenome browser (AnnoJ; <i>not available</i>)</small>
+                                    </div>
+                                    {% endif %}
+                                </div>
                         </div>
                     </div>
                     <div class="panel-collapse collapse in" id="snATAC-plots">
@@ -114,14 +113,20 @@
             <div class="panel panel-default panel-main" style="overflow-x: auto; margin-left:auto; margin-right:auto;">
                 <div class="panel-heading">
                     <div class="panel-title">
-                        <a class="accordion-toggle" data-toggle="collapse" title="" href="#RNA-plots" style="margin-top: 0px;" data-original-title="Collapse RNA Scatter Plot Container">
                             <div style="display:inline-block;">
-                                <b>{{ ensemble_name }} (RNA-seq)</b>
-                                {% if gene is defined %} - {{ gene }}{% endif %}&nbsp;
+                                <b>Data ensemble {{ ensemble_id }}: {{ ensemble_name }} (RNA-seq)</b>{% if gene is defined %} - {{ gene }}{% endif %}&nbsp;
                             </div>
-                            <div class="accordion-chevron" style="display:inline-block;"></div>
-                        </a>
-                        <a data-toggle="collapse" title="" data-placement="left" href=".RNA-plots-options" class="btn btn-sm btn-basic pull-right" style="margin-top: 0px;" data-original-title="Collapse RNA tSNE Options"><i class="glyphicon glyphicon-cog"></i> Options</a>
+                                <div style="display:inline-block; float:right;">
+                                    {% if AnnoJexists == True %}
+                                    <a href="#" target="_blank" id="epiBrowserLink" class="btn btn-info pull-right" role="button">
+                                        <small style="color:white;">Epigenome browser (AnnoJ)</small>
+                                    </a>
+                                    {% else %}
+                                    <div class="btn btn-info pull-right" disabled="disabled" role="button">
+                                        <small style="color:white;">Epigenome browser (AnnoJ; <i>not available</i>)</small>
+                                    </div>
+                                    {% endif %}
+                                </div>
                     </div>
                 </div>
                 <div class="panel-collapse collapse in" id="RNA-plots">
@@ -156,10 +161,21 @@
         <div class="panel panel-default panel-main" style="overflow-x: auto; margin-left:auto; margin-right:auto;">
             <div class="panel-heading">
                 <div class="panel-title">
-                    <a class="accordion-toggle" data-toggle="collapse" title="" href="#cluster-specific-marker-genes" style="margin-top: 0px;" data-original-title="Collapse Cluster Specific Marker Genes Table Container"><b>Cluster specific marker genes</b>&nbsp;
-                        <div class="accordion-chevron" style="display: inline-block;"></div>
-                    </a>
-                </div>
+                            <div style="display:inline-block;">
+                                <b>Data ensemble {{ ensemble_id }}: {{ ensemble_name }}</b>&nbsp;
+                            </div>
+                                <div style="display:inline-block; float:right;">
+                                    {% if AnnoJexists == True %}
+                                    <a href="#" target="_blank" id="epiBrowserLink" class="btn btn-info pull-right" role="button">
+                                        <small style="color:white;">Epigenome browser (AnnoJ)</small>
+                                    </a>
+                                    {% else %}
+                                    <div class="btn btn-info pull-right" disabled="disabled" role="button">
+                                        <small style="color:white;">Epigenome browser (AnnoJ; <i>not available</i>)</small>
+                                    </div>
+                                    {% endif %}
+                                </div>
+                    </div>
             </div>
 
             <div class="panel-body collapse in" id="cluster-specific-marker-genes" style="padding-top:10px;">

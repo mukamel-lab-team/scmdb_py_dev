@@ -71,7 +71,7 @@ def ensemble(ensemble_id):
     
     if ensemble_info['public_access'] == 1 or (ensemble_info['public_access'] == 0 and current_user.is_authenticated):
         return render_template('ensembleview.html', 
-                               ensemble = ensemble_name, 
+                               ensemble_name = ensemble_name, 
                                ensemble_id = ensemble_id,
                                methylation_data_available = methylation_included,
                                snATAC_data_available = snATAC_included,
