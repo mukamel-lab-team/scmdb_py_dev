@@ -46,7 +46,7 @@ def index():
         return redirect(url_for('frontend.login'))
 
 
-@frontend.route('/<ensemble_id>')
+@frontend.route('/<ensemble_id>') 
 def ensemble(ensemble_id):
     ensemble_info = get_ensemble_info(ensemble_id=ensemble_id)
     snATAC_included = ensemble_exists(ensemble_info['ensemble_id'], modality='snATAC')
@@ -57,7 +57,7 @@ def ensemble(ensemble_id):
     if 'RS2' in ensemble_info['datasets']:
         RS2_included = 1
     if methylation_included:
-        methylation_tsne_options = get_methylation_tsne_options(ensemble_id)
+        methylation_tsne_options = get_metadata_options(ensemble_id)
         num_algorithm_options = len(methylation_tsne_options['clustering_algorithms'])
         num_dims_options = len(methylation_tsne_options['tsne_dimensions'])
         num_perplexity_options = len(methylation_tsne_options['tsne_perplexity'])
@@ -417,7 +417,7 @@ def methylation_tsne_options(ensemble):
     if ensemble == None or ensemble == "":
         return jsonify({})
     else:
-        return jsonify(get_methylation_tsne_options(ensemble))
+        return jsonify(get_metadata_options(ensemble))
 
 
 @frontend.route('/snATAC_tsne_options/<ensemble>')

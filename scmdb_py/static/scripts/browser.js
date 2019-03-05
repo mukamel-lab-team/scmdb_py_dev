@@ -554,13 +554,23 @@ function populateMethylationTSNEDropdowns(data) {
     window.global_all_methylation_clustering_settings2 = data['all_clustering_settings2'];
 
     $.each(data["methylation_metadata_fields"], function(key, val) {
-        $(".methylation-tsne-grouping").append(
+        $("#methylation-tsne-grouping").append(
+            $('<option></option>').val(val).text(val)
+        );
+    });
+    $.each(data["snATAC_metadata_fields"], function(key, val) {
+        $("#snATAC-tsne-grouping").append(
+            $('<option></option>').val(val).text(val)
+        );
+    });
+    $.each(data["RNA_metadata_fields"], function(key, val) {
+        $("#RNA-tsne-grouping").append(
             $('<option></option>').val(val).text(val)
         );
     });
     
     $.each(data["tsne_dimensions"], function(key, val) {
-        $(".methylation-tsne-dimensions").append(
+        $("#methylation-tsne-dimensions").append(
             $('<option></option>').val(val).text(val)
         );
     });

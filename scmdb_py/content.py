@@ -644,7 +644,7 @@ def get_ensemble_info(ensemble_id=str()):
 	return result
 
 @cache.memoize(timeout=3600)
-def get_methylation_tsne_options(ensemble):
+def get_metadata_options(ensemble):
 	"""
 	Get all available options for tsne plot for selected ensemble.
 	"""
@@ -658,7 +658,7 @@ def get_methylation_tsne_options(ensemble):
 		df = pd.read_sql(query, db.get_engine(current_app, 'methylation_data'))
 	except exc.ProgrammingError as e:
 		now = datetime.datetime.now()
-		print("[{}] ERROR in app(get_methylation_tsne_options): {}".format(str(now), e))
+		print("[{}] ERROR in app(get_metadata_options): {}".format(str(now), e))
 		sys.stdout.flush()
 		return None
 
@@ -692,11 +692,16 @@ def get_methylation_tsne_options(ensemble):
 	#list_npc_clustering = sorted(list(set([int(x.split('_')[2].replace('npc', '')) for x in list_clustering_types if (list_mc_types_clustering[0]+'_'+list_algorithms_clustering[0]) in x])))
 	#list_k_clustering = sorted(list(set([int(x.split('_')[3].replace('k', '')) for x in list_clustering_types if (list_mc_types_clustering[0]+'_'+list_algorithms_clustering[0]+'_npc'+str(list_npc_clustering[0])) in x])))
 
-	query = "SELECT * FROM cells LIMIT 1"
-	df_metadata = pd.read_sql(query, con=db.get_engine(current_app, 'methylation_data'))
-	df_metadata = df_metadata.drop(list(df_metadata.filter(regex='cell_.*', axis='columns')), axis=1)
-	list_metadata = ['cluster','annotation']
-	list_metadata += list([i for i in df_metadata.columns.values])
+	all_metadata = dict()
+	for modality in ['methylation','snATAC','RNA']:
+		if ensemble_exists(ensemble, modality=modality):
+			query = "SELECT * FROM cells LIMIT 1"
+			df_metadata = pd.read_sql(query, con=db.get_engine(current_app, modality+'_data'))
+			df_metadata = df_metadata.drop(list(df_metadata.filter(regex='cell_.*', axis='columns')), axis=1)
+			all_metadata[modality] = ['cluster','annotation']
+			all_metadata[modality] += list([i for i in df_metadata.columns.values])
+		else:
+			all_metadata[modality] = []
 
 	return {'all_tsne_settings': list_tsne_types, 
 			'tsne_methylation': list_mc_types_tsne,
@@ -705,7 +710,9 @@ def get_methylation_tsne_options(ensemble):
 			'clustering_algorithms': list_algorithms_clustering,
 			'tsne_dimensions': list_dims_tsne_first,
 			'tsne_perplexity': list_perp_tsne_first,
-			'methylation_metadata_fields': list_metadata,}
+			'methylation_metadata_fields': all_metadata['methylation'],
+			'snATAC_metadata_fields': all_metadata['snATAC'],
+			'RNA_metadata_fields': all_metadata['RNA'],}
 
 @cache.memoize(timeout=3600)
 def get_snATAC_tsne_options(ensemble):

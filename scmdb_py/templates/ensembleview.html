@@ -460,7 +460,6 @@
 
     });
 
-
     $("#RNA-tsneUpdateBtn:enabled, #RNA-box-heat-UpdateBtn:enabled").click(function() {
         updateRNAScatterPlot(onlyUpdatetSNEandClustering=true);
         if ($('#geneName').select2('data').length > 1) {
@@ -499,15 +498,6 @@
         dynamicMethylationClusteringOptions_algorithm();
     });
 
-    /*
-    $(".methylation-clustering-npc").change(function() {
-        dynamicMethylationClusteringOptions_npc();
-    });
-    */
-
-    $("#methylation-tsne-grouping").change(function() {
-       $("#methylation-tsne-grouping").val($(this).val());
-   });
     $("#methylation-clustering-algorithm, #methylation-clustering-box-heat-algorithm").change(function() {
        $("#methylation-clustering-algorithm, #methylation-clustering-box-heat-algorithm").val($(this).val());
    });
@@ -517,35 +507,40 @@
 
     /* Data Modality*/
     $("#data-modality").change(function() {
-      if($(this).val() ===  "snmC-seq" ) {
-        $("#snmC-seq-view").show();
-        $("#snATAC-seq-view").hide();
-        $("#RNA-seq-view").hide();
-        $("#marker-table-view").hide();
-    } else if($(this).val() === "snATAC-seq" ) {
-        $("#snATAC-seq-view").show();
-        $("#snmC-seq-view").hide();
-        $("#RNA-seq-view").hide();
-        $("#marker-table-view").hide();
-    }
-    else if($(this).val() === "RNA-seq"){
-        $("#RNA-seq-view").show();
-        $("#snmC-seq-view").hide();
-        $("#snATAC-seq-view").hide();
-        $("#marker-table-view").hide();
-    } else {
-      $("#snmC-seq-view").hide();
-      $("#snATAC-seq-view").hide();
-      $("#RNA-seq-view").hide();
-      $("#marker-table-view").show();
-
-  }
-});
-    /*
-    $("#methylation-clustering-npc, #methylation-clustering-box-heat-npc").change(function() {
-         $("#methylation-clustering-npc, #methylation-clustering-box-heat-npc").val($(this).val());
+          if($(this).val() ===  "snmC-seq" ) {
+            $("#snmC-seq-view").show();
+            $("#snATAC-seq-view").hide();
+            $("#RNA-seq-view").hide();
+            $("#marker-table-view").hide();
+            $("#methylation-tsne-grouping").show();
+            $("#snATAC-tsne-grouping").hide();
+            $("#RNA-tsne-grouping").hide();
+        } else if($(this).val() === "snATAC-seq" ) {
+            $("#snATAC-seq-view").show();
+            $("#snmC-seq-view").hide();
+            $("#RNA-seq-view").hide();
+            $("#marker-table-view").hide();
+            $("#methylation-tsne-grouping").hide();
+            $("#snATAC-tsne-grouping").show();
+            $("#RNA-tsne-grouping").hide();
+        } else if($(this).val() === "RNA-seq"){
+            $("#RNA-seq-view").show();
+            $("#snmC-seq-view").hide();
+            $("#snATAC-seq-view").hide();
+            $("#marker-table-view").hide();
+            $("#methylation-tsne-grouping").hide();
+            $("#snATAC-tsne-grouping").hide();
+            $("#RNA-tsne-grouping").show();
+        } else if ($(this).val() === "Gene-marker"){
+            $("#snmC-seq-view").hide();
+            $("#snATAC-seq-view").hide();
+            $("#RNA-seq-view").hide();
+            $("#marker-table-view").show();
+            $("#methylation-tsne-grouping").hide();
+            $("#snATAC-tsne-grouping").hide();
+            $("#RNA-tsne-grouping").hide();
+        };
     });
-    */
 
     // 1.1 Updating K-value
     $("#methylation-clustering-k, #methylation-clustering-box-heat-k").change(function() {

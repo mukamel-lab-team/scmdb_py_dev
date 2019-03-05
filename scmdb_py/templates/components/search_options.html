@@ -196,7 +196,7 @@
         <a href="javascript:void(0);" class="hover-tooltip" data-toggle="popover" data-trigger="hover"
            data-placement="bottom" title="Data Modality"
            data-content="Data modality or marker genes."> 
-           <select id="data-modality" class="methylation-tsne-grouping methylation-tsneoption" style="color: black; font-size:15px; height:auto;">
+           <select id="data-modality" style="color: black; font-size:15px; height:auto;">
                 {% if methylation_data_available == 1 %}
                 <option value="snmC-seq">DNA methylation (snmC-seq)</option>
                 {% endif %}
@@ -246,17 +246,9 @@
                    data-placement="bottom" title="Color points by"
                    data-content="Color points by to be explained.">Color points by: </a>
              </label>
-        <select id="methylation-tsne-grouping" class="methylation-tsne-grouping methylation-tsneoption"
-                        name="methylation-tsnegrouping" style="color: black; font-size:15px; height:auto;">
-            <!-- <option value="cluster" selected>by cluster</option>
-            <option value="annotation">by cluster annotation</option>
-            <option value="dataset">by dataset</option>
-            <option value="slice">by slice</option>
-            <option value="sex">by sex</option>
-            {% if RS2 == true %}
-            <option value="target_region">by RS2 target region</option>
-            {% endif %} -->
-        </select>
+        <select id="methylation-tsne-grouping" name="methylation-tsnegrouping" style="color: black; font-size:15px; height:auto;"></select>
+        <select id="snATAC-tsne-grouping" name="snATAC-tsnegrouping" style="color: black; font-size:15px; height:auto; display:none;"></select>
+        <select id="RNA-tsne-grouping" name="RNA-tsnegrouping" style="color: black; font-size:15px; height:auto; display:none;"></select>
     </div>
 
     <!-- Methylation Type -->
