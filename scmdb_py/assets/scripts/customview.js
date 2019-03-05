@@ -328,130 +328,137 @@ function populateRNATSNEDropdowns() {
 }
 
 function dynamicMethylationTSNEOptions_dimensions(matching_tsne_options = []) {
-    if (matching_tsne_options.length === 0) {
-        const regex = new RegExp("_ndim" + $(".methylation-tsne-dimensions").val() + "_\\w+");
-        for (let i = 0; i < global_all_methylation_tsne_settings.length; i++) {
-            if (global_all_methylation_tsne_settings[i].match(regex) !== null) {
-                matching_tsne_options.push(global_all_methylation_tsne_settings[i]);
+    try {  // In case the ensemble does not contain methylation cells. TODO: Fix this so that it uses the tSNE options for ATAC
+        if (matching_tsne_options.length === 0) {
+            const regex = new RegExp("_ndim" + $(".methylation-tsne-dimensions").val() + "_\\w+");
+            for (let i = 0; i < global_all_methylation_tsne_settings.length; i++) {
+                if (global_all_methylation_tsne_settings[i].match(regex) !== null) {
+                    matching_tsne_options.push(global_all_methylation_tsne_settings[i]);
+                }
             }
         }
-    }
 
-    let methylation_set = new Set();
-    for (let i = 0; i < matching_tsne_options.length; i++) {
-        let methylation_type = matching_tsne_options[i].split('_')[0];
-        methylation_set.add(methylation_type);
-    }
-
-    let methylation_list = [...methylation_set];
-
-    $(".methylation-tsne-methylation").empty();
-    $(".methylation-tsne-perplexity").empty();
-    for (let i = 0; i < methylation_list.length; i++) {
-        if (methylation_list[i] === "mCHmCG") {
-            $(".methylation-tsne-methylation").append(
-                $("<option selected></option>").val(methylation_list[i]).text(methylation_list[i])
-            );
+        let methylation_set = new Set();
+        for (let i = 0; i < matching_tsne_options.length; i++) {
+            let methylation_type = matching_tsne_options[i].split('_')[0];
+            methylation_set.add(methylation_type);
         }
-        else {
-            $(".methylation-tsne-methylation").append(
-                $("<option></option>").val(methylation_list[i]).text(methylation_list[i])
-            );
+
+        let methylation_list = [...methylation_set];
+
+        $(".methylation-tsne-methylation").empty();
+        $(".methylation-tsne-perplexity").empty();
+        for (let i = 0; i < methylation_list.length; i++) {
+            if (methylation_list[i] === "mCHmCG") {
+                $(".methylation-tsne-methylation").append(
+                    $("<option selected></option>").val(methylation_list[i]).text(methylation_list[i])
+                );
+            }
+            else {
+                $(".methylation-tsne-methylation").append(
+                    $("<option></option>").val(methylation_list[i]).text(methylation_list[i])
+                );
+            }
         }
-    }
-    dynamicMethylationTSNEOptions_methylation(matching_tsne_options);
+        dynamicMethylationTSNEOptions_methylation(matching_tsne_options);
+    } catch(error) {}
 }
 
 // Updating tsne methylation Levels
 function dynamicMethylationTSNEOptions_methylation(matching_tsne_options = []) {
-
-    if (matching_tsne_options.length === 0) {
-        const regex = new RegExp('^'+$(".methylation-tsne-methylation").val()+"_ndim"+$(".methylation-tsne-dimensions").val()+ "_\\w+");
-		// console.log(regex);
-        for (let i = 0; i < global_all_methylation_tsne_settings.length; i++) {
-            if (global_all_methylation_tsne_settings[i].match(regex) !== null) {
-                matching_tsne_options.push(global_all_methylation_tsne_settings[i]);
+    try { 
+        if (matching_tsne_options.length === 0) {
+            const regex = new RegExp('^'+$(".methylation-tsne-methylation").val()+"_ndim"+$(".methylation-tsne-dimensions").val()+ "_\\w+");
+    		// console.log(regex);
+            for (let i = 0; i < global_all_methylation_tsne_settings.length; i++) {
+                if (global_all_methylation_tsne_settings[i].match(regex) !== null) {
+                    matching_tsne_options.push(global_all_methylation_tsne_settings[i]);
+                }
             }
         }
-    }
 
-    let perplexity_set = new Set();
-    for (let i = 0; i < matching_tsne_options.length; i++) {
-        let dimensions = matching_tsne_options[i].split('_')[2];
-        perplexity_set.add(dimensions.replace("perp",""));
-    }
-    let perplexity_list = [...perplexity_set];
+        let perplexity_set = new Set();
+        for (let i = 0; i < matching_tsne_options.length; i++) {
+            let dimensions = matching_tsne_options[i].split('_')[2];
+            perplexity_set.add(dimensions.replace("perp",""));
+        }
+        let perplexity_list = [...perplexity_set];
 
-    $(".methylation-tsne-perplexity").empty();
-    for (let i = 0; i < perplexity_list.length; i++) {
-        $(".methylation-tsne-perplexity").append(
-            $("<option></option>").val(perplexity_list[i]).text(perplexity_list[i])
-        );
-    }
+        $(".methylation-tsne-perplexity").empty();
+        for (let i = 0; i < perplexity_list.length; i++) {
+            $(".methylation-tsne-perplexity").append(
+                $("<option></option>").val(perplexity_list[i]).text(perplexity_list[i])
+            );
+        }
+    } catch(error) {}
 }
 
 function dynamicMethylationClusteringOptions_algorithm() {
-    var matching_clustering_options = [];
-    const regex = new RegExp('_' + $(".methylation-clustering-algorithms").val() + "_\\w+");
-
-    for (let i = 0; i < global_all_methylation_clustering_settings.length; i++) {
-        if (global_all_methylation_clustering_settings[i].match(regex) !== null) {
-            matching_clustering_options.push(global_all_methylation_clustering_settings[i]);
-        }
-    }
-
-    let methylation_set = new Set();
-    for (let i = 0; i < matching_clustering_options.length; i++) {
-        let methylation_type = matching_clustering_options[i].split('_')[0];
-        methylation_set.add(methylation_type);
-    }
-    let methylation_list = [...methylation_set];
-
-    $(".methylation-clustering-methylation").empty();
-    for (let i = 0; i < methylation_list.length; i++) {
-        if (methylation_list[i] === 'mCHmCG') {
-            $(".methylation-clustering-methylation").append(
-                $("<option selected></option>").val(methylation_list[i]).text(methylation_list[i])
-            );
-        }
-        else {
-            $(".methylation-clustering-methylation").append(
-                $("<option></option>").val(methylation_list[i]).text(methylation_list[i])
-            );
-        }
-    }
-
-    dynamicMethylationClusteringOptions_methylation();
-}
-
-// No longer necessary
-function dynamicMethylationClusteringOptions_methylation(matching_clustering_options = []) {
-    if (matching_clustering_options.length === 0) {
+    try {
         var matching_clustering_options = [];
-        const regex = new RegExp('^'+$(".methylation-clustering-methylation").val()+'_'+$(".methylation-clustering-algorithms").val() + "_\\w+");
-
+        const regex = new RegExp('_' + $(".methylation-clustering-algorithms").val() + "_\\w+");
+    
         for (let i = 0; i < global_all_methylation_clustering_settings.length; i++) {
             if (global_all_methylation_clustering_settings[i].match(regex) !== null) {
                 matching_clustering_options.push(global_all_methylation_clustering_settings[i]);
             }
         }
-    }
+    
+        let methylation_set = new Set();
+        for (let i = 0; i < matching_clustering_options.length; i++) {
+            let methylation_type = matching_clustering_options[i].split('_')[0];
+            methylation_set.add(methylation_type);
+        }
+        let methylation_list = [...methylation_set];
+    
+        $(".methylation-clustering-methylation").empty();
+        for (let i = 0; i < methylation_list.length; i++) {
+            if (methylation_list[i] === 'mCHmCG') {
+                $(".methylation-clustering-methylation").append(
+                    $("<option selected></option>").val(methylation_list[i]).text(methylation_list[i])
+                );
+            }
+            else {
+                $(".methylation-clustering-methylation").append(
+                    $("<option></option>").val(methylation_list[i]).text(methylation_list[i])
+                );
+            }
+        }
+    
+        dynamicMethylationClusteringOptions_methylation();
+    } catch(error) {}
+}
 
-    let npc_set = new Set();
-    for (let i = 0; i < matching_clustering_options.length; i++) {
-        let npc = matching_clustering_options[i].split('_')[2].replace("npc","");
-        npc_set.add(npc);
-    }
-    let npc_list = [...npc_set];
-
-    $(".methylation-clustering-npc").empty();
-    for (let i = 0; i < npc_list.length; i++) {
-        $(".methylation-clustering-npc").append(
-            $("<option></option>").val(npc_list[i]).text(npc_list[i])
-        );
-    }
-
-    dynamicMethylationClusteringOptions_npc(matching_clustering_options);
+// No longer necessary
+function dynamicMethylationClusteringOptions_methylation(matching_clustering_options = []) {
+    try {
+        if (matching_clustering_options.length === 0) {
+            var matching_clustering_options = [];
+            const regex = new RegExp('^'+$(".methylation-clustering-methylation").val()+'_'+$(".methylation-clustering-algorithms").val() + "_\\w+");
+    
+            for (let i = 0; i < global_all_methylation_clustering_settings.length; i++) {
+                if (global_all_methylation_clustering_settings[i].match(regex) !== null) {
+                    matching_clustering_options.push(global_all_methylation_clustering_settings[i]);
+                }
+            }
+        }
+    
+        let npc_set = new Set();
+        for (let i = 0; i < matching_clustering_options.length; i++) {
+            let npc = matching_clustering_options[i].split('_')[2].replace("npc","");
+            npc_set.add(npc);
+        }
+        let npc_list = [...npc_set];
+    
+        $(".methylation-clustering-npc").empty();
+        for (let i = 0; i < npc_list.length; i++) {
+            $(".methylation-clustering-npc").append(
+                $("<option></option>").val(npc_list[i]).text(npc_list[i])
+            );
+        }
+    
+        dynamicMethylationClusteringOptions_npc(matching_clustering_options);
+    } catch(error) {}
 }
 
 

@@ -192,11 +192,12 @@
         </div>
 
     <!--Data Modality -->
-    <div>
+    <div style="padding: 8px 8px 8px 32px;">
 <!--         <a href="javascript:void(0);" class="hover-tooltip" data-toggle="popover" data-trigger="hover"
            data-placement="bottom" title="Data Modality"
            data-content="Data modality or marker genes."> 
- -->           <select id="data-modality" style="color: black; font-size:15px; height:auto;">
+ -->          
+            <select id="data-modality" style="color: black; font-size:15px; height:auto;">
                 {% if methylation_data_available == 1 %}
                 <option value="snmC-seq">DNA methylation (snmC-seq)</option>
                 {% endif %}
@@ -368,24 +369,7 @@
                 <!-- {% endif %} -->
     </div>
 
-
-    <div style="display:inline-block;">
-        &nbsp;
+    <div style="margin: auto; width=100%; display: grid;">
+        <button class="btn-sm btn-primary methylation-tsneUpdateBtn" id="methylation-tsneUpdateBtn" style="width:100%; font-size: 15px;">Update</button>
     </div>
-        <!-- </div> -->
-    <!-- </div> -->
-
-
-    <!-- <div id="methylation-plots-options" class="collapse"> -->
-    <!-- <div class="container">
-        <div class="row"> -->
-            <!-- <div id="methylation_tsneType"> -->
-    <br>
-
-    <button class="btn-sm btn-primary methylation-tsneUpdateBtn" id="methylation-tsneUpdateBtn" style="width:100%">Update
-    </button>
-                <!-- </div> -->
-
-            <!-- </div>
-        </div> -->
 </div>
