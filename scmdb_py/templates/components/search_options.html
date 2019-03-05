@@ -193,10 +193,10 @@
 
     <!--Data Modality -->
     <div>
-        <a href="javascript:void(0);" class="hover-tooltip" data-toggle="popover" data-trigger="hover"
+<!--         <a href="javascript:void(0);" class="hover-tooltip" data-toggle="popover" data-trigger="hover"
            data-placement="bottom" title="Data Modality"
            data-content="Data modality or marker genes."> 
-           <select id="data-modality" style="color: black; font-size:15px; height:auto;">
+ -->           <select id="data-modality" style="color: black; font-size:15px; height:auto;">
                 {% if methylation_data_available == 1 %}
                 <option value="snmC-seq">DNA methylation (snmC-seq)</option>
                 {% endif %}
@@ -208,7 +208,7 @@
                 {% endif %}
                  <option value="Gene-marker">Cluster specific marker genes</option>
             </select>
-        </a>
+        <!-- </a> -->
     </div>
 
     <!-- Search gene by name: -->
@@ -240,7 +240,7 @@
     </div>
 
     <!-- Color Points By -->
-    <div>
+    <div id="tsne-grouping-div">
         <label class="control-label">
             <a href="javascript:void(0);" class="hover-tooltip" data-toggle="popover" data-trigger="hover"
                    data-placement="bottom" title="Color points by"

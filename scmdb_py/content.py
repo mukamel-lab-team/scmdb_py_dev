@@ -694,14 +694,12 @@ def get_metadata_options(ensemble):
 
 	all_metadata = dict()
 	for modality in ['methylation','snATAC','RNA']:
+		all_metadata[modality] = ['cluster','annotation']
 		if ensemble_exists(ensemble, modality=modality):
 			query = "SELECT * FROM cells LIMIT 1"
 			df_metadata = pd.read_sql(query, con=db.get_engine(current_app, modality+'_data'))
 			df_metadata = df_metadata.drop(list(df_metadata.filter(regex='cell_.*', axis='columns')), axis=1)
-			all_metadata[modality] = ['cluster','annotation']
 			all_metadata[modality] += list([i for i in df_metadata.columns.values])
-		else:
-			all_metadata[modality] = []
 
 	return {'all_tsne_settings': list_tsne_types, 
 			'tsne_methylation': list_mc_types_tsne,

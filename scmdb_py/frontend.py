@@ -46,7 +46,7 @@ def index():
         return redirect(url_for('frontend.login'))
 
 
-@frontend.route('/<ensemble_id>') 
+@frontend.route('/<ensemble_id>')
 def ensemble(ensemble_id):
     ensemble_info = get_ensemble_info(ensemble_id=ensemble_id)
     snATAC_included = ensemble_exists(ensemble_info['ensemble_id'], modality='snATAC')
@@ -57,12 +57,12 @@ def ensemble(ensemble_id):
     if 'RS2' in ensemble_info['datasets']:
         RS2_included = 1
     if methylation_included:
-        methylation_tsne_options = get_metadata_options(ensemble_id)
-        num_algorithm_options = len(methylation_tsne_options['clustering_algorithms'])
-        num_dims_options = len(methylation_tsne_options['tsne_dimensions'])
-        num_perplexity_options = len(methylation_tsne_options['tsne_perplexity'])
+        metadata_tsne_fields = get_metadata_options(ensemble_id)
+        num_algorithm_options = len(metadata_tsne_fields['clustering_algorithms'])
+        num_dims_options = len(metadata_tsne_fields['tsne_dimensions'])
+        num_perplexity_options = len(metadata_tsne_fields['tsne_perplexity'])
     else:
-        methylation_tsne_options = []
+        metadata_tsne_fields = []
         num_algorithm_options = 0
         num_dims_options = 0
         num_perplexity_options = 0
@@ -77,7 +77,7 @@ def ensemble(ensemble_id):
                                snATAC_data_available = snATAC_included,
                                RNA_data_available = RNA_included,
                                RS2 = RS2_included,
-                               methylation_tsne_options = json.dumps(methylation_tsne_options),
+                               metadata_tsne_fields = json.dumps(metadata_tsne_fields),
                                num_algorithm_options = num_algorithm_options,
                                num_dims_options = num_dims_options,
                                num_perplexity_options = num_perplexity_options,
@@ -411,9 +411,9 @@ def search_gene_by_id():
         return jsonify(get_gene_by_id(query))
 
 
-@frontend.route('/methylation_tsne_options/<ensemble>')
+@frontend.route('/metadata_tsne_fields/<ensemble>')
 @cache.memoize(timeout=3600)
-def methylation_tsne_options(ensemble):
+def metadata_tsne_fields(ensemble):
     if ensemble == None or ensemble == "":
         return jsonify({})
     else:
