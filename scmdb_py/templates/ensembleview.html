@@ -14,14 +14,7 @@
                    <div class="panel panel-default panel-main" style="overflow-x: auto; margin-left:auto; margin-right:auto;">
                       <div class="panel-heading">
                          <div class="panel-title">
-                                <b>Data ensemble {{ ensemble }}: {{ ensemble_name }} (snmC-seq)</b>{% if gene is defined %} - {{ gene }}{% endif %}&nbsp;
-<!--                                 <div style="display: inline-block;">
-                                    <span>tSNE: </span>
-                                    <span id="methylation-tsne-options-heading" style="font-size:0.8em;">&nbsp;</span>
-                                    &nbsp;| Clustering:
-                                    <span id="methylation-clustering-options-heading" style="font-size:0.8em;">&nbsp;</span>
-                                </div>
- -->
+                                <b>Data ensemble {{ ensemble_id }}: {{ ensemble_name }} (snmC-seq)</b>{% if gene is defined %} - {{ gene }}{% endif %}&nbsp;
                                 <div style="display:inline-block; float:right;">
                                     {% if AnnoJexists == True %}
                                     <a href="#" target="_blank" id="epiBrowserLink" class="btn btn-info pull-right" role="button">
@@ -43,7 +36,6 @@
                                     <li role="presentation" class="active"><a id="methylation-box-tab-btn" href="#methylation-scatter" role="tab" data-toggle="tab">Scatter</a></li>
                                     <li role="presentation"><a id="methylation-box-tab-btn" href="#methylation-box" role="tab" data-toggle="tab">Box plot / Heatmap</a></li>
                                     <li role="presentation"><a id="clusters-bar-btn" href="#clusters-bar" role="tab" data-toggle="tab">Cluster statistics</a></li>
-                                    <!--<li role="clusterGeneTable"><a href="#clusterGeneTable" role="tab" data-toggle="tab">Cluster Specific Markers</a></li>-->
                                 </ul>
                             </div>
                             <div class="col-md-12 col-sm-12 flex-item tab-content" id="methyl_scatter_div" style="padding: 0px">
@@ -73,13 +65,20 @@
                    <div class="panel panel-default panel-main" style="overflow-x: auto; margin-left:auto; margin-right:auto;">
                       <div class="panel-heading">
                          <div class="panel-title">
-                            <a class="accordion-toggle" data-toggle="collapse" title="" href="#snATAC-plots" style="margin-top: 0px;" data-original-title="Collapse snATAC Scatter Plot Container">
-                                <div style="display:inline-block;">
-                                    <b>{{ ensemble_name }} (snATAC-seq)</b>
-                                    {% if gene is defined %} - {{ gene }}{% endif %}&nbsp;
+                                <div style="display:inline-block;">                                    
+                                <b>Data ensemble {{ ensemble_id }}: {{ ensemble_name }} (snATAC-seq)</b>{% if gene is defined %} - {{ gene }}{% endif %}&nbsp;
                                 </div>
-                                <div class="accordion-chevron" style="display:inline-block;"></div>
-                            </a>
+                                <div style="display:inline-block; float:right;">
+                                    {% if AnnoJexists == True %}
+                                    <a href="#" target="_blank" id="epiBrowserLink" class="btn btn-info pull-right" role="button">
+                                        <small style="color:white;">Epigenome browser (AnnoJ)</small>
+                                    </a>
+                                    {% else %}
+                                    <div class="btn btn-info pull-right" disabled="disabled" role="button">
+                                        <small style="color:white;">Epigenome browser (AnnoJ; <i>not available</i>)</small>
+                                    </div>
+                                    {% endif %}
+                                </div>
                         </div>
                     </div>
                     <div class="panel-collapse collapse in" id="snATAC-plots">
@@ -114,14 +113,20 @@
             <div class="panel panel-default panel-main" style="overflow-x: auto; margin-left:auto; margin-right:auto;">
                 <div class="panel-heading">
                     <div class="panel-title">
-                        <a class="accordion-toggle" data-toggle="collapse" title="" href="#RNA-plots" style="margin-top: 0px;" data-original-title="Collapse RNA Scatter Plot Container">
                             <div style="display:inline-block;">
-                                <b>{{ ensemble_name }} (RNA-seq)</b>
-                                {% if gene is defined %} - {{ gene }}{% endif %}&nbsp;
+                                <b>Data ensemble {{ ensemble_id }}: {{ ensemble_name }} (RNA-seq)</b>{% if gene is defined %} - {{ gene }}{% endif %}&nbsp;
                             </div>
-                            <div class="accordion-chevron" style="display:inline-block;"></div>
-                        </a>
-                        <a data-toggle="collapse" title="" data-placement="left" href=".RNA-plots-options" class="btn btn-sm btn-basic pull-right" style="margin-top: 0px;" data-original-title="Collapse RNA tSNE Options"><i class="glyphicon glyphicon-cog"></i> Options</a>
+                                <div style="display:inline-block; float:right;">
+                                    {% if AnnoJexists == True %}
+                                    <a href="#" target="_blank" id="epiBrowserLink" class="btn btn-info pull-right" role="button">
+                                        <small style="color:white;">Epigenome browser (AnnoJ)</small>
+                                    </a>
+                                    {% else %}
+                                    <div class="btn btn-info pull-right" disabled="disabled" role="button">
+                                        <small style="color:white;">Epigenome browser (AnnoJ; <i>not available</i>)</small>
+                                    </div>
+                                    {% endif %}
+                                </div>
                     </div>
                 </div>
                 <div class="panel-collapse collapse in" id="RNA-plots">
@@ -156,10 +161,21 @@
         <div class="panel panel-default panel-main" style="overflow-x: auto; margin-left:auto; margin-right:auto;">
             <div class="panel-heading">
                 <div class="panel-title">
-                    <a class="accordion-toggle" data-toggle="collapse" title="" href="#cluster-specific-marker-genes" style="margin-top: 0px;" data-original-title="Collapse Cluster Specific Marker Genes Table Container"><b>Cluster specific marker genes</b>&nbsp;
-                        <div class="accordion-chevron" style="display: inline-block;"></div>
-                    </a>
-                </div>
+                            <div style="display:inline-block;">
+                                <b>Data ensemble {{ ensemble_id }}: {{ ensemble_name }}</b>&nbsp;
+                            </div>
+                                <div style="display:inline-block; float:right;">
+                                    {% if AnnoJexists == True %}
+                                    <a href="#" target="_blank" id="epiBrowserLink" class="btn btn-info pull-right" role="button">
+                                        <small style="color:white;">Epigenome browser (AnnoJ)</small>
+                                    </a>
+                                    {% else %}
+                                    <div class="btn btn-info pull-right" disabled="disabled" role="button">
+                                        <small style="color:white;">Epigenome browser (AnnoJ; <i>not available</i>)</small>
+                                    </div>
+                                    {% endif %}
+                                </div>
+                    </div>
             </div>
 
             <div class="panel-body collapse in" id="cluster-specific-marker-genes" style="padding-top:10px;">
@@ -228,7 +244,7 @@
     var num_algorithm_options = {{ num_algorithm_options }};
     var num_dims_options = {{ num_dims_options }};
     var num_perplexity_options = {{ num_perplexity_options }};
-    var methylation_tsne_options = {{ methylation_tsne_options|safe }};
+    var metadata_tsne_fields = {{ metadata_tsne_fields|safe }};
     var methylation_color_percentile_Slider;
     var snATAC_color_percentile_Slider;
     var RNA_color_percentile_Slider;
@@ -315,7 +331,7 @@
 
         $("#marker-table-view").hide();
 
-        populateMethylationTSNEDropdowns(methylation_tsne_options)
+        populateMethylationTSNEDropdowns(metadata_tsne_fields)
         initGeneNameSearch();
         initGeneModules();
         initClusterSpecificMarkerGeneTable();
@@ -444,7 +460,6 @@
 
     });
 
-
     $("#RNA-tsneUpdateBtn:enabled, #RNA-box-heat-UpdateBtn:enabled").click(function() {
         updateRNAScatterPlot(onlyUpdatetSNEandClustering=true);
         if ($('#geneName').select2('data').length > 1) {
@@ -483,15 +498,6 @@
         dynamicMethylationClusteringOptions_algorithm();
     });
 
-    /*
-    $(".methylation-clustering-npc").change(function() {
-        dynamicMethylationClusteringOptions_npc();
-    });
-    */
-
-    $("#methylation-tsne-grouping").change(function() {
-       $("#methylation-tsne-grouping").val($(this).val());
-   });
     $("#methylation-clustering-algorithm, #methylation-clustering-box-heat-algorithm").change(function() {
        $("#methylation-clustering-algorithm, #methylation-clustering-box-heat-algorithm").val($(this).val());
    });
@@ -501,35 +507,42 @@
 
     /* Data Modality*/
     $("#data-modality").change(function() {
-      if($(this).val() ===  "snmC-seq" ) {
-        $("#snmC-seq-view").show();
-        $("#snATAC-seq-view").hide();
-        $("#RNA-seq-view").hide();
-        $("#marker-table-view").hide();
-    } else if($(this).val() === "snATAC-seq" ) {
-        $("#snATAC-seq-view").show();
-        $("#snmC-seq-view").hide();
-        $("#RNA-seq-view").hide();
-        $("#marker-table-view").hide();
-    }
-    else if($(this).val() === "RNA-seq"){
-        $("#RNA-seq-view").show();
-        $("#snmC-seq-view").hide();
-        $("#snATAC-seq-view").hide();
-        $("#marker-table-view").hide();
-    } else {
-      $("#snmC-seq-view").hide();
-      $("#snATAC-seq-view").hide();
-      $("#RNA-seq-view").hide();
-      $("#marker-table-view").show();
-
-  }
-});
-    /*
-    $("#methylation-clustering-npc, #methylation-clustering-box-heat-npc").change(function() {
-         $("#methylation-clustering-npc, #methylation-clustering-box-heat-npc").val($(this).val());
+          $('#tsne-grouping-div').show();
+          if($(this).val() ===  "snmC-seq" ) {
+            $("#snmC-seq-view").show();
+            $("#snATAC-seq-view").hide();
+            $("#RNA-seq-view").hide();
+            $("#marker-table-view").hide();
+            $("#methylation-tsne-grouping").show();
+            $("#snATAC-tsne-grouping").hide();
+            $("#RNA-tsne-grouping").hide();
+        } else if($(this).val() === "snATAC-seq" ) {
+            $("#snATAC-seq-view").show();
+            $("#snmC-seq-view").hide();
+            $("#RNA-seq-view").hide();
+            $("#marker-table-view").hide();
+            $("#methylation-tsne-grouping").hide();
+            $("#snATAC-tsne-grouping").show();
+            $("#RNA-tsne-grouping").hide();
+        } else if($(this).val() === "RNA-seq"){
+            $("#RNA-seq-view").show();
+            $("#snmC-seq-view").hide();
+            $("#snATAC-seq-view").hide();
+            $("#marker-table-view").hide();
+            $("#methylation-tsne-grouping").hide();
+            $("#snATAC-tsne-grouping").hide();
+            $("#RNA-tsne-grouping").show();
+        } else if ($(this).val() === "Gene-marker"){
+            $("#snmC-seq-view").hide();
+            $("#snATAC-seq-view").hide();
+            $("#RNA-seq-view").hide();
+            $("#marker-table-view").show();
+            $("#methylation-tsne-grouping").hide();
+            $("#snATAC-tsne-grouping").hide();
+            $("#RNA-tsne-grouping").hide();
+            $('#tsne-grouping-div').hide();
+        };
     });
-    */
 
     // 1.1 Updating K-value
     $("#methylation-clustering-k, #methylation-clustering-box-heat-k").change(function() {

@@ -56,12 +56,12 @@ def ensemble(ensemble_id):
     if 'RS2' in ensemble_info['datasets']:
         RS2_included = 1
     if methylation_included:
-        methylation_tsne_options = get_methylation_tsne_options(ensemble_id)
-        num_algorithm_options = len(methylation_tsne_options['clustering_algorithms'])
-        num_dims_options = len(methylation_tsne_options['tsne_dimensions'])
-        num_perplexity_options = len(methylation_tsne_options['tsne_perplexity'])
+        metadata_tsne_fields = get_metadata_options(ensemble_id)
+        num_algorithm_options = len(metadata_tsne_fields['clustering_algorithms'])
+        num_dims_options = len(metadata_tsne_fields['tsne_dimensions'])
+        num_perplexity_options = len(metadata_tsne_fields['tsne_perplexity'])
     else:
-        methylation_tsne_options = []
+        metadata_tsne_fields = []
         num_algorithm_options = 0
         num_dims_options = 0
         num_perplexity_options = 0
@@ -69,13 +69,13 @@ def ensemble(ensemble_id):
     AnnoJexists = ensemble_annoj_exists(ensemble_name)
     if ensemble_info['public_access'] == 1 or (ensemble_info['public_access'] == 0 and current_user.is_authenticated):
         return render_template('ensembleview.html', 
-                               ensemble = ensemble_name, 
+                               ensemble_name = ensemble_name, 
                                ensemble_id = ensemble_id,
                                methylation_data_available = methylation_included,
                                snATAC_data_available = snATAC_included,
                                RNA_data_available = RNA_included,
                                RS2 = RS2_included,
-                               methylation_tsne_options = json.dumps(methylation_tsne_options),
+                               metadata_tsne_fields = json.dumps(metadata_tsne_fields),
                                num_algorithm_options = num_algorithm_options,
                                num_dims_options = num_dims_options,
                                num_perplexity_options = num_perplexity_options,
@@ -409,13 +409,13 @@ def search_gene_by_id():
         return jsonify(get_gene_by_id(query))
 
 
-@frontend.route('/methylation_tsne_options/<ensemble>')
+@frontend.route('/metadata_tsne_fields/<ensemble>')
 @cache.memoize(timeout=3600)
-def methylation_tsne_options(ensemble):
+def metadata_tsne_fields(ensemble):
     if ensemble == None or ensemble == "":
         return jsonify({})
     else:
-        return jsonify(get_methylation_tsne_options(ensemble))
+        return jsonify(get_metadata_options(ensemble))
 
 
 @frontend.route('/snATAC_tsne_options/<ensemble>')
@@ -489,7 +489,7 @@ def login():
         if user is not None and user.password_hash is not None and \
                 user.verify_password(form.password.data):
             login_user(user, form.remember_me.data)
-            return redirect(url_for('frontend.ensemble', ensemble_name=ensemble))
+            return redirect(url_for('frontend.ensemble', ensemble_id=ensemble))
         else:
             flash('Invalid email or password.', 'form-error')
     return render_template('account/login.html', form=form)

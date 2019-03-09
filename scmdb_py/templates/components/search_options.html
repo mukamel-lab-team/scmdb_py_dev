@@ -50,7 +50,6 @@
         */
     }
 
-
     /*
     .option-button:hover{
     	margin-left: 50px;
@@ -75,7 +74,7 @@
 
     .control-label a {
         font-size: 15px;
-        color: white;
+
     }
 
     .control-label {
@@ -111,7 +110,6 @@
       transition: 0.4s;
     }
 
-    
     /*animated option icon
     .change .bar1 {
       -webkit-transform: rotate(-45deg) translate(-9px, 6px);
@@ -174,10 +172,7 @@
     <div class="bar3"></div>
 </div>
 
-<div id="mySidenav" class="sidenav" style="width: 400px; margin-left: -400px; z-index: 55; padding: 40px">
-
-    <h6 style="text-decoration: underline; font-size: 23px;">Options</h6>
-
+<div id="mySidenav" class="sidenav" style="width: 400px; margin-left: -400px; z-index: 55; padding:20px; margin-top:20px;">
 
     <h6>Display Options</h6>
     {% if num_dims_options > 1 %}
@@ -197,74 +192,64 @@
         </div>
 
     <!--Data Modality -->
-    <div>
-        <label class="control-label">
-            <a href="javascript:void(0);" class="hover-tooltip" data-toggle="popover" data-trigger="hover"
-               data-placement="bottom" title="Data Modality"
-               data-content="Data Modality to be explained.">Data Modality: </a>
-        </label>
-        <select id="data-modality" style="width:40%">
-            <option value="snmC-seq">DNA methylation (snmC-seq)</option>
-            {% if snATAC_data_available == 1 %}
-            <option value="snATAC-seq">Chromatin accessibility (snATAC-seq)</option>
-            {% endif %}
-            {% if RNA_data_available == 1 %}
-            <option value="RNA-seq">Transcriptome (RNA-seq)</option>
-            {% endif %}
-             <option value="Gene-marker">Cluster specific marker genes table</option>
-        </select>
+    <div style="padding: 8px 8px 8px 32px;">
+<!--         <a href="javascript:void(0);" class="hover-tooltip" data-toggle="popover" data-trigger="hover"
+           data-placement="bottom" title="Data Modality"
+           data-content="Data modality or marker genes."> 
+ -->          
+            <select id="data-modality" style="color: black; font-size:15px; height:auto;">
+                {% if methylation_data_available == 1 %}
+                <option value="snmC-seq">DNA methylation (snmC-seq)</option>
+                {% endif %}
+                {% if snATAC_data_available == 1 %}
+                <option value="snATAC-seq">Chromatin accessibility (snATAC-seq)</option>
+                {% endif %}
+                {% if RNA_data_available == 1 %}
+                <option value="RNA-seq">Transcriptome (RNA-seq)</option>
+                {% endif %}
+                 <option value="Gene-marker">Cluster specific marker genes</option>
+            </select>
+        <!-- </a> -->
     </div>
 
     <!-- Search gene by name: -->
     <div>
         <label for="geneName" class="control-label">
                 <a href="javascript:void(0);" class="hover-tooltip" data-toggle="popover" data-trigger="hover"
-                   data-placement="bottom" title="Search gene by name"
-                   data-content="Search gene by name to be explained.">Search gene by name: </a>
+                   data-placement="bottom" title="Search gene(s) by name"
+                   data-content="Genes to be displayed.">Gene(s): </a>
         </label>
     </div>
     <div style="padding-left: 32px;">
-            <select id="geneName" multiple style="width:70%">
-                <option>Select..</option>
+            <select id="geneName" multiple style="width:100%">
+                <option>Enter gene name(s)...</option>
             </select>
-            <div style="display: inline-block;">
-                <button type="button" class="btn btn-default btn-sm" id="clear-gene-search-btn">
-                    Clear
-                </button>
-            </div>
     </div>
 
     <!-- Gene Modules -->
-    <div>
-        <label for="geneModulesSelect" class="control-label">
+    <div style="width:100%">
+        <!-- <label for="geneModulesSelect" class="control-label">
+        </label> -->
         <a href="javascript:void(0);" class="hover-tooltip pop" data-toggle="popover"
                 data-trigger="hover" data-placement="top" title="Gene Modules"
-                data-content="Populate gene search with pre-selected list of known and predicted marker genes for different cell types. (Gene modules were curated from supplementary figure S10. <a href='http://science.sciencemag.org/content/357/6351/600' target='_blank'>Link</a>)"
-                data-html="true">Gene Modules</a>
-        </label>
-        <select id="geneModulesSelect" style="width:40%">
-            <option value="0">Select..</option>
-        </select>
+                data-content="Populate gene search with pre-selected list of known and predicted marker genes for different cell types. (Gene modules were curated from Luo, Keown et al., Science 2017, supplementary figure S10)"
+                data-html="true">
+            <select id="geneModulesSelect" style="width:100%">
+                <option value="0">Pre-defined gene modules...</option>
+            </select>
+        </a>
     </div>
 
     <!-- Color Points By -->
-    <div>
+    <div id="tsne-grouping-div">
         <label class="control-label">
             <a href="javascript:void(0);" class="hover-tooltip" data-toggle="popover" data-trigger="hover"
                    data-placement="bottom" title="Color points by"
                    data-content="Color points by to be explained.">Color points by: </a>
              </label>
-        <select id="methylation-tsne-grouping" class="methylation-tsne-grouping methylation-tsneoption"
-                        name="methylation-tsnegrouping">
-            <!-- <option value="cluster" selected>by cluster</option>
-            <option value="annotation">by cluster annotation</option>
-            <option value="dataset">by dataset</option>
-            <option value="slice">by slice</option>
-            <option value="sex">by sex</option>
-            {% if RS2 == true %}
-            <option value="target_region">by RS2 target region</option>
-            {% endif %} -->
-        </select>
+        <select id="methylation-tsne-grouping" name="methylation-tsnegrouping" style="color: black; font-size:15px; height:auto;"></select>
+        <select id="snATAC-tsne-grouping" name="snATAC-tsnegrouping" style="color: black; font-size:15px; height:auto; display:none;"></select>
+        <select id="RNA-tsne-grouping" name="RNA-tsnegrouping" style="color: black; font-size:15px; height:auto; display:none;"></select>
     </div>
 
     <!-- Methylation Type -->
@@ -275,7 +260,7 @@
                            data-placement="top" title="Methylation Type"
                            data-content="Type of gene-body methylation values to display.">Methylation Type</a>
             </label>
-            <select id="mType">
+            <select id="mType" style="color: black; font-size:15px; height:auto;">
                 <option value="mCH" selected>mCH</option>
                 <option value="mCG">mCG</option>
                 <option value="mCA">mCA</option>
@@ -292,7 +277,7 @@
                 <span>Methylation Levels</span>
             </a>
         </label>
-        <select id="methylation-levels">
+        <select id="methylation-levels" style="color: black; font-size:15px; height:auto;">
             <option value="original">Absolute</option>
             <option value="normalized" selected>Normalized</option>
         </select>
@@ -320,7 +305,7 @@
                data-content="Number of nearest neighbors (neighboring cells).">K-value: </a>
         </label>
         <select id="methylation-clustering-k" class="methylation-clustering-k methylation-tsneoption"
-                name="methylation-clustering-k"></select>
+                name="methylation-clustering-k" style="color: black; font-size:15px; height:auto;"></select>
     </div>
 
     <!-- Methylation Type for Display -->
@@ -336,7 +321,7 @@
             </label>
             <select id="methylation-clustering-algorithms"
                             class="methylation-clustering-algorithms methylation-tsneoption"
-                            name="methylation-clustering-algorithms"></select>
+                            name="methylation-clustering-algorithms" style="color: black; font-size:15px; height:auto;"></select>
             &nbsp;
         </div>
 
@@ -351,7 +336,8 @@
             </label>
             <select style="width:70px;" id="methylation-clustering-methylation"
                             class="methylation-clustering-methylation methylation-tsneoption"
-                            name="methylation-clustering-methylation"></select>
+                            name="methylation-clustering-methylation" 
+                            style="color: black; font-size:15px; height:auto;"></select>
         </div>
 
     <!-- tSNE Methylation Type -->
@@ -362,7 +348,8 @@
                        data-content="Type of methylation used to calculate tSNE coordinates.">For tSNE </a>
         </label>
         <select id="methylation-tsne-methylation" class="methylation-tsne-methylation methylation-tsneoption"
-                name="methylation-tsne-methylation">
+                name="methylation-tsne-methylation"
+                style="color: black; font-size:15px; height:auto;">
         </select>
         &nbsp;
     </div>
@@ -376,29 +363,13 @@
                         Perplexity: </a>
         </label>
         <select id="methylation-tsne-perplexity" class="methylation-tsne-perplexity methylation-tsneoption"
-                        name="methylation-tsne-perplexity">
+                        name="methylation-tsne-perplexity"
+                        style="color: black; font-size:15px; height:auto;">
         </select>
                 <!-- {% endif %} -->
     </div>
 
-
-    <div style="display:inline-block;">
-        &nbsp;
+    <div style="margin: auto; width=100%; display: grid;">
+        <button class="btn-sm btn-primary methylation-tsneUpdateBtn" id="methylation-tsneUpdateBtn" style="width:100%; font-size: 15px;">Update</button>
     </div>
-        <!-- </div> -->
-    <!-- </div> -->
-
-
-    <!-- <div id="methylation-plots-options" class="collapse"> -->
-    <!-- <div class="container">
-        <div class="row"> -->
-            <!-- <div id="methylation_tsneType"> -->
-    <br>
-
-    <button class="btn-sm btn-primary methylation-tsneUpdateBtn" id="methylation-tsneUpdateBtn" style="width:100%">Update
-    </button>
-                <!-- </div> -->
-
-            <!-- </div>
-        </div> -->
 </div>
