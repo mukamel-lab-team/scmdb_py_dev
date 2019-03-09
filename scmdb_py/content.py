@@ -148,7 +148,7 @@ def get_ensembles_summary():
 
 			slices_list_rs1 = [d.split('_')[0] for d in datasets_in_ensemble_cell_count if 'RS2' not in d]
 			slices_list_rs1.extend([d.split('_')[0] for d in snATAC_datasets_in_ensemble if 'RS2' not in d])
-			slices_list_rs2 = [d.split('_')[1][2:4] for d in datasets_in_ensemble_cell_count if 'RS2' in d]
+			slices_list_rs2 = [d.replace(' ','_').split('_')[1][2:] for d in datasets_in_ensemble_cell_count if 'RS2' in d]
 			slices_list_rs2.extend([d.split('_')[0] for d in snATAC_datasets_in_ensemble if 'RS2' in d])
 			slices_set = set(slices_list_rs1)
 			slices_set.update(slices_list_rs2)
@@ -696,7 +696,13 @@ def get_metadata_options(ensemble):
 	for modality in ['methylation','snATAC','RNA']:
 		all_metadata[modality] = ['cluster','annotation']
 		if ensemble_exists(ensemble, modality=modality):
-			query = "SELECT * FROM cells LIMIT 1"
+			all_metadata[modality] += ['dataset','sex','brain_region']
+			query = "SELECT count(*) AS count FROM ensembles RIGHT JOIN datasets ON ensembles.datasets LIKE %(x)s WHERE datasets.target_region!='NULL' AND ensembles.ensemble_id={0}".format(ensemble.strip('Ens'))
+			df_metadata = pd.read_sql(query, con=db.get_engine(current_app, modality+'_data'), params={'x': "CONCAT('%',datasets.dataset,'%')"})
+			if (not df_metadata['count'].isnull().all()) and max(df_metadata['count'])>0:
+				all_metadata[modality] += ['target_region']
+
+			query = "SELECT * FROM cells LIMIT 1;"
 			df_metadata = pd.read_sql(query, con=db.get_engine(current_app, modality+'_data'))
 			df_metadata = df_metadata.drop(list(df_metadata.filter(regex='cell_.*', axis='columns')), axis=1)
 			all_metadata[modality] += list([i for i in df_metadata.columns.values])
@@ -901,6 +907,8 @@ def get_gene_methylation(ensemble, methylation_type, gene, grouping, clustering,
 		groupingu = ensemble+"."+grouping+"_"+clustering
 	elif grouping in ['NeuN']:
 		groupingu = "CONCAT('NeuN',cells."+grouping+")"
+	elif grouping in ['dataset','sex','brain_region','target_region']:
+		groupingu = "datasets."+grouping
 	else:
 		groupingu = "cells."+grouping
 
@@ -1213,7 +1221,7 @@ def get_methylation_scatter(ensemble, tsne_type, methylation_type, genes_query, 
 			# print("**** Using cluster_mCH_lv_npc50_k30")
 
 	datasets = points['dataset'].unique().tolist()
-	if grouping in ['cluster','annotation','dataset','NeuN','sex']:
+	if grouping in ['cluster','annotation','dataset','NeuN','sex','slice','brain_region','target_region']: # THese are the metadata fields with discrete/categorical values
 		unique_groups = points['grouping'].unique().tolist()
 	else:
 		# For continuous (numerical) metadata (like global_mCH), don't use discrete clusters
