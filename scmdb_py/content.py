@@ -1743,7 +1743,7 @@ def get_mch_box(ensemble, methylation_type, gene, grouping, clustering, level, o
 			boxpoints=False
 
 		trace = traces.setdefault(group, Box(
-				y=list(),
+				y=[point[methylation_type + '/' + context + '_' + level]],
 				name=name_prepend + str(group),
 				marker={
 					'color': color,
@@ -1754,7 +1754,7 @@ def get_mch_box(ensemble, methylation_type, gene, grouping, clustering, level, o
 				visible=True,
 				showlegend=False,
 				))
-		trace['y'].append(point[methylation_type + '/' + context + '_' + level])
+		# trace['y'].append(point[methylation_type + '/' + context + '_' + level])
 
 	gene_name = get_gene_by_id([ gene ])[0]['gene_name']
 
@@ -1816,7 +1816,7 @@ def get_mch_box(ensemble, methylation_type, gene, grouping, clustering, level, o
 		},
 		output_type='div',
 		show_link=False,
-			include_plotlyjs=False)
+		include_plotlyjs=False,)
 
 @cache.memoize(timeout=3600)
 def get_mch_heatmap(ensemble, methylation_type, grouping, clustering, level, ptile_start, ptile_end, normalize_row, query):
