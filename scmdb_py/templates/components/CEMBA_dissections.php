@@ -1,3 +1,7 @@
+<!-- This php file should be "compiled" to produce an html file, e.g. 
+php -f scmdb_py/templates/components/CEMBA_dissections.php > scmdb_py/templates/components/CEMBA_dissections.html
+ -->
+
 <style>
 
 .myimg {
@@ -7,6 +11,7 @@
   margin-left: auto;
   margin-right: auto;
 }
+
 
 /* Position the image container (needed to position the left and right arrows) */
 .container {
@@ -21,6 +26,10 @@
   display: none;
   margin: left;
   width: 100%;
+}
+
+.mySlides:hover {
+  transform: scale(1.2);
 }
 
 /* Add a pointer when hovering over the thumbnail images */
@@ -90,6 +99,7 @@
 /* Add a transparency effect for thumnbail images */
 .demo {
   opacity: 0.6;
+  max-width: 200px;
 }
 
 .demo:focus {
@@ -110,14 +120,14 @@
       <td>
         <div style="height:450px; overflow:auto; text-align: justify;">
           <?php
-            $pattern    = '/var/www/html/CEMBA_dissection_images/CEMBA_Slice*_sm.png';
+            $pattern    = '/var/www/html/CEMBA_dissection_images/CEMBA_Slice*[0-9].png';
             $files = glob($pattern);
             sort($files,SORT_NATURAL);
             foreach ($files as $key => $value) {
               $currfile = basename($value);
-              printf('<div class="column">');
+              // printf('<div class="column">');
               printf(' <img class="demo cursor" title="Click image to restrict table to this slice" src="https://brainome.ucsd.edu/CEMBA_dissection_images/%s" style="width:100%%;" onclick="currentSlide(%d);" alt="Slice %d / %d">', $currfile, $key+1, $key+1, sizeof($files));
-              printf('</div>');
+              // printf('</div>');
             }
           ?>
             <span class="stretch"></span>
@@ -134,7 +144,7 @@
               $url = sprintf('https://brainome.ucsd.edu/CEMBA_dissection_images/%s', $currfile);
               printf('<div class="mySlides"">');
               printf(' <h2 align="center" style="font-family:inherit;">Slice %d / %d</h2>', $key+1, sizeof($files));
-              printf(' <a target="_blank" onclick="updateTable(%d)"><img class="myimg" src="%s"  align="center" style="height:400px; width:auto;"></a>', $key+1, $url, $url);
+              printf(' <a target="_blank" href="%s"><img class="myimg" src="%s"  align="center" style="height:400px; width:auto;"></a>', $url, $url);
               printf('</div>');
             }
           ?>

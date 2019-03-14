@@ -1,0 +1,5 @@
+jupyter==1.0.0
+jupyter-client==5.2.3
+jupyter-console==5.2.0
+jupyter-core==4.3.0
+
