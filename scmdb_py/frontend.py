@@ -414,11 +414,11 @@ def search_gene_by_id():
 
 @frontend.route('/metadata_tsne_fields/<ensemble>')
 @cache.memoize(timeout=3600)
-def metadata_tsne_fields(ensemble):
+def metadata_tsne_fields(ensemble_id):
     if ensemble == None or ensemble == "":
         return jsonify({})
     else:
-        return jsonify(get_metadata_options(ensemble))
+        return jsonify(get_metadata_options(ensemble_id))
 
 
 @frontend.route('/snATAC_tsne_options/<ensemble>')
