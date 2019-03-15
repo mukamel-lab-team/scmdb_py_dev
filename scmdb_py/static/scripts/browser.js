@@ -1057,7 +1057,7 @@ function updateMCHScatterPlot(onlyUpdatetSNEandClustering=false) {
             url: './plot/methylation/scatter/'+ensemble+'/'+tsne_setting+'/' +methylationType+ '/'+levelType+'/'+grouping+'/'+clustering+'/'+methylation_color_percentile_Values[0]+'/'+methylation_color_percentile_Values[1]+'/'+tsneOutlierOption+'/'+max_points+'?q='+genes_query,
             beforeSend: function() {
                 $("#mch-scatter-loader").show();
-                $("#methylation-tsneUpdateBtn").attr('disabled', true);
+                $("#methylation-tsneUpdateBtn, #methylation-tsneUpdateBtn-top").attr('disabled', true);
                 //$("#plot-mch-scatter").html("");
             },
             complete: function() {
@@ -1066,7 +1066,7 @@ function updateMCHScatterPlot(onlyUpdatetSNEandClustering=false) {
             success: function(data) {
                 //Plotly.newPlot('plot-mch-scatter', data);
                 $('#plot-mch-scatter').html(data);
-                $("#methylation-tsneUpdateBtn").attr('disabled', false);
+                $("#methylation-tsneUpdateBtn, #methylation-tsneUpdateBtn-top").attr('disabled', false);
             }
         });
     }
@@ -1113,7 +1113,7 @@ function updatesnATACScatterPlot(onlyUpdatetSNEandClustering=false) {
             url: './plot/snATAC/scatter/'+ensemble+'/'+grouping+'/'+snATAC_color_percentile_Values[0]+'/'+snATAC_color_percentile_Values[1]+'/'+tsneOutlierOption+'/'+smoothing+'/'+max_points+'?q='+genes_query,
             beforeSend: function() {
                 $("#snATAC-scatter-loader").show();
-                $("#methylation-tsneUpdateBtn").attr("disabled", true);
+                $("#methylation-tsneUpdateBtn, #methylation-tsneUpdateBtn-top").attr("disabled", true);
             },
             complete: function() {
                 $("#snATAC-scatter-loader").hide();
@@ -1121,7 +1121,7 @@ function updatesnATACScatterPlot(onlyUpdatetSNEandClustering=false) {
             success: function(data) {
                 //Plotly.newPlot('plot-mch-scatter', data);
                 $('#plot-snATAC-scatter').html(data);
-                $("#methylation-tsneUpdateBtn").attr("disabled", false);
+                $("#methylation-tsneUpdateBtn, #methylation-tsneUpdateBtn-top").attr("disabled", false);
             }
         });
     }
@@ -1167,7 +1167,7 @@ function updateRNAScatterPlot(onlyUpdatetSNEandClustering=false) {
             url: './plot/RNA/scatter/'+ensemble+'/'+grouping+'/'+RNA_color_percentile_Values[0]+'/'+RNA_color_percentile_Values[1]+'/'+tsneOutlierOption+'/'+max_points+'?q='+genes_query,
             beforeSend: function() {
                 $("#RNA-scatter-loader").show();
-                $("#methylation-tsneUpdateBtn").attr("disabled", true);
+                $("#methylation-tsneUpdateBtn, #methylation-tsneUpdateBtn-top").attr("disabled", true);
             },
             complete: function() {
                 $("#RNA-scatter-loader").hide();
@@ -1175,7 +1175,7 @@ function updateRNAScatterPlot(onlyUpdatetSNEandClustering=false) {
             success: function(data) {
                 //Plotly.newPlot('plot-mch-scatter', data);
                 $('#plot-RNA-scatter').html(data);
-                $("#methylation-tsneUpdateBtn").attr("disabled", false);
+                $("#methylation-tsneUpdateBtn, #methylation-tsneUpdateBtn-top").attr("disabled", false);
             }
         });
     }
@@ -1339,14 +1339,14 @@ function updateMCHBoxPlot() {
         beforeSend: function() {
             $("#mch-box-loader").show();
             $("#plot-mch-heat").html("");
-            $("#methylation-tsneUpdateBtn").attr("disabled", true);
+            $("#methylation-tsneUpdateBtn, #methylation-tsneUpdateBtn-top").attr("disabled", true);
         },
         complete: function() {
             $('#mch-box-loader').hide();
         },
         success: function(data) {
             $("#plot-mch-box").html(data);
-            $("#methylation-tsneUpdateBtn").attr("disabled", false);
+            $("#methylation-tsneUpdateBtn, #methylation-tsneUpdateBtn-top").attr("disabled", false);
         }
     });
 
@@ -1368,14 +1368,14 @@ function updateClustersBarPlot() {
         beforeSend: function() {
             $("#clusters-bar-loader").show();
             $("#plot-clusters-bar").html("");
-            $("#methylation-tsneUpdateBtn").attr("disabled", true);
+            $("#methylation-tsneUpdateBtn, #methylation-tsneUpdateBtn-top").attr("disabled", true);
         },
         complete: function() {
             $('#clusters-bar-loader').hide();
         },
         success: function(data) {
             $("#plot-clusters-bar").html(data);
-            $("#methylation-tsneUpdateBtn").attr("disabled", false);
+            $("#methylation-tsneUpdateBtn, #methylation-tsneUpdateBtn-top").attr("disabled", false);
         }
     });
 }
@@ -1488,7 +1488,7 @@ function updateMethylationHeatmap() {
         beforeSend: function() {
             $("#mch-box-loader").show();
             $("#plot-mch-box").html("");
-            $("#methylation-tsneUpdateBtn").attr("disabled", true);
+            $("#methylation-tsneUpdateBtn, #methylation-tsneUpdateBtn-top").attr("disabled", true);
         },
         complete: function() {
             $("#mch-box-loader").hide();
@@ -1497,7 +1497,7 @@ function updateMethylationHeatmap() {
             $('#gene_table_div').hide();
             $('#mch_box_div').removeClass("col-md-9");
             $('#plot-mch-heat').html(data);
-            $("#methylation-tsneUpdateBtn").attr("disabled", false);
+            $("#methylation-tsneUpdateBtn, #methylation-tsneUpdateBtn-top").attr("disabled", false);
             $('#methylation-tsneOutlierToggle').bootstrapToggle('disable');
         }
     });
