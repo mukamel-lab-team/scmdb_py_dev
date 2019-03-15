@@ -160,11 +160,8 @@ function format ( d ) {
         }
     var slices=[... new Set(d.slices.split(', ').map(x => x.charAt(0)))] // Get the unique slices contributing to this ensemble
     out = out + 
-        '<tr>'+
-            '<td><a href="/tabular/ensemble?slideIndex='+Math.min.apply(Math, slices)+'">'+
-            'Dissection drawings for all slices</a></td>'+
-        '</tr>'+
-        '<tr>'
+        '</table>'+
+        '<div><b>Dissection drawings for all slices:</b><br>'
     var url=''
     for (i=0; i<slices.length; i++) {
         url='https://brainome.ucsd.edu/CEMBA_dissection_images/CEMBA_Slice'+slices[i]
@@ -173,6 +170,6 @@ function format ( d ) {
           '<img src="'+url+'_sm.png" ' +
           ' width=200 alt="CEMBA Slice'+slices[i]+'"></a> </td>'
     }
-    out = out + '</tr></table>'
+    out = out + '</div>'
     return out
 }

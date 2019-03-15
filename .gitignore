@@ -123,3 +123,4 @@ scmdb_py/static/styles/*
 *package-lock.json
 user-login.sqlite
 scmdb_log
+requirements.NEW.txt

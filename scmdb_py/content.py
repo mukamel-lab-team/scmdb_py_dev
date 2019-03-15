@@ -929,20 +929,6 @@ def get_gene_methylation(ensemble, methylation_type, gene, grouping, clustering,
 																	   'methylation_type': methylation_type,
 																	   'context': context,
 																	   'clustering': clustering,}
-		# query = "SELECT cells.cell_id, cells.cell_name, cells.dataset, cells.global_%(methylation_type)s, \
-		# 	%(ensemble)s.annotation_%(clustering)s, %(ensemble)s.cluster_%(clustering)s, \
-		# 	%(ensemble)s.tsne_x_%(tsne_type)s, %(ensemble)s.tsne_y_%(tsne_type)s, \
-		# 	%(gene_table_name)s.%(methylation_type)s, %(gene_table_name)s.%(context)s, \
-		# 	datasets.target_region, datasets.sex \
-		# 	FROM cells \
-		# 	INNER JOIN %(ensemble)s ON cells.cell_id = %(ensemble)s.cell_id \
-		# 	LEFT JOIN %(gene_table_name)s ON %(ensemble)s.cell_id = %(gene_table_name)s.cell_id \
-		# 	LEFT JOIN datasets ON cells.dataset = datasets.dataset" % {'ensemble': ensemble,
-		# 															   'gene_table_name': gene_table_name,
-		# 															   'tsne_type': tsne_type,
-		# 															   'methylation_type': methylation_type,
-		# 															   'context': context,
-		# 															   'clustering': clustering,}
 	else:
 		query = "SELECT cells.cell_id, cells.cell_name, cells.dataset, cells.global_%(methylation_type)s, \
 			%(ensemble)s.annotation_%(clustering)s, %(ensemble)s.cluster_%(clustering)s, \
@@ -952,7 +938,8 @@ def get_gene_methylation(ensemble, methylation_type, gene, grouping, clustering,
 			FROM cells \
 			INNER JOIN %(ensemble)s ON cells.cell_id = %(ensemble)s.cell_id \
 			LEFT JOIN %(gene_table_name)s ON %(ensemble)s.cell_id = %(gene_table_name)s.cell_id \
-			LEFT JOIN datasets ON cells.dataset = datasets.dataset" % {'ensemble': ensemble, 
+			LEFT JOIN datasets ON cells.dataset = datasets.dataset \
+			LIMIT 10000" % {'ensemble': ensemble, 
 																	   'gene_table_name': gene_table_name,
 																	   'tsne_type': tsne_type,
 																	   'methylation_type': methylation_type,
@@ -1030,27 +1017,13 @@ def get_gene_from_mysql(ensemble, gene_table_name, methylation_type, clustering,
 			FROM cells \
 			INNER JOIN %(ensemble)s ON cells.cell_id = %(ensemble)s.cell_id \
 			LEFT JOIN %(gene_table_name)s ON %(ensemble)s.cell_id = %(gene_table_name)s.cell_id \
-			LEFT JOIN datasets ON cells.dataset = datasets.dataset" % {'ensemble': ensemble, 'groupingu': groupingu,
+			LEFT JOIN datasets ON cells.dataset = datasets.dataset \
+			LIMIT 10000" % {'ensemble': ensemble, 'groupingu': groupingu,
 																	   'gene_table_name': gene_table_name,
 																	   'tsne_type': tsne_type,
 																	   'methylation_type': methylation_type,
 																	   'context': context,
 																	   'clustering': clustering,}
-		
-		# query = "SELECT cells.cell_id, cells.cell_name, cells.dataset, cells.global_%(methylation_type)s, \
-		# 	%(ensemble)s.annotation_%(clustering)s, %(ensemble)s.cluster_%(clustering)s, \
-		# 	%(ensemble)s.tsne_x_%(tsne_type)s, %(ensemble)s.tsne_y_%(tsne_type)s, \
-		# 	%(gene_table_name)s.%(methylation_type)s, %(gene_table_name)s.%(context)s, \
-		# 	datasets.target_region, datasets.sex \
-		# 	FROM cells \
-		# 	INNER JOIN %(ensemble)s ON cells.cell_id = %(ensemble)s.cell_id \
-		# 	LEFT JOIN %(gene_table_name)s ON %(ensemble)s.cell_id = %(gene_table_name)s.cell_id \
-		# 	LEFT JOIN datasets ON cells.dataset = datasets.dataset" % {'ensemble': ensemble, 
-		# 															   'gene_table_name': gene_table_name,
-		# 															   'tsne_type': tsne_type,
-		# 															   'methylation_type': methylation_type,
-		# 															   'context': context,
-		# 															   'clustering': clustering,}
 	else: # 3D tSNE
 		query = "SELECT cells.cell_id, cells.cell_name, cells.dataset, cells.global_%(methylation_type)s, \
 			%(ensemble)s.annotation_%(clustering)s, %(ensemble)s.cluster_%(clustering)s, \
@@ -1060,7 +1033,8 @@ def get_gene_from_mysql(ensemble, gene_table_name, methylation_type, clustering,
 			FROM cells \
 			INNER JOIN %(ensemble)s ON cells.cell_id = %(ensemble)s.cell_id \
 			LEFT JOIN %(gene_table_name)s ON %(ensemble)s.cell_id = %(gene_table_name)s.cell_id \
-			LEFT JOIN datasets ON cells.dataset = datasets.dataset" % {'ensemble': ensemble, 
+			LEFT JOIN datasets ON cells.dataset = datasets.dataset \
+			LIMIT 10000" % {'ensemble': ensemble, 
 																	   'gene_table_name': gene_table_name,
 																	   'tsne_type': tsne_type,
 																	   'methylation_type': methylation_type,
@@ -1112,22 +1086,8 @@ def get_mult_gene_methylation(ensemble, methylation_type, genes, grouping, clust
 	gene_table_names = ['gene_' + gene_id[0].replace('.','_') for gene_id in result]
 
 	df_all = pd.DataFrame()
-	
-	############
-	# t0=datetime.datetime.now()
-	# print(' Starting mysql queries '+str(t0)+'; ', file=open(log_file,'a'))# EAM - Profiling SQL
-	# print('Pool size 12', file=open(log_file,'a'))
-	# with Pool(12) as pool:
-	# 	df_list = [pool.apply_async(get_gene_from_mysql,
- #                                       args=(ensemble, gene_table_name, methylation_type, clustering, tsne_type)).get()
- #                               		for gene_table_name in gene_table_names ]
-	# t1=datetime.datetime.now()
-	# print(' Finished mysql queries '+str(t1)+'; ', file=open(log_file,'a'))# EAM - Profiling SQL
-	# print(' Time '+str(t1-t0)+'; ', file=open(log_file,'a'))# EAM - Profiling SQL
 
 	t0=datetime.datetime.now()
-#	print(' Starting mysql queries '+str(t0)+'; ', file=open(log_file,'a'))# EAM - Profiling SQL
-#	print('Pool size 1', file=open(log_file,'a'))
 	df_list = []
 	for i, gene_table_name in enumerate(gene_table_names):
 		t0a=datetime.datetime.now()
@@ -1139,13 +1099,8 @@ def get_mult_gene_methylation(ensemble, methylation_type, genes, grouping, clust
 		if i==0:
 			df_coords=df_all
 		t1a=datetime.datetime.now()
-		# print(str(i)+' : ',str(t1a-t0a), file=open(log_file,'a'))
-
 
 	t1=datetime.datetime.now()
-#	print(' Finished mysql queries '+str(t1)+'; ', file=open(log_file,'a'))# EAM - Profiling SQL
-#	print(' Time '+str(t1-t0)+'; ', file=open(log_file,'a'))# EAM - Profiling SQL
-	############
 
 	df_all[[methylation_type, context]] = df_all[[methylation_type, context]].apply(pd.to_numeric)
 
