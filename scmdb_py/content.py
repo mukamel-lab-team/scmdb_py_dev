@@ -2397,8 +2397,6 @@ def get_gene_snatac_from_mysql(ensemble, gene_table_name, counts_type, tsne_type
 		return None
 
 	t1=datetime.datetime.now()
-#	print(' Running get_gene_snatac_from_mysql for '+gene_table_name+' : '+str(t1-t0)+'; ', file=open(log_file,'a')) # EAM - Profiling SQL
-#	print(' query: '+query, file=open(log_file,'a'))
 
 	return df
 
