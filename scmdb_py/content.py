@@ -1057,7 +1057,8 @@ def get_gene_from_mysql(ensemble, gene_table_name, methylation_type, clustering,
 
 
 @cache.memoize(timeout=3600)
-def get_mult_gene_methylation(ensemble, methylation_type, genes, grouping, clustering, level, tsne_type, max_points):
+def get_mult_gene_methylation(ensemble, methylation_type, genes, grouping, clustering, level, tsne_type, 
+	max_points='10000'):
 	"""Return averaged methylation data ponts for a set of genes.
 
 	Data from ID-to-Name mapping and tSNE points are combined for plot generation.
@@ -1133,7 +1134,7 @@ def get_mult_gene_methylation(ensemble, methylation_type, genes, grouping, clust
 
 @cache.memoize(timeout=1800)
 def get_methylation_scatter(ensemble, tsne_type, methylation_type, genes_query, level, grouping, 
-	clustering, ptile_start, ptile_end, tsne_outlier_bool, max_points):
+	clustering, ptile_start, ptile_end, tsne_outlier_bool, max_points='10000'):
 	"""Generate scatter plot and gene body reads scatter plot using tSNE coordinates from snATAC-seq data.
 
 	Arguments:
