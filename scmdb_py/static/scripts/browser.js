@@ -1015,6 +1015,7 @@ function updateMCHScatterPlot(onlyUpdatetSNEandClustering=false) {
 	// Methylation type
 	let levelType = $('#methylation-levels').val();
     // let levelType = $('#level').val();
+    let max_points = $('#max-points').val();
     let methylationType = $("#mType").val();
     let methylation_color_percentile_Values = methylation_color_percentile_Slider.getValue();
     let genes = $("#geneName").select2('data');
@@ -1053,7 +1054,7 @@ function updateMCHScatterPlot(onlyUpdatetSNEandClustering=false) {
         $.ajax({
         //$.getJSON({
             type: "GET",
-            url: './plot/methylation/scatter/'+ensemble+'/'+tsne_setting+'/' +methylationType+ '/'+levelType+'/'+grouping+'/'+clustering+'/'+methylation_color_percentile_Values[0]+'/'+methylation_color_percentile_Values[1]+'/'+tsneOutlierOption+'?q='+genes_query,
+            url: './plot/methylation/scatter/'+ensemble+'/'+tsne_setting+'/' +methylationType+ '/'+levelType+'/'+grouping+'/'+clustering+'/'+methylation_color_percentile_Values[0]+'/'+methylation_color_percentile_Values[1]+'/'+tsneOutlierOption+'/'+max_points+'?q='+genes_query,
             beforeSend: function() {
                 $("#mch-scatter-loader").show();
                 $("#methylation-tsneUpdateBtn").attr('disabled', true);
@@ -1078,6 +1079,7 @@ function updateMCHScatterPlot(onlyUpdatetSNEandClustering=false) {
 
 function updatesnATACScatterPlot(onlyUpdatetSNEandClustering=false) {
     let tsne_settings = "ATAC_ndim"+$("#snATAC-tsne-dimensions").val()+"_perp"+$("#snATAC-tsne-perplexity").val();
+    let max_points = $('#max-points').val();
     let grouping = $("#methylation-tsne-grouping").val();
     let clustering_settings = "ATAC_"+$("#snATAC-clustering-algorithms").val()+"_npc"+$("#snATAC-clustering-npc").val()+"_k"+$("#snATAC-clustering-k").val();
     let snATAC_color_percentile_Values = snATAC_color_percentile_Slider.getValue();
@@ -1108,7 +1110,7 @@ function updatesnATACScatterPlot(onlyUpdatetSNEandClustering=false) {
         $.ajax({
         //$.getJSON({
             type: "GET",
-            url: './plot/snATAC/scatter/'+ensemble+'/'+grouping+'/'+snATAC_color_percentile_Values[0]+'/'+snATAC_color_percentile_Values[1]+'/'+tsneOutlierOption+'/'+smoothing+'?q='+genes_query,
+            url: './plot/snATAC/scatter/'+ensemble+'/'+grouping+'/'+snATAC_color_percentile_Values[0]+'/'+snATAC_color_percentile_Values[1]+'/'+tsneOutlierOption+'/'+smoothing+'/'+max_points+'?q='+genes_query,
             beforeSend: function() {
                 $("#snATAC-scatter-loader").show();
                 $("#methylation-tsneUpdateBtn").attr("disabled", true);
@@ -1132,6 +1134,7 @@ function updatesnATACScatterPlot(onlyUpdatetSNEandClustering=false) {
 
 function updateRNAScatterPlot(onlyUpdatetSNEandClustering=false) {
     let tsne_settings = "ATAC_ndim"+$("#RNA-tsne-dimensions").val()+"_perp"+$("#RNA-tsne-perplexity").val();
+    let max_points = $('#max-points').val();
     let grouping = $("#RNA-tsne-grouping").val();
     let clustering_settings = "ATAC_"+$("#RNA-clustering-algorithms").val()+"_npc"+$("#RNA-clustering-npc").val()+"_k"+$("#RNA-clustering-k").val();
     let RNA_color_percentile_Values = RNA_color_percentile_Slider.getValue();
@@ -1161,7 +1164,7 @@ function updateRNAScatterPlot(onlyUpdatetSNEandClustering=false) {
         $.ajax({
         //$.getJSON({
             type: "GET",
-            url: './plot/RNA/scatter/'+ensemble+'/'+grouping+'/'+RNA_color_percentile_Values[0]+'/'+RNA_color_percentile_Values[1]+'/'+tsneOutlierOption+'?q='+genes_query,
+            url: './plot/RNA/scatter/'+ensemble+'/'+grouping+'/'+RNA_color_percentile_Values[0]+'/'+RNA_color_percentile_Values[1]+'/'+tsneOutlierOption+'/'+max_points+'?q='+genes_query,
             beforeSend: function() {
                 $("#RNA-scatter-loader").show();
                 $("#methylation-tsneUpdateBtn").attr("disabled", true);

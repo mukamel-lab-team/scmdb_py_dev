@@ -37,7 +37,6 @@ cluster_annotation_order = ['mL2/3', 'mL4', 'mL5-1', 'mL5-2', 'mDL-1', 'mDL-2', 
 methylation_types_order = ['mCH', 'mCG', 'mCA', 'mCHmCG', 'mCHmCA', 'mCAmCG']
 
 num_sigfigs_ticklabels = 2;
-ncells_max = 5000; # Max number of cells to show for scatter/box plots
 log_file='/var/www/scmdb_py_dev/scmdb_log'
 
 class FailToGraphException(Exception):
@@ -873,7 +872,7 @@ def get_corr_genes(ensemble, query):
 	return corr_genes
 
 @cache.memoize(timeout=3600)
-def get_gene_methylation(ensemble, methylation_type, gene, grouping, clustering, level, outliers, tsne_type='mCH_ndim2_perp20'):
+def get_gene_methylation(ensemble, methylation_type, gene, grouping, clustering, level, outliers, tsne_type='mCH_ndim2_perp20', max_points='10000'):
 	"""Return mCH data points for a given gene.
 
 	Data from ID-to-Name mapping and tSNE points are combined for plot generation.
@@ -929,20 +928,6 @@ def get_gene_methylation(ensemble, methylation_type, gene, grouping, clustering,
 																	   'methylation_type': methylation_type,
 																	   'context': context,
 																	   'clustering': clustering,}
-		# query = "SELECT cells.cell_id, cells.cell_name, cells.dataset, cells.global_%(methylation_type)s, \
-		# 	%(ensemble)s.annotation_%(clustering)s, %(ensemble)s.cluster_%(clustering)s, \
-		# 	%(ensemble)s.tsne_x_%(tsne_type)s, %(ensemble)s.tsne_y_%(tsne_type)s, \
-		# 	%(gene_table_name)s.%(methylation_type)s, %(gene_table_name)s.%(context)s, \
-		# 	datasets.target_region, datasets.sex \
-		# 	FROM cells \
-		# 	INNER JOIN %(ensemble)s ON cells.cell_id = %(ensemble)s.cell_id \
-		# 	LEFT JOIN %(gene_table_name)s ON %(ensemble)s.cell_id = %(gene_table_name)s.cell_id \
-		# 	LEFT JOIN datasets ON cells.dataset = datasets.dataset" % {'ensemble': ensemble,
-		# 															   'gene_table_name': gene_table_name,
-		# 															   'tsne_type': tsne_type,
-		# 															   'methylation_type': methylation_type,
-		# 															   'context': context,
-		# 															   'clustering': clustering,}
 	else:
 		query = "SELECT cells.cell_id, cells.cell_name, cells.dataset, cells.global_%(methylation_type)s, \
 			%(ensemble)s.annotation_%(clustering)s, %(ensemble)s.cluster_%(clustering)s, \
@@ -958,6 +943,10 @@ def get_gene_methylation(ensemble, methylation_type, gene, grouping, clustering,
 																	   'methylation_type': methylation_type,
 																	   'context': context,
 																	   'clustering': clustering,}
+	if max_points.isdigit():
+		query = query+" LIMIT %(max_points)s" % {'max_points': max_points}
+		# TODO: Check whether we need to randomize the rows 
+
 	try:
 		df = pd.read_sql(query, db.get_engine(current_app, 'methylation_data'))
 	except exc.ProgrammingError as e:
@@ -995,7 +984,7 @@ def get_gene_methylation(ensemble, methylation_type, gene, grouping, clustering,
 
 	return df
 
-def get_gene_from_mysql(ensemble, gene_table_name, methylation_type, clustering, tsne_type, grouping='cluster'):
+def get_gene_from_mysql(ensemble, gene_table_name, methylation_type, clustering, tsne_type, grouping='cluster', max_points='10000'):
 	"""Helper function to fetch a gene's methylation information from mysql.
 
 	TODO: Don't need to fetch tsne info, annotations etc. except once
@@ -1030,27 +1019,14 @@ def get_gene_from_mysql(ensemble, gene_table_name, methylation_type, clustering,
 			FROM cells \
 			INNER JOIN %(ensemble)s ON cells.cell_id = %(ensemble)s.cell_id \
 			LEFT JOIN %(gene_table_name)s ON %(ensemble)s.cell_id = %(gene_table_name)s.cell_id \
-			LEFT JOIN datasets ON cells.dataset = datasets.dataset" % {'ensemble': ensemble, 'groupingu': groupingu,
+			LEFT JOIN datasets ON cells.dataset = datasets.dataset \
+			LIMIT %(max_points)s" % {'ensemble': ensemble, 'groupingu': groupingu,
 																	   'gene_table_name': gene_table_name,
 																	   'tsne_type': tsne_type,
 																	   'methylation_type': methylation_type,
 																	   'context': context,
-																	   'clustering': clustering,}
-		
-		# query = "SELECT cells.cell_id, cells.cell_name, cells.dataset, cells.global_%(methylation_type)s, \
-		# 	%(ensemble)s.annotation_%(clustering)s, %(ensemble)s.cluster_%(clustering)s, \
-		# 	%(ensemble)s.tsne_x_%(tsne_type)s, %(ensemble)s.tsne_y_%(tsne_type)s, \
-		# 	%(gene_table_name)s.%(methylation_type)s, %(gene_table_name)s.%(context)s, \
-		# 	datasets.target_region, datasets.sex \
-		# 	FROM cells \
-		# 	INNER JOIN %(ensemble)s ON cells.cell_id = %(ensemble)s.cell_id \
-		# 	LEFT JOIN %(gene_table_name)s ON %(ensemble)s.cell_id = %(gene_table_name)s.cell_id \
-		# 	LEFT JOIN datasets ON cells.dataset = datasets.dataset" % {'ensemble': ensemble, 
-		# 															   'gene_table_name': gene_table_name,
-		# 															   'tsne_type': tsne_type,
-		# 															   'methylation_type': methylation_type,
-		# 															   'context': context,
-		# 															   'clustering': clustering,}
+																	   'clustering': clustering,
+																	   'max_points': max_points,}
 	else: # 3D tSNE
 		query = "SELECT cells.cell_id, cells.cell_name, cells.dataset, cells.global_%(methylation_type)s, \
 			%(ensemble)s.annotation_%(clustering)s, %(ensemble)s.cluster_%(clustering)s, \
@@ -1060,12 +1036,15 @@ def get_gene_from_mysql(ensemble, gene_table_name, methylation_type, clustering,
 			FROM cells \
 			INNER JOIN %(ensemble)s ON cells.cell_id = %(ensemble)s.cell_id \
 			LEFT JOIN %(gene_table_name)s ON %(ensemble)s.cell_id = %(gene_table_name)s.cell_id \
-			LEFT JOIN datasets ON cells.dataset = datasets.dataset" % {'ensemble': ensemble, 
+			LEFT JOIN datasets ON cells.dataset = datasets.dataset \
+			LIMIT %(max_points)s" % {'ensemble': ensemble, 
 																	   'gene_table_name': gene_table_name,
 																	   'tsne_type': tsne_type,
 																	   'methylation_type': methylation_type,
 																	   'context': context,
 																	   'clustering': clustering,}
+	if max_points.isdigit():
+		query = query+" LIMIT %(max_points)s" % {'max_points': max_points}
 	try:
 		df = pd.read_sql(query, db.get_engine(current_app, 'methylation_data'))
 	except exc.ProgrammingError as e:
@@ -1078,7 +1057,7 @@ def get_gene_from_mysql(ensemble, gene_table_name, methylation_type, clustering,
 
 
 @cache.memoize(timeout=3600)
-def get_mult_gene_methylation(ensemble, methylation_type, genes, grouping, clustering, level, tsne_type):
+def get_mult_gene_methylation(ensemble, methylation_type, genes, grouping, clustering, level, tsne_type, max_points):
 	"""Return averaged methylation data ponts for a set of genes.
 
 	Data from ID-to-Name mapping and tSNE points are combined for plot generation.
@@ -1112,22 +1091,8 @@ def get_mult_gene_methylation(ensemble, methylation_type, genes, grouping, clust
 	gene_table_names = ['gene_' + gene_id[0].replace('.','_') for gene_id in result]
 
 	df_all = pd.DataFrame()
-	
-	############
-	# t0=datetime.datetime.now()
-	# print(' Starting mysql queries '+str(t0)+'; ', file=open(log_file,'a'))# EAM - Profiling SQL
-	# print('Pool size 12', file=open(log_file,'a'))
-	# with Pool(12) as pool:
-	# 	df_list = [pool.apply_async(get_gene_from_mysql,
- #                                       args=(ensemble, gene_table_name, methylation_type, clustering, tsne_type)).get()
- #                               		for gene_table_name in gene_table_names ]
-	# t1=datetime.datetime.now()
-	# print(' Finished mysql queries '+str(t1)+'; ', file=open(log_file,'a'))# EAM - Profiling SQL
-	# print(' Time '+str(t1-t0)+'; ', file=open(log_file,'a'))# EAM - Profiling SQL
 
 	t0=datetime.datetime.now()
-#	print(' Starting mysql queries '+str(t0)+'; ', file=open(log_file,'a'))# EAM - Profiling SQL
-#	print('Pool size 1', file=open(log_file,'a'))
 	df_list = []
 	for i, gene_table_name in enumerate(gene_table_names):
 		t0a=datetime.datetime.now()
@@ -1135,17 +1100,12 @@ def get_mult_gene_methylation(ensemble, methylation_type, genes, grouping, clust
 			tsne_typeu='noTSNE'
 		else:
 			tsne_typeu=tsne_type
-		df_all = df_all.append(get_gene_from_mysql(ensemble, gene_table_name, methylation_type, clustering, tsne_typeu, grouping))
+		df_all = df_all.append(get_gene_from_mysql(ensemble, gene_table_name, methylation_type, clustering, tsne_typeu, grouping, max_points))
 		if i==0:
 			df_coords=df_all
 		t1a=datetime.datetime.now()
-		# print(str(i)+' : ',str(t1a-t0a), file=open(log_file,'a'))
-
 
 	t1=datetime.datetime.now()
-#	print(' Finished mysql queries '+str(t1)+'; ', file=open(log_file,'a'))# EAM - Profiling SQL
-#	print(' Time '+str(t1-t0)+'; ', file=open(log_file,'a'))# EAM - Profiling SQL
-	############
 
 	df_all[[methylation_type, context]] = df_all[[methylation_type, context]].apply(pd.to_numeric)
 
@@ -1172,7 +1132,8 @@ def get_mult_gene_methylation(ensemble, methylation_type, genes, grouping, clust
 	return df_coords
 
 @cache.memoize(timeout=1800)
-def get_methylation_scatter(ensemble, tsne_type, methylation_type, genes_query, level, grouping, clustering, ptile_start, ptile_end, tsne_outlier_bool):
+def get_methylation_scatter(ensemble, tsne_type, methylation_type, genes_query, level, grouping, 
+	clustering, ptile_start, ptile_end, tsne_outlier_bool, max_points):
 	"""Generate scatter plot and gene body reads scatter plot using tSNE coordinates from snATAC-seq data.
 
 	Arguments:
@@ -1197,11 +1158,11 @@ def get_methylation_scatter(ensemble, tsne_type, methylation_type, genes_query, 
 	x, y, text, mch = list(), list(), list(), list()
 
 	if len(genes) == 1:
-		points = get_gene_methylation(ensemble, methylation_type, genes[0], grouping, clustering, level, True, tsne_type)
+		points = get_gene_methylation(ensemble, methylation_type, genes[0], grouping, clustering, level, True, tsne_type, max_points)
 		gene_name_str = get_gene_by_id([ genes[0] ])[0]['gene_name']
 		title = 'Gene body ' + methylation_type + ': ' + gene_name_str
 	else:
-		points = get_mult_gene_methylation(ensemble, methylation_type, genes, grouping, clustering, level, tsne_type)
+		points = get_mult_gene_methylation(ensemble, methylation_type, genes, grouping, clustering, level, tsne_type, max_points)
 		gene_infos = get_gene_by_id(genes)
 		for i, gene in enumerate(gene_infos):
 			if i > 0 and i % 10 == 0:
@@ -2326,7 +2287,7 @@ def get_clusters_bar(ensemble, grouping, clustering, normalize, outliers):
 ### TODO: Refactor the code to combine the ATAC and RNA into one set of functions...
 ### snATAC
 @cache.memoize(timeout=3600)
-def get_gene_snATAC(ensemble, gene, grouping, outliers, smoothing=False):
+def get_gene_snATAC(ensemble, gene, grouping, outliers, smoothing=False, max_points='10000'):
 	"""Return snATAC data points for a given gene.
 
 	Data from ID-to-Name mapping and tSNE points are combined for plot generation.
@@ -2366,11 +2327,12 @@ def get_gene_snATAC(ensemble, gene, grouping, outliers, smoothing=False):
 		FROM cells \
 		INNER JOIN %(ensemble)s ON cells.cell_id = %(ensemble)s.cell_id \
 		LEFT JOIN %(gene_table_name)s ON %(ensemble)s.cell_id = %(gene_table_name)s.cell_id \
-		LEFT JOIN datasets ON cells.dataset = datasets.dataset \
-		ORDER BY RAND() LIMIT %(ncells)s" % {'ensemble': ensemble, 
-																   'gene_table_name': gene_table_name,
-																   'counts_type': counts_type,
-																   'ncells': ncells_max}
+		LEFT JOIN datasets ON cells.dataset = datasets.dataset" % {'ensemble': ensemble, 
+																'gene_table_name': gene_table_name, 
+																'counts_type': counts_type,}
+
+	if max_points.isdigit():
+		query = query+" LIMIT %(max_points)s" % {'max_points': max_points}
 
 	try:
 		df = pd.read_sql(query, db.get_engine(current_app, 'snATAC_data'))
@@ -2398,7 +2360,7 @@ def get_gene_snATAC(ensemble, gene, grouping, outliers, smoothing=False):
 	
 	return df
 
-def get_gene_snatac_from_mysql(ensemble, gene_table_name, counts_type, tsne_type):
+def get_gene_snatac_from_mysql(ensemble, gene_table_name, counts_type, tsne_type, max_points='10000'):
 	"""Helper function to fetch a gene's snatac information from mysql.
 
 	Returns:
@@ -2422,10 +2384,12 @@ def get_gene_snatac_from_mysql(ensemble, gene_table_name, counts_type, tsne_type
 			FROM cells \
 			INNER JOIN %(ensemble)s ON cells.cell_id = %(ensemble)s.cell_id \
 			LEFT JOIN %(gene_table_name)s ON %(ensemble)s.cell_id = %(gene_table_name)s.cell_id \
-			LEFT JOIN datasets ON cells.dataset = datasets.dataset \
-			LIMIT 5000" % {'ensemble': ensemble, 
+			LEFT JOIN datasets ON cells.dataset = datasets.dataset" % {'ensemble': ensemble, 
 																	   'gene_table_name': gene_table_name,
 																	   'counts_type': counts_type}
+	if max_points.isdigit():
+		query = query+" LIMIT %(max_points)s" % {'max_points': max_points}
+
 	try:
 		df = pd.read_sql(query, db.get_engine(current_app, 'snATAC_data'))
 	except exc.ProgrammingError as e:
@@ -2441,7 +2405,7 @@ def get_gene_snatac_from_mysql(ensemble, gene_table_name, counts_type, tsne_type
 	return df
 
 @cache.memoize(timeout=1800)
-def get_mult_gene_snATAC(ensemble, genes, grouping, smoothing=False):
+def get_mult_gene_snATAC(ensemble, genes, grouping, smoothing=False, max_points='10000'):
 	"""Return averaged methylation data ponts for a set of genes.
 
 	Data from ID-to-Name mapping and tSNE points are combined for plot generation.
@@ -2478,70 +2442,17 @@ def get_mult_gene_snATAC(ensemble, genes, grouping, smoothing=False):
 	else:
 		counts_type='normalized_counts'
 
-	# first = True
-	# for i,gene_table_name in enumerate(gene_table_names):
-	# 	t0=datetime.datetime.now()
-	# 	if first:
-	# 		query = "SELECT cells.cell_id, cells.cell_name, cells.dataset, \
-	# 			%(ensemble)s.annotation_ATAC, %(ensemble)s.cluster_ATAC, \
-	# 			%(ensemble)s.tsne_x_ATAC, %(ensemble)s.tsne_y_ATAC, \
-	# 			%(gene_table_name)s.%(counts_type)s as normalized_counts, \
-	# 			datasets.target_region \
-	# 			FROM cells \
-	# 			INNER JOIN %(ensemble)s ON cells.cell_id = %(ensemble)s.cell_id \
-	# 			LEFT JOIN %(gene_table_name)s ON %(ensemble)s.cell_id = %(gene_table_name)s.cell_id \
-	# 			LEFT JOIN datasets ON cells.dataset = datasets.dataset" % {'ensemble': ensemble, 
-	# 																	   'gene_table_name': gene_table_name,
-	# 																	   'counts_type': counts_type}
-	# 	else:
-	# 		query = "SELECT %(gene_table_name)s.%(counts_type)s as normalized_counts \
-	# 			FROM %(ensemble)s  \
-	# 			LEFT JOIN %(gene_table_name)s ON %(ensemble)s.cell_id = %(gene_table_name)s.cell_id" % {'ensemble': ensemble, 
-	# 																	   'gene_table_name': gene_table_name,
-	# 																	   'counts_type': counts_type}
-
-	# 		# query = "SELECT %(gene_table_name)s.%(counts_type)s as normalized_counts \
-	# 		# 	FROM %(gene_table_name)s  \
-	# 		# 	INNER JOIN %(ensemble)s ON %(ensemble)s.cell_id = %(gene_table_name)s.cell_id" % {'ensemble': ensemble, 
-	# 		# 															   'gene_table_name': gene_table_name,
-	# 		# 															   'counts_type': counts_type}			
-
-	# 	try:
-	# 		df_all = df_all.append(pd.read_sql(query, db.get_engine(current_app, 'snATAC_data')))
-	# 	except exc.ProgrammingError as e:
-	# 		now = datetime.datetime.now()
-	# 		print("[{}] ERROR in app(get_mult_gene_snATAC): {}".format(str(now), e))
-	# 		sys.stdout.flush()
-	# 		return None
-		
-	# 	if first:
-	# 		df_coords = df_all
-	# 	first = False
-	# 	t1=datetime.datetime.now()
-	# 	print(str(i)+' loading snATAC: '+str(t1-t0), file=open(log_file, 'a'))
-
 	t0=datetime.datetime.now()
-#	print('Pool size 1', file=open(log_file,'a'))
 	df_list = []
-	df = get_gene_snatac_from_mysql(ensemble, gene_table_names[0], counts_type, 'TSNE')
+	df = get_gene_snatac_from_mysql(ensemble, gene_table_names[0], counts_type, 'TSNE', max_points)
 	df_all = df_all.append(df)
 	df_coords = df;
-	# df_list.append()
 	for gene_table_name in gene_table_names[1:]:
-		df_all = df_all.append(get_gene_snatac_from_mysql(ensemble, gene_table_name, counts_type, 'noTSNE'))
-	# with Pool(12) as pool:
-	# 	df_list = [pool.apply_async(get_gene_snatac_from_mysql,
- # 	                                      args=(ensemble, gene_table_name, counts_type, 'noTSNE')).get()
- #                               		for gene_table_name in gene_table_names[1:] ]
+		df_all = df_all.append(get_gene_snatac_from_mysql(ensemble, gene_table_name, counts_type, 'noTSNE', max_points))
 
 	t1=datetime.datetime.now()
-#	print('All done: '+str(t1-t0), file=open(log_file,'a'))
-	# df_coords=df_list[0]
-	# for df in df_list:
-		# df_all = df_all.append(df)
 
 	t1=datetime.datetime.now()
-#	print('All done: '+str(t1-t0), file=open(log_file,'a'))
 
 	if df_all.empty: # If no data in column, return None 
 		now = datetime.datetime.now()
@@ -2564,7 +2475,7 @@ def get_mult_gene_snATAC(ensemble, genes, grouping, smoothing=False):
 	return df_coords
 
 @cache.memoize(timeout=1800)
-def get_snATAC_scatter(ensemble, genes_query, grouping, ptile_start, ptile_end, tsne_outlier_bool, smoothing=False):
+def get_snATAC_scatter(ensemble, genes_query, grouping, ptile_start, ptile_end, tsne_outlier_bool, smoothing=False, max_points='10000'):
 	"""Generate scatter plot and gene body snATAC scatter plot using tSNE coordinates from methylation(snmC-seq) data.
 
 	Arguments:
@@ -2587,11 +2498,11 @@ def get_snATAC_scatter(ensemble, genes_query, grouping, ptile_start, ptile_end, 
 	x, y, text, mch = list(), list(), list(), list()
 
 	if len(genes) == 1:
-		points = get_gene_snATAC(ensemble, genes[0], grouping, True, smoothing)
+		points = get_gene_snATAC(ensemble, genes[0], grouping, True, smoothing, max_points)
 		gene_name = get_gene_by_id([ genes[0] ])[0]['gene_name']
 		title = 'Gene body snATAC normalized counts: ' + gene_name
 	else:
-		points = get_mult_gene_snATAC(ensemble, genes, grouping, smoothing)
+		points = get_mult_gene_snATAC(ensemble, genes, grouping, smoothing, max_points)
 		gene_infos = get_gene_by_id(genes)
 		for i, gene in enumerate(gene_infos):
 			if i > 0 and i % 10 == 0:
@@ -2608,9 +2519,9 @@ def get_snATAC_scatter(ensemble, genes_query, grouping, ptile_start, ptile_end, 
 		if grouping+'_ATAC' not in points.columns: # If no cluster annotations available, group by cluster number instead
 			grouping = "cluster"
 			if len(genes) == 1:
-				points = get_gene_snATAC(ensemble, genes[0], grouping, True, smoothing)
+				points = get_gene_snATAC(ensemble, genes[0], grouping, True, smoothing, max_points)
 			else:
-				points = get_mult_gene_snATAC(ensemble, genes, grouping, smoothing)
+				points = get_mult_gene_snATAC(ensemble, genes, grouping, smoothing, max_points)
 			print("**** Grouping by cluster")
 
 	datasets = points['dataset'].unique().tolist()

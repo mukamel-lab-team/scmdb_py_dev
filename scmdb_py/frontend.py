@@ -122,8 +122,8 @@ def nav_bar_screen():
 
 
 # API routes
-@frontend.route('/plot/methylation/scatter/<ensemble>/<tsne_type>/<methylation_type>/<level>/<grouping>/<clustering>/<ptile_start>/<ptile_end>/<tsne_outlier>')
-def plot_methylation_scatter(ensemble, tsne_type, methylation_type, level, grouping, clustering, ptile_start, ptile_end, tsne_outlier):
+@frontend.route('/plot/methylation/scatter/<ensemble>/<tsne_type>/<methylation_type>/<level>/<grouping>/<clustering>/<ptile_start>/<ptile_end>/<tsne_outlier>/<max_points>')
+def plot_methylation_scatter(ensemble, tsne_type, methylation_type, level, grouping, clustering, ptile_start, ptile_end, tsne_outlier, max_points):
 
     genes = request.args.get('q', 'MustHaveAQueryString')
     if tsne_type == 'null':
@@ -147,13 +147,14 @@ def plot_methylation_scatter(ensemble, tsne_type, methylation_type, level, group
                                        clustering,
                                        float(ptile_start),
                                        float(ptile_end),
-                                       tsne_outlier_bool)
+                                       tsne_outlier_bool,
+                                       max_points)
     except FailToGraphException:
         return "Failed to generate methylation tsne scatter plots for {}, please contact maintainer".format(ensemble)
 
 
-@frontend.route('/plot/snATAC/scatter/<ensemble>/<grouping>/<ptile_start>/<ptile_end>/<tsne_outlier>/<smoothing>')
-def plot_snATAC_scatter(ensemble, grouping, ptile_start, ptile_end, tsne_outlier, smoothing):
+@frontend.route('/plot/snATAC/scatter/<ensemble>/<grouping>/<ptile_start>/<ptile_end>/<tsne_outlier>/<smoothing>/<max_points>')
+def plot_snATAC_scatter(ensemble, grouping, ptile_start, ptile_end, tsne_outlier, smoothing, max_points):
 
     genes_query = request.args.get('q', 'MustHaveAQueryString')
     if grouping == 'NaN' or grouping == 'null':
@@ -174,13 +175,14 @@ def plot_snATAC_scatter(ensemble, grouping, ptile_start, ptile_end, tsne_outlier
                                   float(ptile_start),
                                   float(ptile_end),
                                   tsne_outlier_bool,
-                                  smoothing_bool)
+                                  smoothing_bool,
+                                  max_points,)
     except FailToGraphException:
         return "Failed to load snATAC-seq data for {}, please contact maintainer".format(ensemble)
 
 
-@frontend.route('/plot/RNA/scatter/<ensemble>/<grouping>/<ptile_start>/<ptile_end>/<tsne_outlier>')
-def plot_RNA_scatter(ensemble, grouping, ptile_start, ptile_end, tsne_outlier):
+@frontend.route('/plot/RNA/scatter/<ensemble>/<grouping>/<ptile_start>/<ptile_end>/<tsne_outlier>/<max_points>')
+def plot_RNA_scatter(ensemble, grouping, ptile_start, ptile_end, tsne_outlier, max_points):
 
     genes_query = request.args.get('q', 'MustHaveAQueryString')
     if grouping == 'NaN' or grouping == 'null':
@@ -196,7 +198,8 @@ def plot_RNA_scatter(ensemble, grouping, ptile_start, ptile_end, tsne_outlier):
                                   grouping,
                                   float(ptile_start),
                                   float(ptile_end),
-                                  tsne_outlier_bool)
+                                  tsne_outlier_bool,
+                                  max_points)
     except FailToGraphException:
         return "Failed to load RNA-seq data for {}, please contact maintainer".format(ensemble)
 
