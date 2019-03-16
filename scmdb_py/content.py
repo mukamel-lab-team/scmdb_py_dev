@@ -950,7 +950,7 @@ def get_gene_methylation(ensemble, methylation_type, gene, grouping, clustering,
 																	   'context': context,
 																	   'clustering': clustering,}
 	if max_points.isdigit():
-		query = query+" LIMIT %(max_points)s" % {'max_points': max_points}
+		query = query+" ORDER BY RAND() LIMIT %(max_points)s" % {'max_points': max_points}
 		# TODO: Check whether we need to randomize the rows 
 
 	try:
@@ -1052,7 +1052,7 @@ def get_gene_from_mysql(ensemble, gene_table_name, methylation_type, clustering,
 																	   'context': context,
 																	   'clustering': clustering,}
 	if max_points.isdigit():
-		query = query+" LIMIT %(max_points)s" % {'max_points': max_points}
+		query = query+" ORDER BY RAND() LIMIT %(max_points)s" % {'max_points': max_points}
 
 	try:
 		df = pd.read_sql(query, db.get_engine(current_app, 'methylation_data'))
@@ -2343,7 +2343,7 @@ def get_gene_snATAC(ensemble, gene, grouping, outliers, smoothing=False, max_poi
 																'counts_type': counts_type,}
 
 	if max_points.isdigit():
-		query = query+" LIMIT %(max_points)s" % {'max_points': max_points}
+		query = query+" ORDER BY RAND() LIMIT %(max_points)s" % {'max_points': max_points}
 
 	try:
 		df = pd.read_sql(query, db.get_engine(current_app, 'snATAC_data'))
@@ -2399,7 +2399,7 @@ def get_gene_snatac_from_mysql(ensemble, gene_table_name, counts_type, tsne_type
 																	   'gene_table_name': gene_table_name,
 																	   'counts_type': counts_type}
 	if max_points.isdigit():
-		query = query+" LIMIT %(max_points)s" % {'max_points': max_points}
+		query = query+" ORDER BY RAND() LIMIT %(max_points)s" % {'max_points': max_points}
 
 	try:
 		df = pd.read_sql(query, db.get_engine(current_app, 'snATAC_data'))
@@ -3234,7 +3234,7 @@ def get_gene_RNA(ensemble, gene, grouping, outliers, max_points='10000'):
 		LEFT JOIN datasets ON cells.dataset = datasets.dataset" % {'ensemble': ensemble, 
 																   'gene_table_name': gene_table_name}
 	if max_points.isdigit():
-		query = query+" LIMIT %(max_points)s" % {'max_points': max_points}
+		query = query+" ORDER BY RAND() LIMIT %(max_points)s" % {'max_points': max_points}
 
 	try:
 		df = pd.read_sql(query, db.get_engine(current_app, 'RNA_data'))
@@ -3308,7 +3308,7 @@ def get_mult_gene_RNA(ensemble, genes, grouping, max_points='10000'):
 			LEFT JOIN datasets ON cells.dataset = datasets.dataset" % {'ensemble': ensemble, 
 																	   'gene_table_name': gene_table_name}
 		if max_points.isdigit():
-			query = query+" LIMIT %(max_points)s" % {'max_points': max_points}
+			query = query+" ORDER BY RAND() LIMIT %(max_points)s()" % {'max_points': max_points}
 
 		try:
 			df_all = df_all.append(pd.read_sql(query, db.get_engine(current_app, 'RNA_data')))
