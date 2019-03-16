@@ -998,8 +998,11 @@ def get_gene_from_mysql(ensemble, gene_table_name, methylation_type, clustering,
 		groupingu = ensemble+"."+grouping+"_"+clustering
 	elif grouping in ['NeuN']:
 		groupingu = "CONCAT('NeuN',cells."+grouping+")"
+	elif grouping in ['dataset','sex','brain_region','target_region']:
+		groupingu = "datasets."+grouping
 	else:
 		groupingu = "cells."+grouping
+
 
 	t0=datetime.datetime.now()
 	# print(' Running get_gene_from_mysql for '+gene_table_name+' : '+str(t0)+'; ', file=open(log_file,'a'))# EAM - Profiling SQL
@@ -1343,7 +1346,8 @@ def get_methylation_scatter(ensemble, tsne_type, methylation_type, genes_query, 
 			#           'size': 16},
 			legend={'x':legend_x,
 					'y':0.95,
-					'tracegroupgap': 0.5},
+					'tracegroupgap': 0.5,
+					'bgcolor': 'rgba(0,0,0,0)',},
 			margin={'l': 0,
 					'r': 0,
 					'b': 30,
@@ -1536,7 +1540,7 @@ def get_methylation_scatter(ensemble, tsne_type, methylation_type, genes_query, 
 			title=title,
 			titlefont={'color': 'rgba(1,2,2,1)',
 					   'size': 16},
-			legend={'x':-.1, 'y':1},
+			legend={'x':-.1, 'y':1, 'bgcolor':"rgba(0,0,0,0)"},
 			margin={'l': 49,
 					'r': 0,
 					'b': 30,
@@ -2677,7 +2681,8 @@ def get_snATAC_scatter(ensemble, genes_query, grouping, ptile_start, ptile_end, 
 		#            'size': 16},
 		legend={'x':legend_x,
 				'y':0.95,
-				'tracegroupgap': 0.5},
+				'tracegroupgap': 0.5,
+				'bgcolor': 'rgba(0,0,0,0)'},
 		margin={'l': 0,
 				'r': 0,
 				'b': 30,
@@ -3527,7 +3532,8 @@ def get_RNA_scatter(ensemble, genes_query, grouping, ptile_start, ptile_end, tsn
 		#            'size': 16},
 		legend={'x':legend_x,
 				'y':0.95,
-				'tracegroupgap': 0.5},
+				'tracegroupgap': 0.5,
+				'bgcolor': 'rgba(0,0,0,0)'},
 		margin={'l': 0,
 				'r': 0,
 				'b': 30,
