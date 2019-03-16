@@ -602,12 +602,12 @@ def mean_cluster(gene_info, grouping, modality='ATAC'):
 			dict: Cluster_label (key) : mean mCH level (value).
 	"""
 
-	if grouping == 'annotation':
-		gene_info.fillna({'annotation_'+modality: 'None'}, inplace=True)
-	if grouping != 'dataset':
-		return gene_info.groupby(grouping+'_'+modality, sort=False)['normalized_counts'].mean()
-	else:
-		return gene_info.groupby(grouping, sort=False)['normalized_counts'].mean()
+	# if grouping == 'annotation':
+	# 	gene_info.fillna({'annotation_'+modality: 'None'}, inplace=True)
+	# if grouping != 'dataset':
+	# 	return gene_info.groupby(grouping+'_'+modality, sort=False)['normalized_counts'].mean()
+	# else:
+	# 	return gene_info.groupby(grouping, sort=False)['normalized_counts'].mean()
 
 	if grouping == 'annotation':
 		gene_info.fillna({'annotation_'+modality: 'None'}, inplace=True)
@@ -695,8 +695,11 @@ def get_metadata_options(ensemble):
 	for modality in ['methylation','snATAC','RNA']:
 		all_metadata[modality] = ['cluster','annotation']
 		if ensemble_exists(ensemble, modality=modality):
-			all_metadata[modality] += ['dataset','sex','brain_region']
-			query = "SELECT count(*) AS count FROM ensembles RIGHT JOIN datasets ON ensembles.datasets LIKE %(x)s WHERE datasets.target_region!='NULL' AND ensembles.ensemble_id={0}".format(ensemble.strip('Ens'))
+			all_metadata[modality] += ['dataset','sex','brain_region','broad_brain_region']
+			query = "SELECT count(*) AS count FROM ensembles \
+			RIGHT JOIN datasets ON ensembles.datasets LIKE %(x)s \
+			WHERE datasets.target_region!='NULL' \
+			AND ensembles.ensemble_id={0}".format(ensemble.strip('Ens'))
 			df_metadata = pd.read_sql(query, con=db.get_engine(current_app, modality+'_data'), params={'x': "CONCAT('%',datasets.dataset,'%')"})
 			if (not df_metadata['count'].isnull().all()) and max(df_metadata['count'])>0:
 				all_metadata[modality] += ['target_region']
@@ -908,6 +911,8 @@ def get_gene_methylation(ensemble, methylation_type, gene, grouping, clustering,
 		groupingu = "CONCAT('NeuN',cells."+grouping+")"
 	elif grouping in ['dataset','sex','brain_region','target_region']:
 		groupingu = "datasets."+grouping
+	elif grouping in ['broad_brain_region']:
+		groupingu = "ABA_regions.ABA_broad_acronym"
 	else:
 		groupingu = "cells."+grouping
 
@@ -922,7 +927,8 @@ def get_gene_methylation(ensemble, methylation_type, gene, grouping, clustering,
 			FROM cells \
 			INNER JOIN %(ensemble)s ON cells.cell_id = %(ensemble)s.cell_id \
 			LEFT JOIN %(gene_table_name)s ON %(ensemble)s.cell_id = %(gene_table_name)s.cell_id \
-			LEFT JOIN datasets ON cells.dataset = datasets.dataset" % {'ensemble': ensemble, 'groupingu': groupingu,
+			LEFT JOIN datasets ON cells.dataset = datasets.dataset \
+			LEFT JOIN ABA_regions ON datasets.brain_region=ABA_regions.ABA_acronym" % {'ensemble': ensemble, 'groupingu': groupingu,
 																	   'gene_table_name': gene_table_name,
 																	   'tsne_type': tsne_type,
 																	   'methylation_type': methylation_type,
@@ -937,14 +943,14 @@ def get_gene_methylation(ensemble, methylation_type, gene, grouping, clustering,
 			FROM cells \
 			INNER JOIN %(ensemble)s ON cells.cell_id = %(ensemble)s.cell_id \
 			LEFT JOIN %(gene_table_name)s ON %(ensemble)s.cell_id = %(gene_table_name)s.cell_id \
-			LEFT JOIN datasets ON cells.dataset = datasets.dataset" % {'ensemble': ensemble, 
+			LEFT JOIN datasets ON cells.dataset = datasets.dataset " % {'ensemble': ensemble, 
 																	   'gene_table_name': gene_table_name,
 																	   'tsne_type': tsne_type,
 																	   'methylation_type': methylation_type,
 																	   'context': context,
 																	   'clustering': clustering,}
 	if max_points.isdigit():
-		query = query+" LIMIT %(max_points)s" % {'max_points': max_points}
+		query = query+" ORDER BY RAND() LIMIT %(max_points)s" % {'max_points': max_points}
 		# TODO: Check whether we need to randomize the rows 
 
 	try:
@@ -998,8 +1004,13 @@ def get_gene_from_mysql(ensemble, gene_table_name, methylation_type, clustering,
 		groupingu = ensemble+"."+grouping+"_"+clustering
 	elif grouping in ['NeuN']:
 		groupingu = "CONCAT('NeuN',cells."+grouping+")"
+	elif grouping in ['dataset','sex','brain_region','target_region']:
+		groupingu = "datasets."+grouping
+	elif grouping in ['broad_brain_region']:
+		groupingu = "ABA_regions.ABA_broad_acronym"
 	else:
 		groupingu = "cells."+grouping
+
 
 	t0=datetime.datetime.now()
 	# print(' Running get_gene_from_mysql for '+gene_table_name+' : '+str(t0)+'; ', file=open(log_file,'a'))# EAM - Profiling SQL
@@ -1019,7 +1030,8 @@ def get_gene_from_mysql(ensemble, gene_table_name, methylation_type, clustering,
 			FROM cells \
 			INNER JOIN %(ensemble)s ON cells.cell_id = %(ensemble)s.cell_id \
 			LEFT JOIN %(gene_table_name)s ON %(ensemble)s.cell_id = %(gene_table_name)s.cell_id \
-			LEFT JOIN datasets ON cells.dataset = datasets.dataset " % {'ensemble': ensemble, 'groupingu': groupingu,
+			LEFT JOIN datasets ON cells.dataset = datasets.dataset \
+			LEFT JOIN ABA_regions ON datasets.brain_region=ABA_regions.ABA_acronym " % {'ensemble': ensemble, 'groupingu': groupingu,
 																	   'gene_table_name': gene_table_name,
 																	   'tsne_type': tsne_type,
 																	   'methylation_type': methylation_type,
@@ -1040,7 +1052,7 @@ def get_gene_from_mysql(ensemble, gene_table_name, methylation_type, clustering,
 																	   'context': context,
 																	   'clustering': clustering,}
 	if max_points.isdigit():
-		query = query+" LIMIT %(max_points)s" % {'max_points': max_points}
+		query = query+" ORDER BY RAND() LIMIT %(max_points)s" % {'max_points': max_points}
 
 	try:
 		df = pd.read_sql(query, db.get_engine(current_app, 'methylation_data'))
@@ -1180,7 +1192,7 @@ def get_methylation_scatter(ensemble, tsne_type, methylation_type, genes_query, 
 			# print("**** Using cluster_mCH_lv_npc50_k30")
 
 	datasets = points['dataset'].unique().tolist()
-	if grouping in ['cluster','annotation','dataset','NeuN','sex','slice','brain_region','target_region']: # THese are the metadata fields with discrete/categorical values
+	if grouping in ['cluster','annotation','dataset','NeuN','sex','slice','brain_region','broad_brain_region','target_region']: # THese are the metadata fields with discrete/categorical values
 		unique_groups = points['grouping'].unique().tolist()
 	else:
 		# For continuous (numerical) metadata (like global_mCH), don't use discrete clusters
@@ -1343,7 +1355,8 @@ def get_methylation_scatter(ensemble, tsne_type, methylation_type, genes_query, 
 			#           'size': 16},
 			legend={'x':legend_x,
 					'y':0.95,
-					'tracegroupgap': 0.5},
+					'tracegroupgap': 0.5,
+					'bgcolor': 'rgba(0,0,0,0)',},
 			margin={'l': 0,
 					'r': 0,
 					'b': 30,
@@ -1536,7 +1549,7 @@ def get_methylation_scatter(ensemble, tsne_type, methylation_type, genes_query, 
 			title=title,
 			titlefont={'color': 'rgba(1,2,2,1)',
 					   'size': 16},
-			legend={'x':-.1, 'y':1},
+			legend={'x':-.1, 'y':1, 'bgcolor':"rgba(0,0,0,0)"},
 			margin={'l': 49,
 					'r': 0,
 					'b': 30,
@@ -2330,7 +2343,7 @@ def get_gene_snATAC(ensemble, gene, grouping, outliers, smoothing=False, max_poi
 																'counts_type': counts_type,}
 
 	if max_points.isdigit():
-		query = query+" LIMIT %(max_points)s" % {'max_points': max_points}
+		query = query+" ORDER BY RAND() LIMIT %(max_points)s" % {'max_points': max_points}
 
 	try:
 		df = pd.read_sql(query, db.get_engine(current_app, 'snATAC_data'))
@@ -2386,7 +2399,7 @@ def get_gene_snatac_from_mysql(ensemble, gene_table_name, counts_type, tsne_type
 																	   'gene_table_name': gene_table_name,
 																	   'counts_type': counts_type}
 	if max_points.isdigit():
-		query = query+" LIMIT %(max_points)s" % {'max_points': max_points}
+		query = query+" ORDER BY RAND() LIMIT %(max_points)s" % {'max_points': max_points}
 
 	try:
 		df = pd.read_sql(query, db.get_engine(current_app, 'snATAC_data'))
@@ -2677,7 +2690,8 @@ def get_snATAC_scatter(ensemble, genes_query, grouping, ptile_start, ptile_end, 
 		#            'size': 16},
 		legend={'x':legend_x,
 				'y':0.95,
-				'tracegroupgap': 0.5},
+				'tracegroupgap': 0.5,
+				'bgcolor': 'rgba(0,0,0,0)'},
 		margin={'l': 0,
 				'r': 0,
 				'b': 30,
@@ -3182,7 +3196,7 @@ def get_snATAC_box(ensemble, gene, grouping, outliers):
 
 ### RNA
 @cache.memoize(timeout=3600)
-def get_gene_RNA(ensemble, gene, grouping, outliers):
+def get_gene_RNA(ensemble, gene, grouping, outliers, max_points='10000'):
 	"""Return RNA data points for a given gene.
 
 	Data from ID-to-Name mapping and tSNE points are combined for plot generation.
@@ -3217,10 +3231,10 @@ def get_gene_RNA(ensemble, gene, grouping, outliers):
 		FROM cells \
 		INNER JOIN %(ensemble)s ON cells.cell_id = %(ensemble)s.cell_id \
 		LEFT JOIN %(gene_table_name)s ON %(ensemble)s.cell_id = %(gene_table_name)s.cell_id \
-		LEFT JOIN datasets ON cells.dataset = datasets.dataset \
-		ORDER BY RAND() LIMIT %(ncells)s" % {'ensemble': ensemble, 
-																   'gene_table_name': gene_table_name,
-																   'ncells': ncells_max}
+		LEFT JOIN datasets ON cells.dataset = datasets.dataset" % {'ensemble': ensemble, 
+																   'gene_table_name': gene_table_name}
+	if max_points.isdigit():
+		query = query+" ORDER BY RAND() LIMIT %(max_points)s" % {'max_points': max_points}
 
 	try:
 		df = pd.read_sql(query, db.get_engine(current_app, 'RNA_data'))
@@ -3249,7 +3263,7 @@ def get_gene_RNA(ensemble, gene, grouping, outliers):
 	return df
 
 @cache.memoize(timeout=1800)
-def get_mult_gene_RNA(ensemble, genes, grouping):
+def get_mult_gene_RNA(ensemble, genes, grouping, max_points='10000'):
 	"""Return averaged methylation data ponts for a set of genes.
 
 	Data from ID-to-Name mapping and tSNE points are combined for plot generation.
@@ -3291,10 +3305,11 @@ def get_mult_gene_RNA(ensemble, genes, grouping):
 			FROM cells \
 			INNER JOIN %(ensemble)s ON cells.cell_id = %(ensemble)s.cell_id \
 			LEFT JOIN %(gene_table_name)s ON %(ensemble)s.cell_id = %(gene_table_name)s.cell_id \
-			LEFT JOIN datasets ON cells.dataset = datasets.dataset \
-			ORDER BY RAND() LIMIT %(ncells)s" % {'ensemble': ensemble, 
-																	   'gene_table_name': gene_table_name,
-																	   'ncells': ncells_max}
+			LEFT JOIN datasets ON cells.dataset = datasets.dataset" % {'ensemble': ensemble, 
+																	   'gene_table_name': gene_table_name}
+		if max_points.isdigit():
+			query = query+" ORDER BY RAND() LIMIT %(max_points)s()" % {'max_points': max_points}
+
 		try:
 			df_all = df_all.append(pd.read_sql(query, db.get_engine(current_app, 'RNA_data')))
 		except exc.ProgrammingError as e:
@@ -3527,7 +3542,8 @@ def get_RNA_scatter(ensemble, genes_query, grouping, ptile_start, ptile_end, tsn
 		#            'size': 16},
 		legend={'x':legend_x,
 				'y':0.95,
-				'tracegroupgap': 0.5},
+				'tracegroupgap': 0.5,
+				'bgcolor': 'rgba(0,0,0,0)'},
 		margin={'l': 0,
 				'r': 0,
 				'b': 30,
