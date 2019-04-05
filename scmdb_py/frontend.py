@@ -203,9 +203,9 @@ def plot_RNA_scatter(ensemble, grouping, ptile_start, ptile_end, tsne_outlier, m
     except FailToGraphException:
         return "Failed to load RNA-seq data for {}, please contact maintainer".format(ensemble)
 
-@frontend.route('/plot/methylation/box/<ensemble>/<methylation_type>/<gene>/<grouping>/<clustering>/<level>/<outliers_toggle>')
+@frontend.route('/plot/methylation/box/<ensemble>/<methylation_type>/<gene>/<grouping>/<clustering>/<level>/<outliers_toggle>/<max_points>')
 @cache.memoize(timeout=3600)
-def plot_mch_box(ensemble, methylation_type, gene, grouping, clustering, level, outliers_toggle):
+def plot_mch_box(ensemble, methylation_type, gene, grouping, clustering, level, outliers_toggle, max_points):
 
     if outliers_toggle == 'outliers':
         outliers = True
@@ -217,7 +217,7 @@ def plot_mch_box(ensemble, methylation_type, gene, grouping, clustering, level, 
         grouping = 'annotation'
 
     try:
-        return get_mch_box(ensemble, methylation_type, gene, grouping, clustering, level, outliers) 
+        return get_mch_box(ensemble, methylation_type, gene, grouping, clustering, level, outliers, max_points) 
     except (FailToGraphException, ValueError) as e:
         print("ERROR (plot_mch_box): {}".format(e))
         return 'Failed to produce mCH levels box plot. Contact maintainer.'
@@ -241,21 +241,17 @@ def plot_mch_box(ensemble, methylation_type, gene, grouping, clustering, level, 
 #         print("ERROR (plot_mch_box): {}".format(e))
 #         return 'Failed to produce mCH levels box plot. Contact maintainer.'
 
-@frontend.route('/plot/clusters/bar/<ensemble>/<grouping>/<clustering>/<normalize>/<outliers_toggle>')
+@frontend.route('/plot/clusters/bar/<ensemble>/<grouping>/<clustering>/<normalize>')
 @cache.memoize(timeout=3600)
-def plot_clusters_bar(ensemble, grouping, clustering, normalize, outliers_toggle):
+def plot_clusters_bar(ensemble, grouping, clustering, normalize):
 
-    if outliers_toggle == 'outliers':
-        outliers = True
-    else:
-        outliers = False
     if clustering == 'null':
         clustering = 'mCH_lv_npc50_k5'
     if grouping == 'NaN' or grouping == 'null':
         grouping = 'annotation'
 
     try:
-        return get_clusters_bar(ensemble, grouping, clustering, normalize, outliers) # EAM - testing
+        return get_clusters_bar(ensemble, grouping, clustering, normalize) # EAM - testing
     except (FailToGraphException, ValueError) as e:
         print("ERROR (plot_clusters_bar): {}".format(e))
         return 'Failed to produce clusters bar plot. Contact maintainer.'
