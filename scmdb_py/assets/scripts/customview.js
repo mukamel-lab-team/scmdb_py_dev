@@ -979,14 +979,14 @@ function updateMCHBoxPlot() {
         beforeSend: function() {
             $("#mch-box-loader").show();
             $("#plot-mch-heat").html("");
-            $("#methylation-tsneUpdateBtn, #methylation-tsneUpdateBtn-top").attr("disabled", true);
+            $("#methylation-tsneUpdateBtn, #methylation-tsneUpdateBtn-top, #methylation-box-heat-outlierToggle").attr("disabled", true);
         },
         complete: function() {
             $('#mch-box-loader').hide();
         },
         success: function(data) {
             $("#plot-mch-box").html(data);
-            $("#methylation-tsneUpdateBtn, #methylation-tsneUpdateBtn-top").attr("disabled", false);
+            $("#methylation-tsneUpdateBtn, #methylation-tsneUpdateBtn-top, #methylation-box-heat-outlierToggle").attr("disabled", false);
         }
     });
 
