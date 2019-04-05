@@ -205,9 +205,9 @@ def plot_RNA_scatter(ensemble, grouping, ptile_start, ptile_end, tsne_outlier, m
     except FailToGraphException:
         return "Failed to load RNA-seq data for {}, please contact maintainer".format(ensemble)
 
-@frontend.route('/plot/methylation/box/<ensemble>/<methylation_type>/<gene>/<grouping>/<clustering>/<level>/<outliers_toggle>')
+@frontend.route('/plot/methylation/box/<ensemble>/<methylation_type>/<gene>/<grouping>/<clustering>/<level>/<outliers_toggle>/<max_points>')
 @cache.memoize(timeout=3600)
-def plot_mch_box(ensemble, methylation_type, gene, grouping, clustering, level, outliers_toggle):
+def plot_mch_box(ensemble, methylation_type, gene, grouping, clustering, level, outliers_toggle, max_points):
 
     if outliers_toggle == 'outliers':
         outliers = True
@@ -219,7 +219,7 @@ def plot_mch_box(ensemble, methylation_type, gene, grouping, clustering, level, 
         grouping = 'annotation'
 
     try:
-        return get_mch_box(ensemble, methylation_type, gene, grouping, clustering, level, outliers) 
+        return get_mch_box(ensemble, methylation_type, gene, grouping, clustering, level, outliers, max_points) 
     except (FailToGraphException, ValueError) as e:
         print("ERROR (plot_mch_box): {}".format(e))
         return 'Failed to produce mCH levels box plot. Contact maintainer.'

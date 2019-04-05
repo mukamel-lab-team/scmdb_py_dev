@@ -960,6 +960,7 @@ function updateMCHBoxPlot() {
     let levelType = $('#methylation-levels').val();
     // let levelType = $('#level').val();
     let methylationType = $("#mType").val();
+    let max_points = $('#max-points').val();
     let geneSelected = $('#geneName option:selected').val();
     let grouping = $('#methylation-tsne-grouping').val();
     let clustering = $("#methylation-clustering-methylation").val()+"_"+$("#methylation-clustering-algorithms").val()+"_npc50"+"_k"+$("#methylation-clustering-k").val();
@@ -974,7 +975,7 @@ function updateMCHBoxPlot() {
 
     $.ajax({
         type: "GET",
-        url: './plot/methylation/box/'+ensemble+'/'+methylationType+'/'+geneSelected+'/'+grouping+'/'+clustering+'/'+levelType+'/'+outlierOption,
+        url: './plot/methylation/box/'+ensemble+'/'+methylationType+'/'+geneSelected+'/'+grouping+'/'+clustering+'/'+levelType+'/'+outlierOption+'/'+max_points,
         beforeSend: function() {
             $("#mch-box-loader").show();
             $("#plot-mch-heat").html("");
