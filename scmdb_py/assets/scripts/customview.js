@@ -967,7 +967,7 @@ function updateMCHBoxPlot() {
     if ($('#orthologsToggle').prop('checked')) {
         return updateMCHCombinedBoxPlot(mmu_gID, hsa_gID);
     }
-    if ($('#methylation-tsneOutlierToggle').prop('checked')) {
+    if ($('#methylation-box-heat-OutlierToggle').prop('checked')) {
         var outlierOption = 'outliers';
     } else {
         var outlierOption = 'false';
@@ -996,15 +996,10 @@ function updateClustersBarPlot() {
     let grouping = $('#methylation-tsne-grouping').val();
     let normalize = $('#clusters-bar-normalize-toggle').prop('checked');
     let clustering = $("#methylation-clustering-methylation").val()+"_"+$("#methylation-clustering-algorithms").val()+"_npc50"+"_k"+$("#methylation-clustering-k").val();
-    if ($('#methylation-tsneOutlierToggle').prop('checked')) {
-        var outlierOption = 'outliers';
-    } else {
-        var outlierOption = 'false';
-    }
 
     $.ajax({
         type: "GET",
-        url: './plot/clusters/bar/'+ensemble+'/'+grouping+'/'+clustering+'/'+normalize+'/'+outlierOption,
+        url: './plot/clusters/bar/'+ensemble+'/'+grouping+'/'+clustering+'/'+normalize,
         beforeSend: function() {
             $("#clusters-bar-loader").show();
             $("#plot-clusters-bar").html("");
@@ -1082,7 +1077,7 @@ function updateMCHCombinedBoxPlot(mmu_gid, hsa_gid) {
     let levelType = $('#methylation-levels').val();
     // let levelType = $('#level').val();
    let methylationType = $("#mType").val();
-    if ($('#methylation-tsneOutlierToggle').prop('checked')) {
+    if ($('#methylation-box-heat-OutlierToggle').prop('checked')) {
         var outlierOption = 'outliers';
     } else {
         var outlierOption = 'false';
@@ -1138,7 +1133,7 @@ function updateMethylationHeatmap() {
             $('#mch_box_div').removeClass("col-md-9");
             $('#plot-mch-heat').html(data);
             $("#methylation-tsneUpdateBtn, #methylation-tsneUpdateBtn-top").attr("disabled", false);
-            $('#methylation-tsneOutlierToggle').bootstrapToggle('disable');
+            $('#methylation-box-heat-OutlierToggle').bootstrapToggle('disable');
         }
     });
 }

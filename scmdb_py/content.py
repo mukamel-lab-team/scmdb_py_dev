@@ -2191,7 +2191,7 @@ def get_clusters(ensemble, grouping, clustering):
 	return df
 
 @cache.memoize(timeout=3600)
-def get_clusters_bar(ensemble, grouping, clustering, normalize, outliers):
+def get_clusters_bar(ensemble, grouping, clustering, normalize):
 	"""Generate clusters bar plot.
 
 	Traces are grouped by modality (mch, ATAC).
