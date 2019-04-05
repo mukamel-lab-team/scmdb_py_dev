@@ -1680,54 +1680,57 @@ def get_mch_box(ensemble, methylation_type, gene, grouping, clustering, level, o
 
 	traces = OrderedDict()
 	if grouping == "dataset":
+		groups = points[grouping]
 		unique_groups = points["dataset"].unique()
 	elif grouping == 'target_region':
 		points['target_region'].fillna('N/A', inplace=True)
+		groups = points[grouping]
 		unique_groups = points['target_region'].unique()
 	elif grouping == 'slice':
 		datasets_all_cells = points['dataset'].tolist()
 		slices_list = [d.split('_')[1] if 'RS2' not in d else d.split('_')[2][2:4] for d in datasets_all_cells]
 		points['slice'] = slices_list
+		groups = points[grouping]
 		slices_set = set(slices_list)
 		unique_groups = np.array(list(slices_set))
 	elif grouping == 'sex':
 		unique_groups = points['sex'].unique()
+		groups = points[grouping]
 	elif grouping == 'cluster' or grouping == 'annotation':
 		unique_groups = points[grouping+'_'+clustering].unique()
+		groups = points[grouping+'_'+clustering]
 	else:
 		grouping = 'cluster'
 		unique_groups = points[grouping+'_'+clustering].unique()
+		groups = points[grouping+'_'+clustering]
 	num_clusters = len(unique_groups)
 
 	colors = generate_cluster_colors(num_clusters, grouping)
-	for point in points.to_dict('records'):
-		name_prepend = ""
-		if grouping == "dataset" or grouping == 'target_region' or grouping == 'slice' or grouping == 'sex':
-			color = colors[int(np.where(unique_groups==point[grouping])[0]) % len(colors)]
-			group = point[grouping]
-		else:
-			if grouping == "cluster":
-				name_prepend="cluster_"
-			color = colors[int(np.where(unique_groups==point[grouping+'_'+clustering])[0]) % len(colors)]
-			group = point[grouping+'_'+clustering]
+	if grouping == "cluster":
+		name_prepend="cluster_"
+	else:
+		name_prepend=""
+	data = []
+	for group in unique_groups:
+		color = colors[int(np.where(unique_groups==group)[0]) % len(colors)]
 		if outliers:
 			boxpoints='suspectedoutliers';
 		else:
 			boxpoints=False
-
-		trace = traces.setdefault(group, Box(
-				y=[point[methylation_type + '/' + context + '_' + level]],
-				name=name_prepend + str(group),
-				marker={
-					'color': color,
-					'outliercolor': color,
-					'size': 6
-				},
-				boxpoints=boxpoints,
-				visible=True,
-				showlegend=False,
-				))
-		trace['y'].append(point[methylation_type + '/' + context + '_' + level])
+		trace = {
+			"type": 'violin',
+			"x": group,
+			"y": points[methylation_type + '/' + context + '_' + level][groups==group],
+			"name": name_prepend + str(group),
+			"points": boxpoints,
+			"box": {
+				"visible": True
+			},
+			"line": {
+				"color" : color
+			}
+		}
+		data.append(trace)
 
 	gene_name = get_gene_by_id([ gene ])[0]['gene_name']
 
@@ -1784,12 +1787,14 @@ def get_mch_box(ensemble, methylation_type, gene, grouping, clustering, level, o
 
 	return plotly.offline.plot(
 		{
-			'data': list(traces.values()),
+			# 'data': list(traces.values()),
+			'data': data,
 			'layout': layout
 		},
 		output_type='div',
 		show_link=False,
-		include_plotlyjs=False,)
+		include_plotlyjs=False,
+		validate=False,)
 
 @cache.memoize(timeout=3600)
 def get_mch_heatmap(ensemble, methylation_type, grouping, clustering, level, ptile_start, ptile_end, normalize_row, query):
