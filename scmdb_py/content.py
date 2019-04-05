@@ -1705,6 +1705,26 @@ def get_mch_box(ensemble, methylation_type, gene, grouping, clustering, level, o
 		groups = points[grouping+'_'+clustering]
 	num_clusters = len(unique_groups)
 
+	# ## ############
+	# gene_info_df = pd.DataFrame()
+	# gene_info_df = median_cluster_mch(points, grouping, clustering)
+	# gene_info_dict = gene_info_df.to_dict(into=OrderedDict)    
+	# mch = list()
+	# for key in list(gene_info_dict.keys()):
+	# 	mch.append(list(gene_info_dict[key].values()))
+	# mch = np.array(mch)
+	# figure = ff.create_dendrogram(mch.transpose(), orientation="bottom", labels=tuple([i for i in range(mch.shape[1])]), 
+	# 	colorscale=['bbbbbbb'])
+	# for i in range(len(dendro_top['data'])):
+	# 	dendro_top['data'][i]['yaxis'] = 'y2'
+	# dendro_top_leaves = dendro_top['layout']['xaxis']['ticktext']
+	# dendro_top_leaves = list(map(int, dendro_top_leaves))
+	# mch = mch[:,dendro_top_leaves] # Reorder the columns according to the clustering
+	# unique_groups = [unique_groups[i] for i in dendro_top_leaves]
+	# mch = list(mch)
+	# figure['data'].extend(dendro_top['data'])
+	# ## ###########
+
 	colors = generate_cluster_colors(num_clusters, grouping)
 	if grouping == "cluster":
 		name_prepend="cluster_"
@@ -1724,10 +1744,12 @@ def get_mch_box(ensemble, methylation_type, gene, grouping, clustering, level, o
 			"name": name_prepend + str(group),
 			"points": boxpoints,
 			"box": {
-				"visible": True
+				"visible": True,
+				"width": .8,
+				'fillcolor': color,
 			},
 			"line": {
-				"color" : color
+				"color" : 'rgba(10,10,10,.5)'
 			}
 		}
 		data.append(trace)
@@ -1783,11 +1805,11 @@ def get_mch_box(ensemble, methylation_type, gene, grouping, clustering, level, o
 			'linewidth': 1,
 			'mirror': True,
 		},
+		showlegend=False,
 	)
 
 	return plotly.offline.plot(
 		{
-			# 'data': list(traces.values()),
 			'data': data,
 			'layout': layout
 		},
