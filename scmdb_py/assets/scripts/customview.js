@@ -967,7 +967,7 @@ function updateMCHBoxPlot() {
     if ($('#orthologsToggle').prop('checked')) {
         return updateMCHCombinedBoxPlot(mmu_gID, hsa_gID);
     }
-    if ($('#methylation-box-heat-OutlierToggle').prop('checked')) {
+    if ($('#methylation-box-heat-outlierToggle').prop('checked')) {
         var outlierOption = 'outliers';
     } else {
         var outlierOption = 'false';
@@ -1077,7 +1077,7 @@ function updateMCHCombinedBoxPlot(mmu_gid, hsa_gid) {
     let levelType = $('#methylation-levels').val();
     // let levelType = $('#level').val();
    let methylationType = $("#mType").val();
-    if ($('#methylation-box-heat-OutlierToggle').prop('checked')) {
+    if ($('#methylation-box-heat-outlierToggle').prop('checked')) {
         var outlierOption = 'outliers';
     } else {
         var outlierOption = 'false';
@@ -1133,7 +1133,7 @@ function updateMethylationHeatmap() {
             $('#mch_box_div').removeClass("col-md-9");
             $('#plot-mch-heat').html(data);
             $("#methylation-tsneUpdateBtn, #methylation-tsneUpdateBtn-top").attr("disabled", false);
-            $('#methylation-box-heat-OutlierToggle').bootstrapToggle('disable');
+            $('#methylation-box-heat-outlierToggle').bootstrapToggle('disable');
         }
     });
 }
