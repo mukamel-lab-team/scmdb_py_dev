@@ -67,7 +67,7 @@ def ensemble(ensemble_id):
         num_dims_options = 0
         num_perplexity_options = 0
         
-    AnnoJexists = ensemble_annoj_exists(ensemble_name)
+    AnnoJexists = ensemble_annoj_exists(ensemble_id)
     
     if ensemble_info['public_access'] == 1 or (ensemble_info['public_access'] == 0 and current_user.is_authenticated):
         return render_template('ensembleview.html', 
