@@ -1427,7 +1427,10 @@ def get_methylation_scatter(ensemble, tsne_type, methylation_type, genes_query, 
 		fig.append_trace(trace_methylation, 1,2)
 
 		fig['layout'].update(layout)
-		fig['layout']['annotations'].extend([Annotation(text=grouping.title(),
+		# Plotly 3: https://community.plot.ly/t/subplot-titles-disappearing-when-adding-annotations/5256/5
+
+		annotations=[]
+		annotations.append([Annotation(text=grouping.title(),
 														x=legend_x+0.05,
 														y=1.02 + annotation_additional_y,
 														xanchor="left",
@@ -1437,8 +1440,7 @@ def get_methylation_scatter(ensemble, tsne_type, methylation_type, genes_query, 
 														yref="paper",
 														font={'size': 12,
 															  'color': 'gray',})])
-
-		fig['layout']['annotations'].extend([Annotation(text=title,
+		annotations.append([Annotation(text=title,
 														x=0.5,
 														y=1.3,
 														xanchor="center",
@@ -1448,7 +1450,6 @@ def get_methylation_scatter(ensemble, tsne_type, methylation_type, genes_query, 
 														yref="paper",
 														font={'size': 16,
 															  'color': 'black',})])
-
 
 	## 3D tSNE coordinates ##
 	else: 
@@ -1634,7 +1635,7 @@ def get_methylation_scatter(ensemble, tsne_type, methylation_type, genes_query, 
 		fig['layout']['scene1'].update(scene)
 		fig['layout']['scene2'].update(scene)
 	
-		fig['layout']['annotations'].extend([Annotation(text="Cluster Labels",
+		annotations.append([Annotation(text="Cluster Labels",
 														x=-.09,
 														y=1.03 + annotation_additional_y,
 														xanchor="left",
@@ -1644,6 +1645,7 @@ def get_methylation_scatter(ensemble, tsne_type, methylation_type, genes_query, 
 														yref="paper",
 														font={'size': 12,
 															  'color': 'gray',})])
+		fig['layout']['annotations']=annotations
 
 	return plotly.offline.plot(
 		figure_or_data=fig,
@@ -1739,7 +1741,7 @@ def get_mch_box(ensemble, methylation_type, gene, grouping, clustering, level, o
 			boxpoints=False
 		trace = {
 			"type": 'violin',
-			"x": group,
+			"x": [group],
 			"y": points[methylation_type + '/' + context + '_' + level][groups==group],
 			"name": name_prepend + str(group),
 			"points": boxpoints,
@@ -1815,8 +1817,7 @@ def get_mch_box(ensemble, methylation_type, gene, grouping, clustering, level, o
 		},
 		output_type='div',
 		show_link=False,
-		include_plotlyjs=False,
-		validate=False,)
+		include_plotlyjs=False,)
 
 @cache.memoize(timeout=3600)
 def get_mch_heatmap(ensemble, methylation_type, grouping, clustering, level, ptile_start, ptile_end, normalize_row, query):
@@ -2789,7 +2790,8 @@ def get_snATAC_scatter(ensemble, genes_query, grouping, ptile_start, ptile_end, 
 	fig.append_trace(trace_ATAC, 1,2)
 
 	fig['layout'].update(layout)
-	fig['layout']['annotations'].extend([Annotation(text=grouping.title(),
+	annotations=[]
+	annotations.append([Annotation(text=grouping.title(),
 													x=legend_x+0.05,
 													y=1.02 + annotation_additional_y,
 													xanchor="left",
@@ -2799,7 +2801,7 @@ def get_snATAC_scatter(ensemble, genes_query, grouping, ptile_start, ptile_end, 
 													yref="paper",
 													font={'size': 12,
 														  'color': 'gray',})])
-	fig['layout']['annotations'].extend([Annotation(text=title,
+	annotations.append([Annotation(text=title,
 													x=0.5,
 													y=1.3,
 													xanchor="center",
@@ -2809,6 +2811,7 @@ def get_snATAC_scatter(ensemble, genes_query, grouping, ptile_start, ptile_end, 
 													yref="paper",
 													font={'size': 16,
 														  'color': 'black',})])
+	fig['layout']['annotations']=annotations
 
 	return plotly.offline.plot(
 		figure_or_data=fig,
@@ -3371,7 +3374,7 @@ def get_mult_gene_RNA(ensemble, genes, grouping, max_points='10000'):
 	return df_coords
 
 @cache.memoize(timeout=1800)
-def get_RNA_scatter(ensemble, genes_query, grouping, ptile_start, ptile_end, tsne_outlier_bool):
+def get_RNA_scatter(ensemble, genes_query, grouping, ptile_start, ptile_end, tsne_outlier_bool, max_points='10000'):
 	"""Generate RNA scatter plot using tSNE coordinates from methylation(snmC-seq) data.
 
 	Arguments:
@@ -3393,12 +3396,15 @@ def get_RNA_scatter(ensemble, genes_query, grouping, ptile_start, ptile_end, tsn
 	gene_name_str = ""
 	x, y, text, mch = list(), list(), list(), list()
 
+	if grouping+'_RNA' not in points.columns: # If no cluster annotations available, group by cluster number instead
+		grouping = "cluster"
+
 	if len(genes) == 1:
-		points = get_gene_RNA(ensemble, genes[0], grouping, True)
+		points = get_gene_RNA(ensemble, genes[0], grouping, True, max_points)
 		gene_name = get_gene_by_id([ genes[0] ])[0]['gene_name']
 		title = 'Gene body RNA normalized counts: ' + gene_name
 	else:
-		points = get_mult_gene_RNA(ensemble, genes, grouping)
+		points = get_mult_gene_RNA(ensemble, genes, grouping, max_points)
 		gene_infos = get_gene_by_id(genes)
 		for i, gene in enumerate(gene_infos):
 			if i > 0 and i % 10 == 0:
@@ -3409,16 +3415,6 @@ def get_RNA_scatter(ensemble, genes_query, grouping, ptile_start, ptile_end, tsn
 
 	if points is None:
 		raise FailToGraphException
-
-	### TSNE ### 
-	if grouping != 'dataset' and grouping != 'target_region':
-		if grouping+'_RNA' not in points.columns: # If no cluster annotations available, group by cluster number instead
-			grouping = "cluster"
-			if len(genes) == 1:
-				points = get_gene_RNA(ensemble, genes[0], grouping, True)
-			else:
-				points = get_mult_gene_RNA(ensemble, genes, grouping)
-			print("**** Grouping by cluster")
 
 	datasets = points['dataset'].unique().tolist()
 	annotation_additional_y = 0.00 
@@ -3641,7 +3637,8 @@ def get_RNA_scatter(ensemble, genes_query, grouping, ptile_start, ptile_end, tsn
 	fig.append_trace(trace_RNA, 1,2)
 
 	fig['layout'].update(layout)
-	fig['layout']['annotations'].extend([Annotation(text=grouping.title(),
+	annotations=[]
+	annotations.append([Annotation(text=grouping.title(),
 													x=legend_x+0.05,
 													y=1.02 + annotation_additional_y,
 													xanchor="left",
@@ -3651,7 +3648,7 @@ def get_RNA_scatter(ensemble, genes_query, grouping, ptile_start, ptile_end, tsn
 													yref="paper",
 													font={'size': 12,
 														  'color': 'gray',})])
-	fig['layout']['annotations'].extend([Annotation(text=title,
+	annotations.append([Annotation(text=title,
 													x=0.5,
 													y=1.3,
 													xanchor="center",
@@ -3661,6 +3658,7 @@ def get_RNA_scatter(ensemble, genes_query, grouping, ptile_start, ptile_end, tsn
 													yref="paper",
 													font={'size': 16,
 														  'color': 'black',})])
+	fig['layout']['annotations']=annotations
 
 	return plotly.offline.plot(
 		figure_or_data=fig,
