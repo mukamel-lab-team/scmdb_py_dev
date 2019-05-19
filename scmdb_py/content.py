@@ -18,7 +18,8 @@ from numpy import nan, linspace, arange, random
 import pandas as pd
 import plotly
 from plotly import tools
-from plotly.graph_objs import Layout, Annotation, Box, Scatter, Scatter3d, Heatmap, Bar # NOTE: Scattergl has some bugs
+from plotly.graph_objs import Layout, Box, Scatter, Scatter3d, Heatmap, Bar # NOTE: Scattergl has some bugs
+from plotly.graph_objs.layout import Annotation # NOTE: Scattergl has some bugs
 import sqlite3
 from sqlite3 import Error
 import plotly.figure_factory as ff
@@ -1733,7 +1734,7 @@ def get_mch_box(ensemble, methylation_type, gene, grouping, clustering, level, o
 	else:
 		name_prepend=""
 	data = []
-	for group in unique_groups:
+	for i, group in enumerate(unique_groups):
 		color = colors[int(np.where(unique_groups==group)[0]) % len(colors)]
 		if outliers:
 			boxpoints='suspectedoutliers';
@@ -1743,16 +1744,16 @@ def get_mch_box(ensemble, methylation_type, gene, grouping, clustering, level, o
 			"type": 'violin',
 			"x": [group],
 			"y": points[methylation_type + '/' + context + '_' + level][groups==group],
-			"name": name_prepend + str(group),
-			"points": boxpoints,
-			"box": {
-				"visible": True,
-				"width": .8,
-				'fillcolor': color,
-			},
-			"line": {
-				"color" : 'rgba(10,10,10,.5)'
-			}
+			# "name": name_prepend + str(group),
+			# "points": boxpoints,
+			# "box": {
+				# "visible": True,
+				# "width": .8,
+				# 'fillcolor': color,
+			# },
+			# "line": {
+			# 	"color" : 'rgba(10,10,10,.5)'
+			# }
 		}
 		data.append(trace)
 
@@ -1817,7 +1818,7 @@ def get_mch_box(ensemble, methylation_type, gene, grouping, clustering, level, o
 		},
 		output_type='div',
 		show_link=False,
-		include_plotlyjs=False,)
+		include_plotlyjs=False,) 
 
 @cache.memoize(timeout=3600)
 def get_mch_heatmap(ensemble, methylation_type, grouping, clustering, level, ptile_start, ptile_end, normalize_row, query):
