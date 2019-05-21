@@ -1742,18 +1742,17 @@ def get_mch_box(ensemble, methylation_type, gene, grouping, clustering, level, o
 			boxpoints=False
 		trace = {
 			"type": 'violin',
-			"x": [group],
 			"y": points[methylation_type + '/' + context + '_' + level][groups==group],
-			# "name": name_prepend + str(group),
-			# "points": boxpoints,
-			# "box": {
-				# "visible": True,
-				# "width": .8,
-				# 'fillcolor': color,
-			# },
-			# "line": {
-			# 	"color" : 'rgba(10,10,10,.5)'
-			# }
+			"name": name_prepend + str(group),
+			"points": boxpoints,
+			"box": {
+				"visible": True,
+				"width": .8,
+				'fillcolor': color,
+			},
+			"line": {
+				"color" : 'rgba(10,10,10,.5)'
+			}
 		}
 		data.append(trace)
 
