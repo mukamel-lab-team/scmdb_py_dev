@@ -1717,7 +1717,7 @@ def get_mch_box(ensemble, methylation_type, gene, grouping, clustering, level, o
 	# 	mch.append(list(gene_info_dict[key].values()))
 	# mch = np.array(mch)
 	# figure = ff.create_dendrogram(mch.transpose(), orientation="bottom", labels=tuple([i for i in range(mch.shape[1])]), 
-	# 	colorscale=['bbbbbbb'])
+	# 	colorscale='beige')
 	# for i in range(len(dendro_top['data'])):
 	# 	dendro_top['data'][i]['yaxis'] = 'y2'
 	# dendro_top_leaves = dendro_top['layout']['xaxis']['ticktext']
@@ -1878,7 +1878,9 @@ def get_mch_heatmap(ensemble, methylation_type, grouping, clustering, level, pti
 		gene_info_df.sort_values(by=grouping, inplace=True)
 		gene_info_df.set_index(grouping, inplace=True)
 	else:
-		raise FailToGraphException
+		grouping = 'cluster'
+		gene_info_df.sort_values(by='cluster_'+clustering, inplace=True)
+		gene_info_df.set_index(grouping+'_'+clustering, inplace=True)
 
 	# For some reason, Plotly doesn't allow 'None' as a group on the x-axis for heatmaps.
 	if gene_info_df.index.tolist() == ['None']: 
@@ -1927,8 +1929,7 @@ def get_mch_heatmap(ensemble, methylation_type, grouping, clustering, level, pti
 
 	# Hierarchical clustering and dendrogram
 	mch = np.array(mch)
-	figure = ff.create_dendrogram(mch, orientation="right", labels=tuple([i for i in range(len(genes))]), 
-		colorscale=['bbbbbbb']) # TODO: Figure out how to set the colorscale
+	figure = ff.create_dendrogram(mch, orientation="right", labels=tuple([i for i in range(len(genes))])) # TODO: Figure out how to set the colorscale
 	for i in range(len(figure['data'])):
 		figure['data'][i]['xaxis'] = 'x2'
 	dendro_leaves = figure['layout']['yaxis']['ticktext']
@@ -1939,8 +1940,7 @@ def get_mch_heatmap(ensemble, methylation_type, grouping, clustering, level, pti
 	# hover = [hover_old[i] for i in dendro_leaves]
 	hover = [str(i) for i in dendro_leaves]
 
-	dendro_top = ff.create_dendrogram(mch.transpose(), orientation="bottom", labels=tuple([i for i in range(mch.shape[1])]), 
-		colorscale=['bbbbbbb'])
+	dendro_top = ff.create_dendrogram(mch.transpose(), orientation="bottom", labels=tuple([i for i in range(mch.shape[1])]))
 	for i in range(len(dendro_top['data'])):
 		dendro_top['data'][i]['yaxis'] = 'y2'
 	dendro_top_leaves = dendro_top['layout']['xaxis']['ticktext']
@@ -1948,7 +1948,7 @@ def get_mch_heatmap(ensemble, methylation_type, grouping, clustering, level, pti
 	mch = mch[:,dendro_top_leaves] # Reorder the genes according to the clustering
 	clusters_labels = [clusters_labels[i] for i in dendro_top_leaves]
 	mch = list(mch)
-	figure['data'].extend(dendro_top['data'])
+	figure.add_traces(dendro_top['data'])
 
 	# Set color scale limits
 	start = mch_dataframe.quantile(ptile_start).values[0].tolist()
@@ -2003,7 +2003,7 @@ def get_mch_heatmap(ensemble, methylation_type, grouping, clustering, level, pti
 		)
 	trace['y'] = figure['layout']['yaxis']['tickvals']
 	trace['x'] = dendro_top['layout']['xaxis']['tickvals']
-	figure['data'].extend([trace])
+	figure.add_traces([trace])
 
 	layout = Layout(
 		height=max(600*len(genes)/20,550), # EAM Adjust the height of the heatmap according to the number of genes displayed
@@ -2411,8 +2411,7 @@ def get_gene_snatac_from_mysql(ensemble, gene_table_name, counts_type, tsne_type
 	if tsne_type=='noTSNE':
 		query = "SELECT %(gene_table_name)s.%(counts_type)s as normalized_counts \
 			FROM %(ensemble)s  \
-			LEFT JOIN %(gene_table_name)s ON %(ensemble)s.cell_id = %(gene_table_name)s.cell_id \
-			LIMIT 5000" % {'ensemble': ensemble, 
+			LEFT JOIN %(gene_table_name)s ON %(ensemble)s.cell_id = %(gene_table_name)s.cell_id " % {'ensemble': ensemble, 
 			   'gene_table_name': gene_table_name,
 			   'counts_type': counts_type,}
 	else:
@@ -2811,7 +2810,7 @@ def get_snATAC_scatter(ensemble, genes_query, grouping, ptile_start, ptile_end, 
 													yref="paper",
 													font={'size': 16,
 														  'color': 'black',})])
-	fig['layout']['annotations']=annotations
+	# fig['layout']['annotations']=annotations
 
 	return plotly.offline.plot(
 		figure_or_data=fig,
@@ -3043,7 +3042,7 @@ def get_snATAC_heatmap(ensemble, grouping, ptile_start, ptile_end, normalize_row
 
 	layout['updatemenus'] = updatemenus
 
-	layout['annotations'].extend([Annotation(text=title,
+	layout['annotations'].append([Annotation(text=title,
 											 x=0.5,
 											 y=1.4,
 											 xanchor="center",
