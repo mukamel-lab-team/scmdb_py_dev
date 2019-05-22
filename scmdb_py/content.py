@@ -1016,7 +1016,7 @@ def get_gene_from_mysql(ensemble, gene_table_name, methylation_type, clustering,
 	t0=datetime.datetime.now()
 	# print(' Running get_gene_from_mysql for '+gene_table_name+' : '+str(t0)+'; ', file=open(log_file,'a'))# EAM - Profiling SQL
 	if tsne_type=='noTSNE':
-		query = "SELECT %(gene_table_name)s.%(methylation_type)s, %(gene_table_name)s.%(context)s, \
+		query = "SELECT %(gene_table_name)s.%(methylation_type)s, %(gene_table_name)s.%(context)s \
 			FROM %(ensemble)s  \
 			LEFT JOIN %(gene_table_name)s ON %(ensemble)s.cell_id = %(gene_table_name)s.cell_id" % {'ensemble': ensemble, 
 																	   'gene_table_name': gene_table_name,
@@ -1067,8 +1067,7 @@ def get_gene_from_mysql(ensemble, gene_table_name, methylation_type, clustering,
 
 
 @cache.memoize(timeout=3600)
-def get_mult_gene_methylation(ensemble, methylation_type, genes, grouping, clustering, level, tsne_type, 
-	max_points='10000'):
+def get_mult_gene_methylation(ensemble, methylation_type, genes, grouping, clustering, level, tsne_type, max_points='10000'):
 	"""Return averaged methylation data ponts for a set of genes.
 
 	Data from ID-to-Name mapping and tSNE points are combined for plot generation.
@@ -1175,12 +1174,17 @@ def get_methylation_scatter(ensemble, tsne_type, methylation_type, genes_query, 
 	else:
 		points = get_mult_gene_methylation(ensemble, methylation_type, genes, grouping, clustering, level, tsne_type, max_points)
 		gene_infos = get_gene_by_id(genes)
+		ngenes = len(gene_infos)
+		if ngenes>10:
+			gene_infos = gene_infos[0:9]
 		for i, gene in enumerate(gene_infos):
 			if i > 0 and i % 10 == 0:
 				gene_name_str += '<br>'
-			gene_name_str += gene['gene_name'] + '+'
+			gene_name_str += gene['gene_name'] + ','
 		gene_name_str = gene_name_str[:-1]
-		title = 'Avg. Gene body ' + methylation_type + ': <br>' + gene_name_str
+		if ngenes>10:
+			gene_name_str += '+'+str(ngenes-i)+' others '
+		title = 'Avg. gene body ' + methylation_type + ': <br>' + gene_name_str
 
 	if points is None:
 		raise FailToGraphException
@@ -1351,9 +1355,9 @@ def get_methylation_scatter(ensemble, tsne_type, methylation_type, genes_query, 
 			autosize=True,
 			height=550,
 			width=layout_width,
-			#title=title,
-			#titlefont={'color': 'rgba(1,2,2,1)',
-			#           'size': 16},
+			title=title,
+			titlefont={'color': 'rgba(1,2,2,1)',
+			          'size': 16},
 			legend={'x':legend_x,
 					'y':0.95,
 					'tracegroupgap': 0.5,
@@ -2544,9 +2548,12 @@ def get_snATAC_scatter(ensemble, genes_query, grouping, ptile_start, ptile_end, 
 		for i, gene in enumerate(gene_infos):
 			if i > 0 and i % 10 == 0:
 				gene_name_str += "<br>"
-			gene_name_str += gene['gene_name'] + '+'
+			if i>10:
+				gene_name_str += '+ '+str(length(gene_infos)-i)+' others'
+			else:
+				gene_name_str += gene['gene_name'] + ','
 		gene_name_str = gene_name_str[:-1]
-		title = 'Avg. Gene body snATAC normalized counts: <br>' + gene_name_str
+		title = 'Avg. gene body snATAC normalized counts: <br>' + gene_name_str
 
 	if points is None:
 		raise FailToGraphException
