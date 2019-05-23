@@ -2722,7 +2722,7 @@ def get_snATAC_scatter(ensemble, genes_query, grouping, ptile_start, ptile_end, 
 		width=layout_width,
 		# title=title,
 		# titlefont={'color': 'rgba(1,2,2,1)',
-		#            'size': 16},
+		           # 'size': 16},
 		legend={'x':legend_x,
 				'y':0.95,
 				'tracegroupgap': 0.5,
@@ -2730,7 +2730,7 @@ def get_snATAC_scatter(ensemble, genes_query, grouping, ptile_start, ptile_end, 
 		margin={'l': 0,
 				'r': 0,
 				'b': 30,
-				't': 130,},
+				't': 0,},
 		xaxis={
 			'domain': [0, 0.49],
 			'type': 'linear',
@@ -2788,7 +2788,7 @@ def get_snATAC_scatter(ensemble, genes_query, grouping, ptile_start, ptile_end, 
 			shared_xaxes=False,
 			shared_yaxes=True,
 			print_grid=False,
-			subplot_titles=("tSNE", "Normalized Counts"),
+			subplot_titles=("tSNE colored by "+grouping, title),
 			)
 
 	for trace in traces_tsne.items():
@@ -3101,74 +3101,38 @@ def get_snATAC_box(ensemble, gene, grouping, outliers):
 	x_label = grouping
 
 	traces = OrderedDict()
-	# if grouping == "dataset":
-	# 	unique_groups = points["dataset"].unique()
-	# elif grouping == 'target_region':
-	# 	points['target_region'].fillna('N/A', inplace=True)
-	# 	unique_groups = points['target_region'].unique()
-	# elif grouping == 'slice':
-	# 	datasets_all_cells = points['dataset'].tolist()
-	# 	slices_list = [d.split('_')[1] if 'RS2' not in d else d.split('_')[2][2:4] for d in datasets_all_cells]
-	# 	points['slice'] = slices_list
-	# 	slices_set = set(slices_list)
-	# 	unique_groups = np.array(list(slices_set))
-	# elif grouping == 'sex':
-	# 	unique_groups = points['sex'].unique()
-	# elif grouping == 'cluster' or grouping == 'annotation':
-	# 	unique_groups = points[grouping+'_'+clustering].unique()
-	# else:
-	# 	grouping = 'cluster'
-	# 	unique_groups = points[grouping+'_'+clustering].unique()
 	num_clusters = len(unique_groups)
 
-	# name_prepend = ""
-	# x_label = grouping
-	# if grouping != "dataset" or grouping != "target_region":
-	# 	if grouping == "cluster":
-	# 		name_prepend="cluster_"
-	# 	grouping += "_ATAC"
 	if outliers:
 		boxpoints='suspectedoutliers';
 	else:
 		boxpoints=False
 
 	colors = generate_cluster_colors(num_clusters, grouping)
-	# for point in points.to_dict('records'):
-	# 	name_prepend = ""
-	# 	if grouping == "dataset" or grouping == 'target_region' or grouping == 'slice' or grouping == 'sex':
-	# 		color = colors[int(np.where(unique_groups==point[grouping])[0]) % len(colors)]
-	# 		group = point[grouping]
-	# 	else:
-	# 		if grouping == "cluster":
-	# 			name_prepend="cluster_"
-	# 		color = colors[int(np.where(unique_groups==point[grouping+'_'+clustering])[0]) % len(colors)]
-	# 		group = point[grouping+'_'+clustering]
-	# 	if outliers:
-	# 		boxpoints='suspectedoutliers';
-	# 	else:
-	# 		boxpoints=False	
-	for point in points.to_dict('records'):
-		color = colors[int(np.where(unique_groups==point[grouping])[0]) % len(colors)]
-		group = point[grouping]
-		# if grouping == "dataset" or grouping == 'target_region' or grouping == 'slice' or grouping == 'sex':
-		# 	color = colors[int(np.where(unique_groups==point[grouping])[0]) % len(colors)]
-		# 	group = point[grouping]
-		# else:
-		# 	color = colors[int(np.where(unique_groups==point[grouping])[0]) % len(colors)]
-		# 	group = point[grouping]
-		trace = traces.setdefault(group, Box(
-				y=list(),
-				name=name_prepend + str(group),
-				marker={
-					'color': color,
-					'outliercolor': color,
-					'size': 6
-				},
-				boxpoints=boxpoints,
-				visible=True,
-				showlegend=False,
-				))
-		trace['y'].append(point['normalized_counts'])
+	unique_groups = points[grouping].unique()
+	groups = points[grouping]
+	data = []
+	for i, group in enumerate(unique_groups):
+		color = colors[int(np.where(unique_groups==group)[0]) % len(colors)]
+		if outliers:
+			boxpoints='suspectedoutliers';
+		else:
+			boxpoints=False
+		trace = {
+			"type": 'violin',
+			"y": points[groups==group]['normalized_counts'],
+			"name": name_prepend + str(group),
+			"points": boxpoints,
+			"box": {
+				"visible": True,
+				"width": .8,
+				'fillcolor': color,
+			},
+			"line": {
+				"color" : 'rgba(10,10,10,.5)'
+			}
+		}
+		data.append(trace)
 
 	gene_name = get_gene_by_id([ gene ])[0]['gene_name']
 
@@ -3224,7 +3188,8 @@ def get_snATAC_box(ensemble, gene, grouping, outliers):
 	
 	return plotly.offline.plot(
 		{
-			'data': list(traces.values()),
+			# 'data': list(traces.values()),
+			'data': data,
 			'layout': layout
 		},
 		output_type='div',
