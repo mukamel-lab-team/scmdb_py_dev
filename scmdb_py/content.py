@@ -1170,7 +1170,7 @@ def get_methylation_scatter(ensemble, tsne_type, methylation_type, genes_query, 
 	if len(genes) == 1:
 		points = get_gene_methylation(ensemble, methylation_type, genes[0], grouping, clustering, level, True, tsne_type, max_points)
 		gene_name_str = get_gene_by_id([ genes[0] ])[0]['gene_name']
-		title = 'Gene body ' + methylation_type + ': ' + gene_name_str
+		title = level.title()+' gene body ' + methylation_type + ': ' + gene_name_str
 	else:
 		points = get_mult_gene_methylation(ensemble, methylation_type, genes, grouping, clustering, level, tsne_type, max_points)
 		gene_infos = get_gene_by_id(genes)
@@ -1184,7 +1184,7 @@ def get_methylation_scatter(ensemble, tsne_type, methylation_type, genes_query, 
 		gene_name_str = gene_name_str[:-1]
 		if ngenes>10:
 			gene_name_str += '+'+str(ngenes-i)+' others '
-		title = 'Avg. gene body ' + methylation_type + ': <br>' + gene_name_str
+		title = level.title()+' gene body ' + methylation_type + ': <br>' + gene_name_str
 
 	if points is None:
 		raise FailToGraphException
@@ -1355,9 +1355,9 @@ def get_methylation_scatter(ensemble, tsne_type, methylation_type, genes_query, 
 			autosize=True,
 			height=550,
 			width=layout_width,
-			title=title,
-			titlefont={'color': 'rgba(1,2,2,1)',
-			          'size': 16},
+			# title=title,
+			# titlefont={'color': 'rgba(1,2,2,1)',
+			#           'size': 16},
 			legend={'x':legend_x,
 					'y':0.95,
 					'tracegroupgap': 0.5,
@@ -1365,7 +1365,7 @@ def get_methylation_scatter(ensemble, tsne_type, methylation_type, genes_query, 
 			margin={'l': 0,
 					'r': 0,
 					'b': 30,
-					't': 130,},
+					't': 50,},
 			xaxis={
 				'domain': [0, 0.49],
 				'type': 'linear',
@@ -1424,7 +1424,8 @@ def get_methylation_scatter(ensemble, tsne_type, methylation_type, genes_query, 
 				shared_xaxes=False,
 				shared_yaxes=True,
 				print_grid=False,
-				subplot_titles=("tSNE", level.title()+" Methylation ("+methylation_type+")"),
+				# subplot_titles=("tSNE colored by "+grouping, level.title()+" Methylation ("+methylation_type+")"),
+				subplot_titles=("tSNE colored by "+grouping, title),
 				)
 
 		for trace in traces_tsne.items():
@@ -2730,7 +2731,7 @@ def get_snATAC_scatter(ensemble, genes_query, grouping, ptile_start, ptile_end, 
 		margin={'l': 0,
 				'r': 0,
 				'b': 30,
-				't': 0,},
+				't': 50,},
 		xaxis={
 			'domain': [0, 0.49],
 			'type': 'linear',
@@ -2796,27 +2797,27 @@ def get_snATAC_scatter(ensemble, genes_query, grouping, ptile_start, ptile_end, 
 	fig.append_trace(trace_ATAC, 1,2)
 
 	fig['layout'].update(layout)
-	annotations=[]
-	annotations.append([Annotation(text=grouping.title(),
-													x=legend_x+0.05,
-													y=1.02 + annotation_additional_y,
-													xanchor="left",
-													yanchor="top",
-													showarrow=False,
-													xref="paper",
-													yref="paper",
-													font={'size': 12,
-														  'color': 'gray',})])
-	annotations.append([Annotation(text=title,
-													x=0.5,
-													y=1.3,
-													xanchor="center",
-													yanchor="top",
-													showarrow=False,
-													xref="paper",
-													yref="paper",
-													font={'size': 16,
-														  'color': 'black',})])
+	# annotations=[]
+	# annotations.append([Annotation(text=grouping.title(),
+	# 												x=legend_x+0.05,
+	# 												y=1.02 + annotation_additional_y,
+	# 												xanchor="left",
+	# 												yanchor="top",
+	# 												showarrow=False,
+	# 												xref="paper",
+	# 												yref="paper",
+	# 												font={'size': 12,
+	# 													  'color': 'gray',})])
+	# annotations.append([Annotation(text=title,
+	# 												x=0.5,
+	# 												y=1.3,
+	# 												xanchor="center",
+	# 												yanchor="top",
+	# 												showarrow=False,
+	# 												xref="paper",
+	# 												yref="paper",
+	# 												font={'size': 16,
+	# 													  'color': 'black',})])
 	# fig['layout']['annotations']=annotations
 
 	return plotly.offline.plot(
@@ -2966,9 +2967,9 @@ def get_snATAC_heatmap(ensemble, grouping, ptile_start, ptile_end, normalize_row
 		autosize=True,
 		height=max(600*len(genes)/20,550), # EAM Adjust the height of the heatmap according to the number of genes displayed
 		width=1000,
-		# title=title,
-		# titlefont={'color': 'rgba(1,2,2,1)',
-		#            'size': 16},
+		title=title,
+		titlefont={'color': 'rgba(1,2,2,1)',
+		           'size': 16},
 		xaxis={
 			'side': 'bottom',
 			'tickangle': -45,
