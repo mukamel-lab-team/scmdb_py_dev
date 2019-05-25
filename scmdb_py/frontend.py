@@ -25,7 +25,6 @@ from .user import User, Role
 
 import os
 
-
 frontend = Blueprint('frontend', __name__, template_folder="templates", static_folder="static") # Flask "bootstrap"
 
 @frontend.route('/favicon.ico')
@@ -66,9 +65,9 @@ def ensemble(ensemble_id):
         num_algorithm_options = 0
         num_dims_options = 0
         num_perplexity_options = 0
-        
+
     AnnoJexists = ensemble_annoj_exists(ensemble_id)
-    
+
     if ensemble_info['public_access'] == 1 or (ensemble_info['public_access'] == 0 and current_user.is_authenticated):
         return render_template('ensembleview.html', 
                                ensemble_name = ensemble_name, 

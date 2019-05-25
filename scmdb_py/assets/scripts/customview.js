@@ -607,7 +607,7 @@ function updateGeneElements(updateMCHScatter=true) {
                 updateRNAScatterPlot();
             }
         }
-        updateClustersBarPlot();
+        try {updateClustersBarPlot();} catch(err) {};
         $('#epiBrowserLink').removeClass('disabled');
         if($("#geneName").select2('data').length > 1) {
             $('#normalize-heatmap').show();
