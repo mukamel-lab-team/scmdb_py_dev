@@ -18,7 +18,8 @@ from numpy import nan, linspace, arange, random
 import pandas as pd
 import plotly
 from plotly import tools
-from plotly.graph_objs import Layout, Annotation, Box, Scatter, Scatter3d, Heatmap, Bar # NOTE: Scattergl has some bugs
+from plotly.graph_objs import Layout, Box, Scatter, Scatter3d, Heatmap, Bar # NOTE: Scattergl has some bugs
+from plotly.graph_objs.layout import Annotation # NOTE: Scattergl has some bugs
 import sqlite3
 from sqlite3 import Error
 import plotly.figure_factory as ff
@@ -1015,7 +1016,7 @@ def get_gene_from_mysql(ensemble, gene_table_name, methylation_type, clustering,
 	t0=datetime.datetime.now()
 	# print(' Running get_gene_from_mysql for '+gene_table_name+' : '+str(t0)+'; ', file=open(log_file,'a'))# EAM - Profiling SQL
 	if tsne_type=='noTSNE':
-		query = "SELECT %(gene_table_name)s.%(methylation_type)s, %(gene_table_name)s.%(context)s, \
+		query = "SELECT %(gene_table_name)s.%(methylation_type)s, %(gene_table_name)s.%(context)s \
 			FROM %(ensemble)s  \
 			LEFT JOIN %(gene_table_name)s ON %(ensemble)s.cell_id = %(gene_table_name)s.cell_id" % {'ensemble': ensemble,
 																	   'gene_table_name': gene_table_name,
@@ -1066,8 +1067,7 @@ def get_gene_from_mysql(ensemble, gene_table_name, methylation_type, clustering,
 
 
 @cache.memoize(timeout=3600)
-def get_mult_gene_methylation(ensemble, methylation_type, genes, grouping, clustering, level, tsne_type,
-	max_points='10000'):
+def get_mult_gene_methylation(ensemble, methylation_type, genes, grouping, clustering, level, tsne_type, max_points='10000'):
 	"""Return averaged methylation data ponts for a set of genes.
 
 	Data from ID-to-Name mapping and tSNE points are combined for plot generation.
@@ -1170,16 +1170,21 @@ def get_methylation_scatter(ensemble, tsne_type, methylation_type, genes_query, 
 	if len(genes) == 1:
 		points = get_gene_methylation(ensemble, methylation_type, genes[0], grouping, clustering, level, True, tsne_type, max_points)
 		gene_name_str = get_gene_by_id([ genes[0] ])[0]['gene_name']
-		title = 'Gene body ' + methylation_type + ': ' + gene_name_str
+		title = level.title()+' gene body ' + methylation_type + ': ' + gene_name_str
 	else:
 		points = get_mult_gene_methylation(ensemble, methylation_type, genes, grouping, clustering, level, tsne_type, max_points)
 		gene_infos = get_gene_by_id(genes)
+		ngenes = len(gene_infos)
+		if ngenes>10:
+			gene_infos = gene_infos[0:9]
 		for i, gene in enumerate(gene_infos):
 			if i > 0 and i % 10 == 0:
 				gene_name_str += '<br>'
-			gene_name_str += gene['gene_name'] + '+'
+			gene_name_str += gene['gene_name'] + ','
 		gene_name_str = gene_name_str[:-1]
-		title = 'Avg. Gene body ' + methylation_type + ': <br>' + gene_name_str
+		if ngenes>10:
+			gene_name_str += '+'+str(ngenes-i)+' others '
+		title = level.title()+' gene body ' + methylation_type + ': <br>' + gene_name_str
 
 	if points is None:
 		raise FailToGraphException
@@ -1350,8 +1355,8 @@ def get_methylation_scatter(ensemble, tsne_type, methylation_type, genes_query, 
 			autosize=True,
 			height=550,
 			width=layout_width,
-			#title=title,
-			#titlefont={'color': 'rgba(1,2,2,1)',
+			# title=title,
+			# titlefont={'color': 'rgba(1,2,2,1)',
 			#           'size': 16},
 			legend={'x':legend_x,
 					'y':0.95,
@@ -1360,7 +1365,7 @@ def get_methylation_scatter(ensemble, tsne_type, methylation_type, genes_query, 
 			margin={'l': 0,
 					'r': 0,
 					'b': 30,
-					't': 130,},
+					't': 50,},
 			xaxis={
 				'domain': [0, 0.49],
 				'type': 'linear',
@@ -1419,7 +1424,8 @@ def get_methylation_scatter(ensemble, tsne_type, methylation_type, genes_query, 
 				shared_xaxes=False,
 				shared_yaxes=True,
 				print_grid=False,
-				subplot_titles=("tSNE", level.title()+" Methylation ("+methylation_type+")"),
+				# subplot_titles=("tSNE colored by "+grouping, level.title()+" Methylation ("+methylation_type+")"),
+				subplot_titles=("tSNE colored by "+grouping, title),
 				)
 
 		for trace in traces_tsne.items():
@@ -1427,7 +1433,10 @@ def get_methylation_scatter(ensemble, tsne_type, methylation_type, genes_query, 
 		fig.append_trace(trace_methylation, 1,2)
 
 		fig['layout'].update(layout)
-		fig['layout']['annotations'].extend([Annotation(text=grouping.title(),
+		# Plotly 3: https://community.plot.ly/t/subplot-titles-disappearing-when-adding-annotations/5256/5
+
+		annotations=[]
+		annotations.append([Annotation(text=grouping.title(),
 														x=legend_x+0.05,
 														y=1.02 + annotation_additional_y,
 														xanchor="left",
@@ -1437,8 +1446,7 @@ def get_methylation_scatter(ensemble, tsne_type, methylation_type, genes_query, 
 														yref="paper",
 														font={'size': 12,
 															  'color': 'gray',})])
-
-		fig['layout']['annotations'].extend([Annotation(text=title,
+		annotations.append([Annotation(text=title,
 														x=0.5,
 														y=1.3,
 														xanchor="center",
@@ -1448,7 +1456,6 @@ def get_methylation_scatter(ensemble, tsne_type, methylation_type, genes_query, 
 														yref="paper",
 														font={'size': 16,
 															  'color': 'black',})])
-
 
 	## 3D tSNE coordinates ##
 	else:
@@ -1634,7 +1641,7 @@ def get_methylation_scatter(ensemble, tsne_type, methylation_type, genes_query, 
 		fig['layout']['scene1'].update(scene)
 		fig['layout']['scene2'].update(scene)
 
-		fig['layout']['annotations'].extend([Annotation(text="Cluster Labels",
+		annotations.append([Annotation(text="Cluster Labels",
 														x=-.09,
 														y=1.03 + annotation_additional_y,
 														xanchor="left",
@@ -1644,6 +1651,7 @@ def get_methylation_scatter(ensemble, tsne_type, methylation_type, genes_query, 
 														yref="paper",
 														font={'size': 12,
 															  'color': 'gray',})])
+		fig['layout']['annotations']=annotations
 
 	return plotly.offline.plot(
 		figure_or_data=fig,
@@ -1713,8 +1721,8 @@ def get_mch_box(ensemble, methylation_type, gene, grouping, clustering, level, o
 	# for key in list(gene_info_dict.keys()):
 	# 	mch.append(list(gene_info_dict[key].values()))
 	# mch = np.array(mch)
-	# figure = ff.create_dendrogram(mch.transpose(), orientation="bottom", labels=tuple([i for i in range(mch.shape[1])]),
-	# 	colorscale=['bbbbbbb'])
+	# figure = ff.create_dendrogram(mch.transpose(), orientation="bottom", labels=tuple([i for i in range(mch.shape[1])]), 
+	# 	colorscale='beige')
 	# for i in range(len(dendro_top['data'])):
 	# 	dendro_top['data'][i]['yaxis'] = 'y2'
 	# dendro_top_leaves = dendro_top['layout']['xaxis']['ticktext']
@@ -1731,7 +1739,7 @@ def get_mch_box(ensemble, methylation_type, gene, grouping, clustering, level, o
 	else:
 		name_prepend=""
 	data = []
-	for group in unique_groups:
+	for i, group in enumerate(unique_groups):
 		color = colors[int(np.where(unique_groups==group)[0]) % len(colors)]
 		if outliers:
 			boxpoints='suspectedoutliers';
@@ -1739,7 +1747,6 @@ def get_mch_box(ensemble, methylation_type, gene, grouping, clustering, level, o
 			boxpoints=False
 		trace = {
 			"type": 'violin',
-			"x": group,
 			"y": points[methylation_type + '/' + context + '_' + level][groups==group],
 			"name": name_prepend + str(group),
 			"points": boxpoints,
@@ -1815,8 +1822,7 @@ def get_mch_box(ensemble, methylation_type, gene, grouping, clustering, level, o
 		},
 		output_type='div',
 		show_link=False,
-		include_plotlyjs=False,
-		validate=False,)
+		include_plotlyjs=False,) 
 
 @cache.memoize(timeout=3600)
 def get_mch_heatmap(ensemble, methylation_type, grouping, clustering, level, ptile_start, ptile_end, normalize_row, query):
@@ -1877,7 +1883,9 @@ def get_mch_heatmap(ensemble, methylation_type, grouping, clustering, level, pti
 		gene_info_df.sort_values(by=grouping, inplace=True)
 		gene_info_df.set_index(grouping, inplace=True)
 	else:
-		raise FailToGraphException
+		grouping = 'cluster'
+		gene_info_df.sort_values(by='cluster_'+clustering, inplace=True)
+		gene_info_df.set_index(grouping+'_'+clustering, inplace=True)
 
 	# For some reason, Plotly doesn't allow 'None' as a group on the x-axis for heatmaps.
 	if gene_info_df.index.tolist() == ['None']:
@@ -1926,8 +1934,7 @@ def get_mch_heatmap(ensemble, methylation_type, grouping, clustering, level, pti
 
 	# Hierarchical clustering and dendrogram
 	mch = np.array(mch)
-	figure = ff.create_dendrogram(mch, orientation="right", labels=tuple([i for i in range(len(genes))]),
-		colorscale=['bbbbbbb']) # TODO: Figure out how to set the colorscale
+	figure = ff.create_dendrogram(mch, orientation="right", labels=tuple([i for i in range(len(genes))])) # TODO: Figure out how to set the colorscale
 	for i in range(len(figure['data'])):
 		figure['data'][i]['xaxis'] = 'x2'
 	dendro_leaves = figure['layout']['yaxis']['ticktext']
@@ -1938,8 +1945,8 @@ def get_mch_heatmap(ensemble, methylation_type, grouping, clustering, level, pti
 	# hover = [hover_old[i] for i in dendro_leaves]
 	hover = [str(i) for i in dendro_leaves]
 
-	dendro_top = ff.create_dendrogram(mch.transpose(), orientation="bottom", labels=tuple([i for i in range(mch.shape[1])]),
-		colorscale=['bbbbbbb'])
+
+	dendro_top = ff.create_dendrogram(mch.transpose(), orientation="bottom", labels=tuple([i for i in range(mch.shape[1])]))
 	for i in range(len(dendro_top['data'])):
 		dendro_top['data'][i]['yaxis'] = 'y2'
 	dendro_top_leaves = dendro_top['layout']['xaxis']['ticktext']
@@ -1947,7 +1954,7 @@ def get_mch_heatmap(ensemble, methylation_type, grouping, clustering, level, pti
 	mch = mch[:,dendro_top_leaves] # Reorder the genes according to the clustering
 	clusters_labels = [clusters_labels[i] for i in dendro_top_leaves]
 	mch = list(mch)
-	figure['data'].extend(dendro_top['data'])
+	figure.add_traces(dendro_top['data'])
 
 	# Set color scale limits
 	start = mch_dataframe.quantile(ptile_start).values[0].tolist()
@@ -2002,7 +2009,7 @@ def get_mch_heatmap(ensemble, methylation_type, grouping, clustering, level, pti
 		)
 	trace['y'] = figure['layout']['yaxis']['tickvals']
 	trace['x'] = dendro_top['layout']['xaxis']['tickvals']
-	figure['data'].extend([trace])
+	figure.add_traces([trace])
 
 	layout = Layout(
 		height=max(600*len(genes)/20,550), # EAM Adjust the height of the heatmap according to the number of genes displayed
@@ -2410,8 +2417,7 @@ def get_gene_snatac_from_mysql(ensemble, gene_table_name, counts_type, tsne_type
 	if tsne_type=='noTSNE':
 		query = "SELECT %(gene_table_name)s.%(counts_type)s as normalized_counts \
 			FROM %(ensemble)s  \
-			LEFT JOIN %(gene_table_name)s ON %(ensemble)s.cell_id = %(gene_table_name)s.cell_id \
-			LIMIT 5000" % {'ensemble': ensemble,
+			LEFT JOIN %(gene_table_name)s ON %(ensemble)s.cell_id = %(gene_table_name)s.cell_id " % {'ensemble': ensemble, 
 			   'gene_table_name': gene_table_name,
 			   'counts_type': counts_type,}
 	else:
@@ -2544,9 +2550,12 @@ def get_snATAC_scatter(ensemble, genes_query, grouping, ptile_start, ptile_end, 
 		for i, gene in enumerate(gene_infos):
 			if i > 0 and i % 10 == 0:
 				gene_name_str += "<br>"
-			gene_name_str += gene['gene_name'] + '+'
+			if i>10:
+				gene_name_str += '+ '+str(length(gene_infos)-i)+' others'
+			else:
+				gene_name_str += gene['gene_name'] + ','
 		gene_name_str = gene_name_str[:-1]
-		title = 'Avg. Gene body snATAC normalized counts: <br>' + gene_name_str
+		title = 'Avg. gene body snATAC normalized counts: <br>' + gene_name_str
 
 	if points is None:
 		raise FailToGraphException
@@ -2715,7 +2724,7 @@ def get_snATAC_scatter(ensemble, genes_query, grouping, ptile_start, ptile_end, 
 		width=layout_width,
 		# title=title,
 		# titlefont={'color': 'rgba(1,2,2,1)',
-		#            'size': 16},
+		           # 'size': 16},
 		legend={'x':legend_x,
 				'y':0.95,
 				'tracegroupgap': 0.5,
@@ -2723,7 +2732,7 @@ def get_snATAC_scatter(ensemble, genes_query, grouping, ptile_start, ptile_end, 
 		margin={'l': 0,
 				'r': 0,
 				'b': 30,
-				't': 130,},
+				't': 50,},
 		xaxis={
 			'domain': [0, 0.49],
 			'type': 'linear',
@@ -2781,7 +2790,7 @@ def get_snATAC_scatter(ensemble, genes_query, grouping, ptile_start, ptile_end, 
 			shared_xaxes=False,
 			shared_yaxes=True,
 			print_grid=False,
-			subplot_titles=("tSNE", "Normalized Counts"),
+			subplot_titles=("tSNE colored by "+grouping, title),
 			)
 
 	for trace in traces_tsne.items():
@@ -2789,26 +2798,28 @@ def get_snATAC_scatter(ensemble, genes_query, grouping, ptile_start, ptile_end, 
 	fig.append_trace(trace_ATAC, 1,2)
 
 	fig['layout'].update(layout)
-	fig['layout']['annotations'].extend([Annotation(text=grouping.title(),
-													x=legend_x+0.05,
-													y=1.02 + annotation_additional_y,
-													xanchor="left",
-													yanchor="top",
-													showarrow=False,
-													xref="paper",
-													yref="paper",
-													font={'size': 12,
-														  'color': 'gray',})])
-	fig['layout']['annotations'].extend([Annotation(text=title,
-													x=0.5,
-													y=1.3,
-													xanchor="center",
-													yanchor="top",
-													showarrow=False,
-													xref="paper",
-													yref="paper",
-													font={'size': 16,
-														  'color': 'black',})])
+	# annotations=[]
+	# annotations.append([Annotation(text=grouping.title(),
+	# 												x=legend_x+0.05,
+	# 												y=1.02 + annotation_additional_y,
+	# 												xanchor="left",
+	# 												yanchor="top",
+	# 												showarrow=False,
+	# 												xref="paper",
+	# 												yref="paper",
+	# 												font={'size': 12,
+	# 													  'color': 'gray',})])
+	# annotations.append([Annotation(text=title,
+	# 												x=0.5,
+	# 												y=1.3,
+	# 												xanchor="center",
+	# 												yanchor="top",
+	# 												showarrow=False,
+	# 												xref="paper",
+	# 												yref="paper",
+	# 												font={'size': 16,
+	# 													  'color': 'black',})])
+	# fig['layout']['annotations']=annotations
 
 	return plotly.offline.plot(
 		figure_or_data=fig,
@@ -2957,9 +2968,9 @@ def get_snATAC_heatmap(ensemble, grouping, ptile_start, ptile_end, normalize_row
 		autosize=True,
 		height=max(600*len(genes)/20,550), # EAM Adjust the height of the heatmap according to the number of genes displayed
 		width=1000,
-		# title=title,
-		# titlefont={'color': 'rgba(1,2,2,1)',
-		#            'size': 16},
+		title=title,
+		titlefont={'color': 'rgba(1,2,2,1)',
+		           'size': 16},
 		xaxis={
 			'side': 'bottom',
 			'tickangle': -45,
@@ -3040,7 +3051,7 @@ def get_snATAC_heatmap(ensemble, grouping, ptile_start, ptile_end, normalize_row
 
 	layout['updatemenus'] = updatemenus
 
-	layout['annotations'].extend([Annotation(text=title,
+	layout['annotations'].append([Annotation(text=title,
 											 x=0.5,
 											 y=1.4,
 											 xanchor="center",
@@ -3092,75 +3103,39 @@ def get_snATAC_box(ensemble, gene, grouping, outliers):
 	x_label = grouping
 
 	traces = OrderedDict()
-	# if grouping == "dataset":
-	# 	unique_groups = points["dataset"].unique()
-	# elif grouping == 'target_region':
-	# 	points['target_region'].fillna('N/A', inplace=True)
-	# 	unique_groups = points['target_region'].unique()
-	# elif grouping == 'slice':
-	# 	datasets_all_cells = points['dataset'].tolist()
-	# 	slices_list = [d.split('_')[1] if 'RS2' not in d else d.split('_')[2][2:4] for d in datasets_all_cells]
-	# 	points['slice'] = slices_list
-	# 	slices_set = set(slices_list)
-	# 	unique_groups = np.array(list(slices_set))
-	# elif grouping == 'sex':
-	# 	unique_groups = points['sex'].unique()
-	# elif grouping == 'cluster' or grouping == 'annotation':
-	# 	unique_groups = points[grouping+'_'+clustering].unique()
-	# else:
-	# 	grouping = 'cluster'
-	# 	unique_groups = points[grouping+'_'+clustering].unique()
 	num_clusters = len(unique_groups)
 
-	# name_prepend = ""
-	# x_label = grouping
-	# if grouping != "dataset" or grouping != "target_region":
-	# 	if grouping == "cluster":
-	# 		name_prepend="cluster_"
-	# 	grouping += "_ATAC"
 	if outliers:
 		boxpoints='suspectedoutliers';
 	else:
 		boxpoints=False
 
 	colors = generate_cluster_colors(num_clusters, grouping)
-	# for point in points.to_dict('records'):
-	# 	name_prepend = ""
-	# 	if grouping == "dataset" or grouping == 'target_region' or grouping == 'slice' or grouping == 'sex':
-	# 		color = colors[int(np.where(unique_groups==point[grouping])[0]) % len(colors)]
-	# 		group = point[grouping]
-	# 	else:
-	# 		if grouping == "cluster":
-	# 			name_prepend="cluster_"
-	# 		color = colors[int(np.where(unique_groups==point[grouping+'_'+clustering])[0]) % len(colors)]
-	# 		group = point[grouping+'_'+clustering]
-	# 	if outliers:
-	# 		boxpoints='suspectedoutliers';
-	# 	else:
-	# 		boxpoints=False
-	for point in points.to_dict('records'):
-		color = colors[int(np.where(unique_groups==point[grouping])[0]) % len(colors)]
-		group = point[grouping]
-		# if grouping == "dataset" or grouping == 'target_region' or grouping == 'slice' or grouping == 'sex':
-		# 	color = colors[int(np.where(unique_groups==point[grouping])[0]) % len(colors)]
-		# 	group = point[grouping]
-		# else:
-		# 	color = colors[int(np.where(unique_groups==point[grouping])[0]) % len(colors)]
-		# 	group = point[grouping]
-		trace = traces.setdefault(group, Box(
-				y=list(),
-				name=name_prepend + str(group),
-				marker={
-					'color': color,
-					'outliercolor': color,
-					'size': 6
-				},
-				boxpoints=boxpoints,
-				visible=True,
-				showlegend=False,
-				))
-		trace['y'].append(point['normalized_counts'])
-
+	unique_groups = points[grouping].unique()
+	groups = points[grouping]
+	data = []
+	for i, group in enumerate(unique_groups):
+		color = colors[int(np.where(unique_groups==group)[0]) % len(colors)]
+		if outliers:
+			boxpoints='suspectedoutliers';
+		else:
+			boxpoints=False
+		trace = {
+			"type": 'violin',
+			"y": points[groups==group]['normalized_counts'],
+			"name": name_prepend + str(group),
+			"points": boxpoints,
+			"box": {
+				"visible": True,
+				"width": .8,
+				'fillcolor': color,
+			},
+			"line": {
+				"color" : 'rgba(10,10,10,.5)'
+			}
+		}
+		data.append(trace)
+    
 	gene_name = get_gene_by_id([ gene ])[0]['gene_name']
 
 	layout = Layout(
@@ -3215,7 +3190,8 @@ def get_snATAC_box(ensemble, gene, grouping, outliers):
 
 	return plotly.offline.plot(
 		{
-			'data': list(traces.values()),
+			# 'data': list(traces.values()),
+			'data': data,
 			'layout': layout
 		},
 		output_type='div',
@@ -3393,16 +3369,15 @@ def get_RNA_scatter(ensemble, genes_query, grouping, ptile_start, ptile_end, tsn
 	gene_name_str = ""
 	x, y, text, mch = list(), list(), list(), list()
 
+	if grouping+'_RNA' not in points.columns: # If no cluster annotations available, group by cluster number instead
+		grouping = "cluster"
+
 	if len(genes) == 1:
-		points = get_gene_RNA(ensemble, genes[0], grouping, True)
+		points = get_gene_RNA(ensemble, genes[0], grouping, True, max_points)
 		gene_name = get_gene_by_id([ genes[0] ])[0]['gene_name']
 		title = 'Gene body RNA normalized counts: ' + gene_name
 	else:
 		points = get_mult_gene_RNA(ensemble, genes, grouping, max_points)
-		print((ensemble, genes, grouping, max_points))
-		print('Hello')
-		print(points)
-		print('Hello')
 		gene_infos = get_gene_by_id(genes)
 		for i, gene in enumerate(gene_infos):
 			if i > 0 and i % 10 == 0:
@@ -3645,7 +3620,8 @@ def get_RNA_scatter(ensemble, genes_query, grouping, ptile_start, ptile_end, tsn
 	fig.append_trace(trace_RNA, 1,2)
 
 	fig['layout'].update(layout)
-	fig['layout']['annotations'].extend([Annotation(text=grouping.title(),
+	annotations=[]
+	annotations.append([Annotation(text=grouping.title(),
 													x=legend_x+0.05,
 													y=1.02 + annotation_additional_y,
 													xanchor="left",
@@ -3655,7 +3631,7 @@ def get_RNA_scatter(ensemble, genes_query, grouping, ptile_start, ptile_end, tsn
 													yref="paper",
 													font={'size': 12,
 														  'color': 'gray',})])
-	fig['layout']['annotations'].extend([Annotation(text=title,
+	annotations.append([Annotation(text=title,
 													x=0.5,
 													y=1.3,
 													xanchor="center",
@@ -3665,6 +3641,7 @@ def get_RNA_scatter(ensemble, genes_query, grouping, ptile_start, ptile_end, tsn
 													yref="paper",
 													font={'size': 16,
 														  'color': 'black',})])
+	fig['layout']['annotations']=annotations
 
 	return plotly.offline.plot(
 		figure_or_data=fig,
