@@ -39,7 +39,7 @@ def index():
 
     if current_user is not None and current_user.is_authenticated:
         return redirect(url_for('frontend.ensemble_tabular_screen'))
-    else: 
+    else:
         flash('Log in to access private CEMBA data. \
               <li>Click on "Ensembles" at the top of the page to select publicly accessible data.</li>', 'form-info')
         return redirect(url_for('frontend.login'))
@@ -69,8 +69,8 @@ def ensemble(ensemble_id):
     AnnoJexists = ensemble_annoj_exists(ensemble_id)
 
     if ensemble_info['public_access'] == 1 or (ensemble_info['public_access'] == 0 and current_user.is_authenticated):
-        return render_template('ensembleview.html', 
-                               ensemble_name = ensemble_name, 
+        return render_template('ensembleview.html',
+                               ensemble_name = ensemble_name,
                                ensemble_id = ensemble_id,
                                methylation_data_available = methylation_included,
                                snATAC_data_available = snATAC_included,
@@ -142,7 +142,7 @@ def plot_methylation_scatter(ensemble, tsne_type, methylation_type, level, group
         return get_methylation_scatter(ensemble,
                                        tsne_type,
                                        methylation_type,
-                                       genes, 
+                                       genes,
                                        level,
                                        grouping,
                                        clustering,
@@ -171,7 +171,7 @@ def plot_snATAC_scatter(ensemble, grouping, ptile_start, ptile_end, tsne_outlier
 
     try:
         return get_snATAC_scatter(ensemble,
-                                  genes_query, 
+                                  genes_query,
                                   grouping,
                                   float(ptile_start),
                                   float(ptile_end),
@@ -195,7 +195,7 @@ def plot_RNA_scatter(ensemble, grouping, ptile_start, ptile_end, tsne_outlier, m
 
     try:
         return get_RNA_scatter(ensemble,
-                                  genes_query, 
+                                  genes_query,
                                   grouping,
                                   float(ptile_start),
                                   float(ptile_end),
@@ -218,7 +218,7 @@ def plot_mch_box(ensemble, methylation_type, gene, grouping, clustering, level, 
         grouping = 'annotation'
 
     try:
-        return get_mch_box(ensemble, methylation_type, gene, grouping, clustering, level, outliers, max_points) 
+        return get_mch_box(ensemble, methylation_type, gene, grouping, clustering, level, outliers, max_points)
     except (FailToGraphException, ValueError) as e:
         print("ERROR (plot_mch_box): {}".format(e))
         return 'Failed to produce mCH levels box plot. Contact maintainer.'
@@ -295,7 +295,7 @@ def plot_RNA_box(ensemble, gene, grouping, outliers_toggle):
 
 # @frontend.route('/plot/box_combined/<methylation_type>/<gene_mmu>/<gene_hsa>/<level>/<outliers_toggle>')
 # def plot_mch_box_two_ensemble(methylation_type, gene_mmu, gene_hsa, level, outliers_toggle):
-# 
+#
 #     if outliers_toggle == 'outliers':
 #         outliers = True
 #     else:
@@ -461,7 +461,7 @@ def correlated_genes(ensemble, gene_id):
 @frontend.route('/plot/delete_cache/<ensemble>/<grouping>')
 def delete_cluster_cache(ensemble, grouping):
     cache.delete_memoized(plot_cluster, ensemble, grouping)
-    return (ensemble + " cluster cache cleared") 
+    return (ensemble + " cluster cache cleared")
 
 
 @frontend.route('/submit_new_ensemble/<new_ensemble_name>/<new_datasets>')
@@ -475,9 +475,9 @@ def submit_new_ensemble_request(new_ensemble_name, new_datasets):
         print("[{}] ERROR in frontend app(submit_new_ensemble): Could not send new ensemble request email".format(str(now)))
         sys.stdout.flush()
         return json.dumps({"result": False})
-    
+
     return json.dumps({"result": True})
-        
+
 
 # User related routes
 @frontend.route('/login', methods=['GET', 'POST'])
@@ -500,7 +500,7 @@ def logout():
     logout_user()
     flash('You have been logged out.', 'info')
     return redirect(url_for('frontend.login'))
-  
+
 @frontend.route('/admin')
 @login_required
 @admin_required
@@ -752,5 +752,3 @@ def change_password():
         else:
             flash('Original password is invalid.', 'form-error')
     return render_template('account/manage.html', form=form)
-
-
