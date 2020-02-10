@@ -1,6 +1,0 @@
-Requirement already up-to-date: flask in ./venv/lib/python3.5/site-packages (1.1.1)
-Requirement already satisfied, skipping upgrade: Werkzeug>=0.15 in ./venv/lib/python3.5/site-packages (from flask) (0.16.1)
-Requirement already satisfied, skipping upgrade: itsdangerous>=0.24 in ./venv/lib/python3.5/site-packages (from flask) (0.24)
-Requirement already satisfied, skipping upgrade: click>=5.1 in ./venv/lib/python3.5/site-packages (from flask) (6.7)
-Requirement already satisfied, skipping upgrade: Jinja2>=2.10.1 in ./venv/lib/python3.5/site-packages (from flask) (2.10.1)
-Requirement already satisfied, skipping upgrade: MarkupSafe>=0.23 in ./venv/lib/python3.5/site-packages (from Jinja2>=2.10.1->flask) (1.0)
