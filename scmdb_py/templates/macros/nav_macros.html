@@ -9,6 +9,17 @@
     {% endfor %}
 {% endmacro %}
 
+
+{# This renders the left hand side of the navigation bar.
+#}
+{% macro left_header_items() %}
+    {% set endpoints = [
+      ('frontend.index', 'About', 'fas fa-question-circle', 'browser'),
+    ]%}
+    
+    {{ render_menu_items( endpoints ) }}
+{% endmacro %}
+
 {% macro header_items(current_user) %}
     {% set endpoints = [
       ('frontend.index', 'Browser', 'fas fa-home fa-sm', 'browser'),
@@ -60,6 +71,12 @@
 {% macro desktop_nav(current_user, dropdown=None) %}
     <div class="computer tablet only row">
         <div class="ui fixed inverted black main menu" id="navbar">
+            <div class="left menu">
+                <!-- {{ left_header_items() }} -->
+              <a target="_blank" id="About" class="item" href="https://brainome.ucsd.edu/annoj/CEMBA/">
+                <i class="fas fa-question-circle">&nbsp;&nbsp;</i> About
+              </a>
+            </div>
             <div class="ui container">
                 {{ header_items(current_user) }}
                 {{ create_dropdown(dropdown) }}
