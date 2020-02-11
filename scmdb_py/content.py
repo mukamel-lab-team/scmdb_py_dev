@@ -18,7 +18,8 @@ from numpy import nan, linspace, arange, random
 import pandas as pd
 import plotly
 from plotly import tools
-from plotly.graph_objs import Layout, Annotation, Box, Scatter, Scatter3d, Heatmap, Bar # NOTE: Scattergl has some bugs
+from plotly.graph_objs import Layout, Box, Scatter, Scatter3d, Heatmap, Bar # NOTE: Scattergl has some bugs
+from plotly.graph_objs.layout import Annotation # NOTE: Scattergl has some bugs
 import sqlite3
 from sqlite3 import Error
 import plotly.figure_factory as ff
@@ -52,11 +53,13 @@ class FailToGraphException(Exception):
 
 @content.route('/content/ensembles')
 def get_ensembles_summary():
-	""" Retrieve data to be displayed in the "Ensembles" summary tabular page. 
+	""" Retrieve data to be displayed in the "Ensembles" summary tabular page.
 		"/tabular/ensemble"
 	"""
 	regions = request.args.get('region', '').split()
-	regions_lower = [ region.lower() for region in regions ]
+	regions = [ region.lower() for region in regions ]
+	regions_tgt = request.args.get('region_tgt', '').split()
+	regions_tgt = [ region_tgt.lower() for region_tgt in regions_tgt ]
 	
 	ensemble_list=[]
 	# ensemble_list = db.get_engine(current_app, 'methylation_data').execute("SELECT * FROM ensembles").fetchall()
@@ -92,8 +95,8 @@ def get_ensembles_summary():
 			snATAC_cell_counts = None
 
 		annoj_exists = ensemble_annoj_exists(ensemble['ensemble_id'])
-		ensembles_cell_counts.append( {"id": ensemble['ensemble_id'], 
-									   "ensemble": ensemble['ensemble_name'], 
+		ensembles_cell_counts.append( {"id": ensemble['ensemble_id'],
+									   "ensemble": ensemble['ensemble_name'],
 									   "ens_methylation_counts": methylation_cell_counts,
 									   "ens_snATAC_counts": snATAC_cell_counts,
 									   "public_access": ensemble['public_access'],
@@ -121,7 +124,7 @@ def get_ensembles_summary():
 				snATAC_datasets_in_ensemble.append(dataset+" ("+str(count)+" cells)")
 
 		# Do not display ensembles that contain less than 200 total cells. (mainly RS2 data)
-		if total_methylation_cells>0 or total_snATAC_cells>0: 
+		if total_methylation_cells>0 or total_snATAC_cells>0:
 
 			ens_dict["ensemble_id"] = ens['id']
 			ens_dict["ensemble_name"] = ens['ensemble']
@@ -173,13 +176,13 @@ def get_ensembles_summary():
 			ens_dict["annoj_exists"] = ens['annoj_exists']
 
 
-			if regions == ['None']:
+			use_region=True
+			if regions!=['none']:
+				use_region = use_region and (len([region for region in regions if region in ens_dict["ABA_regions_acronym"].lower()])>0)
+			if regions_tgt!=['none']:
+				use_region = use_region and (len([region_tgt for region_tgt in regions_tgt if region_tgt in ens_dict["target_regions_rs2_acronym"].lower()])>0)
+			if use_region:
 				ensembles_json_list.append(ens_dict)
-			else:
-				for region in regions_lower:
-					if region in ens_dict["ABA_regions_acronym"].lower():
-						ensembles_json_list.append(ens_dict)
-						break
 
 	ens_json = json.dumps(ensembles_json_list)
 
@@ -188,20 +191,20 @@ def get_ensembles_summary():
 
 @content.route('/content/datasets/<rs>')
 def get_datasets_summary(rs):
-	""" Retrieve data to be displayed in the RS1 and RS2 summmary tabular page. 
+	""" Retrieve data to be displayed in the RS1 and RS2 summmary tabular page.
 		"/tabular/dataset/rs1"
 		"/tabular/dataset/rs2"
-	
+
 		Arguments:
 			rs = Research Segment. Either "rs1" or "rs2"
 	"""
-	
+
 	if rs == "rs1":
 		dataset_list = db.get_engine(current_app, 'methylation_data').execute("SELECT * FROM datasets WHERE dataset NOT LIKE 'CEMBA_RS2_%%'").fetchall()
 		dataset_list += db.get_engine(current_app, 'snATAC_data').execute("SELECT * FROM datasets WHERE dataset NOT LIKE 'CEMBA_RS2_%%'").fetchall()
-		
+
 		# This is a hack to get unique values in a list of dictionaries
-		dataset_list = list({x['dataset']:x for x in dataset_list}.values()); 
+		dataset_list = list({x['dataset']:x for x in dataset_list}.values());
 		total_methylation_cell_each_dataset = db.get_engine(current_app, 'methylation_data').execute("SELECT dataset, COUNT(*) as `num` FROM cells WHERE dataset NOT LIKE 'CEMBA_RS2_%%' GROUP BY dataset").fetchall()
 		total_snATAC_cell_each_dataset = db.get_engine(current_app, 'snATAC_data').execute("SELECT dataset, COUNT(*) as `num` FROM cells WHERE dataset NOT LIKE 'CEMBA_RS2_%%' GROUP BY dataset").fetchall()
 	elif rs == "rs2":
@@ -212,7 +215,7 @@ def get_datasets_summary(rs):
 		dataset_list = db.get_engine(current_app, 'methylation_data').execute("SELECT * FROM datasets").fetchall()
 		dataset_list += db.get_engine(current_app, 'snATAC_data').execute("SELECT * FROM datasets").fetchall()
 		# This is a hack to get unique values in a list of dictionaries
-		dataset_list = list({x['dataset']:x for x in dataset_list}.values()); 
+		dataset_list = list({x['dataset']:x for x in dataset_list}.values());
 		total_methylation_cell_each_dataset = db.get_engine(current_app, 'methylation_data').execute("SELECT dataset, COUNT(*) as `num` FROM cells GROUP BY dataset").fetchall()
 		total_snATAC_cell_each_dataset = db.get_engine(current_app, 'snATAC_data').execute("SELECT dataset, COUNT(*) as `num` FROM cells GROUP BY dataset").fetchall()
 	else:
@@ -237,16 +240,16 @@ def get_datasets_summary(rs):
 			brain_region_code = dataset['dataset'].split('_')[2]
 			brain_region_code = brain_region_code[-2:]
 			research_segment = "RS2"
-			
+
 		regions_sql = db.get_engine(current_app, 'methylation_data').execute("SELECT ABA_description FROM ABA_regions WHERE ABA_acronym=%s", (dataset['brain_region'],)).fetchone()
 		if regions_sql is not None:
 			ABA_regions_descriptive = regions_sql['ABA_description'].replace('+', ', ')
-		else: 
+		else:
 			ABA_regions_descriptive = ""
 
 		if rs == "rs1":
 			try:
-				dataset_cell_counts.append( {"dataset_name": dataset['dataset'], 
+				dataset_cell_counts.append( {"dataset_name": dataset['dataset'],
 											 "sex": dataset['sex'],
 											 "methylation_cell_count": total_methylation_cell_each_dataset[dataset['dataset']],
 											 "snATAC_cell_count": num_snATAC_cells,
@@ -256,7 +259,7 @@ def get_datasets_summary(rs):
 											 "date_added": str(dataset['date_online']),
 											 "description": dataset['description'] })
 			except:
-				dataset_cell_counts.append( {"dataset_name": dataset['dataset'], 
+				dataset_cell_counts.append( {"dataset_name": dataset['dataset'],
 											 "sex": dataset['sex'],
 											 "methylation_cell_count": 0,
 											 "snATAC_cell_count": num_snATAC_cells,
@@ -316,14 +319,14 @@ def check_ensemble_similarities(new_ensemble_name, new_ensemble_datasets):
 		return json.dumps({"result": "failure", "reason": "The name {} is already in use, please choose a different name".format(new_ensemble_name)})
 
 	new_ensemble_datasets = new_ensemble_datasets.split('+')
-	
+
 	query = "SELECT cell_id FROM cells WHERE dataset IN (" + ",".join(('%s',)*len(new_ensemble_datasets)) + ")"
 	cells_in_new_ensemble = db.get_engine(current_app, 'methylation_data').execute(query, tuple(new_ensemble_datasets)).fetchall()
 	cells_in_new_ensemble_set = set([ cell['cell_id'] for cell in cells_in_new_ensemble ])
 
 	if len(cells_in_new_ensemble_set) <= 200:
 		return json.dumps({"result": "failure", "reason": "Ensembles must contain more than 200 cells."})
-	
+
 	same_datasets_in_both = []
 	new_ensemble_datasets_set = set(new_ensemble_datasets)
 	for existing_ensemble in existing_ensembles_list:
@@ -347,16 +350,16 @@ def check_ensemble_similarities(new_ensemble_name, new_ensemble_datasets):
 		return json.dumps({"result": "warning", "reason": "The following pre-existing ensembles are similar: "+", ".join(("%s",)*len(same_datasets_in_both)) %(tuple([ ensemble['ensemble_name'] for ensemble in same_datasets_in_both]))+". Are you sure you want to request the new ensemble?"})
 
 	# Success
-	return json.dumps({"result": "success", 
+	return json.dumps({"result": "success",
 					   "reason": "Click submit to finalize request.",
-					   "new_ensemble_name": new_ensemble_name, 
-					   "new_ensemble_datasets": new_ensemble_datasets, 
+					   "new_ensemble_name": new_ensemble_name,
+					   "new_ensemble_datasets": new_ensemble_datasets,
 					   "new_ensemble_cells": list(cells_in_new_ensemble_set)})
 
 # Utilities
 @cache.memoize(timeout=1800)
 def ensemble_exists(ensemble, modality='methylation'):
-	"""Check if data for a given ensemble exists 
+	"""Check if data for a given ensemble exists
 
 	Arguments:
 		ensemble (str): Name of ensemble.
@@ -380,11 +383,11 @@ def ensemble_exists(ensemble, modality='methylation'):
 # Utilities
 @cache.memoize(timeout=1800)
 def ensemble_annoj_exists(ensemble):
-	"""Check if AnnoJ browser for a given ensemble exists 
+	"""Check if AnnoJ browser for a given ensemble exists
 
 	Arguments:
 		ensemble (str): Name of ensemble.
-		
+
 	Returns:
 		bool: Whether if given ensemble exists
 	"""
@@ -445,7 +448,7 @@ def generate_cluster_colors(num, grouping):
 	"""
 
 	if (grouping == 'dataset' or grouping == 'target_region') and num > 2 and num <= 9:
-		c = cl.scales[str(num)]['qual']['Set1'] 
+		c = cl.scales[str(num)]['qual']['Set1']
 		return c
 
 	if num>18:
@@ -487,7 +490,7 @@ def all_gene_modules():
 	Arguments:
 		None
 	Returns:
-		list of gene module names. 
+		list of gene module names.
 	"""
 
 	modules_result = db.get_engine(current_app, 'methylation_data').execute("SELECT DISTINCT(module) FROM gene_modules").fetchall()
@@ -538,7 +541,7 @@ def get_cluster_marker_genes(ensemble, clustering):
 	result = [ dict(x) for x in result ]
 	num_genes = result[-1]['rank']
 	num_clusters = result[-1]['cluster']
-	columns = [ 'cluster_'+str(i+1) for i in range(num_clusters) ] 
+	columns = [ 'cluster_'+str(i+1) for i in range(num_clusters) ]
 
 	rows = []
 	for i in range(num_genes):
@@ -627,7 +630,7 @@ def get_ensemble_info(ensemble_id=str()):
 	"""
 	Gets information regarding an ensemble. Requires either the ensemble name or ensemble id
 	"""
-	
+
 	ensemble_id=ensemble_id.replace('Ens','') # Ensemble_id should be an integer
 	if ensemble_id:
 		# result = db.get_engine(current_app, 'methylation_data').execute("SELECT * FROM ensembles WHERE ensemble_id=%s", (ensemble_id,)).fetchone()
@@ -638,7 +641,7 @@ def get_ensemble_info(ensemble_id=str()):
 		ensemble_id = int(filter(str.isdigit, ensemble_id))
 		result = db.get_engine(current_app, 'methylation_data').execute("SELECT * FROM ensembles WHERE ensemble_id=%s", (ensemble_id,)).fetchone()
 		if result is None:
-			result = db.get_engine(current_app, 'snATAC_data').execute("SELECT * FROM ensembles WHERE ensemble_id=%s", (ensemble_id,)).fetchone()	
+			result = db.get_engine(current_app, 'snATAC_data').execute("SELECT * FROM ensembles WHERE ensemble_id=%s", (ensemble_id,)).fetchone()
 
 	return result
 
@@ -652,7 +655,7 @@ def get_metadata_options(ensemble):
 		return None
 
 	query = "SELECT * FROM %(ensemble)s LIMIT 1" % {'ensemble': ensemble,}
-	
+
 	try:
 		df = pd.read_sql(query, db.get_engine(current_app, 'methylation_data'))
 	except exc.ProgrammingError as e:
@@ -709,7 +712,7 @@ def get_metadata_options(ensemble):
 			df_metadata = df_metadata.drop(list(df_metadata.filter(regex='cell_.*', axis='columns')), axis=1)
 			all_metadata[modality] += list([i for i in df_metadata.columns.values])
 
-	return {'all_tsne_settings': list_tsne_types, 
+	return {'all_tsne_settings': list_tsne_types,
 			'tsne_methylation': list_mc_types_tsne,
 			'all_clustering_settings': list_clustering_types,
 			'all_clustering_settings2': dict_clustering_types_and_numclusters,
@@ -730,7 +733,7 @@ def get_snATAC_tsne_options(ensemble):
 		return None
 
 	query = "SELECT * FROM %(ensemble)s LIMIT 1" % {'ensemble': ensemble,}
-	
+
 	try:
 		df = pd.read_sql(query, db.get_engine(current_app, 'snATAC_data'))
 	except exc.ProgrammingError as e:
@@ -765,7 +768,7 @@ def get_snATAC_tsne_options(ensemble):
 	list_npc_clustering = sorted(list(set([int(x.split('_')[2].replace('npc', '')) for x in list_clustering_types])))
 	list_k_clustering = sorted(list(set([int(x.split('_')[3].replace('k', '')) for x in list_clustering_types])))
 
-	return {'all_tsne_types': list_tsne_types, 
+	return {'all_tsne_types': list_tsne_types,
 			'tsne_dimensions': list_dims_tsne_first,
 			'tsne_perplexity': list_perp_tsne_first,
 			'all_clustering_types': list_clustering_types,
@@ -819,7 +822,7 @@ def get_gene_by_name_exact(gene_query):
 	df = pd.read_sql(sql_query, params=(gene_query,), con=db.get_engine(current_app, 'methylation_data'))
 
 	return df.to_dict('records')
-	
+
 @cache.memoize(timeout=3600)
 def get_gene_by_id(gene_query):
 	"""Retrieve gene information by gene id.
@@ -831,7 +834,7 @@ def get_gene_by_id(gene_query):
 		DataFrame: Info for queried gene. Columns are gene_id, gene_name, chr, start, end, strand, gene_type.
 	"""
 
-	gene_query_wildcard = [ gene+'%' for gene in gene_query ] 
+	gene_query_wildcard = [ gene+'%' for gene in gene_query ]
 	sql_query = "SELECT * FROM genes WHERE " + "gene_id LIKE %s OR " * len(gene_query_wildcard)
 	sql_query = sql_query[:-3]
 
@@ -851,12 +854,12 @@ def get_gene_by_id(gene_query):
 
 @cache.memoize(timeout=3600)
 def get_corr_genes(ensemble, query):
-	"""Get correlated genes of a certain gene of a ensemble. 
-	
+	"""Get correlated genes of a certain gene of a ensemble.
+
 		Arguments:
 			ensemble(str): Ensemble identifier. (Eg. Ens0, Ens1, Ens2...).
 			query(str): Gene ID.
-		
+
 		Returns:
 			dict: information of genes that are correlated with target gene.
 	"""
@@ -898,7 +901,7 @@ def get_gene_methylation(ensemble, methylation_type, gene, grouping, clustering,
 	if ";" in ensemble or ";" in methylation_type or ";" in grouping or ";" in clustering or ";" in tsne_type:
 		return None
 
-	# This query is just to fix gene id's missing the ensemble version number. 
+	# This query is just to fix gene id's missing the ensemble version number.
 	# Necessary because the table name must match exactly with whats on the MySQL database.
 	# Ex. ENSMUSG00000026787 is fixed to ENSMUSG00000026787.3 -> gene_ENSMUSG00000026787_3 (table name in MySQL)
 	result = db.get_engine(current_app, 'methylation_data').execute("SELECT gene_id FROM genes WHERE gene_id LIKE %s", (gene+"%",)).fetchone()
@@ -943,7 +946,7 @@ def get_gene_methylation(ensemble, methylation_type, gene, grouping, clustering,
 			FROM cells \
 			INNER JOIN %(ensemble)s ON cells.cell_id = %(ensemble)s.cell_id \
 			LEFT JOIN %(gene_table_name)s ON %(ensemble)s.cell_id = %(gene_table_name)s.cell_id \
-			LEFT JOIN datasets ON cells.dataset = datasets.dataset " % {'ensemble': ensemble, 
+			LEFT JOIN datasets ON cells.dataset = datasets.dataset " % {'ensemble': ensemble,
 																	   'gene_table_name': gene_table_name,
 																	   'tsne_type': tsne_type,
 																	   'methylation_type': methylation_type,
@@ -951,7 +954,7 @@ def get_gene_methylation(ensemble, methylation_type, gene, grouping, clustering,
 																	   'clustering': clustering,}
 	if max_points.isdigit():
 		query = query+" ORDER BY RAND() LIMIT %(max_points)s" % {'max_points': max_points}
-		# TODO: Check whether we need to randomize the rows 
+		# TODO: Check whether we need to randomize the rows
 
 	try:
 		df = pd.read_sql(query, db.get_engine(current_app, 'methylation_data'))
@@ -960,8 +963,8 @@ def get_gene_methylation(ensemble, methylation_type, gene, grouping, clustering,
 		print("[{}] ERROR in app(get_gene_methylation): {}".format(str(now), e))
 		sys.stdout.flush()
 		return None
-	
-	if df[context].isnull().all(): # If no data in column, return None 
+
+	if df[context].isnull().all(): # If no data in column, return None
 		return None
 
 	if level == 'original':
@@ -971,10 +974,10 @@ def get_gene_methylation(ensemble, methylation_type, gene, grouping, clustering,
 
 	if not outliers:
 		# Outliers not wanted, remove rows > 99%ile
-		three_std_dev = df[methylation_type + '/' + context + '_' + level].quantile(0.99) 
-		df = df[df[methylation_type + '/' + context + '_' + level] < three_std_dev] 
+		three_std_dev = df[methylation_type + '/' + context + '_' + level].quantile(0.99)
+		df = df[df[methylation_type + '/' + context + '_' + level] < three_std_dev]
 
-	
+
 	if grouping == 'annotation':
 		df.fillna({'grouping': 'None'}, inplace=True)
 		df['annotation_cat'] = pd.Categorical(df['grouping'], cluster_annotation_order)
@@ -1015,9 +1018,9 @@ def get_gene_from_mysql(ensemble, gene_table_name, methylation_type, clustering,
 	t0=datetime.datetime.now()
 	# print(' Running get_gene_from_mysql for '+gene_table_name+' : '+str(t0)+'; ', file=open(log_file,'a'))# EAM - Profiling SQL
 	if tsne_type=='noTSNE':
-		query = "SELECT %(gene_table_name)s.%(methylation_type)s, %(gene_table_name)s.%(context)s, \
+		query = "SELECT %(gene_table_name)s.%(methylation_type)s, %(gene_table_name)s.%(context)s \
 			FROM %(ensemble)s  \
-			LEFT JOIN %(gene_table_name)s ON %(ensemble)s.cell_id = %(gene_table_name)s.cell_id" % {'ensemble': ensemble, 
+			LEFT JOIN %(gene_table_name)s ON %(ensemble)s.cell_id = %(gene_table_name)s.cell_id" % {'ensemble': ensemble,
 																	   'gene_table_name': gene_table_name,
 																	   'methylation_type': methylation_type,
 																	   'context': context,}
@@ -1045,7 +1048,7 @@ def get_gene_from_mysql(ensemble, gene_table_name, methylation_type, clustering,
 			datasets.target_region, datasets.sex \
 			FROM cells \
 			INNER JOIN %(ensemble)s ON cells.cell_id = %(ensemble)s.cell_id \
-			LEFT JOIN %(gene_table_name)s ON %(ensemble)s.cell_id = %(gene_table_name)s.cell_id " % {'ensemble': ensemble, 
+			LEFT JOIN %(gene_table_name)s ON %(ensemble)s.cell_id = %(gene_table_name)s.cell_id " % {'ensemble': ensemble,
 																	   'gene_table_name': gene_table_name,
 																	   'tsne_type': tsne_type,
 																	   'methylation_type': methylation_type,
@@ -1066,8 +1069,7 @@ def get_gene_from_mysql(ensemble, gene_table_name, methylation_type, clustering,
 
 
 @cache.memoize(timeout=3600)
-def get_mult_gene_methylation(ensemble, methylation_type, genes, grouping, clustering, level, tsne_type, 
-	max_points='10000'):
+def get_mult_gene_methylation(ensemble, methylation_type, genes, grouping, clustering, level, tsne_type, max_points='10000'):
 	"""Return averaged methylation data ponts for a set of genes.
 
 	Data from ID-to-Name mapping and tSNE points are combined for plot generation.
@@ -1092,7 +1094,7 @@ def get_mult_gene_methylation(ensemble, methylation_type, genes, grouping, clust
 	context = methylation_type[1:]
 	genes = [gene+"%" for gene in genes]
 
-	# This query is just to fix gene id's missing the Ensembl version number. 
+	# This query is just to fix gene id's missing the Ensembl version number.
 	# Necessary because the table name must match exactly with whats on the MySQL database.
 	# Ex. ENSMUSG00000026787 is fixed to ENSMUSG00000026787.3
 	first_query = "SELECT gene_id FROM genes WHERE gene_id LIKE %s" + " OR gene_id LIKE %s" * (len(genes)-1)
@@ -1123,7 +1125,7 @@ def get_mult_gene_methylation(ensemble, methylation_type, genes, grouping, clust
 	df_coords.update(df_avg_methylation)
 
 
-	if df_coords[context].isnull().all(): # If no data in column, return None 
+	if df_coords[context].isnull().all(): # If no data in column, return None
 		return None
 	else:
 		if level == 'original':
@@ -1142,7 +1144,7 @@ def get_mult_gene_methylation(ensemble, methylation_type, genes, grouping, clust
 	return df_coords
 
 @cache.memoize(timeout=1800)
-def get_methylation_scatter(ensemble, tsne_type, methylation_type, genes_query, level, grouping, 
+def get_methylation_scatter(ensemble, tsne_type, methylation_type, genes_query, level, grouping,
 	clustering, ptile_start, ptile_end, tsne_outlier_bool, max_points='10000'):
 	"""Generate scatter plot and gene body reads scatter plot using tSNE coordinates from snATAC-seq data.
 
@@ -1156,7 +1158,7 @@ def get_methylation_scatter(ensemble, tsne_type, methylation_type, genes_query, 
 		clustering (str): Different clustering algorithms and parameters. 'lv' = Louvain clustering.
 		ptile_start (float): Lower end of color percentile. [0, 1].
 		ptile_end (float): Upper end of color percentile. [0, 1].
-		tsne_outlier_bool (bool): Whether or not to change X and Y axes range to hide outliers. True = do show outliers. 
+		tsne_outlier_bool (bool): Whether or not to change X and Y axes range to hide outliers. True = do show outliers.
 
 	Returns:
 		str: HTML generated by Plot.ly.
@@ -1170,21 +1172,26 @@ def get_methylation_scatter(ensemble, tsne_type, methylation_type, genes_query, 
 	if len(genes) == 1:
 		points = get_gene_methylation(ensemble, methylation_type, genes[0], grouping, clustering, level, True, tsne_type, max_points)
 		gene_name_str = get_gene_by_id([ genes[0] ])[0]['gene_name']
-		title = 'Gene body ' + methylation_type + ': ' + gene_name_str
+		title = level.title()+' gene body ' + methylation_type + ': ' + gene_name_str
 	else:
 		points = get_mult_gene_methylation(ensemble, methylation_type, genes, grouping, clustering, level, tsne_type, max_points)
 		gene_infos = get_gene_by_id(genes)
+		ngenes = len(gene_infos)
+		if ngenes>10:
+			gene_infos = gene_infos[0:9]
 		for i, gene in enumerate(gene_infos):
 			if i > 0 and i % 10 == 0:
 				gene_name_str += '<br>'
-			gene_name_str += gene['gene_name'] + '+'
+			gene_name_str += gene['gene_name'] + ','
 		gene_name_str = gene_name_str[:-1]
-		title = 'Avg. Gene body ' + methylation_type + ': <br>' + gene_name_str
+		if ngenes>10:
+			gene_name_str += '+'+str(ngenes-i)+' others '
+		title = level.title()+' gene body ' + methylation_type + ': <br>' + gene_name_str
 
 	if points is None:
 		raise FailToGraphException
 
-	### TSNE ### 
+	### TSNE ###
 	if grouping == 'annotation':
 		if grouping+'_'+clustering not in points.columns or points[grouping+'_'+clustering].nunique() <= 1:
 			grouping = "cluster"
@@ -1202,12 +1209,12 @@ def get_methylation_scatter(ensemble, tsne_type, methylation_type, genes_query, 
 		annotation_additional_y = 0.025 # Necessary because legend items overlap with legend title (annotation) when there are many legend items
 		num_clusters = points['cluster_'+clustering].max()
 	else:
-		annotation_additional_y = 0.00 
+		annotation_additional_y = 0.00
 		num_clusters = len(unique_groups)
-	
+
 	colors = generate_cluster_colors(len(unique_groups), grouping)
 	symbols = ['circle', 'square', 'cross', 'triangle-up', 'triangle-down', 'octagon', 'star', 'diamond']
-	
+
 	traces_tsne = OrderedDict()
 
 	legend_x = -.17
@@ -1220,23 +1227,23 @@ def get_methylation_scatter(ensemble, tsne_type, methylation_type, genes_query, 
 
 	if tsne_outlier_bool:
 		top_x = points['tsne_x_'+tsne_type].quantile(0.999)
-		bottom_x = points['tsne_x_'+tsne_type].quantile(0.001) 
+		bottom_x = points['tsne_x_'+tsne_type].quantile(0.001)
 		top_y = points['tsne_y_'+tsne_type].quantile(0.999)
-		bottom_y = points['tsne_y_'+tsne_type].quantile(0.001) 
+		bottom_y = points['tsne_y_'+tsne_type].quantile(0.001)
 	else:
 		top_x = points['tsne_x_'+tsne_type].max()
 		bottom_x = points['tsne_x_'+tsne_type].min()
 		top_y = points['tsne_y_'+tsne_type].max()
 		bottom_y = points['tsne_y_'+tsne_type].min()
 
-	range_x = top_x - bottom_x 
+	range_x = top_x - bottom_x
 	top_x = top_x + range_x * 0.1
 	bottom_x = bottom_x - range_x*0.1
 	range_y = top_y - bottom_y
 	top_y = top_y + range_y * 0.1
 	bottom_y = bottom_y - range_y*0.1
 
-	if len(points) > 3000: 
+	if len(points) > 3000:
 		marker_size = 2
 	else:
 		marker_size = 4
@@ -1266,8 +1273,8 @@ def get_methylation_scatter(ensemble, tsne_type, methylation_type, genes_query, 
 				group_str = group
 			if group == 'All cells':
 				group_str = ''
-			
-			
+
+
 			trace2d = traces_tsne.setdefault(color_num, Scatter(
 				x=list(),
 				y=list(),
@@ -1293,7 +1300,7 @@ def get_methylation_scatter(ensemble, tsne_type, methylation_type, genes_query, 
 														  ('<b>'+grouping+'</b>', point[7]),]))
 							   for point in points_group.itertuples(index=False)]
 
-		### METHYLATION SCATTER ### 
+		### METHYLATION SCATTER ###
 		x = points['tsne_x_' + tsne_type].tolist()
 		y = points['tsne_y_' + tsne_type].tolist()
 		mch = points[methylation_type + '/' + context + '_' + level]
@@ -1350,8 +1357,8 @@ def get_methylation_scatter(ensemble, tsne_type, methylation_type, genes_query, 
 			autosize=True,
 			height=550,
 			width=layout_width,
-			#title=title,
-			#titlefont={'color': 'rgba(1,2,2,1)',
+			# title=title,
+			# titlefont={'color': 'rgba(1,2,2,1)',
 			#           'size': 16},
 			legend={'x':legend_x,
 					'y':0.95,
@@ -1360,7 +1367,7 @@ def get_methylation_scatter(ensemble, tsne_type, methylation_type, genes_query, 
 			margin={'l': 0,
 					'r': 0,
 					'b': 30,
-					't': 130,},
+					't': 50,},
 			xaxis={
 				'domain': [0, 0.49],
 				'type': 'linear',
@@ -1412,14 +1419,15 @@ def get_methylation_scatter(ensemble, tsne_type, methylation_type, genes_query, 
 			hovermode='closest',)
 			#hoverdistance='10',)
 
-		
+
 		fig = tools.make_subplots(
 				rows=1,
 				cols=2,
 				shared_xaxes=False,
 				shared_yaxes=True,
 				print_grid=False,
-				subplot_titles=("tSNE", level.title()+" Methylation ("+methylation_type+")"),
+				# subplot_titles=("tSNE colored by "+grouping, level.title()+" Methylation ("+methylation_type+")"),
+				subplot_titles=("tSNE colored by "+grouping, title),
 				)
 
 		for trace in traces_tsne.items():
@@ -1427,7 +1435,10 @@ def get_methylation_scatter(ensemble, tsne_type, methylation_type, genes_query, 
 		fig.append_trace(trace_methylation, 1,2)
 
 		fig['layout'].update(layout)
-		fig['layout']['annotations'].extend([Annotation(text=grouping.title(),
+		# Plotly 3: https://community.plot.ly/t/subplot-titles-disappearing-when-adding-annotations/5256/5
+
+		annotations=[]
+		annotations.append([Annotation(text=grouping.title(),
 														x=legend_x+0.05,
 														y=1.02 + annotation_additional_y,
 														xanchor="left",
@@ -1437,8 +1448,7 @@ def get_methylation_scatter(ensemble, tsne_type, methylation_type, genes_query, 
 														yref="paper",
 														font={'size': 12,
 															  'color': 'gray',})])
-
-		fig['layout']['annotations'].extend([Annotation(text=title,
+		annotations.append([Annotation(text=title,
 														x=0.5,
 														y=1.3,
 														xanchor="center",
@@ -1449,9 +1459,8 @@ def get_methylation_scatter(ensemble, tsne_type, methylation_type, genes_query, 
 														font={'size': 16,
 															  'color': 'black',})])
 
-
 	## 3D tSNE coordinates ##
-	else: 
+	else:
 		for i, group in enumerate(unique_groups):
 
 			points_group = points[points[grouping_clustering]==group]
@@ -1464,7 +1473,7 @@ def get_methylation_scatter(ensemble, tsne_type, methylation_type, genes_query, 
 				group_str = group
 
 			color_num = i
-			
+
 			trace3d = traces_tsne.setdefault(color_num, Scatter3d(
 				x=list(),
 				y=list(),
@@ -1490,7 +1499,7 @@ def get_methylation_scatter(ensemble, tsne_type, methylation_type, genes_query, 
 															 ('Cluster', point[5]),]))
 							   for point in points_group.itertuples(index=False)]
 
-		### METHYLATION SCATTER ### 
+		### METHYLATION SCATTER ###
 		x = points['tsne_x_' + tsne_type].tolist()
 		y = points['tsne_y_' + tsne_type].tolist()
 		z = points['tsne_z_' + tsne_type].tolist()
@@ -1633,8 +1642,8 @@ def get_methylation_scatter(ensemble, tsne_type, methylation_type, genes_query, 
 		fig['layout'].update(layout)
 		fig['layout']['scene1'].update(scene)
 		fig['layout']['scene2'].update(scene)
-	
-		fig['layout']['annotations'].extend([Annotation(text="Cluster Labels",
+
+		annotations.append([Annotation(text="Cluster Labels",
 														x=-.09,
 														y=1.03 + annotation_additional_y,
 														xanchor="left",
@@ -1644,6 +1653,7 @@ def get_methylation_scatter(ensemble, tsne_type, methylation_type, genes_query, 
 														yref="paper",
 														font={'size': 12,
 															  'color': 'gray',})])
+		fig['layout']['annotations']=annotations
 
 	return plotly.offline.plot(
 		figure_or_data=fig,
@@ -1708,13 +1718,13 @@ def get_mch_box(ensemble, methylation_type, gene, grouping, clustering, level, o
 	# ## ############
 	# gene_info_df = pd.DataFrame()
 	# gene_info_df = median_cluster_mch(points, grouping, clustering)
-	# gene_info_dict = gene_info_df.to_dict(into=OrderedDict)    
+	# gene_info_dict = gene_info_df.to_dict(into=OrderedDict)
 	# mch = list()
 	# for key in list(gene_info_dict.keys()):
 	# 	mch.append(list(gene_info_dict[key].values()))
 	# mch = np.array(mch)
 	# figure = ff.create_dendrogram(mch.transpose(), orientation="bottom", labels=tuple([i for i in range(mch.shape[1])]), 
-	# 	colorscale=['bbbbbbb'])
+	# 	colorscale='beige')
 	# for i in range(len(dendro_top['data'])):
 	# 	dendro_top['data'][i]['yaxis'] = 'y2'
 	# dendro_top_leaves = dendro_top['layout']['xaxis']['ticktext']
@@ -1731,7 +1741,7 @@ def get_mch_box(ensemble, methylation_type, gene, grouping, clustering, level, o
 	else:
 		name_prepend=""
 	data = []
-	for group in unique_groups:
+	for i, group in enumerate(unique_groups):
 		color = colors[int(np.where(unique_groups==group)[0]) % len(colors)]
 		if outliers:
 			boxpoints='suspectedoutliers';
@@ -1739,7 +1749,6 @@ def get_mch_box(ensemble, methylation_type, gene, grouping, clustering, level, o
 			boxpoints=False
 		trace = {
 			"type": 'violin',
-			"x": group,
 			"y": points[methylation_type + '/' + context + '_' + level][groups==group],
 			"name": name_prepend + str(group),
 			"points": boxpoints,
@@ -1815,8 +1824,7 @@ def get_mch_box(ensemble, methylation_type, gene, grouping, clustering, level, o
 		},
 		output_type='div',
 		show_link=False,
-		include_plotlyjs=False,
-		validate=False,)
+		include_plotlyjs=False,) 
 
 @cache.memoize(timeout=3600)
 def get_mch_heatmap(ensemble, methylation_type, grouping, clustering, level, ptile_start, ptile_end, normalize_row, query):
@@ -1829,7 +1837,7 @@ def get_mch_heatmap(ensemble, methylation_type, grouping, clustering, level, pti
 		outliers (bool): Whether if outliers should be displayed.
 		ptile_start (float): Lower end of color percentile. [0, 1].
 		ptile_end (float): Upper end of color percentile. [0, 1].
-		normalize_row (bool): Whether to normalize by each row (gene). 
+		normalize_row (bool): Whether to normalize by each row (gene).
 		query ([str]): Ensembl IDs of genes to display.
 
 	Returns:
@@ -1877,10 +1885,12 @@ def get_mch_heatmap(ensemble, methylation_type, grouping, clustering, level, pti
 		gene_info_df.sort_values(by=grouping, inplace=True)
 		gene_info_df.set_index(grouping, inplace=True)
 	else:
-		raise FailToGraphException
+		grouping = 'cluster'
+		gene_info_df.sort_values(by='cluster_'+clustering, inplace=True)
+		gene_info_df.set_index(grouping+'_'+clustering, inplace=True)
 
 	# For some reason, Plotly doesn't allow 'None' as a group on the x-axis for heatmaps.
-	if gene_info_df.index.tolist() == ['None']: 
+	if gene_info_df.index.tolist() == ['None']:
 		gene_info_df.index = ['N/A']
 
 	clusters_labels = gene_info_df.index.tolist()
@@ -1899,7 +1909,7 @@ def get_mch_heatmap(ensemble, methylation_type, grouping, clustering, level, pti
 			gene_info_df[gene] = (gene_info_df[gene] - gene_info_df[gene].min()) / gene_range
 		normal_or_original = 'Normalized'
 
-	gene_info_dict = gene_info_df.to_dict(into=OrderedDict)    
+	gene_info_dict = gene_info_df.to_dict(into=OrderedDict)
 
 	x, y, text, hover, mch = list(), list(), list(), list(), list()
 	i = 0
@@ -1926,8 +1936,7 @@ def get_mch_heatmap(ensemble, methylation_type, grouping, clustering, level, pti
 
 	# Hierarchical clustering and dendrogram
 	mch = np.array(mch)
-	figure = ff.create_dendrogram(mch, orientation="right", labels=tuple([i for i in range(len(genes))]), 
-		colorscale=['bbbbbbb']) # TODO: Figure out how to set the colorscale
+	figure = ff.create_dendrogram(mch, orientation="right", labels=tuple([i for i in range(len(genes))])) # TODO: Figure out how to set the colorscale
 	for i in range(len(figure['data'])):
 		figure['data'][i]['xaxis'] = 'x2'
 	dendro_leaves = figure['layout']['yaxis']['ticktext']
@@ -1938,8 +1947,8 @@ def get_mch_heatmap(ensemble, methylation_type, grouping, clustering, level, pti
 	# hover = [hover_old[i] for i in dendro_leaves]
 	hover = [str(i) for i in dendro_leaves]
 
-	dendro_top = ff.create_dendrogram(mch.transpose(), orientation="bottom", labels=tuple([i for i in range(mch.shape[1])]), 
-		colorscale=['bbbbbbb'])
+
+	dendro_top = ff.create_dendrogram(mch.transpose(), orientation="bottom", labels=tuple([i for i in range(mch.shape[1])]))
 	for i in range(len(dendro_top['data'])):
 		dendro_top['data'][i]['yaxis'] = 'y2'
 	dendro_top_leaves = dendro_top['layout']['xaxis']['ticktext']
@@ -1947,13 +1956,13 @@ def get_mch_heatmap(ensemble, methylation_type, grouping, clustering, level, pti
 	mch = mch[:,dendro_top_leaves] # Reorder the genes according to the clustering
 	clusters_labels = [clusters_labels[i] for i in dendro_top_leaves]
 	mch = list(mch)
-	figure['data'].extend(dendro_top['data'])
+	figure.add_traces(dendro_top['data'])
 
 	# Set color scale limits
 	start = mch_dataframe.quantile(ptile_start).values[0].tolist()
 	end = mch_dataframe.quantile(ptile_end).values[0].tolist()
 	end = max(end,start+0.01)
-	
+
 	colorbar_tickval = list(arange(start, end, (end - start) / 4))
 	colorbar_tickval[0] = start
 	colorbar_tickval.append(end)
@@ -1969,8 +1978,8 @@ def get_mch_heatmap(ensemble, methylation_type, grouping, clustering, level, pti
 			colorbar_ticktext[0] = '<' + str(round(start, num_sigfigs_ticklabels))
 	colorbar_ticktext.append('>' + str(round(end, num_sigfigs_ticklabels)))
 
-	# Due to a weird bug(?) in plotly, the number of elements in tickvals and ticktext 
-	# must be greater than or equal to number of genes in query. Else, javascript throws 
+	# Due to a weird bug(?) in plotly, the number of elements in tickvals and ticktext
+	# must be greater than or equal to number of genes in query. Else, javascript throws
 	# Uncaught Typeerrors when trying to hover over genes. (Tomo 12/11/17)
 	while len(colorbar_tickval) < len(genes):
 		colorbar_tickval.insert(0,start)
@@ -2002,7 +2011,7 @@ def get_mch_heatmap(ensemble, methylation_type, grouping, clustering, level, pti
 		)
 	trace['y'] = figure['layout']['yaxis']['tickvals']
 	trace['x'] = dendro_top['layout']['xaxis']['tickvals']
-	figure['data'].extend([trace])
+	figure.add_traces([trace])
 
 	layout = Layout(
 		height=max(600*len(genes)/20,550), # EAM Adjust the height of the heatmap according to the number of genes displayed
@@ -2261,7 +2270,7 @@ def get_clusters_bar(ensemble, grouping, clustering, normalize):
 		else:
 			trace['text'] = [str(i)+' '+mi+' cells' for i in clustersu['y']]
 		data.append(trace)
-	
+
 	layout = Layout(
 	    autosize=True,
 	    height=450,
@@ -2347,12 +2356,12 @@ def get_gene_snATAC(ensemble, gene, grouping, outliers, smoothing=False, max_poi
 	if ";" in ensemble or ";" in grouping:
 		return None
 
-	# This query is just to fix gene id's missing the ensemble version number. 
+	# This query is just to fix gene id's missing the ensemble version number.
 	# Necessary because the table name must match exactly with whats on the MySQL database.
 	# Ex. ENSMUSG00000026787 is fixed to ENSMUSG00000026787.3 -> gene_ENSMUSG00000026787_3 (table name in MySQL)
 	result = db.get_engine(current_app, 'snATAC_data').execute("SELECT gene_id FROM genes WHERE gene_id LIKE %s", (gene+"%",)).fetchone()
 	gene_table_name = 'gene_' + result['gene_id'].replace('.','_')
-	
+
 	if smoothing:
 		counts_type='smoothed_normalized_counts'
 	else:
@@ -2366,8 +2375,8 @@ def get_gene_snATAC(ensemble, gene, grouping, outliers, smoothing=False, max_poi
 		FROM cells \
 		INNER JOIN %(ensemble)s ON cells.cell_id = %(ensemble)s.cell_id \
 		LEFT JOIN %(gene_table_name)s ON %(ensemble)s.cell_id = %(gene_table_name)s.cell_id \
-		LEFT JOIN datasets ON cells.dataset = datasets.dataset" % {'ensemble': ensemble, 
-																'gene_table_name': gene_table_name, 
+		LEFT JOIN datasets ON cells.dataset = datasets.dataset" % {'ensemble': ensemble,
+																'gene_table_name': gene_table_name,
 																'counts_type': counts_type,}
 
 	if max_points.isdigit():
@@ -2381,7 +2390,7 @@ def get_gene_snATAC(ensemble, gene, grouping, outliers, smoothing=False, max_poi
 		sys.stdout.flush()
 		return None
 
-	if df.empty: # If no data in column, return None 
+	if df.empty: # If no data in column, return None
 		now = datetime.datetime.now()
 		print("[{}] ERROR in app(get_gene_snATAC): No snATAC data for {}".format(str(now), ensemble))
 		sys.stdout.flush()
@@ -2396,7 +2405,7 @@ def get_gene_snATAC(ensemble, gene, grouping, outliers, smoothing=False, max_poi
 		df.sort_values(by='cluster_ATAC', inplace=True)
 
 	df['normalized_counts'].fillna(0, inplace=True)
-	
+
 	return df
 
 def get_gene_snatac_from_mysql(ensemble, gene_table_name, counts_type, tsne_type, max_points='10000'):
@@ -2410,8 +2419,7 @@ def get_gene_snatac_from_mysql(ensemble, gene_table_name, counts_type, tsne_type
 	if tsne_type=='noTSNE':
 		query = "SELECT %(gene_table_name)s.%(counts_type)s as normalized_counts \
 			FROM %(ensemble)s  \
-			LEFT JOIN %(gene_table_name)s ON %(ensemble)s.cell_id = %(gene_table_name)s.cell_id \
-			LIMIT 5000" % {'ensemble': ensemble, 
+			LEFT JOIN %(gene_table_name)s ON %(ensemble)s.cell_id = %(gene_table_name)s.cell_id " % {'ensemble': ensemble, 
 			   'gene_table_name': gene_table_name,
 			   'counts_type': counts_type,}
 	else:
@@ -2423,7 +2431,7 @@ def get_gene_snatac_from_mysql(ensemble, gene_table_name, counts_type, tsne_type
 			FROM cells \
 			INNER JOIN %(ensemble)s ON cells.cell_id = %(ensemble)s.cell_id \
 			LEFT JOIN %(gene_table_name)s ON %(ensemble)s.cell_id = %(gene_table_name)s.cell_id \
-			LEFT JOIN datasets ON cells.dataset = datasets.dataset" % {'ensemble': ensemble, 
+			LEFT JOIN datasets ON cells.dataset = datasets.dataset" % {'ensemble': ensemble,
 																	   'gene_table_name': gene_table_name,
 																	   'counts_type': counts_type}
 	if max_points.isdigit():
@@ -2464,7 +2472,7 @@ def get_mult_gene_snATAC(ensemble, genes, grouping, smoothing=False, max_points=
 
 	genes = [gene+"%" for gene in genes]
 
-	# This query is just to fix gene id's missing the ensemble version number. 
+	# This query is just to fix gene id's missing the ensemble version number.
 	# Necessary because the table name must match exactly with whats on the MySQL database.
 	# Ex. ENSMUSG00000026787 is fixed to ENSMUSG00000026787.3
 	first_query = "SELECT gene_id FROM genes WHERE gene_id LIKE %s" + " OR gene_id LIKE %s" * (len(genes)-1)
@@ -2473,7 +2481,7 @@ def get_mult_gene_snATAC(ensemble, genes, grouping, smoothing=False, max_points=
 	gene_table_names = ['gene_' + gene_id[0].replace('.','_') for gene_id in result]
 
 	df_all = pd.DataFrame()
-	
+
 	if smoothing:
 		counts_type='smoothed_normalized_counts'
 	else:
@@ -2491,7 +2499,7 @@ def get_mult_gene_snATAC(ensemble, genes, grouping, smoothing=False, max_points=
 
 	t1=datetime.datetime.now()
 
-	if df_all.empty: # If no data in column, return None 
+	if df_all.empty: # If no data in column, return None
 		now = datetime.datetime.now()
 		print("[{}] ERROR in app(get_gene_snATAC): No snATAC data for {}".format(str(now), ensemble))
 		sys.stdout.flush()
@@ -2523,7 +2531,7 @@ def get_snATAC_scatter(ensemble, genes_query, grouping, ptile_start, ptile_end, 
 		clustering (str): Different clustering algorithms and parameters. 'lv' = Louvain clustering.
 		ptile_start (float): Lower end of color percentile. [0, 1].
 		ptile_end (float): Upper end of color percentile. [0, 1].
-		tsne_outlier_bool (bool): Whether or not to change X and Y axes range to hide outliers. True = show outliers. 
+		tsne_outlier_bool (bool): Whether or not to change X and Y axes range to hide outliers. True = show outliers.
 
 	Returns:
 		str: HTML generated by Plot.ly.
@@ -2544,14 +2552,17 @@ def get_snATAC_scatter(ensemble, genes_query, grouping, ptile_start, ptile_end, 
 		for i, gene in enumerate(gene_infos):
 			if i > 0 and i % 10 == 0:
 				gene_name_str += "<br>"
-			gene_name_str += gene['gene_name'] + '+'
+			if i>10:
+				gene_name_str += '+ '+str(length(gene_infos)-i)+' others'
+			else:
+				gene_name_str += gene['gene_name'] + ','
 		gene_name_str = gene_name_str[:-1]
-		title = 'Avg. Gene body snATAC normalized counts: <br>' + gene_name_str
+		title = 'Avg. gene body snATAC normalized counts: <br>' + gene_name_str
 
 	if points is None:
 		raise FailToGraphException
 
-	### TSNE ### 
+	### TSNE ###
 	if grouping != 'dataset' and grouping != 'target_region':
 		if grouping+'_ATAC' not in points.columns: # If no cluster annotations available, group by cluster number instead
 			grouping = "cluster"
@@ -2562,7 +2573,7 @@ def get_snATAC_scatter(ensemble, genes_query, grouping, ptile_start, ptile_end, 
 			print("**** Grouping by cluster")
 
 	datasets = points['dataset'].unique().tolist()
-	annotation_additional_y = 0.00 
+	annotation_additional_y = 0.00
 	if grouping == 'dataset':
 		unique_groups = datasets
 		num_clusters = len(unique_groups)
@@ -2575,10 +2586,10 @@ def get_snATAC_scatter(ensemble, genes_query, grouping, ptile_start, ptile_end, 
 			annotation_additional_y = 0.025 # Necessary because legend items overlap with legend title (annotation) when there are many legend items
 		num_clusters = points['cluster_ATAC'].max()
 		unique_groups = points[grouping+'_ATAC'].unique().tolist()
-	
+
 	colors = generate_cluster_colors(len(unique_groups), grouping)
 	symbols = ['circle', 'square', 'cross', 'triangle-up', 'triangle-down', 'octagon', 'star', 'diamond']
-	
+
 	traces_tsne = OrderedDict()
 
 	legend_x = -.17
@@ -2592,24 +2603,24 @@ def get_snATAC_scatter(ensemble, genes_query, grouping, ptile_start, ptile_end, 
 
 	if tsne_outlier_bool:
 		top_x = points['tsne_x_ATAC'].quantile(0.999)
-		bottom_x = points['tsne_x_ATAC'].quantile(0.001) 
+		bottom_x = points['tsne_x_ATAC'].quantile(0.001)
 		top_y = points['tsne_y_ATAC'].quantile(0.999)
-		bottom_y = points['tsne_y_ATAC'].quantile(0.001) 
-		
+		bottom_y = points['tsne_y_ATAC'].quantile(0.001)
+
 	else:
 		top_x = points['tsne_x_ATAC'].max()
 		bottom_x = points['tsne_x_ATAC'].min()
 		top_y = points['tsne_y_ATAC'].max()
 		bottom_y = points['tsne_y_ATAC'].min()
 
-	range_x = top_x - bottom_x 
+	range_x = top_x - bottom_x
 	top_x = top_x + range_x * 0.1
 	bottom_x = bottom_x - range_x*0.1
 	range_y = top_y - bottom_y
 	top_y = top_y + range_y * 0.1
 	bottom_y = bottom_y - range_y*0.1
 
-	if len(points) > 3000: 
+	if len(points) > 3000:
 		marker_size = 2
 	else:
 		marker_size = 4
@@ -2626,7 +2637,7 @@ def get_snATAC_scatter(ensemble, genes_query, grouping, ptile_start, ptile_end, 
 			group_str = group
 
 		color_num = i
-		
+
 		trace2d = traces_tsne.setdefault(color_num, Scatter(
 			x=list(),
 			y=list(),
@@ -2656,7 +2667,7 @@ def get_snATAC_scatter(ensemble, genes_query, grouping, ptile_start, ptile_end, 
 														 ('Dataset', point[2]),]))
 						   for point in points_group.itertuples(index=False)]
 
-	### snATAC normalized counts scatter plot ### 
+	### snATAC normalized counts scatter plot ###
 	x = points['tsne_x_ATAC'].tolist()
 	y = points['tsne_y_ATAC'].tolist()
 	ATAC_counts = points['normalized_counts'].copy()
@@ -2715,7 +2726,7 @@ def get_snATAC_scatter(ensemble, genes_query, grouping, ptile_start, ptile_end, 
 		width=layout_width,
 		# title=title,
 		# titlefont={'color': 'rgba(1,2,2,1)',
-		#            'size': 16},
+		           # 'size': 16},
 		legend={'x':legend_x,
 				'y':0.95,
 				'tracegroupgap': 0.5,
@@ -2723,7 +2734,7 @@ def get_snATAC_scatter(ensemble, genes_query, grouping, ptile_start, ptile_end, 
 		margin={'l': 0,
 				'r': 0,
 				'b': 30,
-				't': 130,},
+				't': 50,},
 		xaxis={
 			'domain': [0, 0.49],
 			'type': 'linear',
@@ -2774,14 +2785,14 @@ def get_snATAC_scatter(ensemble, genes_query, grouping, ptile_start, ptile_end, 
 		},
 		hovermode='closest',)
 
-	
+
 	fig = tools.make_subplots(
 			rows=1,
 			cols=2,
 			shared_xaxes=False,
 			shared_yaxes=True,
 			print_grid=False,
-			subplot_titles=("tSNE", "Normalized Counts"),
+			subplot_titles=("tSNE colored by "+grouping, title),
 			)
 
 	for trace in traces_tsne.items():
@@ -2789,26 +2800,28 @@ def get_snATAC_scatter(ensemble, genes_query, grouping, ptile_start, ptile_end, 
 	fig.append_trace(trace_ATAC, 1,2)
 
 	fig['layout'].update(layout)
-	fig['layout']['annotations'].extend([Annotation(text=grouping.title(),
-													x=legend_x+0.05,
-													y=1.02 + annotation_additional_y,
-													xanchor="left",
-													yanchor="top",
-													showarrow=False,
-													xref="paper",
-													yref="paper",
-													font={'size': 12,
-														  'color': 'gray',})])
-	fig['layout']['annotations'].extend([Annotation(text=title,
-													x=0.5,
-													y=1.3,
-													xanchor="center",
-													yanchor="top",
-													showarrow=False,
-													xref="paper",
-													yref="paper",
-													font={'size': 16,
-														  'color': 'black',})])
+	# annotations=[]
+	# annotations.append([Annotation(text=grouping.title(),
+	# 												x=legend_x+0.05,
+	# 												y=1.02 + annotation_additional_y,
+	# 												xanchor="left",
+	# 												yanchor="top",
+	# 												showarrow=False,
+	# 												xref="paper",
+	# 												yref="paper",
+	# 												font={'size': 12,
+	# 													  'color': 'gray',})])
+	# annotations.append([Annotation(text=title,
+	# 												x=0.5,
+	# 												y=1.3,
+	# 												xanchor="center",
+	# 												yanchor="top",
+	# 												showarrow=False,
+	# 												xref="paper",
+	# 												yref="paper",
+	# 												font={'size': 16,
+	# 													  'color': 'black',})])
+	# fig['layout']['annotations']=annotations
 
 	return plotly.offline.plot(
 		figure_or_data=fig,
@@ -2825,13 +2838,13 @@ def get_snATAC_heatmap(ensemble, grouping, ptile_start, ptile_end, normalize_row
 		grouping (str): Variable to group cells by. "cluster" or "annotation"
 		ptile_start (float): Lower end of color percentile. [0, 1].
 		ptile_end (float): Upper end of color percentile. [0, 1].
-		normalize_row (bool): Whether to normalize by each row (gene). 
+		normalize_row (bool): Whether to normalize by each row (gene).
 		query ([str]): Ensembl IDs of genes to display.
 
 	Returns:
 		str: HTML generated by Plot.ly
 	"""
-	
+
 	if normalize_row:
 		normal_or_original = '(normalized by gene)'
 	else:
@@ -2867,7 +2880,7 @@ def get_snATAC_heatmap(ensemble, grouping, ptile_start, ptile_end, normalize_row
 		raise FailToGraphException
 
 	# For some reason, Plotly doesn't allow 'None' as a group on the x-axis for heatmaps.
-	if gene_info_df.index.tolist() == ['None']: 
+	if gene_info_df.index.tolist() == ['None']:
 		gene_info_df.index = ['N/A']
 
 	normal_or_original = 'Original'
@@ -2882,7 +2895,7 @@ def get_snATAC_heatmap(ensemble, grouping, ptile_start, ptile_end, normalize_row
 			gene_info_df[gene] = (gene_info_df[gene] - gene_info_df[gene].min()) / gene_range
 		normal_or_original = 'Normalized'
 
-	gene_info_dict = gene_info_df.to_dict(into=OrderedDict)    
+	gene_info_dict = gene_info_df.to_dict(into=OrderedDict)
 
 	x, y, text, hover, snATAC_counts = list(), list(), list(), list(), list()
 	i = 0
@@ -2922,8 +2935,8 @@ def get_snATAC_heatmap(ensemble, grouping, ptile_start, ptile_end, normalize_row
 		colorbar_ticktext[0] = '<' + str(round(start, num_sigfigs_ticklabels))
 	colorbar_ticktext.append('>' + str(round(end, num_sigfigs_ticklabels)))
 
-	# Due to a weird bug(?) in plotly, the number of elements in tickvals and ticktext 
-	# must be greater than or equal to number of genes in query. Else, javascript throws 
+	# Due to a weird bug(?) in plotly, the number of elements in tickvals and ticktext
+	# must be greater than or equal to number of genes in query. Else, javascript throws
 	# Uncaught Typeerrors when trying to hover over genes. (Tomo 12/11/17)
 	while len(colorbar_tickval) < len(genes):
 		colorbar_tickval.insert(0,start)
@@ -2957,9 +2970,9 @@ def get_snATAC_heatmap(ensemble, grouping, ptile_start, ptile_end, normalize_row
 		autosize=True,
 		height=max(600*len(genes)/20,550), # EAM Adjust the height of the heatmap according to the number of genes displayed
 		width=1000,
-		# title=title,
-		# titlefont={'color': 'rgba(1,2,2,1)',
-		#            'size': 16},
+		title=title,
+		titlefont={'color': 'rgba(1,2,2,1)',
+		           'size': 16},
 		xaxis={
 			'side': 'bottom',
 			'tickangle': -45,
@@ -3040,7 +3053,7 @@ def get_snATAC_heatmap(ensemble, grouping, ptile_start, ptile_end, normalize_row
 
 	layout['updatemenus'] = updatemenus
 
-	layout['annotations'].extend([Annotation(text=title,
+	layout['annotations'].append([Annotation(text=title,
 											 x=0.5,
 											 y=1.4,
 											 xanchor="center",
@@ -3092,75 +3105,39 @@ def get_snATAC_box(ensemble, gene, grouping, outliers):
 	x_label = grouping
 
 	traces = OrderedDict()
-	# if grouping == "dataset":
-	# 	unique_groups = points["dataset"].unique()
-	# elif grouping == 'target_region':
-	# 	points['target_region'].fillna('N/A', inplace=True)
-	# 	unique_groups = points['target_region'].unique()
-	# elif grouping == 'slice':
-	# 	datasets_all_cells = points['dataset'].tolist()
-	# 	slices_list = [d.split('_')[1] if 'RS2' not in d else d.split('_')[2][2:4] for d in datasets_all_cells]
-	# 	points['slice'] = slices_list
-	# 	slices_set = set(slices_list)
-	# 	unique_groups = np.array(list(slices_set))
-	# elif grouping == 'sex':
-	# 	unique_groups = points['sex'].unique()
-	# elif grouping == 'cluster' or grouping == 'annotation':
-	# 	unique_groups = points[grouping+'_'+clustering].unique()
-	# else:
-	# 	grouping = 'cluster'
-	# 	unique_groups = points[grouping+'_'+clustering].unique()
 	num_clusters = len(unique_groups)
 
-	# name_prepend = ""
-	# x_label = grouping
-	# if grouping != "dataset" or grouping != "target_region":
-	# 	if grouping == "cluster":
-	# 		name_prepend="cluster_"
-	# 	grouping += "_ATAC"
 	if outliers:
 		boxpoints='suspectedoutliers';
 	else:
 		boxpoints=False
 
 	colors = generate_cluster_colors(num_clusters, grouping)
-	# for point in points.to_dict('records'):
-	# 	name_prepend = ""
-	# 	if grouping == "dataset" or grouping == 'target_region' or grouping == 'slice' or grouping == 'sex':
-	# 		color = colors[int(np.where(unique_groups==point[grouping])[0]) % len(colors)]
-	# 		group = point[grouping]
-	# 	else:
-	# 		if grouping == "cluster":
-	# 			name_prepend="cluster_"
-	# 		color = colors[int(np.where(unique_groups==point[grouping+'_'+clustering])[0]) % len(colors)]
-	# 		group = point[grouping+'_'+clustering]
-	# 	if outliers:
-	# 		boxpoints='suspectedoutliers';
-	# 	else:
-	# 		boxpoints=False	
-	for point in points.to_dict('records'):
-		color = colors[int(np.where(unique_groups==point[grouping])[0]) % len(colors)]
-		group = point[grouping]
-		# if grouping == "dataset" or grouping == 'target_region' or grouping == 'slice' or grouping == 'sex':
-		# 	color = colors[int(np.where(unique_groups==point[grouping])[0]) % len(colors)]
-		# 	group = point[grouping]
-		# else:
-		# 	color = colors[int(np.where(unique_groups==point[grouping])[0]) % len(colors)]
-		# 	group = point[grouping]
-		trace = traces.setdefault(group, Box(
-				y=list(),
-				name=name_prepend + str(group),
-				marker={
-					'color': color,
-					'outliercolor': color,
-					'size': 6
-				},
-				boxpoints=boxpoints,
-				visible=True,
-				showlegend=False,
-				))
-		trace['y'].append(point['normalized_counts'])
-
+	unique_groups = points[grouping].unique()
+	groups = points[grouping]
+	data = []
+	for i, group in enumerate(unique_groups):
+		color = colors[int(np.where(unique_groups==group)[0]) % len(colors)]
+		if outliers:
+			boxpoints='suspectedoutliers';
+		else:
+			boxpoints=False
+		trace = {
+			"type": 'violin',
+			"y": points[groups==group]['normalized_counts'],
+			"name": name_prepend + str(group),
+			"points": boxpoints,
+			"box": {
+				"visible": True,
+				"width": .8,
+				'fillcolor': color,
+			},
+			"line": {
+				"color" : 'rgba(10,10,10,.5)'
+			}
+		}
+		data.append(trace)
+    
 	gene_name = get_gene_by_id([ gene ])[0]['gene_name']
 
 	layout = Layout(
@@ -3212,10 +3189,11 @@ def get_snATAC_box(ensemble, gene, grouping, outliers):
 			'mirror': True,
 		},
 	)
-	
+
 	return plotly.offline.plot(
 		{
-			'data': list(traces.values()),
+			# 'data': list(traces.values()),
+			'data': data,
 			'layout': layout
 		},
 		output_type='div',
@@ -3245,12 +3223,12 @@ def get_gene_RNA(ensemble, gene, grouping, outliers, max_points='10000'):
 	if ";" in ensemble or ";" in grouping:
 		return None
 
-	# This query is just to fix gene id's missing the ensemble version number. 
+	# This query is just to fix gene id's missing the ensemble version number.
 	# Necessary because the table name must match exactly with whats on the MySQL database.
 	# Ex. ENSMUSG00000026787 is fixed to ENSMUSG00000026787.3 -> gene_ENSMUSG00000026787_3 (table name in MySQL)
 	result = db.get_engine(current_app, 'RNA_data').execute("SELECT gene_id FROM genes WHERE gene_id LIKE %s", (gene+"%",)).fetchone()
 	gene_table_name = 'gene_' + result['gene_id'].replace('.','_')
-	
+
 	query = "SELECT cells.cell_id, cells.cell_name, cells.dataset, \
 		%(ensemble)s.annotation_RNA, %(ensemble)s.cluster_RNA, \
 		%(ensemble)s.tsne_x_RNA, %(ensemble)s.tsne_y_RNA, \
@@ -3259,7 +3237,7 @@ def get_gene_RNA(ensemble, gene, grouping, outliers, max_points='10000'):
 		FROM cells \
 		INNER JOIN %(ensemble)s ON cells.cell_id = %(ensemble)s.cell_id \
 		LEFT JOIN %(gene_table_name)s ON %(ensemble)s.cell_id = %(gene_table_name)s.cell_id \
-		LEFT JOIN datasets ON cells.dataset = datasets.dataset" % {'ensemble': ensemble, 
+		LEFT JOIN datasets ON cells.dataset = datasets.dataset" % {'ensemble': ensemble,
 																   'gene_table_name': gene_table_name}
 	if max_points.isdigit():
 		query = query+" ORDER BY RAND() LIMIT %(max_points)s" % {'max_points': max_points}
@@ -3272,7 +3250,7 @@ def get_gene_RNA(ensemble, gene, grouping, outliers, max_points='10000'):
 		sys.stdout.flush()
 		return None
 
-	if df.empty: # If no data in column, return None 
+	if df.empty: # If no data in column, return None
 		now = datetime.datetime.now()
 		print("[{}] ERROR in app(get_gene_RNA): No RNA data for {}".format(str(now), ensemble))
 		sys.stdout.flush()
@@ -3287,7 +3265,7 @@ def get_gene_RNA(ensemble, gene, grouping, outliers, max_points='10000'):
 		df.sort_values(by='cluster_RNA', inplace=True)
 
 	df['normalized_counts'].fillna(0, inplace=True)
-	
+
 	return df
 
 @cache.memoize(timeout=1800)
@@ -3313,7 +3291,7 @@ def get_mult_gene_RNA(ensemble, genes, grouping, max_points='10000'):
 
 	genes = [gene+"%" for gene in genes]
 
-	# This query is just to fix gene id's missing the ensemble version number. 
+	# This query is just to fix gene id's missing the ensemble version number.
 	# Necessary because the table name must match exactly with whats on the MySQL database.
 	# Ex. ENSMUSG00000026787 is fixed to ENSMUSG00000026787.3
 	first_query = "SELECT gene_id FROM genes WHERE gene_id LIKE %s" + " OR gene_id LIKE %s" * (len(genes)-1)
@@ -3322,7 +3300,7 @@ def get_mult_gene_RNA(ensemble, genes, grouping, max_points='10000'):
 	gene_table_names = ['gene_' + gene_id[0].replace('.','_') for gene_id in result]
 
 	df_all = pd.DataFrame()
-	
+
 	first = True
 	for gene_table_name in gene_table_names:
 		query = "SELECT cells.cell_id, cells.cell_name, cells.dataset, \
@@ -3333,7 +3311,7 @@ def get_mult_gene_RNA(ensemble, genes, grouping, max_points='10000'):
 			FROM cells \
 			INNER JOIN %(ensemble)s ON cells.cell_id = %(ensemble)s.cell_id \
 			LEFT JOIN %(gene_table_name)s ON %(ensemble)s.cell_id = %(gene_table_name)s.cell_id \
-			LEFT JOIN datasets ON cells.dataset = datasets.dataset" % {'ensemble': ensemble, 
+			LEFT JOIN datasets ON cells.dataset = datasets.dataset" % {'ensemble': ensemble,
 																	   'gene_table_name': gene_table_name}
 		if max_points.isdigit():
 			query = query+" ORDER BY RAND() LIMIT %(max_points)s()" % {'max_points': max_points}
@@ -3345,12 +3323,12 @@ def get_mult_gene_RNA(ensemble, genes, grouping, max_points='10000'):
 			print("[{}] ERROR in app(get_mult_gene_RNA): {}".format(str(now), e))
 			sys.stdout.flush()
 			return None
-		
+
 		if first:
 			df_coords = df_all
 		first = False
 
-	if df_all.empty: # If no data in column, return None 
+	if df_all.empty: # If no data in column, return None
 		now = datetime.datetime.now()
 		print("[{}] ERROR in app(get_gene_RNA): No RNA data for {}".format(str(now), ensemble))
 		sys.stdout.flush()
@@ -3371,7 +3349,7 @@ def get_mult_gene_RNA(ensemble, genes, grouping, max_points='10000'):
 	return df_coords
 
 @cache.memoize(timeout=1800)
-def get_RNA_scatter(ensemble, genes_query, grouping, ptile_start, ptile_end, tsne_outlier_bool):
+def get_RNA_scatter(ensemble, genes_query, grouping, ptile_start, ptile_end, tsne_outlier_bool, max_points='10000'):
 	"""Generate RNA scatter plot using tSNE coordinates from methylation(snmC-seq) data.
 
 	Arguments:
@@ -3382,7 +3360,7 @@ def get_RNA_scatter(ensemble, genes_query, grouping, ptile_start, ptile_end, tsn
 		clustering (str): Different clustering algorithms and parameters. 'lv' = Louvain clustering.
 		ptile_start (float): Lower end of color percentile. [0, 1].
 		ptile_end (float): Upper end of color percentile. [0, 1].
-		tsne_outlier_bool (bool): Whether or not to change X and Y axes range to hide outliers. True = show outliers. 
+		tsne_outlier_bool (bool): Whether or not to change X and Y axes range to hide outliers. True = show outliers.
 
 	Returns:
 		str: HTML generated by Plot.ly.
@@ -3393,12 +3371,15 @@ def get_RNA_scatter(ensemble, genes_query, grouping, ptile_start, ptile_end, tsn
 	gene_name_str = ""
 	x, y, text, mch = list(), list(), list(), list()
 
+	if grouping+'_RNA' not in points.columns: # If no cluster annotations available, group by cluster number instead
+		grouping = "cluster"
+
 	if len(genes) == 1:
-		points = get_gene_RNA(ensemble, genes[0], grouping, True)
+		points = get_gene_RNA(ensemble, genes[0], grouping, True, max_points)
 		gene_name = get_gene_by_id([ genes[0] ])[0]['gene_name']
 		title = 'Gene body RNA normalized counts: ' + gene_name
 	else:
-		points = get_mult_gene_RNA(ensemble, genes, grouping)
+		points = get_mult_gene_RNA(ensemble, genes, grouping, max_points)
 		gene_infos = get_gene_by_id(genes)
 		for i, gene in enumerate(gene_infos):
 			if i > 0 and i % 10 == 0:
@@ -3410,7 +3391,7 @@ def get_RNA_scatter(ensemble, genes_query, grouping, ptile_start, ptile_end, tsn
 	if points is None:
 		raise FailToGraphException
 
-	### TSNE ### 
+	### TSNE ###
 	if grouping != 'dataset' and grouping != 'target_region':
 		if grouping+'_RNA' not in points.columns: # If no cluster annotations available, group by cluster number instead
 			grouping = "cluster"
@@ -3421,7 +3402,7 @@ def get_RNA_scatter(ensemble, genes_query, grouping, ptile_start, ptile_end, tsn
 			print("**** Grouping by cluster")
 
 	datasets = points['dataset'].unique().tolist()
-	annotation_additional_y = 0.00 
+	annotation_additional_y = 0.00
 	if grouping == 'dataset':
 		unique_groups = datasets
 		num_clusters = len(unique_groups)
@@ -3434,10 +3415,10 @@ def get_RNA_scatter(ensemble, genes_query, grouping, ptile_start, ptile_end, tsn
 			annotation_additional_y = 0.025 # Necessary because legend items overlap with legend title (annotation) when there are many legend items
 		num_clusters = points['cluster_RNA'].max()
 		unique_groups = points[grouping+'_RNA'].unique().tolist()
-	
+
 	colors = generate_cluster_colors(len(unique_groups), grouping)
 	symbols = ['circle', 'square', 'cross', 'triangle-up', 'triangle-down', 'octagon', 'star', 'diamond']
-	
+
 	traces_tsne = OrderedDict()
 
 	legend_x = -.17
@@ -3451,24 +3432,24 @@ def get_RNA_scatter(ensemble, genes_query, grouping, ptile_start, ptile_end, tsn
 
 	if tsne_outlier_bool:
 		top_x = points['tsne_x_RNA'].quantile(0.999)
-		bottom_x = points['tsne_x_RNA'].quantile(0.001) 
+		bottom_x = points['tsne_x_RNA'].quantile(0.001)
 		top_y = points['tsne_y_RNA'].quantile(0.999)
-		bottom_y = points['tsne_y_RNA'].quantile(0.001) 
-		
+		bottom_y = points['tsne_y_RNA'].quantile(0.001)
+
 	else:
 		top_x = points['tsne_x_RNA'].max()
 		bottom_x = points['tsne_x_RNA'].min()
 		top_y = points['tsne_y_RNA'].max()
 		bottom_y = points['tsne_y_RNA'].min()
 
-	range_x = top_x - bottom_x 
+	range_x = top_x - bottom_x
 	top_x = top_x + range_x * 0.1
 	bottom_x = bottom_x - range_x*0.1
 	range_y = top_y - bottom_y
 	top_y = top_y + range_y * 0.1
 	bottom_y = bottom_y - range_y*0.1
 
-	if len(points) > 3000: 
+	if len(points) > 3000:
 		marker_size = 2
 	else:
 		marker_size = 4
@@ -3485,7 +3466,7 @@ def get_RNA_scatter(ensemble, genes_query, grouping, ptile_start, ptile_end, tsn
 			group_str = group
 
 		color_num = i
-		
+
 		trace2d = traces_tsne.setdefault(color_num, Scatter(
 			x=list(),
 			y=list(),
@@ -3508,7 +3489,7 @@ def get_RNA_scatter(ensemble, genes_query, grouping, ptile_start, ptile_end, tsn
 														 ('Dataset', point[2]),]))
 						   for point in points_group.itertuples(index=False)]
 
-	### RNA normalized counts scatter plot ### 
+	### RNA normalized counts scatter plot ###
 	x = points['tsne_x_RNA'].tolist()
 	y = points['tsne_y_RNA'].tolist()
 	RNA_counts = points['normalized_counts'].copy()
@@ -3626,7 +3607,7 @@ def get_RNA_scatter(ensemble, genes_query, grouping, ptile_start, ptile_end, tsn
 		},
 		hovermode='closest',)
 
-	
+
 	fig = tools.make_subplots(
 			rows=1,
 			cols=2,
@@ -3641,7 +3622,8 @@ def get_RNA_scatter(ensemble, genes_query, grouping, ptile_start, ptile_end, tsn
 	fig.append_trace(trace_RNA, 1,2)
 
 	fig['layout'].update(layout)
-	fig['layout']['annotations'].extend([Annotation(text=grouping.title(),
+	annotations=[]
+	annotations.append([Annotation(text=grouping.title(),
 													x=legend_x+0.05,
 													y=1.02 + annotation_additional_y,
 													xanchor="left",
@@ -3651,7 +3633,7 @@ def get_RNA_scatter(ensemble, genes_query, grouping, ptile_start, ptile_end, tsn
 													yref="paper",
 													font={'size': 12,
 														  'color': 'gray',})])
-	fig['layout']['annotations'].extend([Annotation(text=title,
+	annotations.append([Annotation(text=title,
 													x=0.5,
 													y=1.3,
 													xanchor="center",
@@ -3661,6 +3643,7 @@ def get_RNA_scatter(ensemble, genes_query, grouping, ptile_start, ptile_end, tsn
 													yref="paper",
 													font={'size': 16,
 														  'color': 'black',})])
+	fig['layout']['annotations']=annotations
 
 	return plotly.offline.plot(
 		figure_or_data=fig,
@@ -3677,13 +3660,13 @@ def get_RNA_heatmap(ensemble, grouping, ptile_start, ptile_end, normalize_row, q
 		grouping (str): Variable to group cells by. "cluster" or "annotation"
 		ptile_start (float): Lower end of color percentile. [0, 1].
 		ptile_end (float): Upper end of color percentile. [0, 1].
-		normalize_row (bool): Whether to normalize by each row (gene). 
+		normalize_row (bool): Whether to normalize by each row (gene).
 		query ([str]): Ensembl IDs of genes to display.
 
 	Returns:
 		str: HTML generated by Plot.ly
 	"""
-	
+
 	if normalize_row:
 		normal_or_original = '(normalized by gene)'
 	else:
@@ -3719,7 +3702,7 @@ def get_RNA_heatmap(ensemble, grouping, ptile_start, ptile_end, normalize_row, q
 		raise FailToGraphException
 
 	# For some reason, Plotly doesn't allow 'None' as a group on the x-axis for heatmaps.
-	if gene_info_df.index.tolist() == ['None']: 
+	if gene_info_df.index.tolist() == ['None']:
 		gene_info_df.index = ['N/A']
 
 	normal_or_original = 'Original'
@@ -3734,7 +3717,7 @@ def get_RNA_heatmap(ensemble, grouping, ptile_start, ptile_end, normalize_row, q
 			gene_info_df[gene] = (gene_info_df[gene] - gene_info_df[gene].min()) / gene_range
 		normal_or_original = 'Normalized'
 
-	gene_info_dict = gene_info_df.to_dict(into=OrderedDict)    
+	gene_info_dict = gene_info_df.to_dict(into=OrderedDict)
 
 	x, y, text, hover, RNA_counts = list(), list(), list(), list(), list()
 	i = 0
@@ -3774,8 +3757,8 @@ def get_RNA_heatmap(ensemble, grouping, ptile_start, ptile_end, normalize_row, q
 		colorbar_ticktext[0] = '<' + str(round(start, num_sigfigs_ticklabels))
 	colorbar_ticktext.append('>' + str(round(end, num_sigfigs_ticklabels)))
 
-	# Due to a weird bug(?) in plotly, the number of elements in tickvals and ticktext 
-	# must be greater than or equal to number of genes in query. Else, javascript throws 
+	# Due to a weird bug(?) in plotly, the number of elements in tickvals and ticktext
+	# must be greater than or equal to number of genes in query. Else, javascript throws
 	# Uncaught Typeerrors when trying to hover over genes. (Tomo 12/11/17)
 	while len(colorbar_tickval) < len(genes):
 		colorbar_tickval.insert(0,start)
@@ -3944,7 +3927,7 @@ def get_RNA_box(ensemble, gene, grouping, outliers):
 			points = get_gene_RNA(ensemble, gene, grouping, outliers)
 			print("**** Grouping by cluster")
 		unique_groups = points[grouping+'_RNA'].unique()
-	else: 
+	else:
 		raise FailToGraphException
 
 	num_clusters = len(unique_groups)
@@ -4039,4 +4022,3 @@ def get_RNA_box(ensemble, gene, grouping, outliers):
 		output_type='div',
 		show_link=False,
 		include_plotlyjs=False)
-

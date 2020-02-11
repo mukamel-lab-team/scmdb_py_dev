@@ -8,7 +8,7 @@ function initEnsembleDataTable() {
         "order": [[3, 'desc']], //Initially sort by "Total Cells (snmC-seq)" in descending order. 
         "pageLength": 50,
         "ajax": {
-            "url": $SCRIPT_ROOT+'/content/ensembles?region=' + region,
+            "url": $SCRIPT_ROOT+'/content/ensembles?region='+region+'&region_tgt='+region_tgt,
             "dataSrc": ""
         },
         "columns": [
