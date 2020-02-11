@@ -90,6 +90,9 @@ def ensemble(ensemble_id):
 def ensemble_tabular_screen():
     redirect = request.args.get('redirect', 'false')
     region = request.args.get('region', None)
+    region_src = request.args.get('region_src', None)
+    if (region_src):
+        region = region_src;
     region_tgt = request.args.get('region_tgt', None)
     if redirect == 'true':
         flash('Please select an ensemble first.', 'info')
