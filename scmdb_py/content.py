@@ -57,8 +57,10 @@ def get_ensembles_summary():
 		"/tabular/ensemble"
 	"""
 	regions = request.args.get('region', '').split()
-	regions_lower = [ region.lower() for region in regions ]
-
+	regions = [ region.lower() for region in regions ]
+	regions_tgt = request.args.get('region_tgt', '').split()
+	regions_tgt = [ region_tgt.lower() for region_tgt in regions_tgt ]
+	
 	ensemble_list=[]
 	# ensemble_list = db.get_engine(current_app, 'methylation_data').execute("SELECT * FROM ensembles").fetchall()
 	ensemble_list = db.get_engine(current_app, 'methylation_data').execute("SELECT * FROM ensembles").fetchall()
@@ -174,13 +176,13 @@ def get_ensembles_summary():
 			ens_dict["annoj_exists"] = ens['annoj_exists']
 
 
-			if regions == ['None']:
+			use_region=True
+			if regions!=['none']:
+				use_region = use_region and (len([region for region in regions if region in ens_dict["ABA_regions_acronym"].lower()])>0)
+			if regions_tgt!=['none']:
+				use_region = use_region and (len([region_tgt for region_tgt in regions_tgt if region_tgt in ens_dict["target_regions_rs2_acronym"].lower()])>0)
+			if use_region:
 				ensembles_json_list.append(ens_dict)
-			else:
-				for region in regions_lower:
-					if region in ens_dict["ABA_regions_acronym"].lower():
-						ensembles_json_list.append(ens_dict)
-						break
 
 	ens_json = json.dumps(ensembles_json_list)
 

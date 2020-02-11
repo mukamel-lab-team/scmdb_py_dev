@@ -58,10 +58,10 @@
 
     <script> 
         var region = "{{ region }}";
-        console.log(region);
-
+        var region_tgt = "{{ region_tgt }}"; // Synaptic target region, i.e. where the retro-AAV was injected (for RS2 samples)
+        
         $(document).ready( function () {
-            initEnsembleDataTable(region);
+            initEnsembleDataTable();
         }); 
     </script>
 

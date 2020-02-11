@@ -40,7 +40,7 @@ def index():
     if current_user is not None and current_user.is_authenticated:
         return redirect(url_for('frontend.ensemble_tabular_screen'))
     else:
-        flash('Log in to access private CEMBA data. \
+        flash('Log in to access private CEMBA data.  \
               <li>Click on "Ensembles" at the top of the page to select publicly accessible data.</li>', 'form-info')
         return redirect(url_for('frontend.login'))
 
@@ -90,9 +90,10 @@ def ensemble(ensemble_id):
 def ensemble_tabular_screen():
     redirect = request.args.get('redirect', 'false')
     region = request.args.get('region', None)
+    region_tgt = request.args.get('region_tgt', None)
     if redirect == 'true':
         flash('Please select an ensemble first.', 'info')
-    return render_template('tabular_ensemble.html', region=region)
+    return render_template('tabular_ensemble.html', region=region, region_tgt=region_tgt)
 
 
 @frontend.route('/tabular/dataset/rs1')
