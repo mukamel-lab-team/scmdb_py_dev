@@ -432,16 +432,23 @@ function getMax(arr, prop) {
 }
 
 function generateBrowserURL(gene) {
-    let base = 'http://brainome.ucsd.edu/annoj_private/CEMBA/cemba.php?ens='+ensemble.replace(/Ens/g, "");
-
+    // Special case for ensemble 218 (MOp mini-atlas)
     const chrom = gene.chr.replace(/^\D+/g, "");
-
     if (gene.strand === '+') {
         var position = gene.start;
     } else {
         var position = gene.end;
     }
-    return base+'&assembly='+chrom+'&position='+position;
+
+    var url='';
+    if (ensemble=='Ens218') {
+        url='https://brainome.ucsd.edu/annoj/BICCN_MOp/index.html?'
+        url += 'location='+chrom+':'+position;         
+    } else {
+        url = 'https://brainome.ucsd.edu/annoj_private/CEMBA/cemba.php?ens='+ensemble.replace(/Ens/g, "");
+        url += '&assembly='+chrom+'&position='+position;        
+    }
+    return url;
 }
 
 function initGeneNameSearch() {
