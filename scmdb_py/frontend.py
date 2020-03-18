@@ -174,14 +174,15 @@ def plot_snATAC_scatter(ensemble, grouping, ptile_start, ptile_end, tsne_outlier
         smoothing_bool = True
 
     try:
-        return get_snATAC_scatter(ensemble,
+        return get_scatter(ensemble,
                                   genes_query,
                                   grouping,
                                   float(ptile_start),
                                   float(ptile_end),
-                                  tsne_outlier_bool,
-                                  smoothing_bool,
-                                  max_points,)
+                                  tsne_outlier_bool=tsne_outlier_bool,
+                                  smoothing=smoothing_bool,
+                                  max_points=max_points,
+                                  modality='snATAC')
     except FailToGraphException:
         return "Failed to load snATAC-seq data for {}, please contact maintainer".format(ensemble)
 
@@ -198,13 +199,15 @@ def plot_RNA_scatter(ensemble, grouping, ptile_start, ptile_end, tsne_outlier, m
         tsne_outlier_bool = True
 
     try:
-        return get_RNA_scatter(ensemble,
-                                  genes_query,
-                                  grouping,
-                                  float(ptile_start),
-                                  float(ptile_end),
-                                  tsne_outlier_bool,
-                                  max_points)
+        return get_scatter(ensemble,
+                            genes_query,
+                            grouping,
+                            float(ptile_start),
+                            float(ptile_end),
+                            smoothing=False,
+                            tsne_outlier_bool=tsne_outlier_bool,
+                            max_points=max_points,
+                            modality='snRNA')
     except FailToGraphException:
         return "Failed to load RNA-seq data for {}, please contact maintainer".format(ensemble)
 
