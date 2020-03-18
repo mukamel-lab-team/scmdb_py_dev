@@ -124,3 +124,4 @@ scmdb_py/static/styles/*
 user-login.sqlite
 scmdb_log
 requirements.NEW.txt
+venv.old
