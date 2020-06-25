@@ -432,7 +432,6 @@ function getMax(arr, prop) {
 }
 
 function generateBrowserURL(gene) {
-    // Special case for ensemble 218 (MOp mini-atlas)
     const chrom = gene.chr.replace(/^\D+/g, "");
     if (gene.strand === '+') {
         var position = gene.start;
@@ -442,7 +441,8 @@ function generateBrowserURL(gene) {
 
     var url='';
     if (ensemble=='Ens218') {
-        url='https://brainome.ucsd.edu/annoj/BICCN_MOp/index.html?'
+        // Special case for ensemble 218 (MOp mini-atlas)
+        url='https://brainome.ucsd.edu/annoj/BICCN_MOp/index.html?celltype=all&'
         url += 'location='+chrom+':'+position;         
     } else {
         url = 'https://brainome.ucsd.edu/annoj_private/CEMBA/cemba.php?ens='+ensemble.replace(/Ens/g, "");
@@ -1385,7 +1385,7 @@ function updateClustersBarPlot() {
 
 function updatesnATACBoxPlot() {
     let geneSelected = $('#geneName option:selected').val();
-    let grouping = $('#methylation-tsne-grouping').val();
+    let grouping = $('#snATAC-tsne-grouping').val();
 
     if ($('#methylation-box-heat-outlierToggle').prop('checked')) {
         var outlierOption = 'outliers';
@@ -1414,7 +1414,8 @@ function updatesnATACBoxPlot() {
 
 function updateRNABoxPlot() {
     let geneSelected = $('#geneName option:selected').val();
-    let grouping = $('#RNA-box-heat-grouping').val();
+    // let grouping = $('#RNA-box-heat-grouping').val();
+    let grouping = $('#RNA-tsne-grouping').val();
 
     if ($('#RNA-box-heat-outlierToggle').prop('checked')) {
         var outlierOption = 'outliers';

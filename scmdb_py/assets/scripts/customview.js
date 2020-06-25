@@ -1024,7 +1024,7 @@ function updateClustersBarPlot() {
 
 function updatesnATACBoxPlot() {
     let geneSelected = $('#geneName option:selected').val();
-    let grouping = $('#methylation-tsne-grouping').val();
+    let grouping = $('#snATAC-tsne-grouping').val();
 
     if ($('#methylation-box-heat-outlierToggle').prop('checked')) {
         var outlierOption = 'outliers';
@@ -1053,7 +1053,8 @@ function updatesnATACBoxPlot() {
 
 function updateRNABoxPlot() {
     let geneSelected = $('#geneName option:selected').val();
-    let grouping = $('#RNA-box-heat-grouping').val();
+    // let grouping = $('#RNA-box-heat-grouping').val();
+    let grouping = $('#RNA-tsne-grouping').val();
 
     if ($('#RNA-box-heat-outlierToggle').prop('checked')) {
         var outlierOption = 'outliers';

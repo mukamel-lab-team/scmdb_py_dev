@@ -25,6 +25,7 @@ from .user import User, Role
 
 import os
 
+log_file='/var/www/scmdb_py/scmdb_log'
 frontend = Blueprint('frontend', __name__, template_folder="templates", static_folder="static") # Flask "bootstrap"
 
 @frontend.route('/favicon.ico')
@@ -225,9 +226,13 @@ def plot_mch_box(ensemble, methylation_type, gene, grouping, clustering, level, 
         grouping = 'annotation'
 
     try:
-        return get_mch_box(ensemble, methylation_type, gene, grouping, clustering, level, outliers, max_points)
+        # return get_mch_box(ensemble, methylation_type, gene, grouping, clustering, level, outliers, max_points)
+        return get_boxplot(ensemble=ensemble, gene=gene, grouping=grouping, outliers=outliers, modality='methylation', 
+            methylation_type=methylation_type, clustering=clustering, level=level, 
+            max_points=max_points, smoothing=False)
     except (FailToGraphException, ValueError) as e:
-        print("ERROR (plot_mch_box): {}".format(e))
+        with open(log_file,'a') as f:
+            print("ERROR (plot_mch_box): {}".format(e), file=f)
         return 'Failed to produce mCH levels box plot. Contact maintainer.'
 
 # @frontend.route('/plot/clusters/bar/<ensemble>/<grouping>/<clustering>/<outliers_toggle>')
@@ -261,7 +266,8 @@ def plot_clusters_bar(ensemble, grouping, clustering, normalize):
     try:
         return get_clusters_bar(ensemble, grouping, clustering, normalize) # EAM - testing
     except (FailToGraphException, ValueError) as e:
-        print("ERROR (plot_clusters_bar): {}".format(e))
+        with open(log_file,'a') as f:
+            print("ERROR (plot_clusters_bar): {}".format(e),file=f)
         return 'Failed to produce clusters bar plot. Contact maintainer.'
 
 
@@ -269,34 +275,33 @@ def plot_clusters_bar(ensemble, grouping, clustering, normalize):
 @cache.memoize(timeout=3600)
 def plot_snATAC_box(ensemble, gene, grouping, outliers_toggle):
 
-    if outliers_toggle == 'outliers':
-        outliers = True
-    else:
-        outliers = False
+    outliers = (outliers_toggle=='outliers')
     if grouping == 'NaN' or grouping == 'null':
         grouping = 'cluster'
 
     try:
-        return get_snATAC_box(ensemble, gene, grouping, outliers)
+        # return get_snATAC_box(ensemble, gene, grouping, outliers)
+        return get_boxplot(ensemble=ensemble, gene=gene, grouping=grouping, 
+            outliers=outliers, modality='snATAC', clustering='lv')
     except (FailToGraphException, ValueError) as e:
-        print("ERROR (plot_snATAC_box): {}".format(e))
+        with open(log_file,'a') as f:
+            print("ERROR (plot_snATAC_box): {}".format(e),file=f)
         return 'Failed to produce snATAC normalized counts box plot. Contact maintainer.'
 
 @frontend.route('/plot/RNA/box/<ensemble>/<gene>/<grouping>/<outliers_toggle>')
 @cache.memoize(timeout=3600)
 def plot_RNA_box(ensemble, gene, grouping, outliers_toggle):
 
-    if outliers_toggle == 'outliers':
-        outliers = True
-    else:
-        outliers = False
+    outliers = (outliers_toggle=='outliers')
     if grouping == 'NaN' or grouping == 'null':
         grouping = 'cluster'
 
     try:
-        return get_RNA_box(ensemble, gene, grouping, outliers)
+        # return get_RNA_box(ensemble, gene, grouping, outliers)
+        return get_boxplot(ensemble, gene, grouping, outliers, modality='RNA')
     except (FailToGraphException, ValueError) as e:
-        print("ERROR (plot_RNA_box): {}".format(e))
+        with open(log_file,'a') as f:
+            print("ERROR (plot_RNA_box): {}".format(e),file=f)
         return 'Failed to produce RNA normalized counts box plot. Contact maintainer.'
 
 
