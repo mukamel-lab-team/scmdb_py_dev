@@ -629,7 +629,7 @@ def mean_cluster(gene_info, grouping, modality='ATAC'):
 		return None
 
 @cache.memoize(timeout=3600)
-def get_ensemble_info(ensemble_id=str()):
+def get_ensemble_info(ensemble_id='Ens218'):
 	"""
 	Gets information regarding an ensemble. Requires either the ensemble name or ensemble id
 	"""
@@ -645,6 +645,11 @@ def get_ensemble_info(ensemble_id=str()):
 		result = db.get_engine(current_app, 'methylation_data').execute("SELECT * FROM ensembles WHERE ensemble_id=%s", (ensemble_id,)).fetchone()
 		if result is None:
 			result = db.get_engine(current_app, 'snATAC_data').execute("SELECT * FROM ensembles WHERE ensemble_id=%s", (ensemble_id,)).fetchone()
+
+	# Hard coded failsafe -- if the ensemble fails to load, default to MOp
+	if result is None:
+		ensemble_id = 'Ens218';
+		result=get_ensemble_info(ensemble_id);
 
 	return result
 
