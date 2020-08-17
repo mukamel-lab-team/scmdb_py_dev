@@ -1076,7 +1076,6 @@ def get_gene_from_mysql(ensemble, gene_table_name, methylation_type, clustering,
 
 	return df
 
-
 @cache.memoize(timeout=3600)
 def get_mult_gene_methylation(ensemble, methylation_type, genes, grouping, clustering, level, tsne_type, max_points='10000'):
 	"""Return averaged methylation data ponts for a set of genes.
@@ -2611,9 +2610,9 @@ def get_scatter(ensemble, genes_query, grouping, ptile_start, ptile_end, tsne_ou
 	"""	
 	modalityu = modality.replace('snATAC','ATAC').replace('snRNA','RNA')
 
-	# with open(log_file,'a') as f:
-	# 	print(' *** Running get_scatter', file=f) 
-	# 	print('modalityu=%s' % modalityu, file=f)
+	with open(log_file,'a') as f:
+		print(' *** Running get_scatter', file=f) 
+		print('modalityu=%s' % modalityu, file=f)
 
 	genes = genes_query.split()
 
@@ -2708,6 +2707,7 @@ def get_scatter(ensemble, genes_query, grouping, ptile_start, ptile_end, tsne_ou
 
 	## 2D tSNE coordinates ##
 	for i, group in enumerate(unique_groups):
+	
 		points_group = points[points[grouping_clustering]==group]
 		if grouping_clustering.startswith('cluster'):
 			group_str = 'cluster_' + str(group)
@@ -2718,6 +2718,10 @@ def get_scatter(ensemble, genes_query, grouping, ptile_start, ptile_end, tsne_ou
 			group_str = group
 
 		color_num = i
+
+		with open(log_file,'a') as f:
+			print('%d %s %s' % (i,group,group_str), file=f) 
+			print(points_group.columns, file=f)
 
 		trace2d = traces_tsne.setdefault(color_num, Scatter(
 			x=list(),
@@ -2879,6 +2883,9 @@ def get_scatter(ensemble, genes_query, grouping, ptile_start, ptile_end, tsne_ou
 	for trace in traces_tsne.items():
 		fig.append_trace(trace[1], 1,1)
 	fig.append_trace(trace_ATAC, 1,2)
+
+	with open(log_file,'a') as f:
+		print(trace_ATAC, file=f)
 
 	fig['layout'].update(layout)
 	return plotly.offline.plot(
