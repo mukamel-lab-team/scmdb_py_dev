@@ -48,7 +48,9 @@ def index():
 
 
 @frontend.route('/<ensemble_id>')
-def ensemble(ensemble_id):
+def ensemble(ensemble_id='Ens218'):
+    if ensemble_id=='MOp_MiniAtlas_SCF':
+        ensemble_id='Ens218'
     ensemble_info = get_ensemble_info(ensemble_id=ensemble_id)
     snATAC_included = ensemble_exists(ensemble_info['ensemble_id'], modality='snATAC')
     methylation_included = ensemble_exists(ensemble_info['ensemble_id'], modality='methylation')
