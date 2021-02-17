@@ -38,12 +38,13 @@ def index():
     # Index is not needed since this site is embedded as a frame
     # We use JS redirect b/c reverse proxy will be confused about subdirectories
 
-    if current_user is not None and current_user.is_authenticated:
-        return redirect(url_for('frontend.ensemble_tabular_screen'))
-    else:
-        flash('Log in to access private CEMBA data.  \
-              <li>Click on "Ensembles" at the top of the page to select publicly accessible data.</li>', 'form-info')
-        return redirect(url_for('frontend.login'))
+    return redirect(url_for('frontend.ensemble_tabular_screen'))
+    # if current_user is not None and current_user.is_authenticated:
+    #     return redirect(url_for('frontend.ensemble_tabular_screen'))
+    # else:
+    #     flash('Log in to access private CEMBA data.  \
+    #           <li>Click on "Ensembles" at the top of the page to select publicly accessible data.</li>', 'form-info')
+    #     return redirect(url_for('frontend.login'))
 
 
 @frontend.route('/<ensemble_id>')

@@ -81,6 +81,12 @@
         font-size: 15px;
     }
 
+    .select {
+        color: black; 
+        font-size:15px; 
+        height:auto;
+    }
+
     /* On smaller screens, where height is less than 450px, change the style of the sidenav (less padding and a smaller font size) */
     @media screen and (max-height: 450px) {
         .sidenav {
@@ -204,7 +210,7 @@
            data-placement="bottom" title="Data Modality"
            data-content="Data modality or marker genes."> 
  -->          
-            <select id="data-modality" style="color: black; font-size:15px; height:auto;">
+            <select id="data-modality">
                 {% if methylation_data_available == 1 %}
                 <option value="snmC-seq">DNA methylation (snmC-seq)</option>
                 {% endif %}
@@ -254,7 +260,7 @@
                    data-placement="bottom" title="Maximum number of points"
                    data-content="Subsample the data points.">Points to show: </a>
         </label>
-        <select id="max-points" style="color: black; font-size:15px; height:auto;">
+        <select id="max-points">
             <option value="1000">1000</option>
             <option value="5000">5000</option>
             <option value="10000" selected>10000</option>
@@ -270,7 +276,7 @@
                    data-placement="bottom" title="Color points by"
                    data-content="Color points by to be explained.">Color points by: </a>
              </label>
-        <select id="methylation-tsne-grouping" name="methylation-tsnegrouping" style="color: black; font-size:15px; height:auto;"></select>
+        <select id="methylation-tsne-grouping" name="methylation-tsnegrouping"></select>
         <select id="snATAC-tsne-grouping" name="snATAC-tsnegrouping" style="color: black; font-size:15px; height:auto; display:none;"></select>
         <select id="RNA-tsne-grouping" name="RNA-tsnegrouping" style="color: black; font-size:15px; height:auto; display:none;"></select>
     </div>
@@ -283,7 +289,7 @@
                            data-placement="top" title="Methylation Type"
                            data-content="Type of gene-body methylation values to display.">Methylation Type</a>
             </label>
-            <select id="mType" style="color: black; font-size:15px; height:auto;">
+            <select id="mType">
                 <option value="mCH" selected>mCH</option>
                 <option value="mCG">mCG</option>
                 <option value="mCA">mCA</option>
@@ -300,7 +306,7 @@
                 <span>Methylation Levels</span>
             </a>
         </label>
-        <select id="methylation-levels" style="color: black; font-size:15px; height:auto;">
+        <select id="methylation-levels">
             <option value="original">Absolute</option>
             <option value="normalized" selected>Normalized</option>
         </select>
@@ -328,7 +334,7 @@
                data-content="Number of nearest neighbors (neighboring cells).">K-value: </a>
         </label>
         <select id="methylation-clustering-k" class="methylation-clustering-k methylation-tsneoption"
-                name="methylation-clustering-k" style="color: black; font-size:15px; height:auto;"></select>
+                name="methylation-clustering-k"></select>
     </div>
 
     <!-- Methylation Type for Display -->
@@ -344,7 +350,7 @@
             </label>
             <select id="methylation-clustering-algorithms"
                             class="methylation-clustering-algorithms methylation-tsneoption"
-                            name="methylation-clustering-algorithms" style="color: black; font-size:15px; height:auto;"></select>
+                            name="methylation-clustering-algorithms"></select>
             &nbsp;
         </div>
 
@@ -360,7 +366,7 @@
             <select style="width:70px;" id="methylation-clustering-methylation"
                             class="methylation-clustering-methylation methylation-tsneoption"
                             name="methylation-clustering-methylation" 
-                            style="color: black; font-size:15px; height:auto;"></select>
+                           ></select>
         </div>
 
     <!-- tSNE Methylation Type -->
@@ -372,7 +378,7 @@
         </label>
         <select id="methylation-tsne-methylation" class="methylation-tsne-methylation methylation-tsneoption"
                 name="methylation-tsne-methylation"
-                style="color: black; font-size:15px; height:auto;">
+               >
         </select>
         &nbsp;
     </div>
@@ -386,8 +392,7 @@
                         Perplexity: </a>
         </label>
         <select id="methylation-tsne-perplexity" class="methylation-tsne-perplexity methylation-tsneoption"
-                        name="methylation-tsne-perplexity"
-                        style="color: black; font-size:15px; height:auto;">
+                        name="methylation-tsne-perplexity">
         </select>
                 <!-- {% endif %} -->
         &nbsp;
