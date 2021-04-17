@@ -158,13 +158,15 @@ php -f scmdb_py/templates/components/CEMBA_dissections.php > scmdb_py/templates/
     showSlides(slideIndex);
 
     function updateTable(n) {
-      // Fill in the slice number that the user clicked into the search field of the table
-      // 6 is the column for slices, search for input value
-      if (n==="") { n='.'; }
-      $('#ensemble-table').DataTable().columns(6)
-        .search('(^'+n+'([A-Z,]|$)+|, '+n+'([A-Z,]|$)+)', true, false)
-        .draw();
-      slideIndex = n;
+      if (document.readyState=="complete"){
+            // Fill in the slice number that the user clicked into the search field of the table
+            // 6 is the column for slices, search for input value
+            if (n==="") { n='.'; }
+            $('#ensemble-table').DataTable().columns(6)
+              .search('(^'+n+'([A-Z,]|$)+|, '+n+'([A-Z,]|$)+)', true, false)
+              .draw();
+            slideIndex = n;
+          }
     }
 
     function plusSlides(n) {
