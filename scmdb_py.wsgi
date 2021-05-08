@@ -16,4 +16,4 @@ from scmdb_py import create_app
 
 config_path = os.path.join(dir_path, 'scmdb_py/default_config.py')
 application = create_app(config_path)
-application.secret_key = 's3cr3t'
+application.secret_key = 'cndd_ddnc'

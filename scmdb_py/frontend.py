@@ -11,7 +11,7 @@ import dominate
 from dominate.tags import img
 from flask import Blueprint, render_template, jsonify, request, redirect, current_app, flash, abort, url_for
 from flask_login import (current_user, login_required, login_user,
-                         logout_user)
+                         logout_user, LoginManager)
 from flask_mail import Mail, Message
 from flask_nav.elements import Navbar, Link, View, Text, Subgroup
 from flask_rq import get_queue
@@ -49,6 +49,9 @@ def index():
 
 @frontend.route('/<ensemble_id>')
 def ensemble(ensemble_id='Ens218'):
+    # TODO: For some reason the current_user remains anonymous
+    print('Current user full name: %s' % current_user.full_name())
+
     if ensemble_id=='MOp_MiniAtlas_SCF':
         ensemble_id='Ens218'
     ensemble_info = get_ensemble_info(ensemble_id=ensemble_id)
@@ -71,6 +74,12 @@ def ensemble(ensemble_id='Ens218'):
         num_perplexity_options = 0
 
     AnnoJexists = ensemble_annoj_exists(ensemble_id)
+    print(current_user.is_authenticated)
+    print('Current user full name: %s' % current_user.full_name())
+    print('Is admin?  %s' % current_user.is_admin())
+    print(ensemble_info['public_access'])
+    print(ensemble_info)
+    print(ensemble_info.keys())
 
     if ensemble_info['public_access'] == 1 or (ensemble_info['public_access'] == 0 and current_user.is_authenticated):
         return render_template('ensembleview.html',
@@ -456,17 +465,6 @@ def cluster_specific_marker_genes(ensemble, clustering):
     return jsonify(get_cluster_marker_genes(ensemble, clustering))
 
 
-# Legacy code from when the browser was used to also display human data
-# This function is not necessary due to CEMBA only containing mouse data
-# @frontend.route('/gene/orthologs/<ensemble>/<gene_id>')
-# def orthologs(ensemble, gene_id):
-#     gene_id = gene_id.split('.')[0]
-#     if 'Ens' in ensemble:
-#         return jsonify(find_orthologs(mmu_gene_id=gene_id))
-#     else:
-#         return jsonify(find_orthologs(hsa_gene_id=gene_id))
-
-
 @frontend.route('/gene/corr/<ensemble>/<gene_id>')
 @cache.memoize(timeout=3600)
 def correlated_genes(ensemble, gene_id):
@@ -499,11 +497,20 @@ def submit_new_ensemble_request(new_ensemble_name, new_datasets):
 def login():
     ensemble = request.args.get('q', '')
     form = LoginForm()
+    print('****** 22 Current_user = %s' % current_user.full_name())
     if form.validate_on_submit():
         user = User.query.filter_by(email=form.email.data).first()
+        print('user = %s' % user.full_name())
         if user is not None and user.password_hash is not None and \
                 user.verify_password(form.password.data):
-            login_user(user, form.remember_me.data)
+                    
+            login_user(user, remember=form.remember_me.data, force=True)
+            flash('Logged in successfully.')
+            
+            print('user = %s' % user.full_name())
+            print('** current user = %s' % current_user.full_name())
+            print('** current user active? = %s' % current_user.is_active)
+            
             return redirect(url_for('frontend.ensemble', ensemble_id=ensemble))
         else:
             flash('Invalid email or password.', 'form-error')

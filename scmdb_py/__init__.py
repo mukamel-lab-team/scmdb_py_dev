@@ -3,7 +3,8 @@ from flask import Flask, current_app
 from flask_mail import Mail
 from flask_appconfig import AppConfig
 from flask_bootstrap import Bootstrap
-from flask.ext.cache import Cache
+# from flask_cache import Cache
+from flask_cache import Cache
 from flask_nav import Nav
 from flask_assets import Environment
 from flask_compress import Compress

@@ -241,7 +241,7 @@ def get_datasets_summary(rs):
 			brain_region_code = brain_region_code[-2:]
 			research_segment = "RS2"
 
-		regions_sql = db.get_engine(current_app, 'methylation_data').execute("SELECT ABA_description FROM ABA_regions WHERE ABA_acronym=%s", (dataset['brain_region'],)).fetchone()
+		regions_sql = db.get_engine(current_app, 'methylation_data').execute("SELECT ABA_description FROM ABA_regions WHERE ABA_acronym='%s'", (dataset['brain_region'],)).fetchone()
 		if regions_sql is not None:
 			ABA_regions_descriptive = regions_sql['ABA_description'].replace('+', ', ')
 		else:
@@ -269,7 +269,7 @@ def get_datasets_summary(rs):
 											 "date_added": str(dataset['date_online']),
 											 "description": dataset['description'] })
 		else:
-			target_region_sql = db.get_engine(current_app, 'methylation_data').execute("SELECT ABA_description FROM ABA_regions WHERE ABA_acronym=%s", (dataset['target_region'],)).fetchone()
+			target_region_sql = db.get_engine(current_app, 'methylation_data').execute("SELECT ABA_description FROM ABA_regions WHERE ABA_acronym='%s'", (dataset['target_region'],)).fetchone()
 			if target_region_sql is not None:
 				target_region_descriptive = target_region_sql['ABA_description'].replace('+', ', ')
 			else:
@@ -373,7 +373,7 @@ def ensemble_exists(ensemble, modality='methylation'):
 		ensemble_name = 'ensemble_id'
 	else:
 		ensemble_name = 'snmc_ensemble_id'
-	result = db.get_engine(current_app, modality+'_data').execute("SELECT * FROM ensembles WHERE "+ensemble_name+"=%s", (str(ensemble),)).fetchone()
+	result = db.get_engine(current_app, modality+'_data').execute("SELECT * FROM ensembles WHERE "+ensemble_name+"='%s'" % str(ensemble)).fetchone()
 
 	if result is None:
 		return 0
@@ -415,7 +415,7 @@ def gene_exists(ensemble, methylation_type, gene):
 	"""
 
 	gene_table_name = 'gene_' + gene.replace(".", "_")
-	return len(db.get_engine(current_app, 'methylation_data').execute("SELECT * FROM information_schema.tables WHERE table_name = %s", (gene_table_name,)).fetchall()) > 0
+	return len(db.get_engine(current_app, 'methylation_data').execute("SELECT * FROM information_schema.tables WHERE table_name = '%s'"%gene_table_name).fetchall()) > 0
 
 
 def build_hover_text(labels):
@@ -510,7 +510,7 @@ def get_genes_of_module(module):
 		Dataframe of gene_name and gene_id of each gene in the module for the corresponding
 	"""
 
-	modules_result = db.get_engine(current_app, 'methylation_data').execute("SELECT module, mmu_gene_id, mmu_gene_name FROM gene_modules WHERE module=%s", (module,)).fetchall()
+	modules_result = db.get_engine(current_app, 'methylation_data').execute("SELECT module, mmu_gene_id, mmu_gene_name FROM gene_modules WHERE module='%s'", (module,)).fetchall()
 	genes_in_module = [ {'module': d['module'], 'gene_id': d['mmu_gene_id'], 'gene_name': d['mmu_gene_name']} for d in modules_result ]
 
 	return genes_in_module
@@ -633,18 +633,21 @@ def get_ensemble_info(ensemble_id='Ens218'):
 	"""
 	Gets information regarding an ensemble. Requires either the ensemble name or ensemble id
 	"""
-
-	ensemble_id=ensemble_id.lower().replace('ens','') # Ensemble_id should be an integer
+	ensemble_id=ensemble_id.lower().replace('ens','') # ensemble_id should be an integer
 	if ensemble_id:
-		# result = db.get_engine(current_app, 'methylation_data').execute("SELECT * FROM ensembles WHERE ensemble_id=%s", (ensemble_id,)).fetchone()
-		result = db.get_engine(current_app, 'methylation_data').execute("SELECT * FROM ensembles WHERE ensemble_id=%s", (ensemble_id,)).fetchone()
-		if result is None:
-			result = db.get_engine(current_app, 'snATAC_data').execute("SELECT * FROM ensembles WHERE ensemble_id=%s", (ensemble_id,)).fetchone()
+		query = "SELECT * FROM ensembles WHERE ensemble_id='%s'"%ensemble_id
+		# result = db.get_engine(current_app, 'methylation_data').execute("SELECT * FROM ensembles WHERE ensemble_id='%s'", (ensemble_id,)).fetchone()
+		# result = db.get_engine(current_app, 'methylation_data').execute(query).fetchone()
+		# if result is None:
+		# 	result = db.get_engine(current_app, 'snATAC_data').execute(query).fetchone()
 	else:
 		ensemble_id = int(filter(str.isdigit, ensemble_id))
-		result = db.get_engine(current_app, 'methylation_data').execute("SELECT * FROM ensembles WHERE ensemble_id=%s", (ensemble_id,)).fetchone()
-		if result is None:
-			result = db.get_engine(current_app, 'snATAC_data').execute("SELECT * FROM ensembles WHERE ensemble_id=%s", (ensemble_id,)).fetchone()
+		query = "SELECT * FROM ensembles WHERE ensemble_id='%s'"%ensemble_id
+
+
+	result = db.get_engine(current_app, 'methylation_data').execute(query).fetchone()
+	if result is None:
+		result = db.get_engine(current_app, 'snATAC_data').execute(query).fetchone()
 
 	# Hard coded failsafe -- if the ensemble fails to load, default to MOp
 	if result is None:

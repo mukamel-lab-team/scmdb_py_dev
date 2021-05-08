@@ -158,7 +158,7 @@ php -f scmdb_py/templates/components/CEMBA_dissections.php > scmdb_py/templates/
     showSlides(slideIndex);
 
     function updateTable(n) {
-      if (document.readyState=="complete"){
+      if (document.readyState === 'complete') {
             // Fill in the slice number that the user clicked into the search field of the table
             // 6 is the column for slices, search for input value
             if (n==="") { n='.'; }

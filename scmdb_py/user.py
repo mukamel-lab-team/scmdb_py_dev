@@ -108,6 +108,9 @@ class AnonymousUser(AnonymousUserMixin):
     def can(self, _):
         return False
 
+    def full_name(self):
+        return 'Anonymous'
+
     def is_admin(self):
         return False
 
