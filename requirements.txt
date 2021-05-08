@@ -86,7 +86,7 @@ python-dateutil==2.6.1
 python-editor==1.0.3
 pytz==2017.3
 PyWavelets==1.0.1
-PyYAML==5.1
+PyYAML==5.4
 pyzmq==17.1.2
 qtconsole==4.4.1
 redis==2.10.6
