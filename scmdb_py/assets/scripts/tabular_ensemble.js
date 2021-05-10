@@ -143,9 +143,12 @@ function format ( d ) {
     }
 
     var out = '<table cellpadding="5" cellspacing="0" border="0" style="padding-left:50px;">'+
-    '<tr>'+
-    '<td><b>Description:</b></td>'+
-    '<td>'+d.description+'</td>'+
+    '<tr>';
+    if (d.description!=null) {
+        out = out+'<td><b>Description:</b></td>'+
+        '<td>'+d.description+'</td>'
+    }
+    out = out+
     '</tr>'+
     '<tr>'+
     '<td><b>Datasets in ensemble (snmC-seq):</b></td>'+
