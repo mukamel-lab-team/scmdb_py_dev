@@ -26,7 +26,7 @@ function initEnsembleDataTable() {
                 '<span title="'+data+'">'+data.substr( 0, 38 )+'...</span>' : 
                 data;
             }
- 
+
         },
         {"data": "total_methylation_cells", "className": 'dt-center'},
         {"data": "total_snATAC_cells", "className": 'dt-center'},
@@ -116,21 +116,21 @@ function initEnsembleDataTable() {
     });
 
 
-  $('#ensemble-table tbody').on('click', 'td.details-control', function() {
-    var tr = $(this).closest('tr');
-    var row = table.row(tr);
+    $('#ensemble-table tbody').on('click', 'td.details-control', function() {
+        var tr = $(this).closest('tr');
+        var row = table.row(tr);
 
-    if (row.child.isShown()) {
-        row.child.hide();
-        tr.removeClass('shown');
-        $(this).html('<i class="fas fa-plus-circle"></i>');
-    }
-    else {
-        row.child(format(row.data())).show();
-        tr.addClass('shown');
-        $(this).html('<i class="fas fa-minus-circle"></i>');
-    }
-});
+        if (row.child.isShown()) {
+            row.child.hide();
+            tr.removeClass('shown');
+            $(this).html('<i class="fas fa-plus-circle"></i>');
+        }
+        else {
+            row.child(format(row.data())).show();
+            tr.addClass('shown');
+            $(this).html('<i class="fas fa-minus-circle"></i>');
+        }
+    });
 
 }
 

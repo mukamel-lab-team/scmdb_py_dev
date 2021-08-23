@@ -58,6 +58,8 @@ def get_ensembles_summary():
 	"""
 	regions = request.args.get('region', '').split()
 	regions = [ region.lower() for region in regions ]
+	# Remove suffix after "-" -- for compatibility with Dong lab iConnectome
+	regions = [ re.sub(r'-.*','',region) for region in regions ]
 	regions_tgt = request.args.get('region_tgt', '').split()
 	regions_tgt = [ region_tgt.lower() for region_tgt in regions_tgt ]
 	
@@ -230,7 +232,7 @@ def get_datasets_summary(rs):
 			brain_region_code = brain_region_code[-2:]
 			research_segment = "RS2"
 
-		regions_sql = db.get_engine(current_app, 'methylation_data').execute("SELECT ABA_description FROM ABA_regions WHERE ABA_acronym='%s'", (dataset['brain_region'],)).fetchone()
+		regions_sql = db.get_engine(current_app, 'methylation_data').execute("SELECT ABA_description FROM ABA_regions WHERE ABA_acronym='%s'" % dataset['brain_region']).fetchone()
 		if regions_sql is not None:
 			ABA_regions_descriptive = regions_sql['ABA_description'].replace('+', ', ')
 		else:
@@ -258,7 +260,7 @@ def get_datasets_summary(rs):
 											 "date_added": str(dataset['date_online']),
 											 "description": dataset['description'] })
 		else:
-			target_region_sql = db.get_engine(current_app, 'methylation_data').execute("SELECT ABA_description FROM ABA_regions WHERE ABA_acronym='%s'", (dataset['target_region'],)).fetchone()
+			target_region_sql = db.get_engine(current_app, 'methylation_data').execute("SELECT ABA_description FROM ABA_regions WHERE ABA_acronym='%s'" % dataset['target_region']).fetchone()
 			if target_region_sql is not None:
 				target_region_descriptive = target_region_sql['ABA_description'].replace('+', ', ')
 			else:
