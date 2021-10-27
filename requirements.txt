@@ -19,7 +19,7 @@ colorlover==0.2.1
 contextvars==2.4
 cssmin==0.2.0
 cycler==0.10.0
-dask==1.1.1
+dask==2021.10.0
 dataclasses==0.8
 decorator==4.3.2
 dominate==2.3.1
