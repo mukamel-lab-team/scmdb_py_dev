@@ -71,7 +71,7 @@ plotly==3.7.0
 prometheus-client==0.10.1
 prompt-toolkit==1.0.18
 ptyprocess==0.7.0
-Pygments==2.9.0
+Pygments==2.7.4
 PyMySQL==0.8.1
 pyparsing==2.4.7
 python-dateutil==2.8.1
