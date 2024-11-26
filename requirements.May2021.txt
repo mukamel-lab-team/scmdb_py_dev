@@ -10,7 +10,7 @@ click==7.1.2
 colorlover==0.3.0
 cssmin==0.2.0
 cycler==0.10.0
-dask==1.1.1
+dask==2021.10.0
 decorator==4.3.2
 dominate==2.6.0
 entrypoints==0.3
